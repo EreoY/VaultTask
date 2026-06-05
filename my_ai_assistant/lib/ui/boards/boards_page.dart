@@ -5,11 +5,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import '../../models/board_model.dart';
 import '../../models/workspace_model.dart';
 import '../../state_managers/state_boards.dart';
 import '../../databases/api_cloudflare.dart';
 import '../theme/glass_theme.dart';
+import '../common/glass_widgets.dart';
 import '../common/responsive_layout.dart';
 import '../common/ime_safe_text_field.dart';
 import 'widgets/board_edit_modal.dart';
@@ -202,6 +204,22 @@ class _BoardsPageState extends State<BoardsPage> {
                       color: GlassColors.onSurface,
                     ),
                   ),
+                  if (selectedWorkspace != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded, size: 16, color: GlassColors.onSurfaceVariant),
+                      tooltip: 'Rename Workspace',
+                      onPressed: () => _showRenameWorkspaceDialog(context, selectedWorkspace),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, size: 16, color: GlassColors.onSurfaceVariant),
+                      tooltip: 'Copy Workspace ID',
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: selectedWorkspace.id));
+                        GlassNotifications.show(context, 'Workspace ID copied to clipboard');
+                      },
+                    ),
+                  ],
                 ],
               ),
               Row(
@@ -294,12 +312,12 @@ class _BoardsPageState extends State<BoardsPage> {
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           final id = controller.text.trim();
                           if (id.isEmpty) return;
@@ -307,25 +325,101 @@ class _BoardsPageState extends State<BoardsPage> {
                             await context.read<StateBoards>().joinWorkspaceById(id);
                             if (context.mounted) {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Joined workspace successfully!')),
-                              );
+                              GlassNotifications.show(context, 'Joined workspace successfully!');
                             }
                           } catch (e) {
                             if (context.mounted) {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to join workspace: $e')),
-                              );
+                              GlassNotifications.show(context, 'Failed to join workspace: $e', isError: true);
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.primary,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.onPrimary, fontWeight: FontWeight.bold)),
+                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRenameWorkspaceDialog(BuildContext context, WorkspaceModel workspace) {
+    final controller = TextEditingController(text: workspace.name);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Center(
+        child: Container(
+          width: 400,
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('RENAME WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                const SizedBox(height: 24),
+                ImeSafeTextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: GlassText.bodyLG(),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: GlassColors.primary.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: GlassColors.ghostBorder),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final newName = controller.text.trim();
+                          if (newName.isEmpty || newName == workspace.name) return;
+                          final boardsState = context.read<StateBoards>();
+                          final scaffoldMessenger = ScaffoldMessenger.of(context);
+                          final navigator = Navigator.of(dialogContext);
+                          try {
+                            await boardsState.updateWorkspaceName(workspace, newName);
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Workspace renamed successfully!');
+                          } catch (e) {
+                            GlassNotifications.show(context, 'Failed to rename workspace: $e', isError: true);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -821,12 +915,12 @@ class _BoardsPageState extends State<BoardsPage> {
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           final name = controller.text.trim();
                           if (name.isEmpty) return;
@@ -835,18 +929,17 @@ class _BoardsPageState extends State<BoardsPage> {
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to update board: $e')),
-                              );
+                              GlassNotifications.show(context, 'Failed to update board: $e', isError: true);
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.primary,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('SAVE', style: GlassText.labelSM().copyWith(color: GlassColors.onPrimary, fontWeight: FontWeight.bold)),
+                        child: Text('SAVE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -891,30 +984,29 @@ class _BoardsPageState extends State<BoardsPage> {
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           try {
                             await stateBoards.deleteBoard(board);
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to delete board: $e')),
-                              );
+                              GlassNotifications.show(context, 'Failed to delete board: $e', isError: true);
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.error,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          backgroundColor: GlassColors.error.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -984,9 +1076,7 @@ class _BoardsPageState extends State<BoardsPage> {
                                         setState(() {});
                                       } catch (e) {
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Error: $e')),
-                                          );
+                                          GlassNotifications.show(context, 'Error: $e', isError: true);
                                         }
                                       }
                                     },
@@ -1020,14 +1110,12 @@ class _BoardsPageState extends State<BoardsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton(
+                        OutlinedButton(
                           onPressed: () async {
                             final newUid = uidController.text.trim();
                             if (newUid.isEmpty) return;
                             if (board.members.contains(newUid)) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('User is already a member')),
-                              );
+                              GlassNotifications.show(context, 'User is already a member', isError: true);
                               return;
                             }
                             try {
@@ -1040,18 +1128,17 @@ class _BoardsPageState extends State<BoardsPage> {
                               setState(() {});
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to add member: $e')),
-                                );
+                                GlassNotifications.show(context, 'Failed to add member: $e', isError: true);
                               }
                             }
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: GlassColors.gold,
+                          style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                            backgroundColor: GlassColors.gold.withOpacity(0.05),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: Text('ADD', style: GlassText.labelSM().copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                          child: Text('ADD', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -1107,18 +1194,14 @@ class _BoardsPageState extends State<BoardsPage> {
           
           if (context.mounted) {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Uploaded "$filename" successfully!')),
-            );
+            GlassNotifications.show(context, 'Uploaded "$filename" successfully!');
           }
         }
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload: $e')),
-        );
+        GlassNotifications.show(context, 'Failed to upload: $e', isError: true);
       }
     }
   }
@@ -1156,12 +1239,12 @@ class _BoardsPageState extends State<BoardsPage> {
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           try {
                             final updatedDocs = List<Map<String, dynamic>>.from(board.documents)
@@ -1170,18 +1253,17 @@ class _BoardsPageState extends State<BoardsPage> {
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to delete document: $e')),
-                              );
+                              GlassNotifications.show(context, 'Failed to delete document: $e', isError: true);
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.error,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          backgroundColor: GlassColors.error.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],

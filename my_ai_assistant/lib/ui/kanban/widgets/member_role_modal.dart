@@ -150,61 +150,62 @@ class _MemberRoleModalState extends State<MemberRoleModal> {
   void _confirmRemoveMember(BuildContext context, String uid, String name) {
     showDialog(
       context: context,
-      builder: (context) => Center(
+      builder: (dialogContext) => Center(
         child: Container(
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.surface(radius: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('REMOVE OPERATIVE', style: GlassText.labelSM().copyWith(color: GlassColors.error, letterSpacing: 2)),
-              const SizedBox(height: 24),
-              Text('Are you sure you want to remove $name from this board?', style: GlassText.bodyMD()),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: GlassColors.ghostBorder),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('REMOVE OPERATIVE', style: GlassText.labelSM().copyWith(color: GlassColors.error, letterSpacing: 2)),
+                const SizedBox(height: 24),
+                Text('Are you sure you want to remove $name from this board?', style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant)),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: GlassColors.ghostBorder),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
-                      child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          await context.read<StateBoards>().removeMember(widget.board, uid);
-                          if (context.mounted) {
-                            Navigator.pop(context);
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final boardsState = context.read<StateBoards>();
+                          final navigator = Navigator.of(dialogContext);
+                          try {
+                            await boardsState.removeMember(widget.board, uid);
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Member removed successfully!');
+                          } catch (e) {
+                            GlassNotifications.show(context, 'Failed to remove member: $e', isError: true);
                           }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to remove member: $e')),
-                            );
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: GlassColors.error,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          backgroundColor: GlassColors.error.withOpacity(0.05),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('REMOVE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
                       ),
-                      child: Text('REMOVE', style: GlassText.labelSM().copyWith(color: Colors.white)),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,6 +1,98 @@
-## Phase 91: UI Resiliency & CORS Network Image Exception Hardening
+## Phase 93: Startup Stability, Workspace Dashboard Correctness, and Workspace Management Updates
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงความเสถียรของแอปพลิเคชันในช่วงเริ่มต้นโหลด (ลดการกะพริบและ redirect) ปรับปรุงหน้าจอ Active Workspaces บนแดชบอร์ดให้แสดงผล Workspace จริงพร้อมรายชื่อโปรเจกต์ภายในอย่างมินิมอล และเพิ่มการทำงานแก้ไขชื่อ Workspace และการคัดลอกรหัส Workspace (Workspace ID) ในส่วนหัวของหน้าบอร์ดโครงการ
+
+### Task 93.1: Startup Stability & Auth Guard Safety Delay
+- **Status:** [ ] Planned
+- **Target Files:**
+    - `my_ai_assistant/lib/main.dart`
+- **Action:** เพิ่มระยะเวลาหน่วงเพื่อความปลอดภัย (Safety Delay) 800ms ในขั้นตอนเช็คสิทธิ์ผู้ใช้ของ StartupGuard บน Web/App เพื่อป้องกันเพจเปลี่ยนสถานะกะพริบก่อนโหลด Firebase Auth Token เสร็จสิ้น
+- **Why:** เพื่อแก้ปัญหาระบบหลุดไปหน้า Login แล้วเด้งกลับเข้าหน้าหลักเมื่อเริ่มเปิดแอป
+
+### Task 93.2: StateBoards Workspace Management Update
+- **Status:** [ ] Planned
+- **Target Files:**
+    - `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:** เพิ่มฟังก์ชัน `updateWorkspaceName(WorkspaceModel workspace, String newName)` ที่รองรับการบันทึกลง SQLite (ถ้าเป็น personal) และเซฟลง Cloudflare (ถ้าเป็น team)
+- **Why:** เพื่อเพิ่มความสามารถในการแก้ไขชื่อและซิงค์ข้อมูลกับ backend ได้อย่างราบรื่น
+
+### Task 93.3: Dashboard Workspace Overview Redesign & Tab Integration
+- **Status:** [ ] Planned
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+    - `my_ai_assistant/lib/main.dart`
+- **Action:**
+    - ดึงรายการ `workspaces` และ `boards` มารวมรวบแสดงใน Active Workspaces ในรูปมินิมอลแสดงรายการโปรเจ็กต์ย่อยด้านในแยกตาม Workspace
+    - เชื่อมต่อ `onNavigate` เพื่อให้เมื่อผู้ใช้คลิกเลือกบอร์ดในหน้าแดชบอร์ด จะตั้งค่าเป็น Selected Workspace และนำทางเข้าสู่หน้ารายการบอร์ด (Boards Page) ทันที
+- **Why:** เพื่อแก้ไขพฤติกรรมการแสดงผลผิดพลาดที่ก่อนหน้านี้แสดงบอร์ดแทน Workspace และสร้าง UX การสลับแท็บที่ดี
+
+### Task 93.4: Boards Page Header Updates
+- **Status:** [ ] Planned
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:**
+    - เพิ่มปุ่มแก้ไขชื่อ (Rename) และปุ่มคัดลอก (Copy Workspace ID) ลงในแถบ Breadcrumbs/Header ของบอร์ดงานที่เลือก
+    - นำเสนอหน้าต่าง Dialog กรอกข้อมูลให้เสร็จสิ้นและแสดง SnackBar แจ้งเตือนหลังเซฟ
+- **Why:** เพื่อรองรับความสามารถการแก้ไขชื่อและการคัดลอก ID ในระดับผู้บริหารอย่างสะดวกสบาย
+
+### Task 93.5: Final Polish & Static Code Analysis
+- **Status:** [ ] Planned
+- **Action:**
+    - รันการวิเคราะห์และตรวจสอบความสมบูรณ์ผ่าน `flutter analyze`
+- **Why:** เพื่อยืนยันคุณภาพและความพร้อมก่อนส่งมอบงาน
+
+## Phase 92: Dashboard Clean Redesign & Comments Integration
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงหน้าแดชบอร์ดให้มีความสะอาดตาและพรีเมียม แสดงจำนวนและรายการ Workspace ทั้งหมด แสดงงานที่ใกล้ถึงกำหนดส่งจากบอร์ดทั้งหมด และพัฒนาระบบคอมเมนต์ฝังลงตารางงานเดิม (SQLite + Cloudflare D1) เพื่อดึงฟีดกิจกรรมการคอมเมนต์ล่าสุดมาทำหน้าที่เป็นฟีดแจ้งเตือนที่เอเจนท์สามารถอ่านได้
+
+### Task 92.1: Update Documentation & Project SOP Sync
+- **Status:** [x] Done
+- **Target Files:**
+    - `task-graph.md`
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** สร้างและบันทึกผังความรับผิดชอบ Phase 92 และเตรียมตัวเขียนโค้ด
+- **Why:** เพื่อให้สอดคล้องกับกฎเหล็กในการทำงานของ AI และการควบคุมประวัติโครงการอย่างชัดเจน
+
+### Task 92.2: Cloudflare Backend D1 Database Migration
+- **Status:** [x] Done
+- **Target Files:**
+    - `cloudflare_backend/cloudflare_worker.js`
+- **Action:**
+    - เพิ่มขั้นตอน Migration คอลัมน์ `comments TEXT DEFAULT '[]'` ไปยังตาราง `team_tasks` ในฟังก์ชัน `ensureSchema`
+    - ปรับปรุงการสืบค้น `INSERT` และ `UPDATE` ใน worker ให้รองรับการอ่านเขียนฟิลด์ `comments` ลงฐานข้อมูล D1
+- **Why:** เพื่อให้ฐานข้อมูลบน Cloudflare D1 เก็บและส่งข้อมูลการคอมเมนต์แบบทีมได้อย่างสมบูรณ์
+
+### Task 92.3: SQLite Database Migration
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/databases/db_personal_sqlite.dart`
+- **Action:**
+    - ขยับรุ่นฐานข้อมูล (version) เป็น `10`
+    - เพิ่มคำสั่งสร้างคอลัมน์ `comments TEXT DEFAULT '[]'` ใน `_createDB` และใน `_upgradeDB` สำหรับตาราง `personal_tasks`
+    - ปรับปรุงฟังก์ชัน `insertTask`, `getTasksByBoard`, `getAllTasks` และ `updateTask` เพื่อดึงและบันทึกคอมเมนต์แบบมีโครงสร้าง JSON string
+- **Why:** เพื่อให้การเก็บคอมเมนต์ทำงานได้เสถียรบน Local Database (SQLite) กรณีใช้งานแบบออฟไลน์/ส่วนตัว
+
+### Task 92.4: Dashboard Clean UI & Activity Feed Implementation
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:**
+    - รีดีไซน์หน้าจอแดชบอร์ดใหม่ทั้งหมด ให้มีความคลีน หรูหรา ไร้บล็อกรกสายตา
+    - แสดง Workspace Overview (จำนวน Workspace ทั้งหมด พร้อมการ์ดลิสต์มินิมอล)
+    - แสดงงานที่จะต้องส่งในระยะเวลาอันใกล้ (Due Soon Tasks) จากทุก Workspace/Board กรองเฉพาะงานที่ยังไม่เสร็จ (`!isCompleted`) เรียงตามกำหนดส่ง
+    - แสดง Recent Comments Feed รวบรวมคอมเมนต์จากทุกงานมาเรียงลำดับล่าสุดเพื่อเป็น Activity/Notification Feed
+- **Why:** เพื่อยกระดับ UX ให้ดูเป็นระบบพรีเมียม สะอาดตา และเพิ่มช่องทางให้ผู้ใช้และ AI รับทราบความคืบหน้าผ่านคอมเมนต์
+
+### Task 92.5: UI Polish & Forensic Static Analysis
+- **Status:** [x] Done
+- **Action:**
+    - ตรวจสอบการคอมไพล์และคอมเม้นท์บน Emulator/Browser
+    - รันการตรวจสอบแบบสแตติก `flutter analyze` เพื่อยืนยันว่าไม่มีจุดผิดพลาดหรือ Syntax Error
+- **Why:** เพื่อรับประกันความมั่นคงและคุณภาพของซอร์สโค้ดก่อนส่งงาน
+
+## Phase 91: UI Resiliency & CORS Network Image Exception Hardening> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
 > **Architecture Mandate:** ปรับปรุงและป้องกันข้อผิดพลาดการโหลดรูปภาพผ่านเครือข่าย (CORS Exceptions) บนเบราว์เซอร์ โดยเปลี่ยนจากการใช้ NetworkImage หรือ DecorationImage ตรงๆ ไปเป็นโครงสร้าง Image.network ที่มีการติดตั้ง errorBuilder และ CircleAvatar ที่ติดตั้ง foregroundImage + onForegroundImageError เพื่อความเสถียรของแอปพลิเคชัน
 
 ### Task 91.1: Refactor User Profiles

@@ -3,27 +3,34 @@ import '../common/ime_safe_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/board_model.dart';
+import '../../models/task_model.dart';
+import '../../models/workspace_model.dart';
 import '../../state_managers/state_boards.dart';
 import '../../state_managers/state_tasks.dart';
 import '../theme/glass_theme.dart';
-import '../common/glass_widgets.dart';
 import '../common/responsive_layout.dart';
+import '../common/glass_widgets.dart';
+import '../kanban/widgets/task_edit_modal.dart';
 import 'widgets/dashboard_widgets.dart';
 
 class DashboardPage extends StatefulWidget {
   final bool isDark;
-  const DashboardPage({super.key, required this.isDark});
+  final ValueChanged<int>? onNavigate;
+  const DashboardPage({super.key, required this.isDark, this.onNavigate});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  Set<String> _readCommentIds = {};
+
   @override
   void initState() {
     super.initState();
+    _loadReadComments();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<StateBoards>().fetchAllBoards();
       if (mounted) {
@@ -33,33 +40,116 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  Future<void> _loadReadComments() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('read_comment_ids') ?? [];
+    if (mounted) {
+      setState(() {
+        _readCommentIds = list.toSet();
+      });
+    }
+  }
+
+  Future<void> _markCommentAsRead(String id) async {
+    if (_readCommentIds.contains(id)) return;
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _readCommentIds.add(id);
+    });
+    await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
+  }
+
+  Future<void> _markAllCommentsAsRead(List<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _readCommentIds.addAll(ids);
+    });
+    await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
+  }
+
+  void _openTask(BuildContext context, BoardModel board, TaskModel task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TaskEditModal(
+        board: board,
+        existingTask: task,
+        isDark: widget.isDark,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = Responsive.isDesktop(context);
+    final boardsState = context.watch<StateBoards>();
+    final boards = boardsState.boards;
+    final workspaces = boardsState.workspaces;
+    final tasksState = context.watch<StateTasks>();
+
+    // 1. Gather all tasks and compute milestones / activity updates
+    final List<MilestoneItem> milestoneItems = [];
+    final List<ActivityItem> activityItems = [];
+
+    for (final board in boards) {
+      final boardTasks = tasksState.tasksForBoard(board.id);
+      for (final task in boardTasks) {
+        if (task.status.toLowerCase() != 'completed' && task.status.toLowerCase() != 'done') {
+          milestoneItems.add(MilestoneItem(task: task, board: board));
+        }
+        for (final comment in task.comments) {
+          activityItems.add(ActivityItem(comment: comment, task: task, board: board));
+        }
+      }
+    }
+
+    // Sort milestones by closest due date first
+    milestoneItems.sort((a, b) => a.task.dueDate.compareTo(b.task.dueDate));
+    // Sort activity feed by newest comment first
+    activityItems.sort((a, b) => b.comment.time.compareTo(a.comment.time));
+
+    final unreadCommentIds = activityItems
+        .where((item) => !_readCommentIds.contains(item.comment.id))
+        .map((item) => item.comment.id)
+        .toList();
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(ExecutiveSpacing.containerPadding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(boards.length, unreadCommentIds.length),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
           
-          // Layout Grid
           isDesktop 
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(flex: 2, child: _buildMainColumn(context)),
+                  Expanded(
+                    flex: 3, 
+                    child: Column(
+                      children: [
+                        _buildWorkspacesCard(workspaces, boards),
+                        const SizedBox(height: 24),
+                        _buildMilestonesCard(milestoneItems),
+                      ],
+                    ),
+                  ),
                   SizedBox(width: ExecutiveSpacing.gutter(context)),
-                  Expanded(flex: 1, child: _buildSideColumn(context)),
+                  Expanded(
+                    flex: 2, 
+                    child: _buildActivityFeedCard(activityItems, unreadCommentIds),
+                  ),
                 ],
               )
             : Column(
                 children: [
-                  _buildMainColumn(context),
-                  SizedBox(height: ExecutiveSpacing.stackMd(context)),
-                  _buildSideColumn(context),
+                  _buildWorkspacesCard(workspaces, boards),
+                  const SizedBox(height: 24),
+                  _buildMilestonesCard(milestoneItems),
+                  const SizedBox(height: 24),
+                  _buildActivityFeedCard(activityItems, unreadCommentIds),
                 ],
               ),
         ],
@@ -67,278 +157,454 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(int workspacesCount, int unreadCount) {
     final now = DateTime.now();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final isSmall = MediaQuery.of(context).size.width < 600;
+
+    return Wrap(
+      spacing: 24,
+      runSpacing: 16,
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.end,
       children: [
-        Text(
-          DateFormat('MMMM').format(now),
-          style: GlassText.headlineXL().copyWith(
-            fontSize: MediaQuery.of(context).size.width < 600 ? 48 : 83,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Text(
-            'A curated overview of your upcoming commitments and strategic milestones.',
-            style: GlassText.bodyLG().copyWith(
-              color: GlassColors.onSurfaceVariant.withOpacity(0.8),
-              fontSize: MediaQuery.of(context).size.width < 600 ? 16 : 21,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              DateFormat('MMMM d').format(now).toUpperCase(),
+              style: GlassText.labelSM().copyWith(letterSpacing: 2.0, color: GlassColors.primary),
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              'STRATEGIC HUB',
+              style: GlassText.headlineXL().copyWith(
+                fontSize: isSmall ? 36 : 56,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeaderStatChip('WORKSPACES', workspacesCount.toString(), GlassColors.primary),
+            if (unreadCount > 0) ...[
+              const SizedBox(width: 16),
+              _buildHeaderStatChip('UNREAD FEED', unreadCount.toString(), GlassColors.gold),
+            ],
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildMainColumn(BuildContext context) {
-    final isMobile = Responsive.isMobile(context);
-    
-    return Column(
-      children: [
-        DashboardBentoCard(
-          title: 'Daily Overview',
-          icon: Icons.auto_awesome_outlined,
-          isDark: widget.isDark,
-          height: isMobile ? null : 360,
-          child: Consumer<StateTasks>(
-            builder: (context, state, child) {
-              final total = state.totalCompletedCount + state.totalInProgressCount;
-              final progress = total > 0 ? state.totalCompletedCount / total : 0.0;
-              final boardsCount = context.read<StateBoards>().boards.length;
-              
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ProgressMetric(label: 'Overall Strategic Completion', value: progress),
-                  SizedBox(height: ExecutiveSpacing.stackMd(context)),
-                  ProgressMetric(label: 'Active Strategic Clusters', value: boardsCount > 0 ? 1.0 : 0.0, color: GlassColors.gold),
-                  const SizedBox(height: 48),
-                  
-                  // Responsive Stats layout
-                  isMobile
-                    ? Column(
-                        children: [
-                          _buildStatMiniCard('COMPLETED', state.totalCompletedCount.toString().padLeft(2, '0'), Icons.check_circle_outline),
-                          const SizedBox(height: 12),
-                          _buildStatMiniCard('IN PROGRESS', state.totalInProgressCount.toString().padLeft(2, '0'), Icons.pending_outlined),
-                          const SizedBox(height: 12),
-                          _buildStatMiniCard('UPCOMING', state.totalUpcomingCount.toString().padLeft(2, '0'), Icons.calendar_today_outlined),
-                        ],
-                      )
-                    : SizedBox(
-                        height: 120,
-                        child: Row(
-                          children: [
-                            _buildStatMiniCard('COMPLETED', state.totalCompletedCount.toString().padLeft(2, '0'), Icons.check_circle_outline),
-                            const SizedBox(width: 12),
-                            _buildStatMiniCard('IN PROGRESS', state.totalInProgressCount.toString().padLeft(2, '0'), Icons.pending_outlined),
-                            const SizedBox(width: 12),
-                            _buildStatMiniCard('UPCOMING', state.totalUpcomingCount.toString().padLeft(2, '0'), Icons.calendar_today_outlined),
-                          ],
-                        ),
-                      ),
-                ],
-              );
-            },
-          ),
-        ),
-        SizedBox(height: ExecutiveSpacing.stackMd(context)),
-        DashboardBentoCard(
-          title: 'Recent Projects',
-          icon: Icons.folder_open_outlined,
-          isDark: widget.isDark,
-          height: 400,
-          trailing: _buildGhostButton('JOIN TEAM WORKSPACE', Icons.group_add_rounded, onTap: () => _showJoinWorkspaceDialog(context)),
-          child: Consumer<StateBoards>(
-            builder: (context, state, child) {
-              final boards = state.boards.take(3).toList();
-              return ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: boards.length,
-                separatorBuilder: (context, index) => Divider(height: 40, color: GlassColors.ghostBorder),
-                itemBuilder: (context, index) {
-                  final board = boards[index];
-                  final currentUid = AuthService().currentUser?.uid;
-                  final isOwner = board.ownerUid == currentUid;
+  Widget _buildHeaderStatChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(value, style: GlassText.headlineLG().copyWith(fontSize: 20, color: color)),
+          const SizedBox(height: 2),
+          Text(label, style: GlassText.labelSM().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+        ],
+      ),
+    );
+  }
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: GlassDecorations.surface(radius: ExecutiveRadius.xl),
-                      child: Icon(Icons.grid_view_rounded, color: Color(board.color), size: 20),
-                    ),
-                    title: Text(
-                      board.name, 
-                      style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600)
-                    ),
-                    subtitle: Text(
-                      'Updated 2 hours ago', 
-                      style: GlassText.secondary().copyWith(fontSize: 12)
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
-                      color: GlassColors.background,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      onSelected: (value) {
-                        if (value == 'copy_id') {
-                          Clipboard.setData(ClipboardData(text: board.id));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Board ID copied to clipboard')),
-                          );
-                        } else if (value == 'rename' && isOwner) {
-                          _showRenameBoardDialog(context, board);
-                        } else if (value == 'members' && isOwner) {
-                          state.setSelectedBoard(board);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        if (isOwner)
-                          PopupMenuItem(
-                            value: 'rename',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit_rounded, size: 16, color: GlassColors.primary),
-                                const SizedBox(width: 8),
-                                Text('Rename Board', style: GlassText.bodyMD()),
-                              ],
-                            ),
+  Widget _buildWorkspacesCard(List<WorkspaceModel> workspaces, List<BoardModel> boards) {
+    final boardsState = context.read<StateBoards>();
+    
+    return DashboardBentoCard(
+      title: 'Active Workspaces',
+      icon: Icons.grid_view_rounded,
+      isDark: widget.isDark,
+      trailing: _buildGhostButton('JOIN WORKSPACE', Icons.group_add_rounded, onTap: () => _showJoinWorkspaceDialog(context)),
+      child: workspaces.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'No active workspaces found. Join or create one using the command hub.',
+                style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+              ),
+            )
+          : ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: workspaces.length,
+              separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+              itemBuilder: (context, index) {
+                final workspace = workspaces[index];
+                final workspaceBoards = boards.where((b) => b.workspaceId == workspace.id).toList();
+
+                return InkWell(
+                  onTap: () {
+                    boardsState.setSelectedWorkspace(workspace);
+                    boardsState.setSelectedBoard(null);
+                    widget.onNavigate?.call(1);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Glassy Icon
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: GlassColors.primary.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: GlassColors.primary.withOpacity(0.12)),
                           ),
-                        if (isOwner)
-                          PopupMenuItem(
-                            value: 'members',
-                            child: Row(
-                              children: [
-                                Icon(Icons.group_rounded, size: 16, color: GlassColors.primary),
-                                const SizedBox(width: 8),
-                                Text('Manage Members', style: GlassText.bodyMD()),
-                              ],
-                            ),
+                          child: Icon(
+                            workspace.type == 'personal' ? Icons.person_rounded : Icons.group_rounded,
+                            color: GlassColors.primary,
+                            size: 16,
                           ),
-                        PopupMenuItem(
-                          value: 'copy_id',
-                          child: Row(
+                        ),
+                        const SizedBox(width: 16),
+                        
+                        // Workspace details
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.copy_rounded, size: 16, color: GlassColors.primary),
-                              const SizedBox(width: 8),
-                              Text('Copy Board ID', style: GlassText.bodyMD()),
+                              Row(
+                                children: [
+                                  Text(
+                                    workspace.name,
+                                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: workspace.type == 'team' ? GlassColors.primary.withOpacity(0.1) : GlassColors.gold.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      workspace.type == 'team' ? 'TEAM' : 'PERSONAL',
+                                      style: GlassText.labelSM().copyWith(
+                                        fontSize: 7.5,
+                                        color: workspace.type == 'team' ? GlassColors.primary : GlassColors.gold,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              if (workspaceBoards.isEmpty)
+                                Text(
+                                  'No projects inside this workspace',
+                                  style: GlassText.secondary().copyWith(fontSize: 11),
+                                )
+                              else
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: workspaceBoards.map((board) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Color(board.color).withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: Color(board.color).withOpacity(0.15)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 5,
+                                            height: 5,
+                                            decoration: BoxDecoration(
+                                              color: Color(board.color),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            board.name,
+                                            style: GlassText.bodyMD().copyWith(
+                                              fontSize: 10,
+                                              color: GlassColors.onSurfaceVariant.withOpacity(0.8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
                             ],
                           ),
                         ),
+                        
+                        // Workspace popup options
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                          color: GlassColors.background,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          onSelected: (value) {
+                            if (value == 'copy_id') {
+                              Clipboard.setData(ClipboardData(text: workspace.id));
+                              GlassNotifications.show(context, 'Workspace ID copied to clipboard');
+                            } else if (value == 'rename') {
+                              _showRenameWorkspaceDialog(context, workspace);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 'rename',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_rounded, size: 16, color: GlassColors.primary),
+                                  const SizedBox(width: 8),
+                                  Text('Rename Workspace', style: GlassText.bodyMD()),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'copy_id',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.copy_rounded, size: 16, color: GlassColors.primary),
+                                  const SizedBox(width: 8),
+                                  Text('Copy Workspace ID', style: GlassText.bodyMD()),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                    onTap: () {
-                      state.setSelectedBoard(board);
-                    },
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+                  ),
+                );
+              },
+            ),
     );
   }
 
-  Widget _buildSideColumn(BuildContext context) {
-    return Column(
-      children: [
-        DashboardBentoCard(
-          title: 'Aether Insight',
-          icon: Icons.auto_awesome,
-          isDark: widget.isDark,
-          height: 300,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Based on your recent flow state, consider optimizing your upcoming schedule.',
-                style: GlassText.bodyMD().copyWith(height: 1.6),
+  Widget _buildMilestonesCard(List<MilestoneItem> milestoneItems) {
+    final displayedMilestones = milestoneItems.take(5).toList();
+
+    return DashboardBentoCard(
+      title: 'Upcoming Milestones',
+      icon: Icons.alarm_rounded,
+      isDark: widget.isDark,
+      child: displayedMilestones.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'No pending milestones.',
+                style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
               ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: GlassColors.primary.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-                  border: Border.all(color: GlassColors.ghostBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SCHEDULE CONFLICT',
-                      style: GlassText.labelSM().copyWith(color: GlassColors.gold, letterSpacing: 1.2),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Thursday afternoon looks heavy. Consider moving the Sync.',
-                      style: GlassText.bodyMD().copyWith(fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: ExecutiveSpacing.stackMd(context)),
-        Container(
-          height: 260,
-          width: double.infinity,
-          decoration: GlassDecorations.surface(radius: ExecutiveRadius.xl),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              Image.network(
-                'https://lh3.googleusercontent.com/aida/ADBb0ujiphgSb_p0c2_sYHwjXWA8fdhrcutU48fDIPm2q-NbWIIkrERsC3-kYCq0akTXYcfePGfRsxFd8QCHuSTvrsGz5F4FZFKZe-IWe6qlqk7lNux0yxW28zwTtMj1Pjs1RojgQf7PJzckgjccRm1Fs-IW6_RG4Btvh5dZ-0qXrFbX_BKUsTDnKysZdi0_YFbybQX1boX00jGXYRQ8nqZA9_vsWC6gh2vSvLMJxRNPaTUucnpwGMJz1BIcx8YW_f6LdE6BB5tAXr6oBg',
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                opacity: const AlwaysStoppedAnimation(0.4),
-              ),
-              Positioned(
-                bottom: 20,
-                left: 20,
-                child: Text(
-                  'FOCUS MODE',
-                  style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2.0),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+            )
+          : ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayedMilestones.length,
+              separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+              itemBuilder: (context, index) {
+                final item = displayedMilestones[index];
+                final task = item.task;
+                final board = item.board;
+                
+                final now = DateTime.now();
+                final diff = task.dueDate.difference(now);
+                final isOverdue = diff.isNegative;
+                final daysLeft = diff.inDays;
+
+                String dueText;
+                Color dueColor;
+                if (isOverdue) {
+                  dueText = 'Overdue';
+                  dueColor = GlassColors.error;
+                } else if (daysLeft == 0) {
+                  dueText = 'Due Today';
+                  dueColor = GlassColors.gold;
+                } else if (daysLeft == 1) {
+                  dueText = 'Due Tomorrow';
+                  dueColor = GlassColors.gold;
+                } else {
+                  dueText = 'Due in $daysLeft days';
+                  dueColor = GlassColors.primary;
+                }
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        dueText.toUpperCase(),
+                        style: GlassText.labelSM().copyWith(fontSize: 8, color: dueColor, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  subtitle: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Color(board.color).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          board.name.toUpperCase(),
+                          style: GlassText.labelSM().copyWith(fontSize: 8, color: Color(board.color)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        task.status.toUpperCase(),
+                        style: GlassText.secondary().copyWith(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                  trailing: Icon(Icons.chevron_right_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                  onTap: () => _openTask(context, board, task),
+                );
+              },
+            ),
     );
   }
 
-  Widget _buildStatMiniCard(String label, String value, IconData icon) {
-    return Expanded(
-      flex: Responsive.isMobile(context) ? 0 : 1,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: GlassColors.primary.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-          border: Border.all(color: GlassColors.ghostBorder),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: GlassColors.primary.withOpacity(0.3)),
-            const SizedBox(height: 12),
-            Text(value, style: GlassText.headlineLG().copyWith(fontSize: 28)),
-            const SizedBox(height: 4),
-            Text(label, style: GlassText.labelSM().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
-          ],
-        ),
-      ),
+  Widget _buildActivityFeedCard(List<ActivityItem> activityItems, List<String> unreadCommentIds) {
+    final displayedActivities = activityItems.take(8).toList();
+
+    return DashboardBentoCard(
+      title: 'Discussion Updates',
+      icon: Icons.chat_bubble_outline_rounded,
+      isDark: widget.isDark,
+      trailing: unreadCommentIds.isNotEmpty
+          ? _buildGhostButton(
+              'MARK ALL READ',
+              Icons.done_all_rounded,
+              onTap: () => _markAllCommentsAsRead(unreadCommentIds),
+            )
+          : null,
+      child: displayedActivities.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'No recent updates or discussion points.',
+                style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+              ),
+            )
+          : ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayedActivities.length,
+              separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+              itemBuilder: (context, index) {
+                final item = displayedActivities[index];
+                final comment = item.comment;
+                final task = item.task;
+                final board = item.board;
+                final isUnread = !_readCommentIds.contains(comment.id);
+                final memberColor = GlassColors.getMemberColor(comment.userId);
+
+                return InkWell(
+                  onTap: () async {
+                    await _markCommentAsRead(comment.id);
+                    if (mounted) {
+                      _openTask(context, board, task);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: memberColor.withOpacity(0.1),
+                          child: Text(
+                            comment.userName.isNotEmpty ? comment.userName[0].toUpperCase() : '?',
+                            style: GlassText.labelSM().copyWith(color: memberColor, fontSize: 10),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      comment.userName,
+                                      style: GlassText.bodyMD().copyWith(
+                                        fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateFormat('MMM d, HH:mm').format(comment.time),
+                                    style: GlassText.secondary().copyWith(
+                                      fontSize: 10,
+                                      color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'on ${task.title}',
+                                style: GlassText.labelSM().copyWith(
+                                  fontSize: 10,
+                                  color: Color(board.color),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                comment.text,
+                                style: GlassText.bodyMD().copyWith(
+                                  fontSize: 12,
+                                  color: isUnread ? GlassColors.onSurface : GlassColors.onSurfaceVariant,
+                                  height: 1.4,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isUnread) ...[
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: GlassColors.gold,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -368,7 +634,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => Center(
+      builder: (dialogContext) => Center(
         child: Container(
           width: 400,
           margin: const EdgeInsets.all(24),
@@ -398,48 +664,43 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Row(
+                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           final id = controller.text.trim();
                           if (id.isEmpty) return;
+                          final boardsState = context.read<StateBoards>();
+                          final navigator = Navigator.of(dialogContext);
                           try {
-                            await context.read<StateBoards>().joinWorkspaceById(id);
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Joined workspace successfully!')),
-                              );
-                            }
+                            await boardsState.joinWorkspaceById(id);
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Joined workspace successfully!');
                           } catch (e) {
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to join workspace: $e')),
-                              );
-                            }
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Failed to join workspace: $e', isError: true);
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.primary,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: Colors.white)),
+                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -456,7 +717,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final controller = TextEditingController(text: board.name);
     showDialog(
       context: context,
-      builder: (context) => Center(
+      builder: (dialogContext) => Center(
         child: Container(
           width: 400,
           margin: const EdgeInsets.all(24),
@@ -486,43 +747,38 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           final newName = controller.text.trim();
                           if (newName.isEmpty || newName == board.name) return;
+                          final boardsState = context.read<StateBoards>();
+                          final navigator = Navigator.of(dialogContext);
                           try {
-                            await context.read<StateBoards>().updateBoard(board.copyWith(name: newName));
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Board renamed successfully!')),
-                              );
-                            }
+                            await boardsState.updateBoard(board.copyWith(name: newName));
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Board renamed successfully!');
                           } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to rename board: $e')),
-                              );
-                            }
+                            GlassNotifications.show(context, 'Failed to rename board: $e', isError: true);
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.primary,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: Colors.white)),
+                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -534,4 +790,95 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  void _showRenameWorkspaceDialog(BuildContext context, WorkspaceModel workspace) {
+    final controller = TextEditingController(text: workspace.name);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Center(
+        child: Container(
+          width: 400,
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: GlassDecorations.surface(radius: 24),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('RENAME WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                const SizedBox(height: 24),
+                ImeSafeTextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: GlassText.bodyLG(),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: GlassColors.primary.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: GlassColors.ghostBorder),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final newName = controller.text.trim();
+                          if (newName.isEmpty || newName == workspace.name) return;
+                          final boardsState = context.read<StateBoards>();
+                          final navigator = Navigator.of(dialogContext);
+                          try {
+                            await boardsState.updateWorkspaceName(workspace, newName);
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Workspace renamed successfully!');
+                          } catch (e) {
+                            GlassNotifications.show(context, 'Failed to rename workspace: $e', isError: true);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MilestoneItem {
+  final TaskModel task;
+  final BoardModel board;
+  MilestoneItem({required this.task, required this.board});
+}
+
+class ActivityItem {
+  final TaskComment comment;
+  final TaskModel task;
+  final BoardModel board;
+  ActivityItem({required this.comment, required this.task, required this.board});
 }

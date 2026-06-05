@@ -186,6 +186,7 @@ class ApiCloudflare {
         'status': task.status,
         'is_completed': task.isCompleted,
         'images': task.images.map((e) => e.toJson()).toList(),
+        'comments': task.comments.map((e) => e.toMap()).toList(),
       }),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -209,6 +210,7 @@ class ApiCloudflare {
         'status': task.status,
         'is_completed': task.isCompleted,
         'images': task.images.map((e) => e.toJson()).toList(),
+        'comments': task.comments.map((e) => e.toMap()).toList(),
       }),
     );
     if (response.statusCode != 200) {

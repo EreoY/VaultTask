@@ -72,15 +72,7 @@ class _KanbanPageState extends State<KanbanPage> {
       } catch (_) {}
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('STRATEGY EXECUTED: $successCount TASKS', style: GlassText.labelSM().copyWith(color: Colors.black, letterSpacing: 2)),
-          backgroundColor: GlassColors.gold,
-          behavior: SnackBarBehavior.floating,
-          width: 280,
-          duration: const Duration(seconds: 2),
-        )
-      );
+      GlassNotifications.show(context, 'STRATEGY EXECUTED: $successCount TASKS');
       setState(() { _isSelectMode = false; _selectedTaskIds.clear(); });
     }
   }
@@ -108,15 +100,7 @@ class _KanbanPageState extends State<KanbanPage> {
     }
     Clipboard.setData(ClipboardData(text: buffer.toString()));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('MARKDOWN EXPORTED', style: GlassText.labelSM().copyWith(color: Colors.black, letterSpacing: 2)),
-          backgroundColor: GlassColors.gold,
-          behavior: SnackBarBehavior.floating,
-          width: 200,
-          duration: const Duration(seconds: 2),
-        )
-      );
+      GlassNotifications.show(context, 'MARKDOWN EXPORTED');
       setState(() { _isSelectMode = false; _selectedTaskIds.clear(); });
     }
   }
@@ -138,15 +122,7 @@ class _KanbanPageState extends State<KanbanPage> {
     await boardState.updateBoard(updatedBoard);
     
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('STRUCTURE REORGANIZED', style: GlassText.labelSM().copyWith(color: Colors.black, letterSpacing: 2)),
-          backgroundColor: GlassColors.gold,
-          behavior: SnackBarBehavior.floating,
-          width: 280,
-          duration: const Duration(seconds: 2),
-        )
-      );
+      GlassNotifications.show(context, 'STRUCTURE REORGANIZED');
     }
   }
 
@@ -594,7 +570,74 @@ class _KanbanPageState extends State<KanbanPage> {
 
   void _showRenameBoardDialog(BuildContext context, BoardModel board) {
     final controller = TextEditingController(text: board.name);
-    showDialog(context: context, builder: (context) => AlertDialog(backgroundColor: GlassColors.background, title: Text('RENAME BOARD', style: GlassText.labelSM()), content: ImeSafeTextField(controller: controller, autofocus: true, style: GlassText.bodyLG()), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')), ElevatedButton(onPressed: () async { await context.read<StateBoards>().updateBoard(board.copyWith(name: controller.text)); Navigator.pop(context); }, child: const Text('RENAME'))]));
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Center(
+        child: Container(
+          width: 400,
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('RENAME BOARD', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                const SizedBox(height: 24),
+                ImeSafeTextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: GlassText.bodyLG(),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: GlassColors.ghostBorder),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final newName = controller.text.trim();
+                          if (newName.isEmpty || newName == board.name) return;
+                          final boardsState = context.read<StateBoards>();
+                          final navigator = Navigator.of(dialogContext);
+                          try {
+                            await boardsState.updateBoard(board.copyWith(name: newName));
+                            navigator.pop();
+                            GlassNotifications.show(context, 'Board renamed successfully!');
+                          } catch (e) {
+                            GlassNotifications.show(context, 'Failed to rename board: $e', isError: true);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          backgroundColor: GlassColors.gold.withOpacity(0.05),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

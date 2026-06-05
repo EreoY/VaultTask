@@ -5,6 +5,7 @@ import '../../state_managers/state_boards.dart';
 import '../../models/workspace_model.dart';
 import '../boards/widgets/board_edit_modal.dart';
 import '../theme/glass_theme.dart';
+import 'glass_widgets.dart';
 import 'ime_safe_text_field.dart';
 
 class AetherSideNav extends StatelessWidget {
@@ -378,7 +379,7 @@ class AetherSideNav extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
+                        child: OutlinedButton(
                           onPressed: () async {
                             final name = nameController.text.trim();
                             if (name.isEmpty) return;
@@ -389,18 +390,17 @@ class AetherSideNav extends StatelessWidget {
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to add workspace: $e')),
-                                );
+                                GlassNotifications.show(context, 'Failed to add workspace: $e', isError: true);
                               }
                             }
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: GlassColors.primary,
+                          style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                            backgroundColor: GlassColors.gold.withOpacity(0.05),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: Text('CREATE', style: GlassText.labelSM().copyWith(color: GlassColors.onPrimary, fontWeight: FontWeight.bold)),
+                          child: Text('CREATE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -446,12 +446,12 @@ class AetherSideNav extends StatelessWidget {
                           side: BorderSide(color: GlassColors.ghostBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: OutlinedButton(
                         onPressed: () async {
                           try {
                             await stateBoards.deleteWorkspace(workspace);
@@ -460,18 +460,17 @@ class AetherSideNav extends StatelessWidget {
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to delete workspace: $e')),
-                              );
+                              GlassNotifications.show(context, 'Failed to delete workspace: $e', isError: true);
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.error,
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          backgroundColor: GlassColors.error.withOpacity(0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],

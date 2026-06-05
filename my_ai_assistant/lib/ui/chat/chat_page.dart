@@ -75,15 +75,7 @@ class _ChatPageState extends State<ChatPage> {
                 child: InkWell(
                   onTap: () {
                     context.read<StateChat>().resetFullChat();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('SESSION RESET', style: GlassText.labelSM().copyWith(color: Colors.black, letterSpacing: 2)),
-                        backgroundColor: GlassColors.gold,
-                        behavior: SnackBarBehavior.floating,
-                        width: 200,
-                        duration: const Duration(seconds: 1),
-                      )
-                    );
+                    GlassNotifications.show(context, 'SESSION RESET');
                   },
                   borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
                   child: Container(

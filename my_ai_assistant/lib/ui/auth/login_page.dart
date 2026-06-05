@@ -19,15 +19,11 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final cred = await AuthService().signInWithGoogle();
       if (cred == null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login cancelled or failed')),
-        );
+        GlassNotifications.show(context, 'Login cancelled or failed', isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
-        );
+        GlassNotifications.show(context, 'Login failed: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

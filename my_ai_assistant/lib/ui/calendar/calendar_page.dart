@@ -517,9 +517,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final boardState = context.read<StateBoards>();
     final boards = boardState.boards.where((b) => b.type == 'team').toList();
     if (boards.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No team boards available. Create a board first.')),
-      );
+      GlassNotifications.show(context, 'No team boards available. Create a board first.', isError: true);
       return;
     }
     final board = boardState.selectedBoard ?? boards.first;

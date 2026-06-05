@@ -8,6 +8,7 @@ import '../../../models/board_model.dart';
 import '../../../state_managers/state_tasks.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../../databases/api_cloudflare.dart';
+import '../../../services/auth_service.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/glass_widgets.dart';
 
@@ -35,6 +36,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _descFocusNode = FocusNode();
+  final _commentController = TextEditingController();
   
   // Persistent Controllers for Asset Names
   final Map<String, TextEditingController> _assetNameControllers = {};
@@ -44,6 +46,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
   List<TaskImage> _images = [];
   List<String> _members = [];
   List<String> _labelIds = [];
+  List<TaskComment> _comments = [];
   bool _isSaving = false;
   bool _isUploading = false;
 
@@ -63,6 +66,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       _images = List.from(widget.existingTask!.images);
       _members = List.from(widget.existingTask!.members);
       _labelIds = List.from(widget.existingTask!.labelIds);
+      _comments = List.from(widget.existingTask!.comments);
     } else {
       _dueDate = widget.initialDate ?? DateTime.now().add(const Duration(days: 1));
       _status = widget.initialStatus ?? (widget.board.columns.isNotEmpty ? widget.board.columns.first : 'todo');
@@ -103,6 +107,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
         _images = List.from(updated.images);
         _members = List.from(updated.members);
         _labelIds = List.from(updated.labelIds);
+        _comments = List.from(updated.comments);
       });
     }
   }
@@ -113,6 +118,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     _titleController.dispose();
     _descController.dispose();
     _descFocusNode.dispose();
+    _commentController.dispose();
     for (final c in _assetNameControllers.values) {
       c.dispose();
     }
@@ -148,6 +154,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
           _images = List.from(updated.images);
           _members = List.from(updated.members);
           _labelIds = List.from(updated.labelIds);
+          _comments = List.from(updated.comments);
         });
       }
     } catch (e) {
@@ -168,6 +175,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
             images: _images,
             members: _members,
             labelIds: _labelIds,
+            comments: _comments,
           ) ??
           TaskModel(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -180,6 +188,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
             images: _images,
             members: _members,
             labelIds: _labelIds,
+            comments: _comments,
           );
 
       if (widget.existingTask != null) {
@@ -351,6 +360,12 @@ class _TaskEditModalState extends State<TaskEditModal> {
                         _buildSectionTitle('OPERATIONAL ASSETS'),
                         const SizedBox(height: 24),
                         _buildVerticalAssetList(),
+                        if (widget.existingTask != null) ...[
+                          const SizedBox(height: 48),
+                          _buildSectionTitle('STRATEGIC DISCUSSION & FEED'),
+                          const SizedBox(height: 24),
+                          _buildCommentsSection(),
+                        ],
                         const SizedBox(height: 80),
                         if (widget.existingTask == null)
                            _buildGhostButton('CREATE STRATEGIC TASK', _handleExplicitSave, isPrimary: true),
@@ -816,4 +831,142 @@ class _TaskEditModalState extends State<TaskEditModal> {
       ),
     );
   }
+
+  Widget _buildCommentsSection() {
+    final currentUid = AuthService().currentUser?.uid ?? '';
+    final currentUserName = AuthService().currentUser?.displayName ?? 'Anonymous';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_comments.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'No discussion points logged yet.',
+              style: GlassText.bodyMD().copyWith(
+                color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _comments.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final comment = _comments[index];
+              final isMe = comment.userId == currentUid;
+              final memberColor = GlassColors.getMemberColor(comment.userId);
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: memberColor.withOpacity(0.1),
+                    child: Text(
+                      comment.userName.isNotEmpty ? comment.userName[0].toUpperCase() : '?',
+                      style: GlassText.labelSM().copyWith(color: memberColor, fontSize: 11),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              comment.userName.isNotEmpty ? comment.userName : 'Unknown',
+                              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat('MMM d, HH:mm').format(comment.time),
+                              style: GlassText.secondary().copyWith(
+                                fontSize: 10,
+                                color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isMe ? GlassColors.primary.withOpacity(0.05) : GlassColors.onSurface.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: GlassColors.ghostBorder),
+                          ),
+                          child: Text(
+                            comment.text,
+                            style: GlassText.bodyMD().copyWith(fontSize: 13, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: GlassColors.onSurface.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: GlassColors.ghostBorder),
+                ),
+                child: ImeSafeTextField(
+                  controller: _commentController,
+                  style: GlassText.bodyMD(),
+                  decoration: InputDecoration(
+                    hintText: 'Add a comment or progress update...',
+                    hintStyle: GlassText.bodyMD().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                    ),
+                    border: InputBorder.none,
+                  ),
+                  onSubmitted: (_) => _handleAddComment(currentUid, currentUserName),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            IconButton(
+              icon: const Icon(Icons.send_rounded, color: GlassColors.primary),
+              onPressed: () => _handleAddComment(currentUid, currentUserName),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _handleAddComment(String currentUid, String currentUserName) {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
+
+    final newComment = TaskComment(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: currentUid,
+      userName: currentUserName,
+      text: text,
+      time: DateTime.now(),
+    );
+
+    setState(() {
+      _comments.add(newComment);
+      _commentController.clear();
+    });
+
+    _autoSaveTask();
+  }
 }
+

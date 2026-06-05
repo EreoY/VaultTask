@@ -93,7 +93,9 @@ class StartupGuard extends StatefulWidget {
 
 class _StartupGuardState extends State<StartupGuard> {
   bool _showRetry = false;
+  bool _delayCompleted = false;
   Timer? _timeoutTimer;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -101,11 +103,19 @@ class _StartupGuardState extends State<StartupGuard> {
     _timeoutTimer = Timer(const Duration(seconds: 12), () {
       if (mounted) setState(() => _showRetry = true);
     });
+    _delayTimer = Timer(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _delayCompleted = true;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _timeoutTimer?.cancel();
+    _delayTimer?.cancel();
     super.dispose();
   }
 
@@ -118,7 +128,7 @@ class _StartupGuardState extends State<StartupGuard> {
           return _buildErrorState(snapshot.error.toString());
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting || !_delayCompleted) {
           return _buildLoadingState();
         }
 
@@ -211,7 +221,10 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _screens = [
-      const DashboardPage(isDark: false),
+      DashboardPage(
+        isDark: false,
+        onNavigate: (i) => setState(() => _index = i),
+      ),
       const BoardsPage(isDark: false),
       CalendarPage(
         isDark: false,

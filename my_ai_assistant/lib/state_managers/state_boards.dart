@@ -242,6 +242,30 @@ class StateBoards extends ChangeNotifier {
     }
   }
 
+  Future<void> updateWorkspaceName(WorkspaceModel workspace, String newName) async {
+    try {
+      final updated = workspace.copyWith(name: newName);
+      if (workspace.type == 'personal') {
+        if (!kIsWeb) {
+          await DbPersonalSqlite.instance.updateWorkspace(updated);
+        }
+      } else {
+        await ApiCloudflare.insertWorkspace(updated);
+      }
+      final idx = _workspaces.indexWhere((w) => w.id == workspace.id);
+      if (idx != -1) {
+        _workspaces[idx] = updated;
+      }
+      if (_selectedWorkspace?.id == workspace.id) {
+        _selectedWorkspace = updated;
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating workspace name: $e');
+      rethrow;
+    }
+  }
+
   // ─── BOARD CRUD ───────────────────────────────────────
 
   Future<BoardModel> addBoard(BoardModel board) async {

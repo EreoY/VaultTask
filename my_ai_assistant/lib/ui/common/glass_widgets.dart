@@ -332,3 +332,62 @@ class GlassBottomBarItem {
   });
 }
 
+class GlassNotifications {
+  static void show(BuildContext context, String message, {bool isError = false}) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.clearSnackBars();
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        padding: EdgeInsets.zero,
+        duration: const Duration(seconds: 3),
+        content: GlassContainer(
+          isDark: true,
+          radius: 12,
+          blur: 16,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: GlassColors.surface.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isError ? GlassColors.error.withOpacity(0.5) : GlassColors.gold.withOpacity(0.5),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+                color: isError ? GlassColors.error : GlassColors.gold,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurface,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
