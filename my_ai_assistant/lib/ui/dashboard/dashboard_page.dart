@@ -151,7 +151,7 @@ class _DashboardPageState extends State<DashboardPage> {
           icon: Icons.folder_open_outlined,
           isDark: widget.isDark,
           height: 400,
-          trailing: _buildGhostButton('JOIN TEAM BOARD', Icons.group_add_rounded, onTap: () => _showJoinBoardDialog(context)),
+          trailing: _buildGhostButton('JOIN TEAM WORKSPACE', Icons.group_add_rounded, onTap: () => _showJoinWorkspaceDialog(context)),
           child: Consumer<StateBoards>(
             builder: (context, state, child) {
               final boards = state.boards.take(3).toList();
@@ -364,7 +364,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  void _showJoinBoardDialog(BuildContext context) {
+  void _showJoinWorkspaceDialog(BuildContext context) {
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -380,16 +380,16 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('JOIN TEAM BOARD', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                Text('JOIN TEAM WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
                 const SizedBox(height: 24),
-                Text('Enter the Board ID shared by your colleague.', style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant)),
+                Text('Enter the Workspace ID shared by your colleague.', style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant)),
                 const SizedBox(height: 24),
                 ImeSafeTextField(
                   controller: controller,
                   autofocus: true,
                   style: GlassText.bodyLG(),
                   decoration: InputDecoration(
-                    hintText: 'e.g., 1715000000000',
+                    hintText: 'e.g., default_team_xxxx',
                     hintStyle: GlassText.bodyLG().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
                     filled: true,
                     fillColor: GlassColors.primary.withOpacity(0.05),
@@ -418,17 +418,18 @@ class _DashboardPageState extends State<DashboardPage> {
                           final id = controller.text.trim();
                           if (id.isEmpty) return;
                           try {
-                            await context.read<StateBoards>().joinBoardById(id);
+                            await context.read<StateBoards>().joinWorkspaceById(id);
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Joined board successfully!')),
+                                const SnackBar(content: Text('Joined workspace successfully!')),
                               );
                             }
                           } catch (e) {
                             if (context.mounted) {
+                              Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to join board: $e')),
+                                SnackBar(content: Text('Failed to join workspace: $e')),
                               );
                             }
                           }
@@ -438,7 +439,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('JOIN BOARD', style: GlassText.labelSM().copyWith(color: Colors.white)),
+                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: Colors.white)),
                       ),
                     ),
                   ],

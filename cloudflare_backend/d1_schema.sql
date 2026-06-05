@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS team_boards (
   columns TEXT DEFAULT '["todo","doing","done"]', -- JSON array of column names
   labels TEXT DEFAULT '[]',       -- JSON array of tag objects {id, color, name}
   workspace_id TEXT DEFAULT '',
+  documents TEXT DEFAULT '[]',    -- JSON array of Document objects
   updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(owner_uid) REFERENCES users(uid)
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS team_tasks (
   is_completed INTEGER DEFAULT 0,  -- 0=false, 1=true
   images TEXT DEFAULT '[]',        -- JSON array of TaskImage objects
   comments TEXT DEFAULT '[]',      -- JSON array of TaskComment objects
+  order_index INTEGER DEFAULT 0,   -- Sort order in Kanban column
   updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(board_id) REFERENCES team_boards(id),

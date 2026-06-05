@@ -34,13 +34,17 @@ class ProfilePage extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: GlassColors.primary.withOpacity(0.1), width: 1),
-            image: user?.photoURL != null 
-              ? DecorationImage(image: NetworkImage(user!.photoURL!), fit: BoxFit.cover)
-              : null,
+            color: GlassColors.primary.withOpacity(0.05),
           ),
-          child: user?.photoURL == null 
-            ? const Icon(Icons.person_outline_rounded, size: 64, color: GlassColors.primary)
-            : null,
+          child: ClipOval(
+            child: user?.photoURL != null 
+              ? Image.network(
+                  user!.photoURL!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.person_outline_rounded, size: 64, color: GlassColors.primary),
+                )
+              : const Icon(Icons.person_outline_rounded, size: 64, color: GlassColors.primary),
+          ),
         ),
         const SizedBox(width: 64),
         Column(

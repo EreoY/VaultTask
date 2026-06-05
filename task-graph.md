@@ -1,3 +1,160 @@
+## Phase 91: UI Resiliency & CORS Network Image Exception Hardening
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงและป้องกันข้อผิดพลาดการโหลดรูปภาพผ่านเครือข่าย (CORS Exceptions) บนเบราว์เซอร์ โดยเปลี่ยนจากการใช้ NetworkImage หรือ DecorationImage ตรงๆ ไปเป็นโครงสร้าง Image.network ที่มีการติดตั้ง errorBuilder และ CircleAvatar ที่ติดตั้ง foregroundImage + onForegroundImageError เพื่อความเสถียรของแอปพลิเคชัน
+
+### Task 91.1: Refactor User Profiles
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/profile/profile_page.dart`
+    - `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** แทนที่การเรนเดอร์รูปภาพโปรไฟล์ผ่าน BoxDecoration image ด้วยระบบ ClipOval ครอบ Image.network พร้อมตัวควบคุม errorBuilder เพื่อแสดงผลป้ายอักษรย่อหรือไอคอนเมื่อโหลดไม่สำเร็จ
+- **Why:** เพื่อดักจับข้อผิดพลาด CORS หรือรูปโปรไฟล์ใช้งานไม่ได้ และตัดข้อผิดพลาด NetworkImage ใน Console บนเว็บเบราว์เซอร์
+
+### Task 91.2: Refactor Workspace Boards & Daily Timelines
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/boards/boards_page.dart`
+    - `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:**
+    - ปรับปรุง `_buildMemberAvatar` ในหน้าบอร์ด ให้ใช้งาน ClipOval และ Image.network ร่วมกับ errorBuilder
+    - ปรับปรุง daily timeline cover image, asset preview image และ avatar stack ให้มีกลไก Safe Image Loading
+- **Why:** เพื่อป้องกันภาพปกและไอคอนสมาชิกที่โหลดจากโดเมนภายนอกล้มเหลวและทริกเกอร์ Uncaught Exception
+
+### Task 91.3: Refactor Chat Widgets & Drafts
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/chat/widgets/chat_widgets.dart`
+    - `my_ai_assistant/lib/ui/chat/widgets/draft_cards.dart`
+- **Action:**
+    - ปรับปรุง Avatar ของบอท Aether (ChatAI) และสมาชิกผู้ใช้ (ChatUser) ให้มี fallback ไปเป็นไอคอนกรณีโหลดภาพล้มเหลว
+    - ปรับปรุง Avatar ในหน้า Drafts และส่วนการเลือกสมาชิกให้ใช้ระบบ Safe Loading
+- **Why:** เพื่อดักจับภาพบอทและภาพสมาชิกที่แสดงในแแชทและแถบดราฟท์ให้มีทางเลือกภาพจำลองที่สวยงาม
+
+### Task 91.4: Refactor Kanban Boards & Roles Modals
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/widgets/member_role_modal.dart`
+    - `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+    - `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`
+- **Action:**
+    - อัปเดต CircleAvatar ทุกจุดบนบอร์ดคันบังและ modal จัดการตำแหน่งสมาชิกให้ใช้งาน foregroundImage และ onForegroundImageError
+    - อัปเดตภาพหน้าปกและภาพแนบบนการ์ดคันบังให้ใช้งาน ClipRRect และ Image.network ร่วมกับ errorBuilder แผงข้อความขัดข้องแบบกลาสมอร์ฟิก
+- **Why:** เพื่อให้สอดคล้องกับโครงสร้างและสุนทรียศาสตร์ของบอร์ด Kanban และป้อนตัวเลือก fallback ที่เสถียร
+
+### Task 91.5: Quality Assurance & Code Analysis
+- **Status:** [x] Done
+- **Action:** รันการวิเคราะห์โค้ด `flutter analyze` เพื่อตรวจสอบ Syntax และความสมบูรณ์ในการรันบนเบราว์เซอร์
+- **Why:** เพื่อยืนยันว่าไม่มีข้อผิดพลาดเชิงโครงสร้างหรือ Syntax หลุดรอด
+
+## Phase 90: Workspace Sorting & Join Workspace Refactoring
+
+- **Status:** [x] Done
+- **Target Files:**
+    - `cloudflare_backend/cloudflare_worker.js`
+    - `my_ai_assistant/lib/databases/api_cloudflare.dart`
+    - `my_ai_assistant/lib/state_managers/state_boards.dart`
+    - `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** เพิ่ม API `/api/workspaces_join`, ปรับปรุงและเรียงลำดับ Workspace เริ่มต้นให้อยู่ด้านบนสุด, รีแฟคเตอร์หน้าจอการกด Join Board ให้เปลี่ยนเป็น Join Workspace
+- **Why:** เพื่อการทำงานและความลื่นไหลในการจัดการทีมตาม Workspace-First Architecture
+
+## Phase 89: Notion-Style Minimalist Projects Table & Infinite Rebuild Stabilization
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงตารางโครงงานในหน้าเวิร์คสเปซ (Boards Page) ให้แสดงผลแบบ Notion Minimalist ไร้การเลื่อนด้านข้าง จัดสัดส่วนพื้นที่ด้วย Flex และสถาปัตยกรรมตัวแปรหน้าจอที่เสถียร รวมถึงการแก้บั๊ก Infinite Loop การประมวลผลซ้ำของระบบ
+
+### Task 89.1: Fix Infinite Rebuild Loop
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/main.dart`
+    - `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:**
+    - ย้ายรายการเพจ `_screens` ใน `_AppShellState` ไปเป็นตัวแปรแบบ `late final` และเตรียมใน `initState` แทนการใช้ Getter
+    - ใส่ Loading Guard (`if (_isLoading) return;`) ที่หัวของฟังก์ชัน `fetchAllBoards()` ใน `state_boards.dart`
+- **Why:** เพื่อหยุดกระบวนการสร้างและเมานต์ widget ซ้ำๆ ทุกรอบที่สถานะอัปเดต และลดการดึงข้อมูลและข้อผิดพลาด 429 ของเครือข่าย
+
+### Task 89.2: Notion-Style Minimalist Table Layout
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:**
+    - เอา `SingleChildScrollView(scrollDirection: Axis.horizontal)` ออก
+    - นำโครงสร้างตารางเดิมออก และปรับเป็นคอลัมน์ของแถวที่ใช้ `Row` ร่วมกับ `Expanded` เพื่อควบคุม Flex Ratio ที่พอดีกับจอเดสก์ท็อป โดยไม่มี Scrollbar
+- **Why:** เพื่อให้ตารางเป็นแบบมินิมอลตามดีไซน์ของ Notion ตามคำขอของลูกค้า
+
+### Task 89.3: Refine Row Components
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:**
+    - ปรับปรุงการออกแบบแถวของแต่ละโครงงาน:
+        - คอลัมน์ Project: แสดงจุดสีประเภทบอร์ด + ชื่อโครงงานแบบคลิกข้ามได้ พร้อมปุ่ม `OPEN` ขนาดเล็ก
+        - คอลัมน์ Stage: แสดงประเภทเป็นแคปซูลเล็ก
+        - คอลัมน์ Members: แสดง Avatar Stack ขนาดเล็ก และปุ่มจัดการสมาชิกสำหรับโปรเจ็กต์ทีม
+        - คอลัมน์ Docs: แสดงรายการไฟล์เป็นป้ายขนาดเล็ก พร้อมปุ่มอัปโหลด
+    - คั่นระหว่างแถวด้วยเส้นใยบางเบา `GlassColors.outlineVariant.withOpacity(0.15)`
+- **Why:** เพื่อความกระชับ หรูหรา ไร้รอยต่อ และเป็นระเบียบของตารางข้อมูล
+
+### Task 89.4: Breadcrumbs, Header & "+ New project" Text Row
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:**
+    - เพิ่ม Breadcrumbs ดำเนินการที่ด้านบนสุด เช่น `Workspace HQ / Projects`
+    - ปรับแต่งฟอนต์หัวข้อหลักให้ใหญ่ หนา และมีอีโมจิ `🎯`
+    - เพิ่มแถวตัวเลือกจำลองและเมนูปุ่มจำลองด้านบนขวา
+    - เพิ่มปุ่มแถวท้ายตาราง `+ New project` เพื่อกดสร้างบอร์ดได้ทันที
+- **Why:** เพื่อจำลอง UX/UI และพฤติกรรมโครงสร้างตารางของ Notion ได้อย่างสมบูรณ์แบบ
+
+### Task 89.5: Linter & Compilation Check
+- **Status:** [x] Done
+- **Action:**
+    - รัน `flutter analyze`
+- **Why:** ยืนยันความปลอดภัยและความถูกต้องทางโครงสร้างซอฟต์แวร์
+
+## Phase 88: Workspace Board Table View, Document Attachment, Sidebar Nesting & SQL Fix
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงหน้ารายการบอร์ดของพื้นที่ทำงานให้แสดงผลแบบตาราง (Table View) ที่รองรับการจัดการเอกสาร/ข้อบังคับแนบโครงการ ปรับปรุงการนำบอร์ดโครงการย่อยกลับมาแสดงใน Sidebar ปรับเมนูบอร์ดหลักออก และแก้ไข D1 SQL order_index คอลัมน์ที่ขาดหายไป
+
+### Task 88.1: Database Schema Migration & Worker Support
+- **Status:** [x] Done
+- **Target Files:**
+    - `cloudflare_backend/d1_schema.sql`
+    - `cloudflare_backend/cloudflare_worker.js`
+    - `my_ai_assistant/lib/databases/db_personal_sqlite.dart`
+- **Action:**
+    - เพิ่ม `order_index` ใน `team_tasks` และ `documents` ใน `team_boards` ใน `d1_schema.sql`
+    - เพิ่มโค้ด ALTER TABLE ไมเกรชันใน `ensureSchema` ของ `cloudflare_worker.js`
+    - อัปเดต POST/PUT `/api/boards` ใน `cloudflare_worker.js`
+    - อัปเดต `db_personal_sqlite.dart` (เวอร์ชัน 9 + ไมเกรชันสำหรับ `documents` ใน `personal_boards`)
+- **Why:** เพื่อรองรับการเก็บลิสต์เอกสารและการจัดเรียงการ์ดภารกิจที่มั่นคง ไม่ทำให้ API เกิด SQL 500 error
+
+### Task 88.2: Expand BoardModel with Documents Support
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/models/board_model.dart`
+- **Action:**
+    - เพิ่มฟิลด์ `documents` ใน `BoardModel` พร้อมอัปเดตฟังก์ชันแปลงข้อมูลเข้า/ออกจาก JSON/SQLite Map
+- **Why:** เพื่อให้โมเดลของบอร์ดในแอปสามารถพึ่งพาระบบเอกสารแนบส่วนตัวและทีมได้สำเร็จ
+
+### Task 88.3: Sidebar Menu Navigation Adjustments
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:**
+    - ลบปุ่มนำทางหลัก 'Boards' ออก
+    - นำรายการบอร์ดโครงการย่อย (Nested list) กลับมาใส่ใต้หัวข้อ Workspace แต่ละตัว โดยแสดงจุด Bullet เพื่อคลิกสลับเข้าบอร์ดโดยตรง
+- **Why:** เพื่อรักษาความคลีน และช่วยให้กระโดดข้ามไปยังบอร์ดต่าง ๆ ได้อย่างสะดวกผ่าน Sidebar
+
+### Task 88.4: Develop Premium Workspace Boards Table View
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:**
+    - เปลี่ยนการแสดงผลจากการ์ด Grid ไปเป็น Glassy Table Row ประกอบด้วยข้อมูล Project, Members, Documents และ Actions
+    - มีปุ่มอัปโหลดเอกสารข้อบังคับและการจัดการสมาชิกของบอร์ดนั้น ๆ
+- **Why:** เพื่อเพิ่มพื้นที่และมิติข้อมูลให้มองเห็นรายละเอียดโปรเจ็กต์ สมาชิก และแนบเอกสารกฎเกณฑ์ประจำโปรเจ็กต์ได้ทันที
+
+### Task 88.5: Verification & Production Compilation
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` เพื่อตรวจสอบความถูกต้องทั้งหมด
+- **Why:** เพื่อความปลอดภัยและเสถียรภาพสูงสุดของผลิตภัณฑ์
+
 ## Phase 87: Solid Popups, High-Contrast Submit Buttons & Sidebar Cleanup
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)

@@ -39,6 +39,7 @@ class StateBoards extends ChangeNotifier {
   Map<String, String>? getMemberProfile(String uid) => _userProfiles[uid];
 
   Future<void> fetchAllBoards() async {
+    if (_isLoading) return;
     _isLoading = true;
     notifyListeners();
 
@@ -90,6 +91,15 @@ class StateBoards extends ChangeNotifier {
           debugPrint('Error auto-provisioning team workspace: $e');
         }
       }
+
+      // Sort workspaces: default ones at the top, others below
+      _workspaces.sort((a, b) {
+        final aIsDefault = a.id.startsWith('default_');
+        final bIsDefault = b.id.startsWith('default_');
+        if (aIsDefault && !bIsDefault) return -1;
+        if (!aIsDefault && bIsDefault) return 1;
+        return a.createdAt.compareTo(b.createdAt);
+      });
 
       // If _selectedWorkspace is null, select the first workspace
       if (_selectedWorkspace == null && _workspaces.isNotEmpty) {
@@ -275,6 +285,33 @@ class StateBoards extends ChangeNotifier {
       return board;
     } catch (e) {
       debugPrint('Error joining board: $e');
+      rethrow;
+    }
+  }
+
+  Future<WorkspaceModel> joinWorkspaceById(String workspaceId) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final ws = await ApiCloudflare.joinWorkspace(uid, workspaceId);
+      
+      final exists = _workspaces.any((w) => w.id == ws.id);
+      if (!exists) {
+        _workspaces.add(ws);
+      } else {
+        final idx = _workspaces.indexWhere((w) => w.id == ws.id);
+        if (idx != -1) {
+          _workspaces[idx] = ws;
+        }
+      }
+      
+      _selectedWorkspace = ws;
+      
+      await fetchAllBoards();
+      
+      notifyListeners();
+      return ws;
+    } catch (e) {
+      debugPrint('Error joining workspace: $e');
       rethrow;
     }
   }

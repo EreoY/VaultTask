@@ -74,8 +74,11 @@ class _MemberRoleModalState extends State<MemberRoleModal> {
                       CircleAvatar(
                         radius: 20,
                         backgroundColor: color.withOpacity(0.15),
-                        backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
-                        child: photo.isEmpty ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: GlassText.labelSM().copyWith(color: color)) : null,
+                        foregroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                        onForegroundImageError: photo.isNotEmpty
+                            ? (exception, stackTrace) { /* CORS/network fallback */ }
+                            : null,
+                        child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: GlassText.labelSM().copyWith(color: color)),
                       ),
                       const SizedBox(width: 20),
                       Expanded(

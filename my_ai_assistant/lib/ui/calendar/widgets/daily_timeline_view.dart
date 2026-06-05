@@ -401,19 +401,39 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                     Container(
                       height: 200,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                        image: DecorationImage(image: NetworkImage(coverImage.url), fit: BoxFit.cover),
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                              child: Image.network(
+                                coverImage.url,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: GlassColors.surfaceHighest.withOpacity(0.1),
+                                  child: Center(
+                                    child: Icon(Icons.broken_image_outlined, size: 32, color: GlassColors.primary.withOpacity(0.3)),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   Padding(
@@ -558,7 +578,17 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             height: 40,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-              image: DecorationImage(image: NetworkImage(img.url), fit: BoxFit.cover),
+              color: GlassColors.surfaceHighest.withOpacity(0.1),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+              child: Image.network(
+                img.url,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Center(
+                  child: Icon(Icons.broken_image_outlined, size: 16, color: GlassColors.primary.withOpacity(0.3)),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -593,6 +623,13 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         final photo = profile?['photo'] ?? '';
         final color = GlassColors.getMemberColor(uid);
         
+        final fallback = Center(
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : '?',
+            style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold),
+          ),
+        );
+
         return Container(
           margin: const EdgeInsets.only(left: -8),
           width: 26,
@@ -601,11 +638,16 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             shape: BoxShape.circle,
             color: color.withOpacity(0.2),
             border: Border.all(color: GlassColors.background, width: 2),
-            image: photo.isNotEmpty ? DecorationImage(image: NetworkImage(photo), fit: BoxFit.cover) : null,
           ),
-          child: photo.isEmpty 
-            ? Center(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold)))
-            : null,
+          child: ClipOval(
+            child: photo.isNotEmpty
+                ? Image.network(
+                    photo,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => fallback,
+                  )
+                : fallback,
+          ),
         );
       }).toList(),
     );

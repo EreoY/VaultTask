@@ -203,24 +203,23 @@ class AppShell extends StatefulWidget {
   @override
   State<AppShell> createState() => _AppShellState();
 }
-
 class _AppShellState extends State<AppShell> {
   int _index = 0;
-
-  List<Widget> get _screens => [
-    const DashboardPage(isDark: false),
-    const BoardsPage(isDark: false),
-    CalendarPage(
-      isDark: false,
-      onNavigate: (i) => setState(() => _index = i),
-    ),
-    const ChatPage(isDark: false),
-    const ProfilePage(isDark: false),
-  ];
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _screens = [
+      const DashboardPage(isDark: false),
+      const BoardsPage(isDark: false),
+      CalendarPage(
+        isDark: false,
+        onNavigate: (i) => setState(() => _index = i),
+      ),
+      const ChatPage(isDark: false),
+      const ProfilePage(isDark: false),
+    ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StateBoards>().fetchAllBoards();
     });
@@ -264,7 +263,9 @@ class _AppShellState extends State<AppShell> {
                 onItemSelected: (index) {
                   setState(() {
                     _index = index;
-                    context.read<StateBoards>().setSelectedBoard(null);
+                    if (index != 1) {
+                      context.read<StateBoards>().setSelectedBoard(null);
+                    }
                   });
                 },
                 isDark: false,

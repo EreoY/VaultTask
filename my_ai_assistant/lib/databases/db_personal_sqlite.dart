@@ -21,7 +21,7 @@ class DbPersonalSqlite {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 8, onCreate: _createDB, onUpgrade: _upgradeDB);
+    return await openDatabase(path, version: 9, onCreate: _createDB, onUpgrade: _upgradeDB);
   }
 
   Future _createDB(Database db, int version) async {
@@ -45,6 +45,7 @@ CREATE TABLE personal_boards (
   columns TEXT DEFAULT '["todo","doing","done"]',
   labels TEXT DEFAULT '[]',
   workspace_id TEXT DEFAULT '',
+  documents TEXT DEFAULT '[]',
   created_at TEXT NOT NULL
 )
 ''');
@@ -115,6 +116,11 @@ CREATE TABLE personal_workspaces (
       } catch (_) {}
       try {
         await db.execute('ALTER TABLE personal_boards ADD COLUMN workspace_id TEXT DEFAULT ""');
+      } catch (_) {}
+    }
+    if (oldVersion < 9) {
+      try {
+        await db.execute('ALTER TABLE personal_boards ADD COLUMN documents TEXT DEFAULT "[]"');
       } catch (_) {}
     }
   }

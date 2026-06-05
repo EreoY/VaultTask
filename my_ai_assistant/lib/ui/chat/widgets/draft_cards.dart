@@ -243,6 +243,14 @@ class ProposalDraftCard extends StatelessWidget {
         final profileName = profile?['name'] ?? state.draft?.memberNames[uid] ?? uid;
         final photo = profile?['photo'] ?? '';
         final color = GlassColors.getMemberColor(uid);
+        
+        final fallback = Center(
+          child: Text(
+            profileName.isNotEmpty ? profileName[0].toUpperCase() : '?',
+            style: GlassText.labelSM().copyWith(fontSize: 9, color: color),
+          ),
+        );
+
         return Container(
           width: 24,
           height: 24,
@@ -251,14 +259,16 @@ class ProposalDraftCard extends StatelessWidget {
             shape: BoxShape.circle,
             color: color.withOpacity(0.15),
             border: Border.all(color: GlassColors.ghostBorder, width: 0.5),
-            image: photo.isNotEmpty ? DecorationImage(image: NetworkImage(photo), fit: BoxFit.cover) : null,
           ),
-          child: photo.isEmpty ? Center(
-            child: Text(
-              profileName.isNotEmpty ? profileName[0].toUpperCase() : '?',
-              style: GlassText.labelSM().copyWith(fontSize: 9, color: color),
-            ),
-          ) : null,
+          child: ClipOval(
+            child: photo.isNotEmpty
+                ? Image.network(
+                    photo,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => fallback,
+                  )
+                : fallback,
+          ),
         );
       }).toList(),
     );
@@ -319,7 +329,7 @@ class ProposalDraftCard extends StatelessWidget {
                     onTap: () {
                        state.updateDraftItemColumn(taskIdx, col);
                        Navigator.pop(context);
-                    },
+                     },
                   );
                 }).toList(),
                 const SizedBox(height: 24),
@@ -366,9 +376,17 @@ class ProposalDraftCard extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 14,
-                          backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                          foregroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                          onForegroundImageError: photo.isNotEmpty
+                              ? (exception, stackTrace) {
+                                  // Cleanly capture CORS/network loading failure
+                                }
+                              : null,
                           backgroundColor: color.withOpacity(0.2),
-                          child: photo.isEmpty ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: GlassText.labelSM().copyWith(fontSize: 10, color: color)) : null,
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: GlassText.labelSM().copyWith(fontSize: 10, color: color),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(name, style: GlassText.bodyMD()),

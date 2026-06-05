@@ -289,19 +289,39 @@ class _TaskEditModalState extends State<TaskEditModal> {
                     Container(
                       height: 200,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                        image: DecorationImage(image: NetworkImage(coverImage.url), fit: BoxFit.cover),
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                              child: Image.network(
+                                coverImage.url,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: GlassColors.surfaceHighest.withOpacity(0.1),
+                                  child: Center(
+                                    child: Icon(Icons.broken_image_outlined, size: 32, color: GlassColors.primary.withOpacity(0.3)),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   Padding(
@@ -446,7 +466,17 @@ class _TaskEditModalState extends State<TaskEditModal> {
               height: 48,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                image: DecorationImage(image: NetworkImage(img.url), fit: BoxFit.cover),
+                color: GlassColors.surfaceHighest.withOpacity(0.1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                child: Image.network(
+                  img.url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Icon(Icons.broken_image_outlined, size: 16, color: GlassColors.primary.withOpacity(0.3)),
+                  ),
+                ),
               ),
             ),
           ),
@@ -750,9 +780,12 @@ class _TaskEditModalState extends State<TaskEditModal> {
                       children: [
                         CircleAvatar(
                           radius: 14,
-                          backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                          foregroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                          onForegroundImageError: photo.isNotEmpty
+                              ? (exception, stackTrace) { /* CORS/network fallback */ }
+                              : null,
                           backgroundColor: GlassColors.getMemberColor(entry.key).withOpacity(0.2),
-                          child: photo.isEmpty ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.getMemberColor(entry.key))) : null,
+                          child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.getMemberColor(entry.key))),
                         ),
                         const SizedBox(width: 12),
                         Column(

@@ -80,12 +80,6 @@ class AetherSideNav extends StatelessWidget {
                         onTap: () => onItemSelected(0),
                       ),
                       _NavItem(
-                        icon: Icons.grid_view_rounded,
-                        label: 'Boards',
-                        isActive: selectedIndex == 1,
-                        onTap: () => onItemSelected(1),
-                      ),
-                      _NavItem(
                         icon: Icons.calendar_today_outlined,
                         label: 'Calendar',
                         isActive: selectedIndex == 2,
@@ -145,6 +139,7 @@ class AetherSideNav extends StatelessWidget {
                         InkWell(
                           onTap: () {
                             stateBoards.setSelectedWorkspace(workspace);
+                            stateBoards.setSelectedBoard(null);
                             onItemSelected(1); // Navigates to Boards Page
                           },
                           borderRadius: BorderRadius.circular(ExecutiveRadius.l),
@@ -202,6 +197,54 @@ class AetherSideNav extends StatelessWidget {
                           ),
                         ),
 
+                        // Nested Boards List (Bullet points under selected workspace)
+                        if (isSelected) ...[
+                          const SizedBox(height: 4),
+                          ...stateBoards.boards.where((b) => b.workspaceId == workspace.id).map((board) {
+                            final isBoardSelected = stateBoards.selectedBoard?.id == board.id && selectedIndex == 1;
+                            
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 20, bottom: 2),
+                              child: InkWell(
+                                onTap: () {
+                                  stateBoards.setSelectedWorkspace(workspace);
+                                  stateBoards.setSelectedBoard(board);
+                                  onItemSelected(1);
+                                },
+                                borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Color(board.color == 0 ? 0xFF0D40A5 : board.color),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          board.name,
+                                          style: GlassText.bodyMD().copyWith(
+                                            fontSize: 12,
+                                            fontWeight: isBoardSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isBoardSelected ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.7),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+
                         const SizedBox(height: 8),
                       ],
                     );
@@ -220,16 +263,17 @@ class AetherSideNav extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.2), width: 1),
-              image: user?.photoURL != null 
-                ? DecorationImage(
-                    image: NetworkImage(user!.photoURL!),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+              color: GlassColors.primary.withOpacity(0.05),
             ),
-            child: user?.photoURL == null 
-              ? const Icon(Icons.person_outline_rounded, size: 24, color: GlassColors.primary)
-              : null,
+            child: ClipOval(
+              child: user?.photoURL != null 
+                ? Image.network(
+                    user!.photoURL!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.person_outline_rounded, size: 24, color: GlassColors.primary),
+                  )
+                : const Icon(Icons.person_outline_rounded, size: 24, color: GlassColors.primary),
+            ),
           ),
         ],
       ),

@@ -11,6 +11,7 @@ class BoardModel {
   final List<String> columns; // Custom Kanban column names e.g. ['todo','doing','done']
   final List<Map<String, dynamic>> labels; // Available tags e.g. [{id: '1', color: 0xFFF44336, name: 'Urgent'}]
   final String workspaceId;
+  final List<Map<String, dynamic>> documents; // Documents attached to the board e.g. [{name: 'Rules.pdf', url: 'https://...', uploadedAt: 123456789000}]
   final DateTime createdAt;
 
   BoardModel({
@@ -24,6 +25,7 @@ class BoardModel {
     this.columns = const ['todo', 'doing', 'done'],
     this.labels = const [],
     this.workspaceId = '',
+    this.documents = const [],
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -48,6 +50,9 @@ class BoardModel {
           ? List<Map<String, dynamic>>.from(jsonDecode(map['labels'] as String))
           : [],
       workspaceId: map['workspace_id'] as String? ?? '',
+      documents: map['documents'] != null
+          ? List<Map<String, dynamic>>.from(jsonDecode(map['documents'] as String))
+          : [],
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : DateTime.now(),
@@ -66,6 +71,7 @@ class BoardModel {
       'columns': jsonEncode(columns),
       'labels': jsonEncode(labels),
       'workspace_id': workspaceId,
+      'documents': jsonEncode(documents),
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -99,6 +105,11 @@ class BoardModel {
         return (raw as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
       }(),
       workspaceId: json['workspace_id'] as String? ?? '',
+      documents: () {
+        if (json['documents'] == null) return <Map<String, dynamic>>[];
+        final raw = json['documents'] is String ? jsonDecode(json['documents'] as String) : json['documents'];
+        return (raw as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+      }(),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -117,6 +128,7 @@ class BoardModel {
       'columns': columns,
       'labels': labels,
       'workspace_id': workspaceId,
+      'documents': documents,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -132,6 +144,7 @@ class BoardModel {
     List<String>? columns,
     List<Map<String, dynamic>>? labels,
     String? workspaceId,
+    List<Map<String, dynamic>>? documents,
     DateTime? createdAt,
   }) {
     return BoardModel(
@@ -145,6 +158,7 @@ class BoardModel {
       columns: columns ?? this.columns,
       labels: labels ?? this.labels,
       workspaceId: workspaceId ?? this.workspaceId,
+      documents: documents ?? this.documents,
       createdAt: createdAt ?? this.createdAt,
     );
   }

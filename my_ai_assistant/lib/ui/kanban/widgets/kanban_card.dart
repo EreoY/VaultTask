@@ -84,7 +84,17 @@ class KanbanTaskCard extends StatelessWidget {
             if (coverImage != null && coverImage.url.isNotEmpty)
               Container(
                 height: imageHeight, width: double.infinity, margin: EdgeInsets.only(bottom: isOverviewMode ? 12 : 20),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(ExecutiveRadius.s), image: DecorationImage(image: NetworkImage(coverImage.url), fit: BoxFit.cover)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(ExecutiveRadius.s), color: GlassColors.surfaceHighest.withOpacity(0.1)),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                  child: Image.network(
+                    coverImage.url,
+                    fit: BoxFit.cover, width: double.infinity, height: imageHeight,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(Icons.broken_image_outlined, size: 24, color: GlassColors.primary.withOpacity(0.3)),
+                    ),
+                  ),
+                ),
               ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

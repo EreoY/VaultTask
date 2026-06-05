@@ -388,4 +388,21 @@ class ApiCloudflare {
       throw Exception('Failed to delete workspace: ${response.body}');
     }
   }
+
+  static Future<WorkspaceModel> joinWorkspace(String uid, String workspaceId) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/workspaces_join'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': workspaceId,
+        'uid': uid,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return WorkspaceModel.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      throw Exception('Failed to join workspace: ${response.body}');
+    }
+  }
 }
+
