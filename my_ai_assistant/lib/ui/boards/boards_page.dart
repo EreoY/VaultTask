@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../common/ime_safe_text_field.dart';
 import 'package:provider/provider.dart';
 import '../../models/board_model.dart';
+import '../../models/workspace_model.dart';
 import '../../state_managers/state_boards.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
@@ -28,18 +29,23 @@ class _BoardsPageState extends State<BoardsPage> {
   @override
   Widget build(BuildContext context) {
     final boardsState = context.watch<StateBoards>();
-    final boards = boardsState.boards;
+    final selectedWorkspace = boardsState.selectedWorkspace;
+    final boards = selectedWorkspace != null 
+        ? boardsState.boards.where((b) => b.workspaceId == selectedWorkspace.id).toList()
+        : <BoardModel>[];
     final isMobile = Responsive.isMobile(context);
     final isTablet = Responsive.isTablet(context);
 
     return Column(
       children: [
-        _buildHeader(context),
+        _buildHeader(context, selectedWorkspace),
+        _buildWorkspaceTabs(context, boardsState),
+        const SizedBox(height: 16),
         Expanded(
           child: boardsState.isLoading 
             ? const Center(child: CircularProgressIndicator(color: GlassColors.primary))
             : boards.isEmpty 
-              ? _buildEmptyState()
+              ? _buildEmptyState(selectedWorkspace)
               : GridView.builder(
                   padding: EdgeInsets.all(isMobile ? 16 : ExecutiveSpacing.containerPadding(context)),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -48,7 +54,6 @@ class _BoardsPageState extends State<BoardsPage> {
                     crossAxisSpacing: ExecutiveSpacing.stackMd(context),
                     mainAxisSpacing: ExecutiveSpacing.stackMd(context),
                   ),
-
                   itemCount: boards.length,
                   itemBuilder: (context, index) {
                     return _BoardCard(board: boards[index], isDark: widget.isDark);
@@ -59,7 +64,65 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildWorkspaceTabs(BuildContext context, StateBoards boardsState) {
+    if (boardsState.workspaces.isEmpty) return const SizedBox.shrink();
+
+    final isMobile = Responsive.isMobile(context);
+
+    return Container(
+      height: 48,
+      margin: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
+      ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: boardsState.workspaces.length,
+        itemBuilder: (context, index) {
+          final workspace = boardsState.workspaces[index];
+          final isSelected = boardsState.selectedWorkspace?.id == workspace.id;
+
+          return GestureDetector(
+            onTap: () => boardsState.setSelectedWorkspace(workspace),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? GlassColors.primary.withOpacity(0.15) : GlassColors.surfaceBright.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+                border: Border.all(
+                  color: isSelected ? GlassColors.primary : GlassColors.ghostBorder.withOpacity(0.5),
+                  width: isSelected ? 1.5 : 1.0,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    workspace.type == 'personal' ? Icons.person_rounded : Icons.group_rounded,
+                    size: 16,
+                    color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    workspace.name,
+                    style: GlassText.bodyMD().copyWith(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, WorkspaceModel? selectedWorkspace) {
     final isMobile = Responsive.isMobile(context);
     
     return Container(
@@ -69,7 +132,6 @@ class _BoardsPageState extends State<BoardsPage> {
         isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
         24,
       ),
-
       child: isMobile 
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +145,7 @@ class _BoardsPageState extends State<BoardsPage> {
                 children: [
                   Expanded(child: _buildGhostButton('JOIN BOARD', Icons.group_add_rounded, onTap: () => _showJoinBoardDialog(context))),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildNewBoardButton()),
+                  Expanded(child: _buildNewBoardButton(selectedWorkspace)),
                 ],
               ),
             ],
@@ -110,7 +172,7 @@ class _BoardsPageState extends State<BoardsPage> {
                 children: [
                   _buildGhostButton('JOIN BOARD', Icons.group_add_rounded, onTap: () => _showJoinBoardDialog(context)),
                   const SizedBox(width: 12),
-                  _buildNewBoardButton(),
+                  _buildNewBoardButton(selectedWorkspace),
                 ],
               ),
             ],
@@ -149,7 +211,7 @@ class _BoardsPageState extends State<BoardsPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.surface(radius: 24),
+          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
           child: Material(
             color: Colors.transparent,
             child: Column(
@@ -214,7 +276,7 @@ class _BoardsPageState extends State<BoardsPage> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('JOIN BOARD', style: GlassText.labelSM().copyWith(color: Colors.white)),
+                        child: Text('JOIN BOARD', style: GlassText.labelSM().copyWith(color: GlassColors.onPrimary, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -227,14 +289,14 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  Widget _buildNewBoardButton() {
+  Widget _buildNewBoardButton(WorkspaceModel? selectedWorkspace) {
     return GestureDetector(
       onTap: () {
         showModalBottomSheet(
           context: context,
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
-          builder: (context) => BoardEditModal(isDark: widget.isDark),
+          builder: (context) => BoardEditModal(isDark: widget.isDark, workspace: selectedWorkspace),
         );
       },
       child: Container(
@@ -259,14 +321,14 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(WorkspaceModel? selectedWorkspace) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.grid_view_rounded, size: 64, color: GlassColors.primary.withOpacity(0.1)),
           const SizedBox(height: 24),
-          Text('No projects found.', style: GlassText.bodyLG()),
+          Text('No projects found in this workspace.', style: GlassText.bodyLG()),
           const SizedBox(height: 16),
           TextButton(
             onPressed: () {
@@ -274,7 +336,7 @@ class _BoardsPageState extends State<BoardsPage> {
                 context: context,
                 backgroundColor: Colors.transparent,
                 isScrollControlled: true,
-                builder: (context) => BoardEditModal(isDark: widget.isDark),
+                builder: (context) => BoardEditModal(isDark: widget.isDark, workspace: selectedWorkspace),
               );
             },
             child: Text('Create your first board', style: GlassText.bodyMD().copyWith(color: GlassColors.primary)),

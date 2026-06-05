@@ -1,3 +1,84 @@
+## Phase 87: Solid Popups, High-Contrast Submit Buttons & Sidebar Cleanup
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับแต่ง Popups/Dialogs ให้เป็นสีทึบเพื่อความอ่านง่าย, เพิ่ม Contrast ให้กับปุ่ม Submit และทำความสะอาดเมนูบอร์ดโครงการใน Sidebar
+
+### Task 87.1: Update Theme Decorations
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:**
+    - เพิ่ม `GlassDecorations.solidSurface` เพื่อสร้าง BoxDecoration สีทึบ (GlassColors.surface)
+- **Why:** เพื่อเป็นฐานอ้างอิงให้ Dialog/Modal ทั่วทั้งแอปปรับเป็นสีทึบพรีเมียมได้แบบรวมศูนย์
+
+### Task 87.2: Sidebar Cleanup & Solid Dialogs
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:**
+    - ลบ Nested Boards/Projects List (ลูปเรนเดอร์บอร์ดโครงการย่อย) ออก
+    - ปรับ `_showAddWorkspaceDialog` และ `_showDeleteWorkspaceConfirmDialog` ให้ใช้ `solidSurface`
+    - แก้ไขสีปุ่ม ElevatedButton ของ CREATE และ DELETE ให้มี Contrast สูงและตัวหนา
+- **Why:** เพื่อให้ Sidebar คลีน และการพิมพ์และจัดการ Workspace ในป๊อปอัปเด่นชัดอ่านง่าย
+
+### Task 87.3: Boards Page Solid Dialogs
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:**
+    - ปรับ `_showJoinBoardDialog` ให้ใช้ `solidSurface`
+    - เปลี่ยนสีข้อความปุ่ม ElevatedButton ของ JOIN BOARD ให้เป็น `GlassColors.onPrimary` และตัวหนา
+- **Why:** เพื่อให้ป๊อปอัปเข้าร่วมบอร์ดเป็นสีทึบและตัวอักษรบนปุ่ม Contrast ชัดเจน
+
+### Task 87.4: Board Edit Modal Solid Decoration
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/widgets/board_edit_modal.dart`
+- **Action:**
+    - ปรับกล่อง Container หลักให้ใช้ `solidSurface`
+    - ปรับ `_buildGhostButton` สำหรับปุ่มหลัก `isPrimary = true` ให้เป็นสีพื้นทองทึบ `GlassColors.gold` และข้อความสีดำตัวหนา พร้อม BoxShadow
+- **Why:** เพื่อให้โมดัลสร้างบอร์ดเป็นสีทึบ และปุ่มสร้างบอร์ดเห็นเด่นชัดและคลิกง่าย
+
+### Task 87.5: Code Verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` เพื่อตรวจสอบความเสถียรและคุณภาพโค้ด
+- **Why:** เพื่อให้มั่นใจว่าระบบไม่มีข้อผิดพลาดการคอมไพล์หรือลินเตอร์
+
+## Phase 86: Notion-Style Minimalist Design Adaptation
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุง Theme, Typography และ Decorator ใน GlassTheme และ GlassWidgets ให้เปลี่ยนเป็น Notion Minimalist Light Theme
+
+### Task 86.1: Update Theme Colors and Typography Definitions
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:**
+    - Update `GlassColors` to light palette.
+    - Set font loading to `GoogleFonts.inter` for displays/headlines/body.
+    - Setup `GoogleFonts.jetbrainsMono` for monospace tags.
+    - Update card, button, elevated container decoration shapes and borders.
+
+### Task 86.2: Refactor GlassContainer and GlassButton
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:**
+    - Disable BackdropFilter dynamically in `GlassContainer` if light mode.
+    - Adjust `GlassButton` to use white text/icon contrast on solid backgrounds.
+
+### Task 86.3: Shift MaterialApp to Brightness.light
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/main.dart`
+- **Action:**
+    - Change global brightness theme to `Brightness.light`.
+
+### Task 86.4: Update AetherSideNav Sidebar Colors
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:**
+    - Remove opacity blur on sidebar background, styling it with warm-gray surface.
+    - Customize active navigation list items to align with Notion styles.
+
+### Task 86.5: Verify Project Compilation and Screen Designs
+- **Status:** [x] Done
+- **Target File:** Multi-file
+- **Action:**
+    - Run `flutter analyze` and verify styling changes compile and render correctly.
 
 ## Phase 85: AI-to-Kanban Real-time Sync via Supabase Broadcast
 
@@ -913,3 +994,61 @@
 - **Action:** 
     - ปรับแก้เวลาใน `Timer.periodic` ของ `_startPolling` จาก 10 วินาที เป็น 5 วินาที
 - **Why:** เพื่อตอบสนองต่อคำขอของผู้ใช้ที่ต้องการให้ซิงค์ข้อมูลเร็วขึ้นในขณะที่ยังใช้แบบ Polling (Soft Real-time) อยู่
+
+## Phase 82: Workspace Hierarchy & Dark Theme Reversion
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับเลย์เอาต์ระบบเป็น Workspace & Projects พร้อมกู้คืนสี Dark Glass Theme
+
+### Task 82.1: Context & Graph Update
+- **Status:** [x] Done
+- **Target File:** `task-graph.md`
+- **Action:** บันทึกโครงงาน Phase 82 และตั้งผังการดำเนินงานย่อยในระบบภาษาไทย
+- **Why:** เพื่อแสดงจุดยืนเชิงโครงสร้างและความถูกต้องตามข้อกำหนด Sovereign Protocol
+
+### Task 82.2: Restoration of Dark Glass Theme Colors
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/theme/glass_theme.dart` และ `my_ai_assistant/lib/main.dart`
+- **Action:** คืนค่าสีตัวแปรของ GlassColors กลับเป็น Abyssal Minimal และอัปเดต MaterialApp theme เป็น Brightness.dark
+- **Why:** เพื่อแก้ปัญหาสีสว่างกวนสายตาและกู้ระบบธีมสีดาร์กชาร์ดกลับตามความต้องการของผู้ใช้
+
+### Task 82.3: Workspace Model Implementation
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/models/workspace_model.dart` และ `my_ai_assistant/lib/models/board_model.dart`
+- **Action:** สร้างโมเดล Workspace และผูก workspaceId เข้ากับ BoardModel
+- **Why:** เพื่อให้เกิดโครงสร้างข้อมูล Project บอร์ดย่อยเชื่อมโยงกับ Workspace ได้อย่างถูกต้อง
+
+### Task 82.4: Local SQLite Schema Migration (v8)
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/databases/db_personal_sqlite.dart`
+- **Action:** สร้างตาราง personal_workspaces และเพิ่มคอลัมน์ workspace_id ใน SQLite
+- **Why:** เพื่อการจัดเก็บ Workspace และ Project แบบ Offline บนคอมพิวเตอร์ของผู้ใช้
+
+### Task 82.5: Cloudflare Worker API & D1 Schema Update
+- **Status:** [x] Done
+- **Target File:** `cloudflare_backend/d1_schema.sql` และ `cloudflare_backend/cloudflare_worker.js`
+- **Action:** อัปเดตตารางทีมบนฐานข้อมูล D1, เพิ่ม Endpoint API `/api/workspaces` และติดตั้ง Auto-alter
+- **Why:** เพื่อจัดเตรียม Endpoint และ Schema ฝั่ง Cloud สำหรับ Workspace & Project แบบทีม
+
+### Task 82.6: State Managers Workspace Business Logic
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:** เพิ่มฟังก์ชัน CRUD Workspace และเมธอด Auto-Migration สำหรับบอร์ดเก่าใน StateBoards
+- **Why:** เพื่อให้แอปพลิเคชันคุมความเรียบร้อยของข้อมูล และย้ายบอร์ดเก่าเข้า Default Workspace อัตโนมัติ
+
+### Task 82.7: Sidebar & Navigation UI Restructuring
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ปรับ Sidebar Menu ให้สามารถสร้าง Workspace และเรนเดอร์บอร์ดโครงการย่อยเข้าโครงสร้างต้นไม้ได้
+- **Why:** เพื่อมอบสุนทรียศาสตร์และการใช้งานที่ลื่นไหลในการควบคุม Workspace จากบานหน้าต่างด้านข้าง
+
+### Task 82.8: Projects Grid & Workspace Tabs on BoardsPage
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** ปรับปรุงหน้าบอร์ดให้แสดงผล Workspace Tabs ด้านบนและกรองเฉพาะ Projects ของ Workspace นั้นๆ ด้านล่าง
+- **Why:** เพื่อให้การนำทางและการเข้าถึงโครงการย่อยในแต่ละ Workspace คลีนและสะดวกยิ่งขึ้น
+
+### Task 82.9: Empirical Proof & Code Audit
+- **Status:** [x] Done
+- **Action:** รันลินเตอร์ตรวจสอบโค้ดและดีพลอยผ่าน run_local.sh เพื่อทดสอบระบบหน้าจอ E2E
+- **Why:** เพื่อรับรองคุณภาพผลลัพธ์และความสมบูรณ์ของระบบ

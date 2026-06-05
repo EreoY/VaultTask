@@ -2,8 +2,34 @@ import { DurableObject } from "cloudflare:workers";
 
 const nowMs = () => Date.now();
 
+let schemaChecked = false;
+async function ensureSchema(db) {
+  if (schemaChecked) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS team_workspaces (
+        id TEXT PRIMARY KEY,
+        owner_uid TEXT NOT NULL,
+        name TEXT NOT NULL,
+        members TEXT DEFAULT '[]',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    try {
+      await db.prepare(`ALTER TABLE team_boards ADD COLUMN workspace_id TEXT DEFAULT ''`).run();
+    } catch (e) {
+      // column already exists, ignore
+    }
+    schemaChecked = true;
+  } catch (e) {
+    console.error("Migration error:", e);
+  }
+}
+
 export default {
   async fetch(request, env) {
+    await ensureSchema(env.DB);
     const url = new URL(request.url);
 
     // CORS preflight
@@ -85,6 +111,50 @@ export default {
       }
     }
 
+    // WORKSPACES ──────────────────────────────
+    if (url.pathname === "/api/workspaces" && request.method === "GET") {
+      try {
+        const uid = url.searchParams.get("uid");
+        if (!uid) return json({ error: "Missing uid" }, 400);
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM team_workspaces WHERE owner_uid = ? OR members LIKE ? ORDER BY created_at DESC`
+        ).bind(uid, `%${uid}%`).all();
+        return json(results);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/workspaces" && request.method === "POST") {
+      try {
+        const { id, owner_uid, name, members } = await request.json();
+        if (!id || !owner_uid || !name) return json({ error: "Missing required fields" }, 400);
+        await env.DB.prepare(
+          `INSERT INTO team_workspaces (id, owner_uid, name, members) VALUES (?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET name=excluded.name, members=excluded.members`
+        ).bind(id, owner_uid, name, JSON.stringify(members || [owner_uid])).run();
+        return json({ success: true, id }, 201);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/workspaces" && request.method === "DELETE") {
+      try {
+        const id = url.searchParams.get("id");
+        if (!id) return json({ error: "Missing id" }, 400);
+        const { results: boards } = await env.DB.prepare(`SELECT id FROM team_boards WHERE workspace_id = ?`).bind(id).all();
+        for (const board of boards) {
+          await env.DB.prepare(`DELETE FROM team_tasks WHERE board_id = ?`).bind(board.id).run();
+          await env.DB.prepare(`DELETE FROM team_boards WHERE id = ?`).bind(board.id).run();
+        }
+        await env.DB.prepare(`DELETE FROM team_workspaces WHERE id = ?`).bind(id).run();
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
     // BOARDS ─────────────────────────────────
     if (url.pathname === "/api/boards" && request.method === "GET") {
       try {
@@ -111,14 +181,14 @@ export default {
 
     if (url.pathname === "/api/boards" && request.method === "POST") {
       try {
-        const { id, owner_uid, name, color, members, member_roles, columns, labels } =
+        const { id, owner_uid, name, color, members, member_roles, columns, labels, workspace_id } =
           await request.json();
         if (!id || !owner_uid || !name)
           return json({ error: "Missing required fields" }, 400);
         const now = nowMs();
         await env.DB.prepare(
-          `INSERT INTO team_boards (id, owner_uid, name, color, members, member_roles, columns, labels, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO team_boards (id, owner_uid, name, color, members, member_roles, columns, labels, workspace_id, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
           .bind(
             id,
@@ -129,6 +199,7 @@ export default {
             JSON.stringify(member_roles || {}),
             JSON.stringify(columns || ["todo", "doing", "done"]),
             JSON.stringify(labels || []),
+            workspace_id || "",
             now,
           )
           .run();
@@ -145,12 +216,12 @@ export default {
 
     if (url.pathname === "/api/boards" && request.method === "PUT") {
       try {
-        const { id, name, color, members, member_roles, columns, labels } =
+        const { id, name, color, members, member_roles, columns, labels, workspace_id } =
           await request.json();
         if (!id) return json({ error: "Missing id" }, 400);
         const now = nowMs();
         await env.DB.prepare(
-          `UPDATE team_boards SET name=?, color=?, members=?, member_roles=?, columns=?, labels=?, updated_at=? WHERE id=?`,
+          `UPDATE team_boards SET name=?, color=?, members=?, member_roles=?, columns=?, labels=?, workspace_id=?, updated_at=? WHERE id=?`,
         )
           .bind(
             name,
@@ -159,6 +230,7 @@ export default {
             JSON.stringify(member_roles || {}),
             JSON.stringify(columns || []),
             JSON.stringify(labels || []),
+            workspace_id || "",
             now,
             id,
           )

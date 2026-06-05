@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/board_model.dart';
 import '../models/task_model.dart';
+import '../models/workspace_model.dart';
 import '../config/env_config.dart';
 
 // DeltaResult is defined inline here (not imported) to avoid Flutter Web DDC
@@ -60,6 +61,7 @@ class ApiCloudflare {
         'member_roles': board.memberRoles,
         'columns': board.columns,
         'labels': board.labels,
+        'workspace_id': board.workspaceId,
       }),
     );
     if (response.statusCode != 201) {
@@ -81,6 +83,7 @@ class ApiCloudflare {
         'member_roles': board.memberRoles,
         'columns': board.columns,
         'labels': board.labels,
+        'workspace_id': board.workspaceId,
       }),
     );
     if (response.statusCode != 200) {
@@ -343,5 +346,46 @@ class ApiCloudflare {
 
   static Future<void> updateUserDisplayName(String uid, String displayName) async {
     await http.put(Uri.parse('$_base/api/users'), headers: _headers, body: jsonEncode({'uid': uid, 'display_name': displayName}));
+  }
+
+  // ─── WORKSPACES ───────────────────────────────────────
+
+  static Future<List<WorkspaceModel>> getWorkspaces(String uid) async {
+    final url = '$_base/api/workspaces?uid=$uid';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is! List) return [];
+      return data.map((j) => WorkspaceModel.fromJson(j as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to get workspaces: ${response.body}');
+    }
+  }
+
+  static Future<String> insertWorkspace(WorkspaceModel workspace) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/workspaces'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': workspace.id,
+        'owner_uid': workspace.ownerUid,
+        'name': workspace.name,
+        'members': workspace.members,
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to create workspace: ${response.body}');
+    }
+    return workspace.id;
+  }
+
+  static Future<void> deleteWorkspace(String id) async {
+    final response = await http.delete(
+      Uri.parse('$_base/api/workspaces?id=$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete workspace: ${response.body}');
+    }
   }
 }

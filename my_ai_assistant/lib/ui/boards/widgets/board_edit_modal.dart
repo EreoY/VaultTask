@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../../common/ime_safe_text_field.dart';
 import 'package:provider/provider.dart';
 import '../../../models/board_model.dart';
+import '../../../models/workspace_model.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../theme/glass_theme.dart';
-import '../../common/glass_widgets.dart';
 
 class BoardEditModal extends StatefulWidget {
   final bool isDark;
-  const BoardEditModal({super.key, required this.isDark});
+  final WorkspaceModel? workspace;
+  const BoardEditModal({super.key, required this.isDark, this.workspace});
 
   @override
   State<BoardEditModal> createState() => _BoardEditModalState();
@@ -36,11 +37,16 @@ class _BoardEditModalState extends State<BoardEditModal> {
     setState(() => _isSaving = true);
 
     try {
+      final currentWorkspace = widget.workspace ?? context.read<StateBoards>().selectedWorkspace;
+      final type = currentWorkspace?.type ?? 'team';
+      final workspaceId = currentWorkspace?.id ?? '';
+
       final board = BoardModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
         color: _selectedColor,
-        type: 'team', // Default to team board for this project
+        type: type,
+        workspaceId: workspaceId,
         columns: ['todo', 'doing', 'done'],
         members: [],
       );
@@ -58,7 +64,7 @@ class _BoardEditModalState extends State<BoardEditModal> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(48),
-      decoration: GlassDecorations.surface(radius: 32, hasShadow: true),
+      decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,16 +157,23 @@ class _BoardEditModalState extends State<BoardEditModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         decoration: BoxDecoration(
-          color: isPrimary ? color.withOpacity(0.1) : Colors.transparent,
+          color: isPrimary ? GlassColors.gold : Colors.transparent,
           borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-          border: Border.all(color: color.withOpacity(isPrimary ? 0.3 : 0.1)),
+          border: Border.all(color: isPrimary ? GlassColors.gold : color.withOpacity(0.1)),
+          boxShadow: isPrimary ? [
+            BoxShadow(
+              color: GlassColors.gold.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          ] : null,
         ),
         child: Text(
           label,
           style: GlassText.labelSM().copyWith(
-            color: color.withOpacity(isPrimary ? 1.0 : 0.6),
+            color: isPrimary ? Colors.black : color.withOpacity(0.6),
             fontSize: 11,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

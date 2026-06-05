@@ -1,9 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Aether AI Design System (Premium Glassmorphism - Abyssal Minimal)
-/// Based on Stitch Conversational Task Planner reference.
+/// Aether AI Design System (Notion-Style Minimalist Light Theme)
+/// Adapted from React/Tailwind reference design.
 
 class GlassColors {
   // Abyssal Minimal Palette
@@ -33,7 +32,7 @@ class GlassColors {
   static Color glassBorder() => ghostBorder;
   static Color glassTint() => primary.withOpacity(0.05);
 
-  // Task 25.2: Distinct Operative Identity
+  // Distinct Operative Identity
   static const List<Color> memberPalette = [
     Color(0xFF34D399), // success/green
     Color(0xFFCC9E67), // gold
@@ -76,11 +75,11 @@ class ExecutiveSpacing {
 
 
 class ExecutiveRadius {
-  static const double s = 2.0; // 0.125rem
-  static const double m = 4.0; // 0.25rem
-  static const double l = 6.0; // 0.375rem
-  static const double xl = 8.0; // 0.5rem (Standard for Abyssal Minimal)
-  static const double xxl = 12.0; // 0.75rem
+  static const double s = 2.0; 
+  static const double m = 4.0; 
+  static const double l = 6.0; 
+  static const double xl = 8.0; // Notion standard corner radius
+  static const double xxl = 12.0;
   static const double circular = 9999.0;
 }
 
@@ -99,6 +98,15 @@ class GlassDecorations {
         border: Border.all(color: GlassColors.ghostBorder, width: 1.0),
         boxShadow: hasShadow ? [
           BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 40, offset: const Offset(0, 12)),
+        ] : [],
+      );
+
+  static BoxDecoration solidSurface({double radius = 8, bool hasShadow = false}) => BoxDecoration(
+        color: GlassColors.surface,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.3), width: 1.0),
+        boxShadow: hasShadow ? [
+          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 40, offset: const Offset(0, 12)),
         ] : [],
       );
 
@@ -127,56 +135,63 @@ class GlassDecorations {
 }
 
 class GlassText {
-  // Headlines (Newsreader)
-  static TextStyle headlineXL() => GoogleFonts.newsreader(
+  // Headlines (Inter)
+  static TextStyle headlineXL() => GoogleFonts.inter(
     fontSize: 83, 
-    fontWeight: FontWeight.w400, 
-    color: GlassColors.primary, 
+    fontWeight: FontWeight.w700, 
+    color: GlassColors.onSurface, 
     letterSpacing: -0.02 * 83,
     height: 1.1,
   );
   
-  static TextStyle headlineLG() => GoogleFonts.newsreader(
+  static TextStyle headlineLG() => GoogleFonts.inter(
     fontSize: 38, 
-    fontWeight: FontWeight.w400, 
-    color: GlassColors.primary,
+    fontWeight: FontWeight.w700, 
+    color: GlassColors.onSurface,
     height: 1.2,
   );
 
-  static TextStyle headlineMD() => GoogleFonts.newsreader(
+  static TextStyle headlineMD() => GoogleFonts.inter(
     fontSize: 24, 
-    fontWeight: FontWeight.w400, 
-    color: GlassColors.primary,
+    fontWeight: FontWeight.w600, 
+    color: GlassColors.onSurface,
   );
 
-  // Body & Labels (Work Sans)
-  static TextStyle bodyLG() => GoogleFonts.workSans(
+  // Body & Labels (Inter)
+  static TextStyle bodyLG() => GoogleFonts.inter(
     fontSize: 21, 
     fontWeight: FontWeight.w400, 
     color: GlassColors.onSurface, 
     height: 1.6,
   );
 
-  static TextStyle bodyMD() => GoogleFonts.workSans(
+  static TextStyle bodyMD() => GoogleFonts.inter(
     fontSize: 14, 
     fontWeight: FontWeight.w400, 
     color: GlassColors.onSurface, 
     height: 1.6,
   );
 
-  static TextStyle secondary() => GoogleFonts.workSans(
+  static TextStyle secondary() => GoogleFonts.inter(
     fontSize: 14, 
     fontWeight: FontWeight.w400, 
     color: GlassColors.onSurfaceVariant,
     height: 1.6,
   );
 
-  static TextStyle labelSM() => GoogleFonts.workSans(
+  static TextStyle labelSM() => GoogleFonts.inter(
     fontSize: 12, 
     fontWeight: FontWeight.w600, 
     color: GlassColors.onSurface, 
-    letterSpacing: 0.1 * 12,
+    letterSpacing: 0.05 * 12,
     height: 1.0,
+  );
+
+  // Monospace (JetBrains Mono)
+  static TextStyle mono([double size = 12]) => GoogleFonts.jetBrainsMono(
+    fontSize: size, 
+    fontWeight: FontWeight.w400, 
+    color: GlassColors.onSurfaceVariant,
   );
   
   // Legacy alias for compatibility

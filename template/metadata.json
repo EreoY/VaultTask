@@ -1,0 +1,6 @@
+{
+  "name": "AI Task Board & Business Calendar",
+  "description": "An offline-focused business task board and calendar integrated with local document RAG and an agentic helper for automated context augmentation and task Q&A chat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

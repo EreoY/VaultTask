@@ -10,6 +10,7 @@ class BoardModel {
   final Map<String, String> memberRoles; // Map of UID to Role Description
   final List<String> columns; // Custom Kanban column names e.g. ['todo','doing','done']
   final List<Map<String, dynamic>> labels; // Available tags e.g. [{id: '1', color: 0xFFF44336, name: 'Urgent'}]
+  final String workspaceId;
   final DateTime createdAt;
 
   BoardModel({
@@ -22,6 +23,7 @@ class BoardModel {
     this.memberRoles = const {},
     this.columns = const ['todo', 'doing', 'done'],
     this.labels = const [],
+    this.workspaceId = '',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -45,6 +47,7 @@ class BoardModel {
       labels: map['labels'] != null
           ? List<Map<String, dynamic>>.from(jsonDecode(map['labels'] as String))
           : [],
+      workspaceId: map['workspace_id'] as String? ?? '',
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : DateTime.now(),
@@ -58,11 +61,11 @@ class BoardModel {
       'type': type,
       'owner_uid': ownerUid,
       'color': color,
-      'owner_uid': ownerUid,
       'members': jsonEncode(members),
       'member_roles': jsonEncode(memberRoles),
       'columns': jsonEncode(columns),
       'labels': jsonEncode(labels),
+      'workspace_id': workspaceId,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -72,7 +75,7 @@ class BoardModel {
     return BoardModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      type: 'team',
+      type: json['type'] as String? ?? 'team',
       ownerUid: json['owner_uid']?.toString() ?? '',
       color: json['color'] as int? ?? 0xFF0D40A5,
       members: () {
@@ -95,6 +98,7 @@ class BoardModel {
         final raw = json['labels'] is String ? jsonDecode(json['labels'] as String) : json['labels'];
         return (raw as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
       }(),
+      workspaceId: json['workspace_id'] as String? ?? '',
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -105,12 +109,14 @@ class BoardModel {
     return {
       'id': id,
       'name': name,
+      'type': type,
       'owner_uid': ownerUid,
       'color': color,
       'members': members,
       'member_roles': memberRoles,
       'columns': columns,
       'labels': labels,
+      'workspace_id': workspaceId,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -125,6 +131,7 @@ class BoardModel {
     Map<String, String>? memberRoles,
     List<String>? columns,
     List<Map<String, dynamic>>? labels,
+    String? workspaceId,
     DateTime? createdAt,
   }) {
     return BoardModel(
@@ -137,6 +144,7 @@ class BoardModel {
       memberRoles: memberRoles ?? this.memberRoles,
       columns: columns ?? this.columns,
       labels: labels ?? this.labels,
+      workspaceId: workspaceId ?? this.workspaceId,
       createdAt: createdAt ?? this.createdAt,
     );
   }

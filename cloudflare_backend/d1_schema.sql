@@ -11,6 +11,16 @@ CREATE TABLE IF NOT EXISTS users (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Team Workspaces
+CREATE TABLE IF NOT EXISTS team_workspaces (
+  id TEXT PRIMARY KEY,
+  owner_uid TEXT NOT NULL,
+  name TEXT NOT NULL,
+  members TEXT DEFAULT '[]',      -- JSON array of Firebase UIDs
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(owner_uid) REFERENCES users(uid)
+);
+
 -- Team Boards
 CREATE TABLE IF NOT EXISTS team_boards (
   id TEXT PRIMARY KEY,            -- UUID generated client-side
@@ -21,6 +31,7 @@ CREATE TABLE IF NOT EXISTS team_boards (
   member_roles TEXT DEFAULT '{}', -- JSON object mapping UID to role description
   columns TEXT DEFAULT '["todo","doing","done"]', -- JSON array of column names
   labels TEXT DEFAULT '[]',       -- JSON array of tag objects {id, color, name}
+  workspace_id TEXT DEFAULT '',
   updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(owner_uid) REFERENCES users(uid)
@@ -48,5 +59,6 @@ CREATE TABLE IF NOT EXISTS team_tasks (
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_team_boards_owner ON team_boards(owner_uid);
+CREATE INDEX IF NOT EXISTS idx_team_workspaces_owner ON team_workspaces(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_board  ON team_tasks(board_id);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_due    ON team_tasks(due_date);

@@ -208,14 +208,14 @@ class _AppShellState extends State<AppShell> {
   int _index = 0;
 
   List<Widget> get _screens => [
-    const DashboardPage(isDark: true),
-    const BoardsPage(isDark: true),
+    const DashboardPage(isDark: false),
+    const BoardsPage(isDark: false),
     CalendarPage(
-      isDark: true,
+      isDark: false,
       onNavigate: (i) => setState(() => _index = i),
     ),
-    const ChatPage(isDark: true),
-    const ProfilePage(isDark: true),
+    const ChatPage(isDark: false),
+    const ProfilePage(isDark: false),
   ];
 
   @override
@@ -249,7 +249,7 @@ class _AppShellState extends State<AppShell> {
                 GlassBottomBarItem(icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
                 GlassBottomBarItem(icon: Icons.person_outline_rounded, label: 'Profile'),
               ],
-              isDark: true,
+              isDark: false,
             )
           : null,
       body: Container(
@@ -267,7 +267,7 @@ class _AppShellState extends State<AppShell> {
                     context.read<StateBoards>().setSelectedBoard(null);
                   });
                 },
-                isDark: true,
+                isDark: false,
               ),
             Expanded(
               child: Stack(
@@ -299,7 +299,7 @@ class _AppShellState extends State<AppShell> {
                           ? KanbanPage(
                               key: ValueKey('kanban_${selectedBoard.id}'),
                               board: selectedBoard,
-                              isDark: true,
+                              isDark: false,
                             )
                           : KeyedSubtree(
                               key: ValueKey('screen_$_index'),

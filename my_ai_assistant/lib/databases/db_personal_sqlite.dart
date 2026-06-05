@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
 import '../models/board_model.dart';
 import '../models/task_model.dart';
+import '../models/workspace_model.dart';
 
 class DbPersonalSqlite {
   static final DbPersonalSqlite instance = DbPersonalSqlite._init();
@@ -20,10 +21,20 @@ class DbPersonalSqlite {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 7, onCreate: _createDB, onUpgrade: _upgradeDB);
+    return await openDatabase(path, version: 8, onCreate: _createDB, onUpgrade: _upgradeDB);
   }
 
   Future _createDB(Database db, int version) async {
+    await db.execute('''
+CREATE TABLE personal_workspaces (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  owner_uid TEXT DEFAULT '',
+  members TEXT DEFAULT '[]',
+  created_at TEXT NOT NULL
+)
+''');
     await db.execute('''
 CREATE TABLE personal_boards (
   id TEXT PRIMARY KEY,
@@ -33,6 +44,7 @@ CREATE TABLE personal_boards (
   members TEXT DEFAULT '[]',
   columns TEXT DEFAULT '["todo","doing","done"]',
   labels TEXT DEFAULT '[]',
+  workspace_id TEXT DEFAULT '',
   created_at TEXT NOT NULL
 )
 ''');
@@ -58,7 +70,6 @@ CREATE TABLE personal_tasks (
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Migration from old schema (tasks table) to new schema
       try {
         await db.execute('DROP TABLE IF EXISTS tasks');
       } catch (_) {}
@@ -68,7 +79,6 @@ CREATE TABLE personal_tasks (
     if (oldVersion == 2) {
       await db.execute('ALTER TABLE personal_boards ADD COLUMN labels TEXT DEFAULT "[]";');
       await db.execute('ALTER TABLE personal_tasks ADD COLUMN label_ids TEXT DEFAULT "[]";');
-      return;
     }
     if (oldVersion < 4) {
       try {
@@ -90,6 +100,67 @@ CREATE TABLE personal_tasks (
         await db.execute('ALTER TABLE personal_tasks ADD COLUMN images TEXT DEFAULT "[]"');
       } catch (_) {}
     }
+    if (oldVersion < 8) {
+      try {
+        await db.execute('''
+CREATE TABLE personal_workspaces (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  owner_uid TEXT DEFAULT '',
+  members TEXT DEFAULT '[]',
+  created_at TEXT NOT NULL
+)
+''');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE personal_boards ADD COLUMN workspace_id TEXT DEFAULT ""');
+      } catch (_) {}
+    }
+  }
+
+  // ─── WORKSPACES ───────────────────────────────────────
+
+  Future<String> insertWorkspace(WorkspaceModel workspace) async {
+    if (kIsWeb) return workspace.id;
+    final db = await database;
+    final id = workspace.id.isEmpty
+        ? DateTime.now().millisecondsSinceEpoch.toString()
+        : workspace.id;
+    final map = {...workspace.toMap(), 'id': id};
+    try {
+      await db.insert('personal_workspaces', map, conflictAlgorithm: ConflictAlgorithm.replace);
+      debugPrint('DB DEBUG insertWorkspace success id=$id');
+    } catch (e) {
+      debugPrint('DB DEBUG insertWorkspace error: $e');
+      rethrow;
+    }
+    return id;
+  }
+
+  Future<List<WorkspaceModel>> getAllWorkspaces() async {
+    if (kIsWeb) return [];
+    final db = await database;
+    final result = await db.query('personal_workspaces', orderBy: 'created_at DESC');
+    return result.map((m) => WorkspaceModel.fromMap(m)).toList();
+  }
+
+  Future<void> updateWorkspace(WorkspaceModel workspace) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.update('personal_workspaces', workspace.toMap(), where: 'id = ?', whereArgs: [workspace.id]);
+  }
+
+  Future<void> deleteWorkspace(String workspaceId) async {
+    if (kIsWeb) return;
+    final db = await database;
+    // Delete all boards belonging to this workspace
+    final boards = await db.query('personal_boards', where: 'workspace_id = ?', whereArgs: [workspaceId]);
+    for (final board in boards) {
+      final boardId = board['id'] as String;
+      await deleteBoard(boardId);
+    }
+    await db.delete('personal_workspaces', where: 'id = ?', whereArgs: [workspaceId]);
   }
 
   // ─── BOARDS ───────────────────────────────────────────

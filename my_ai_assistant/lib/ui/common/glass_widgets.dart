@@ -26,18 +26,28 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius ?? ExecutiveRadius.l),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          margin: margin,
-          padding: padding,
-          decoration: decoration ?? GlassDecorations.surface(isDark: isDark, radius: radius ?? ExecutiveRadius.l),
-          child: child,
-        ),
-      ),
+    final hasBlur = blur > 0.0 && GlassColors.glassSurface.opacity < 1.0;
+    Widget container = Container(
+      margin: margin,
+      padding: padding,
+      decoration: decoration ?? GlassDecorations.surface(isDark: isDark, radius: radius ?? ExecutiveRadius.l),
+      child: child,
     );
+
+    if (hasBlur) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius ?? ExecutiveRadius.l),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: container,
+        ),
+      );
+    } else {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius ?? ExecutiveRadius.l),
+        child: container,
+      );
+    }
   }
 }
 
@@ -129,6 +139,7 @@ class GlassButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color contentColor = isGold ? GlassColors.gold : GlassColors.primary;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -142,14 +153,15 @@ class GlassButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, color: isGold ? GlassColors.gold : GlassColors.primary, size: 18),
+                Icon(icon, color: contentColor, size: 18),
                 const SizedBox(width: 10),
               ],
               Text(
                 label.toUpperCase(),
                 style: GlassText.label(isDark).copyWith(
-                  color: isGold ? GlassColors.gold : GlassColors.primary,
+                  color: contentColor,
                   fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
