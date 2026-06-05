@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'config/env_config.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -40,51 +41,51 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCmpEBLMOPw8pcSJpd4d7TCI3Sj_m4hwnc',
-    appId: '1:294337832265:web:b3faf535b42fc7664c2698',
-    messagingSenderId: '294337832265',
-    projectId: 'calenda-ai-app',
-    authDomain: 'calenda-ai-app.firebaseapp.com',
-    storageBucket: 'calenda-ai-app.firebasestorage.app',
-    measurementId: 'G-4H6K9Y38LM',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: EnvConfig.firebaseApiKeyWeb,
+    appId: EnvConfig.firebaseAppIdWeb,
+    messagingSenderId: EnvConfig.firebaseMessagingSenderId,
+    projectId: EnvConfig.firebaseProjectId,
+    authDomain: EnvConfig.firebaseAuthDomain,
+    storageBucket: EnvConfig.firebaseStorageBucket,
+    measurementId: EnvConfig.firebaseMeasurementIdWeb,
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBAB7Mqm4FirYGFM81j9X_WZAN0jr2zLE0',
-    appId: '1:294337832265:android:8f2e1193a125c9124c2698',
-    messagingSenderId: '294337832265',
-    projectId: 'calenda-ai-app',
-    storageBucket: 'calenda-ai-app.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: EnvConfig.firebaseApiKeyAndroid,
+    appId: EnvConfig.firebaseAppIdAndroid,
+    messagingSenderId: EnvConfig.firebaseMessagingSenderId,
+    projectId: EnvConfig.firebaseProjectId,
+    storageBucket: EnvConfig.firebaseStorageBucket,
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD37G1Umsa_N9h_PggpbapjYeanMMdXnTQ',
-    appId: '1:294337832265:ios:50bd10aa415e13a84c2698',
-    messagingSenderId: '294337832265',
-    projectId: 'calenda-ai-app',
-    storageBucket: 'calenda-ai-app.firebasestorage.app',
-    iosClientId: '294337832265-rhapvjri8coucajkebkjnv3nfrkupv3c.apps.googleusercontent.com',
-    iosBundleId: 'com.example.myAiAssistant',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: EnvConfig.firebaseApiKeyIos,
+    appId: EnvConfig.firebaseAppIdIos,
+    messagingSenderId: EnvConfig.firebaseMessagingSenderId,
+    projectId: EnvConfig.firebaseProjectId,
+    storageBucket: EnvConfig.firebaseStorageBucket,
+    iosClientId: EnvConfig.firebaseIosClientId,
+    iosBundleId: EnvConfig.firebaseIosBundleId,
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD37G1Umsa_N9h_PggpbapjYeanMMdXnTQ',
-    appId: '1:294337832265:ios:50bd10aa415e13a84c2698',
-    messagingSenderId: '294337832265',
-    projectId: 'calenda-ai-app',
-    storageBucket: 'calenda-ai-app.firebasestorage.app',
-    iosClientId: '294337832265-rhapvjri8coucajkebkjnv3nfrkupv3c.apps.googleusercontent.com',
-    iosBundleId: 'com.example.myAiAssistant',
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey: EnvConfig.firebaseApiKeyIos,
+    appId: EnvConfig.firebaseAppIdIos,
+    messagingSenderId: EnvConfig.firebaseMessagingSenderId,
+    projectId: EnvConfig.firebaseProjectId,
+    storageBucket: EnvConfig.firebaseStorageBucket,
+    iosClientId: EnvConfig.firebaseIosClientId,
+    iosBundleId: EnvConfig.firebaseIosBundleId,
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCmpEBLMOPw8pcSJpd4d7TCI3Sj_m4hwnc',
-    appId: '1:294337832265:web:8825245d47e66af24c2698',
-    messagingSenderId: '294337832265',
-    projectId: 'calenda-ai-app',
-    authDomain: 'calenda-ai-app.firebaseapp.com',
-    storageBucket: 'calenda-ai-app.firebasestorage.app',
-    measurementId: 'G-VK669TZLB0',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: EnvConfig.firebaseApiKeyWindows,
+    appId: EnvConfig.firebaseAppIdWindows,
+    messagingSenderId: EnvConfig.firebaseMessagingSenderId,
+    projectId: EnvConfig.firebaseProjectId,
+    authDomain: EnvConfig.firebaseAuthDomain,
+    storageBucket: EnvConfig.firebaseStorageBucket,
+    measurementId: EnvConfig.firebaseMeasurementIdWindows,
   );
 }

@@ -13,6 +13,7 @@ import 'dart:async';
 import 'dart:html' as html; 
 
 import 'firebase_options.dart';
+import 'config/env_config.dart';
 import 'state_managers/state_boards.dart';
 import 'state_managers/state_tasks.dart';
 import 'state_managers/state_chat.dart';
@@ -37,16 +38,17 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   try {
     final envPath = kIsWeb ? 'env' : 'assets/env';
     await dotenv.load(fileName: envPath, isOptional: true);
   } catch (e) {
     debugPrint('No env file found: $e');
   }
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Supabase.initialize(
-    url: 'https://ofaspmhkrykgqxigjmxv.supabase.co',
-    anonKey: 'sb_publishable_aFzFokHfq_MTz8vMGJttww_LaHEphaX',
+    url: EnvConfig.supabaseUrl,
+    anonKey: EnvConfig.supabaseAnonKey,
   );
   runApp(
     MultiProvider(

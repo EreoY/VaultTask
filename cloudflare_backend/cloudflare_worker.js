@@ -577,9 +577,23 @@ export default {
         const body = await request.json();
         const { model, messages, tools, uid, stream } = body;
         
-        if (!uid) return json({ error: "Unauthorized" }, 401);
+        console.log(`\n🤖 [AI CHAT] Request received - User: ${uid}`);
+        console.log(`🤖 [AI CHAT] Messages count: ${messages ? messages.length : 0}`);
+        if (tools && tools.length > 0) {
+          console.log(`🤖 [AI CHAT] Tools offered: ${tools.map(t => t.function.name).join(", ")}`);
+        } else {
+          console.log(`🤖 [AI CHAT] No tools offered.`);
+        }
+        
+        if (!uid) {
+          console.warn(`⚠️ [AI CHAT] Unauthorized - No UID provided`);
+          return json({ error: "Unauthorized" }, 401);
+        }
         const user = await env.DB.prepare("SELECT uid FROM users WHERE uid = ?").bind(uid).first();
-        if (!user) return json({ error: "Unauthorized" }, 401);
+        if (!user) {
+          console.warn(`⚠️ [AI CHAT] Unauthorized - UID ${uid} not found in DB`);
+          return json({ error: "Unauthorized" }, 401);
+        }
 
         const serverNow = new Date();
         const serverTimeText = `Current Server ISO Time: ${serverNow.toISOString()}\nToday is: ${serverNow.toDateString()}\nYear: ${serverNow.getFullYear()}`;
@@ -597,6 +611,7 @@ export default {
         }
 
         const actualModel = "google/gemma-4-26b-a4b-it";
+        console.log(`🤖 [AI CHAT] Forwarding to OpenRouter (Model: ${actualModel})`);
         
         const geminiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
@@ -616,10 +631,12 @@ export default {
         
         if (!geminiResponse.ok) {
           const data = await geminiResponse.json();
+          console.error(`❌ [AI CHAT] OpenRouter error (Status: ${geminiResponse.status}):`, JSON.stringify(data));
           return json({ error: data }, geminiResponse.status);
         }
         
         if (stream) {
+          console.log(`🤖 [AI CHAT] Streaming response started`);
           return new Response(geminiResponse.body, {
             headers: {
               ...corsHeaders(),
@@ -631,9 +648,34 @@ export default {
         }
 
         const data = await geminiResponse.json();
+        
+        // Detailed Logging of Token Usage and Choices
+        if (data.usage) {
+          console.log(`📊 [AI CHAT] Usage - Prompt: ${data.usage.prompt_tokens}, Completion: ${data.usage.completion_tokens}, Total: ${data.usage.total_tokens}`);
+        } else {
+          console.log(`📊 [AI CHAT] Usage data not returned`);
+        }
+
+        if (data.choices && data.choices.length > 0) {
+          const choice = data.choices[0];
+          const msg = choice.message;
+          if (msg) {
+            if (msg.tool_calls && msg.tool_calls.length > 0) {
+              console.log(`⚙️ [AI CHAT] Tool Calls requested:`);
+              msg.tool_calls.forEach((tc, idx) => {
+                console.log(`  [${idx + 1}] Function: ${tc.function.name}`);
+                console.log(`      Args: ${tc.function.arguments}`);
+              });
+            } else if (msg.content) {
+              const preview = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+              console.log(`💬 [AI CHAT] Assistant Response: "${preview.replace(/\n/g, ' ')}"`);
+            }
+          }
+        }
+        
         return json({ result: data });
       } catch (err) {
-        console.error("AI CHAT ERROR:", err.message, err.stack);
+        console.error("❌ [AI CHAT ERROR]:", err.message, err.stack);
         return json({ error: "Internal Server Error" }, 500);
       }
     }

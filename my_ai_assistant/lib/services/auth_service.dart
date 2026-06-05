@@ -9,9 +9,8 @@ import '../config/env_config.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
+  final GoogleSignIn? _googleSignIn = kIsWeb ? null : GoogleSignIn(
     scopes: ['email'],
-    clientId: kIsWeb ? '294337832265-5ji8ja6fqjup4km1jcdj0o1ubspqbgnb.apps.googleusercontent.com' : null,
   );
 
   // ปัจจุบันดึง User ที่ล็อกอินได้จากตรงนี้
@@ -28,7 +27,7 @@ class AuthService {
         }
         return userCredential;
       } else {
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        final GoogleSignInAccount? googleUser = await _googleSignIn!.signIn();
         if (googleUser == null) return null;
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -52,8 +51,8 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    if (!kIsWeb) {
-      await _googleSignIn.signOut();
+    if (!kIsWeb && _googleSignIn != null) {
+      await _googleSignIn!.signOut();
     }
     await _auth.signOut();
   }

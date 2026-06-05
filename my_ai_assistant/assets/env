@@ -1,1 +1,41 @@
-# placeholder env for web build
+# === VaultTask Environment Configuration ===
+
+# Backend Selection
+# Toggle this to 'true' to use the local wrangler backend (http://localhost:8787).
+# Set to 'false' to route requests to the remote deployed production worker.
+USE_LOCAL_BACKEND=true
+
+# Cloudflare Worker URL Configurations
+LOCAL_BACKEND_URL_DEFAULT=http://localhost:8787
+LOCAL_BACKEND_URL_ANDROID=http://10.0.2.2:8787
+PRODUCTION_BACKEND_URL=https://vaulttask-api-worker.jitkhon1979.workers.dev
+
+# Supabase Authentication and Database Settings
+SUPABASE_URL=https://ofaspmhkrykgqxigjmxv.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_aFzFokHfq_MTz8vMGJttww_LaHEphaX
+
+# Firebase Credentials - Project calenda-ai-app
+FIREBASE_PROJECT_ID=calenda-ai-app
+FIREBASE_MESSAGING_SENDER_ID=294337832265
+FIREBASE_AUTH_DOMAIN=calenda-ai-app.firebaseapp.com
+FIREBASE_STORAGE_BUCKET=calenda-ai-app.firebasestorage.app
+
+# Firebase Web App Keys
+FIREBASE_API_KEY_WEB=AIzaSyCmpEBLMOPw8pcSJpd4d7TCI3Sj_m4hwnc
+FIREBASE_APP_ID_WEB=1:294337832265:web:b3faf535b42fc7664c2698
+FIREBASE_MEASUREMENT_ID_WEB=G-4H6K9Y38LM
+
+# Firebase Android Key
+FIREBASE_API_KEY_ANDROID=AIzaSyBAB7Mqm4FirYGFM81j9X_WZAN0jr2zLE0
+FIREBASE_APP_ID_ANDROID=1:294337832265:android:8f2e1193a125c9124c2698
+
+# Firebase iOS / macOS Key
+FIREBASE_API_KEY_IOS=AIzaSyD37G1Umsa_N9h_PggpbapjYeanMMdXnTQ
+FIREBASE_APP_ID_IOS=1:294337832265:ios:50bd10aa415e13a84c2698
+FIREBASE_IOS_CLIENT_ID=294337832265-rhapvjri8coucajkebkjnv3nfrkupv3c.apps.googleusercontent.com
+FIREBASE_IOS_BUNDLE_ID=com.example.myAiAssistant
+
+# Firebase Windows App Key
+FIREBASE_API_KEY_WINDOWS=AIzaSyCmpEBLMOPw8pcSJpd4d7TCI3Sj_m4hwnc
+FIREBASE_APP_ID_WINDOWS=1:294337832265:web:8825245d47e66af24c2698
+FIREBASE_MEASUREMENT_ID_WINDOWS=G-VK669TZLB0
