@@ -1,0 +1,73 @@
+# Environments and Secrets
+.env
+.env.*
+*.local
+auth.json
+secrets.json
+keys/
+
+# Cloudflare Wrangler
+.wrangler/
+cloudflare_backend/.wrangler/
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Flutter/Dart
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Android
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+*.apk
+*.aab
+*.keystore
+**/android/key.properties
+
+# iOS / macOS
+**/ios/**/*.mode1v3
+**/ios/**/*.pbxuser
+**/ios/*.xcworkspace/
+**/ios/DerivedData/
+*.app
+*.ipa
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Build artifacts
+*.class
+*.pyc
+*.swp
+.buildlog/
+.history
+.svn/
+.gitnexus
+.claude/
+obsidian_graph/
+AGENTS.md
+CLAUDE.md
+
+# Dependencies
+node_modules/
+.cache/

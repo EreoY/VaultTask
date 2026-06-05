@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "294337832265",
+    "project_id": "calenda-ai-app",
+    "storage_bucket": "calenda-ai-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:294337832265:android:8f2e1193a125c9124c2698",
+        "android_client_info": {
+          "package_name": "com.example.my_ai_assistant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "294337832265-kbju0l2t9aa3ihjq8rmsejkjct667j3r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.my_ai_assistant",
+            "certificate_hash": "3b9095ab4b2e6703f1c9fb429c21703206d475eb"
+          }
+        },
+        {
+          "client_id": "294337832265-5ji8ja6fqjup4km1jcdj0o1ubspqbgnb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAB7Mqm4FirYGFM81j9X_WZAN0jr2zLE0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "294337832265-5ji8ja6fqjup4km1jcdj0o1ubspqbgnb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "294337832265-rhapvjri8coucajkebkjnv3nfrkupv3c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myAiAssistant"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,7 @@
+import '../models/task_model.dart';
+
+class DeltaResult {
+  final List<TaskModel> tasks;
+  final int maxUpdated;
+  DeltaResult(this.tasks, this.maxUpdated);
+}

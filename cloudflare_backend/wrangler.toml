@@ -1,0 +1,25 @@
+name = "calenda-api-worker"
+main = "cloudflare_worker.js"
+compatibility_date = "2024-03-14"
+account_id = "3cf3dea881cea4cdbe2aee3b5f2c8225"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "calenda-db"
+database_id = "7a5bc663-6cca-47a3-8346-ac7f402216bb"
+
+[durable_objects]
+bindings = [
+  { name = "BOARD_HUB", class_name = "BoardHub" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BoardHub"]
+
+[ai]
+binding = "AI"
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "calenda-assets"

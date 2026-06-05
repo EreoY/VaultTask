@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misty AI - Design Template สำหรับ Engineer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #101A2C;
+  color: #F4EFDF;
+  line-height: 1.7;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+header {
+  background: linear-gradient(135deg, #11284D, #101A2C);
+  border-bottom: 1px solid rgba(213, 179, 112, 0.15);
+  padding: 60px 40px;
+  text-align: center;
+}
+header h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 44px;
+  color: #D5B370;
+  margin-bottom: 10px;
+}
+header p { color: #8A9BB3; font-size: 16px; }
+
+.section { margin-bottom: 56px; }
+h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 28px;
+  color: #D5B370;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(213, 179, 112, 0.15);
+}
+h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  color: #F4EFDF;
+  margin: 28px 0 12px;
+}
+p, li { color: #8A9BB3; font-size: 15px; }
+ul { padding-left: 24px; margin: 12px 0; }
+li { margin-bottom: 8px; }
+
+.colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.color-box { border-radius: 12px; overflow: hidden; border: 1px solid rgba(138, 155, 179, 0.1); }
+.color-swatch { height: 80px; }
+.color-info { padding: 12px; background: #11284D; }
+.color-name { font-size: 13px; font-weight: 600; color: #F4EFDF; }
+.color-hex { font-size: 12px; color: #8A9BB3; font-family: monospace; }
+.color-use { font-size: 11px; color: #5a6d8a; margin-top: 4px; }
+
+table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid rgba(138, 155, 179, 0.08); }
+th { color: #D5B370; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+td { font-size: 14px; color: #8A9BB3; }
+td code { color: #D5B370; font-family: monospace; font-size: 13px; background: rgba(17, 40, 77, 0.4); padding: 2px 6px; border-radius: 4px; }
+tr:hover td { background: rgba(213, 179, 112, 0.02); }
+
+.code-block {
+  background: #0d1525;
+  border: 1px solid rgba(138, 155, 179, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+  overflow-x: auto;
+}
+.code-block pre { color: #8A9BB3; font-size: 13px; line-height: 1.8; }
+.code-block .comment { color: #5a6d8a; }
+.code-block .key { color: #D5B370; }
+.code-block .val { color: #7ab8e0; }
+.code-block .str { color: #7ee0b8; }
+
+.note {
+  background: linear-gradient(135deg, rgba(38, 75, 111, 0.1), rgba(17, 40, 77, 0.15));
+  border-left: 3px solid #D5B370;
+  padding: 16px 20px;
+  border-radius: 0 10px 10px 0;
+  margin: 16px 0;
+}
+.note p { color: #F4EFDF; font-size: 14px; }
+
+.divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(213, 179, 112, 0.15), transparent); margin: 40px 0; }
+
+.font-sample { font-size: 32px; margin: 8px 0; }
+.font-display { font-family: 'Playfair Display', Georgia, serif; color: #D5B370; }
+.font-body { font-family: 'Inter', system-ui, sans-serif; color: #F4EFDF; }
+.font-thai { font-family: 'Noto Sans Thai', system-ui, sans-serif; color: #F4EFDF; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+  <h1>Misty AI Design Template</h1>
+  <p>สำหรับส่งต่อให้ Engineer / Developer ทำตาม</p>
+</header>
+
+<div class="container">
+
+<!-- ==================== 1. OVERVIEW ==================== -->
+<div class="section">
+  <h2>1. Overview</h2>
+  <ul>
+    <li><strong>Bot Name:</strong> Misty (Executive AI Assistant)</li>
+    <li><strong>Persona:</strong> เลขาส่วนตัว AI ที่คอยช่วยจัดตารางงาน เตือนความจำ เขียนงาน แก้งาน ลบงาน</li>
+    <li><strong>Theme Concept:</strong> Midnight Ocean Moon (ทะเลยามดึก + แสงจันทร์)</li>
+    <li><strong>Tagline:</strong> "Your AI Executive Assistant"</li>
+    <li><strong>Dual Theme:</strong> Dark (default) + Light (toggle ได้)</li>
+  </ul>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 2. COLOR SYSTEM ==================== -->
+<div class="section">
+  <h2>2. Color System (สำคัญที่สุด)</h2>
+  <p>ทุกสีต้องใช้ผ่าน <strong>CSS Variables</strong> เท่านั้น ห้าม hardcode hex โดยตรงใน component</p>
+
+  <h3>Dark Theme (default)</h3>
+  <div class="colors">
+    <div class="color-box"><div class="color-swatch" style="background:#101A2C"></div><div class="color-info"><div class="color-name">--bg-deep</div><div class="color-hex">#101A2C</div><div class="color-use">พื้นหลังหลัก</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#11284D"></div><div class="color-info"><div class="color-name">--bg-card</div><div class="color-hex">#11284D</div><div class="color-use">การ์ด, sidebar</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#142a52"></div><div class="color-info"><div class="color-name">--bg-elevated</div><div class="color-hex">#142a52</div><div class="color-use">hover, ชั้นยก</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#F4EFDF"></div><div class="color-info"><div class="color-name">--text-primary</div><div class="color-hex">#F4EFDF</div><div class="color-use">ข้อความหลัก</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#8A9BB3"></div><div class="color-info"><div class="color-name">--text-secondary</div><div class="color-hex">#8A9BB3</div><div class="color-use">ข้อความรอง</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#5a6d8a"></div><div class="color-info"><div class="color-name">--text-muted</div><div class="color-hex">#5a6d8a</div><div class="color-use">ข้อความจาง</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#D5B370"></div><div class="color-info"><div class="color-name">--gold</div><div class="color-hex">#D5B370</div><div class="color-use">accent, highlight</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#264B6F"></div><div class="color-info"><div class="color-name">--navy</div><div class="color-hex">#264B6F</div><div class="color-use">ปุ่ม, links</div></div></div>
+  </div>
+
+  <h3>Light Theme (warm cream - ไม่แสบตา)</h3>
+  <div class="colors">
+    <div class="color-box"><div class="color-swatch" style="background:#D8D4CA"></div><div class="color-info"><div class="color-name">--bg-deep</div><div class="color-hex">#D8D4CA</div><div class="color-use">พื้นหลังหลัก</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#E8E4DA"></div><div class="color-info"><div class="color-name">--bg-card</div><div class="color-hex">#E8E4DA</div><div class="color-use">การ์ด, sidebar</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#F0EDE6"></div><div class="color-info"><div class="color-name">--bg-elevated</div><div class="color-hex">#F0EDE6</div><div class="color-use">hover, ชั้นยก</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#1C2234"></div><div class="color-info"><div class="color-name">--text-primary</div><div class="color-hex">#1C2234</div><div class="color-use">ข้อความหลัก</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#4A5568"></div><div class="color-info"><div class="color-name">--text-secondary</div><div class="color-hex">#4A5568</div><div class="color-use">ข้อความรอง</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#8B8678"></div><div class="color-info"><div class="color-name">--text-muted</div><div class="color-hex">#8B8678</div><div class="color-use">ข้อความจาง</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#C4A55A"></div><div class="color-info"><div class="color-name">--gold</div><div class="color-hex">#C4A55A</div><div class="color-use">accent, highlight</div></div></div>
+    <div class="color-box"><div class="color-swatch" style="background:#3A5A80"></div><div class="color-info"><div class="color-name">--navy</div><div class="color-hex">#3A5A80</div><div class="color-use">ปุ่ม, links</div></div></div>
+  </div>
+
+  <h3>Complete CSS Variables Code</h3>
+  <div class="code-block">
+<pre><span class="comment">/* ===== DARK THEME (default) ===== */</span>
+<span class="key">:root</span> {
+  <span class="key">--bg-deep</span>:        <span class="str">#101A2C</span>;
+  <span class="key">--bg-card</span>:        <span class="str">#11284D</span>;
+  <span class="key">--bg-elevated</span>:    <span class="str">#142a52</span>;
+  <span class="key">--bg-hover</span>:       <span class="str">#1a3466</span>;
+  <span class="key">--text-primary</span>:   <span class="str">#F4EFDF</span>;
+  <span class="key">--text-secondary</span>: <span class="str">#8A9BB3</span>;
+  <span class="key">--text-muted</span>:     <span class="str">#5a6d8a</span>;
+  <span class="key">--gold</span>:           <span class="str">#D5B370</span>;
+  <span class="key">--gold-light</span>:     <span class="str">#E5C88A</span>;
+  <span class="key">--gold-dark</span>:      <span class="str">#C4A055</span>;
+  <span class="key">--navy</span>:           <span class="str">#264B6F</span>;
+  <span class="key">--navy-deep</span>:      <span class="str">#11284D</span>;
+  <span class="key">--border</span>:         <span class="val">rgba(212, 220, 236, 0.08)</span>;
+  <span class="key">--border-hover</span>:   <span class="val">rgba(212, 220, 236, 0.15)</span>;
+  <span class="key">--shadow</span>:         <span class="val">rgba(0, 0, 0, 0.3)</span>;
+  <span class="key">--success</span>:        <span class="str">#34d399</span>;
+  <span class="key">--error</span>:          <span class="str">#f87171</span>;
+}
+
+<span class="comment">/* ===== LIGHT THEME ===== */</span>
+<span class="key">[data-theme="light"]</span> {
+  <span class="key">--bg-deep</span>:        <span class="str">#D8D4CA</span>;
+  <span class="key">--bg-card</span>:        <span class="str">#E8E4DA</span>;
+  <span class="key">--bg-elevated</span>:    <span class="str">#F0EDE6</span>;
+  <span class="key">--bg-hover</span>:       <span class="str">#DDD9CF</span>;
+  <span class="key">--text-primary</span>:   <span class="str">#1C2234</span>;
+  <span class="key">--text-secondary</span>: <span class="str">#4A5568</span>;
+  <span class="key">--text-muted</span>:     <span class="str">#8B8678</span>;
+  <span class="key">--gold</span>:           <span class="str">#C4A55A</span>;
+  <span class="key">--gold-light</span>:     <span class="str">#D4B76E</span>;
+  <span class="key">--gold-dark</span>:      <span class="str">#A68B4B</span>;
+  <span class="key">--navy</span>:           <span class="str">#3A5A80</span>;
+  <span class="key">--navy-deep</span>:      <span class="str">#2A4A70</span>;
+  <span class="key">--border</span>:         <span class="val">rgba(28, 34, 52, 0.07)</span>;
+  <span class="key">--border-hover</span>:   <span class="val">rgba(28, 34, 52, 0.14)</span>;
+  <span class="key">--shadow</span>:         <span class="val">rgba(28, 34, 52, 0.05)</span>;
+  <span class="key">--success</span>:        <span class="str">#10b981</span>;
+  <span class="key">--error</span>:          <span class="str">#ef4444</span>;
+}
+</pre>
+  </div>
+
+  <div class="note">
+    <p><strong>วิธีสลับธีม:</strong> ใส่ <code>data-theme="light"</code> ที่ &lt;html&gt; tag ทุก CSS Variable จะเปลี่ยนอัตโนมัติ ไม่ต้องแก้ component</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 3. TYPOGRAPHY ==================== -->
+<div class="section">
+  <h2>3. Typography</h2>
+  <div class="note">
+    <p><strong>กฏสำคัญ:</strong> หัวข้อ/ชื่อบอท → Serif หรู | เนื้อหาอ่านบ่อยๆ → Sans อ่านง่าย | ภาษาไทย → Noto Sans Thai</p>
+  </div>
+
+  <h3>Font Stack</h3>
+  <div class="code-block">
+<pre><span class="comment">/* Google Fonts Import */</span>
+@import url(<span class="str">'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap'</span>);
+
+<span class="comment">/* ใช้ตามนี้เท่านั้น */</span>
+<span class="key">font-display</span>: <span class="str">'Playfair Display'</span>, Georgia, serif;     <span class="comment">// หัวข้อ, ชื่อบอท</span>
+<span class="key">font-body</span>:    <span class="str">'Inter'</span>, <span class="str">'Noto Sans Thai'</span>, sans-serif;  <span class="comment">// เนื้อหา, ปุ่ม, การ์ด</span>
+</pre>
+  </div>
+
+  <table>
+    <thead><tr><th>Element</th><th>Font</th><th>Size</th><th>Weight</th><th>Color</th></tr></thead>
+    <tbody>
+      <tr><td>Page Title (Good morning)</td><td><code>Playfair Display</code></td><td>36-48px</td><td>700</td><td><code>var(--text-primary)</code></td></tr>
+      <tr><td>Brand Name "Misty"</td><td><code>Playfair Display</code></td><td>24px</td><td>700</td><td><code>var(--gold)</code></td></tr>
+      <tr><td>Section Header</td><td><code>Playfair Display</code></td><td>18-20px</td><td>600</td><td><code>var(--text-primary)</code></td></tr>
+      <tr><td>Body Text / Content</td><td><code>Inter</code></td><td>14px</td><td>400</td><td><code>var(--text-primary)</code></td></tr>
+      <tr><td>Button Text</td><td><code>Inter</code></td><td>14px</td><td>500</td><td><code>var(--text-primary)</code></td></tr>
+      <tr><td>Labels / Badges</td><td><code>Inter</code></td><td>10-11px</td><td>500</td><td><code>var(--gold)</code></td></tr>
+      <tr><td>Muted / Secondary</td><td><code>Inter</code></td><td>12-13px</td><td>400</td><td><code>var(--text-muted)</code></td></tr>
+      <tr><td>Thai Text (anywhere)</td><td><code>Noto Sans Thai</code></td><td>ตาม context</td><td>ตาม context</td><td>ตาม context</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:24px">
+    <div class="font-sample font-display">Playfair Display - Elegant Headings</div>
+    <div class="font-sample font-body">Inter - Clean & Readable Body</div>
+    <div class="font-sample font-thai">Noto Sans Thai - ฟอนต์ภาษาไทย</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 4. COMPONENTS ==================== -->
+<div class="section">
+  <h2>4. Components Spec</h2>
+
+  <h3>Card (Container)</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: <span class="val">var(--bg-card)</span>;
+<span class="key">border</span>: 1px solid <span class="val">var(--border)</span>;
+<span class="key">border-radius</span>: <span class="str">16px</span>;
+<span class="key">padding</span>: <span class="str">24px</span>;
+<span class="key">box-shadow</span>: 0 8px 32px <span class="val">var(--shadow)</span>;
+<span class="key">transition</span>: all 0.3s ease;
+</pre>
+  </div>
+
+  <h3>Primary Button (Blue)</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: linear-gradient(135deg, <span class="val">var(--navy)</span>, <span class="val">var(--navy-deep)</span>);
+<span class="key">border</span>: 1px solid color-mix(in srgb, <span class="val">var(--gold)</span> 12%, transparent);
+<span class="key">color</span>: <span class="val">var(--text-primary)</span>;
+<span class="key">border-radius</span>: <span class="str">12px</span>;
+<span class="key">padding</span>: <span class="str">10px 24px</span>;
+<span class="key">font-family</span>: <span class="str">'Inter'</span>, sans-serif;
+<span class="key">font-size</span>: <span class="str">14px</span>;
+<span class="key">font-weight</span>: <span class="str">500</span>;
+<span class="key">box-shadow</span>: 0 4px 15px color-mix(in srgb, <span class="val">var(--navy)</span> 15%, transparent);
+</pre>
+  </div>
+
+  <h3>Gold Button (CTA Primary)</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: linear-gradient(135deg, <span class="val">var(--gold)</span>, <span class="val">var(--gold-dark)</span>);
+<span class="key">color</span>: <span class="val">var(--bg-deep)</span>;
+<span class="key">border</span>: none;
+<span class="key">border-radius</span>: <span class="str">12px</span>;
+<span class="key">padding</span>: <span class="str">10px 24px</span>;
+<span class="key">font-family</span>: <span class="str">'Inter'</span>, sans-serif;
+<span class="key">font-weight</span>: <span class="str">600</span>;
+</pre>
+  </div>
+
+  <h3>Chat Bubble - User (Right side)</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: <span class="val">var(--navy)</span>;
+<span class="key">color</span>: <span class="str">#F4EFDF</span>;
+<span class="key">border</span>: 1px solid color-mix(in srgb, <span class="val">var(--navy)</span> 30%, transparent);
+<span class="key">border-radius</span>: <span class="str">16px</span>;
+<span class="key">border-top-right-radius</span>: <span class="str">4px</span>;
+<span class="key">box-shadow</span>: 0 4px 15px color-mix(in srgb, <span class="val">var(--navy)</span> 12%, transparent);
+</pre>
+  </div>
+
+  <h3>Chat Bubble - Assistant (Left side)</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: <span class="val">var(--bg-card)</span>;
+<span class="key">color</span>: <span class="val">var(--text-primary)</span>;
+<span class="key">border</span>: 1px solid <span class="val">var(--border)</span>;
+<span class="key">border-radius</span>: <span class="str">16px</span>;
+<span class="key">border-top-left-radius</span>: <span class="str">4px</span>;
+</pre>
+  </div>
+
+  <h3>Badge / Tag</h3>
+  <div class="code-block">
+<pre><span class="comment">// Gold badge (สำคัญ)</span>
+<span class="key">background</span>: color-mix(in srgb, <span class="val">var(--gold)</span> 8%, transparent);
+<span class="key">color</span>: <span class="val">var(--gold)</span>;
+<span class="key">border</span>: 1px solid color-mix(in srgb, <span class="val">var(--gold)</span> 12%, transparent);
+<span class="key">border-radius</span>: <span class="str">20px</span>;
+<span class="key">padding</span>: <span class="str">4px 12px</span>;
+<span class="key">font-size</span>: <span class="str">10px</span>;
+<span class="key">text-transform</span>: uppercase;
+
+<span class="comment">// Muted badge (ทั่วไป)</span>
+<span class="key">background</span>: color-mix(in srgb, <span class="val">var(--text-muted)</span> 8%, transparent);
+<span class="key">color</span>: <span class="val">var(--text-muted)</span>;
+<span class="key">border</span>: 1px solid <span class="val">var(--border)</span>;
+</pre>
+  </div>
+
+  <h3>Icon Container (Circle bg)</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: linear-gradient(
+  135deg,
+  color-mix(in srgb, <span class="val">var(--navy)</span> 20%, transparent),
+  color-mix(in srgb, <span class="val">var(--navy)</span> 8%, transparent)
+);
+<span class="key">border</span>: 1px solid color-mix(in srgb, <span class="val">var(--navy)</span> 20%, transparent);
+<span class="key">border-radius</span>: <span class="str">12px</span>;
+<span class="key">padding</span>: <span class="str">10px</span>;
+</pre>
+  </div>
+
+  <h3>Progress Bar</h3>
+  <div class="code-block">
+<pre><span class="comment">// Track</span>
+<span class="key">background</span>: <span class="val">var(--border)</span>;
+<span class="key">height</span>: <span class="str">8px</span>;
+<span class="key">border-radius</span>: <span class="str">4px</span>;
+
+<span class="comment">// Fill</span>
+<span class="key">background</span>: linear-gradient(90deg, <span class="val">var(--navy-deep)</span>, <span class="val">var(--navy)</span>, <span class="val">var(--gold)</span>);
+<span class="key">height</span>: <span class="str">100%</span>;
+<span class="key">border-radius</span>: <span class="str">4px</span>;
+</pre>
+  </div>
+
+  <h3>Online Status Dot</h3>
+  <div class="code-block">
+<pre><span class="key">background</span>: linear-gradient(135deg, <span class="val">var(--success)</span>, #10b981);
+<span class="key">border</span>: 2px solid <span class="val">var(--bg-deep)</span>;
+<span class="key">box-shadow</span>: 0 0 8px color-mix(in srgb, <span class="val">var(--success)</span> 50%, transparent);
+</pre>
+  </div>
+
+  <h3>Sidebar Navigation</h3>
+  <div class="code-block">
+<pre><span class="comment">// Default</span>
+<span class="key">background</span>: transparent;
+<span class="key">border</span>: 1px solid transparent;
+<span class="key">color</span>: <span class="val">var(--text-secondary)</span>;
+
+<span class="comment">// Active state</span>
+<span class="key">background</span>: linear-gradient(
+  135deg,
+  color-mix(in srgb, <span class="val">var(--navy)</span> 30%, transparent),
+  color-mix(in srgb, <span class="val">var(--gold)</span> 5%, transparent)
+);
+<span class="key">border</span>: 1px solid color-mix(in srgb, <span class="val">var(--gold)</span> 15%, <span class="val">var(--border)</span>);
+<span class="key">color</span>: <span class="val">var(--text-primary)</span>;
+<span class="key">box-shadow</span>: 0 4px 20px color-mix(in srgb, <span class="val">var(--navy)</span> 15%, transparent);
+<span class="comment">// Left accent line</span>
+<span class="key">border-left</span>: 3px solid linear-gradient(180deg, <span class="val">var(--gold)</span>, <span class="val">var(--navy)</span>);
+</pre>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 5. PAGES ==================== -->
+<div class="section">
+  <h2>5. Pages</h2>
+  <table>
+    <thead><tr><th>Page</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Home</td><td><code>/</code></td><td>Dashboard: stats cards, today's schedule, projects progress, weekly focus</td></tr>
+      <tr><td>Chat</td><td><code>/chat</code></td><td>Chat interface with Misty + right panel for confirmed actions</td></tr>
+      <tr><td>Calendar</td><td><code>/calendar</code></td><td>Monthly calendar grid with event badges</td></tr>
+      <tr><td>Kanban</td><td><code>/kanban</code></td><td>4 columns: TODO / DOING / DONE / TEST</td></tr>
+      <tr><td>Profile</td><td><code>/profile</code></td><td>User profile, account info, downloads</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 6. LAYOUT ==================== -->
+<div class="section">
+  <h2>6. Layout Specs</h2>
+  <table>
+    <thead><tr><th>Element</th><th>Size</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Sidebar width</td><td>288px (72px collapsed)</td><td>Fixed left, z-index 40</td></tr>
+      <tr><td>Chat Panel width</td><td>320px</td><td>Only on Chat page, right side</td></tr>
+      <tr><td>Content padding</td><td>24-40px</td><td>Responsive</td></tr>
+      <tr><td>Card border-radius</td><td>16px</td><td>All cards</td></tr>
+      <tr><td>Button border-radius</td><td>12px</td><td>All buttons</td></tr>
+      <tr><td>Input border-radius</td><td>12px</td><td>All inputs</td></tr>
+      <tr><td>Avatar size</td><td>40-48px</td><td>Circular</td></tr>
+      <tr><td>Spacing unit</td><td>16px</td><td>Base for gaps and padding</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 7. ANIMATIONS ==================== -->
+<div class="section">
+  <h2>7. Animations</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Duration</th><th>Use Case</th></tr></thead>
+    <tbody>
+      <tr><td><code>animate-moon-rise</code></td><td>0.6s ease-out</td><td>Elements appearing on page load</td></tr>
+      <tr><td><code>animate-star-twinkle</code></td><td>3s infinite</td><td>Decorative star icons</td></tr>
+      <tr><td><code>animate-wave-float</code></td><td>5s infinite</td><td>Cards gentle floating</td></tr>
+      <tr><td><code>animate-shimmer-gold</code></td><td>3s infinite</td><td>Progress bar shine effect</td></tr>
+      <tr><td><code>hover-moon</code></td><td>0.3s</td><td>Card hover: lift + shadow</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Transition Rule</h3>
+  <div class="code-block">
+<pre><span class="comment">/* ทุก element ที่เปลี่ยนสีต้องมี */</span>
+<span class="key">transition</span>: all 0.3s ease;
+
+<span class="comment">/* หรือถ้าใช้ Tailwind */</span>
+className=<span class="str">"transition-all duration-300"</span>
+</pre>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 8. RULES ==================== -->
+<div class="section">
+  <h2>8. Rules (ห้ามทำ)</h2>
+
+  <div class="note"><p><strong>1. ห้าม hardcode สี</strong> — ทุกสีต้องผ่าน CSS Variable เท่านั้น (var(--xxx)) ไม่งั้น Light Mode จะพัง</p></div>
+  <div class="note"><p><strong>2. ห้ามใช้ #000000 หรือ #FFFFFF</strong> — ใช้ var(--bg-deep) และ var(--text-primary) แทน</p></div>
+  <div class="note"><p><strong>3. ห้ามใช้ bg-black หรือ bg-white</strong> — แม้ overlay ก็ต้องใช้ color-mix กับ variables</p></div>
+  <div class="note"><p><strong>4. ห้ามลืม transition</strong> — ทุก element ที่เปลี่ยนสีต้องมี transition: all 0.3s</p></div>
+  <div class="note"><p><strong>5. ฟอนต์หัวข้อต้องเป็น Playfair Display</strong> — ห้ามใช้ Inter กับหัวข้อใหญ่/ชื่อบอท</p></div>
+  <div class="note"><p><strong>6. ฟอนต์เนื้อหาต้องเป็น Inter</strong> — ห้ามใช้ Serif กับข้อความที่อ่านบ่อยๆ</p></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== 9. BRAND ASSETS ==================== -->
+<div class="section">
+  <h2>9. Brand Assets</h2>
+  <table>
+    <thead><tr><th>Asset</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Logo</td><td><code>/misty-moon-logo.png</code> — Crescent moon + waves + letter M, gold/silver</td></tr>
+      <tr><td>Avatar</td><td><code>/misty-midnight-avatar.png</code> — Female AI assistant, midnight theme</td></tr>
+      <tr><td>Old Logo</td><td><code>/misty-logo.png</code> — สำรอง</td></tr>
+      <tr><td>Old Avatar</td><td><code>/misty-avatar.png</code> — สำรอง</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div style="text-align:center; padding: 40px 0; color: #5a6d8a; font-size: 13px;">
+  <p>Misty AI Design Template v2.0 — Updated Light Theme</p>
+  <p style="margin-top:4px">สำหรับส่งต่อให้ Engineer / Developer</p>
+</div>
+
+</div>
+</body>
+</html>

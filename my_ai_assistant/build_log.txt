@@ -1,0 +1,672 @@
+Compiling lib/main.dart for the Web...                          
+Wasm dry run findings:
+Found incompatibilities with WebAssembly.
+
+file:///home/kimbiaw/.pub-cache/hosted/pub.dev/google_identity_services_web-0.3.3+1/lib/src/js_interop/google_accounts_id.dart 102:12 - invalid_runtime_check_with_js_interop_types lint violation: Runtime check between 'Object' and 'JSObject' checks whether a Dart value is a JS interop type, which might not be platform-consistent. (7)
+
+Consider addressing these issues to enable wasm builds. See docs for more info: https://docs.flutter.dev/platform-integration/web/wasm
+
+Use --no-wasm-dry-run to disable these warnings.
+Target dart2js failed: ProcessException: Process exited abnormally with exit code 1:
+lib/ui/chat/chat_page.dart:6:8:
+Error: Error when reading 'lib/theme/glass_theme.dart': Error reading 'lib/theme/glass_theme.dart'  (No such file or directory)
+import '../../theme/glass_theme.dart';
+       ^
+lib/ui/dashboard/dashboard_page.dart:6:8:
+Error: Error when reading 'lib/theme/glass_theme.dart': Error reading 'lib/theme/glass_theme.dart'  (No such file or directory)
+import '../../theme/glass_theme.dart';
+       ^
+lib/ui/kanban/kanban_page.dart:8:8:
+Error: Error when reading 'lib/theme/glass_theme.dart': Error reading 'lib/theme/glass_theme.dart'  (No such file or directory)
+import '../../theme/glass_theme.dart';
+       ^
+lib/ui/auth/login_page.dart:3:8:
+Error: Error when reading 'lib/theme/glass_theme.dart': Error reading 'lib/theme/glass_theme.dart'  (No such file or directory)
+import '../../theme/glass_theme.dart';
+       ^
+lib/ui/profile/profile_page.dart:3:8:
+Error: Error when reading 'lib/theme/glass_theme.dart': Error reading 'lib/theme/glass_theme.dart'  (No such file or directory)
+import '../../theme/glass_theme.dart';
+       ^
+lib/ui/boards/boards_page.dart:5:8:
+Error: Error when reading 'lib/theme/glass_theme.dart': Error reading 'lib/theme/glass_theme.dart'  (No such file or directory)
+import '../../theme/glass_theme.dart';
+       ^
+lib/ui/chat/chat_page.dart:7:8:
+Error: Error when reading 'lib/common/glass_widgets.dart': Error reading 'lib/common/glass_widgets.dart'  (No such file or directory)
+import '../../common/glass_widgets.dart';
+       ^
+lib/ui/dashboard/dashboard_page.dart:7:8:
+Error: Error when reading 'lib/common/glass_widgets.dart': Error reading 'lib/common/glass_widgets.dart'  (No such file or directory)
+import '../../common/glass_widgets.dart';
+       ^
+lib/ui/kanban/kanban_page.dart:9:8:
+Error: Error when reading 'lib/common/glass_widgets.dart': Error reading 'lib/common/glass_widgets.dart'  (No such file or directory)
+import '../../common/glass_widgets.dart';
+       ^
+lib/ui/auth/login_page.dart:4:8:
+Error: Error when reading 'lib/common/glass_widgets.dart': Error reading 'lib/common/glass_widgets.dart'  (No such file or directory)
+import '../../common/glass_widgets.dart';
+       ^
+lib/ui/profile/profile_page.dart:4:8:
+Error: Error when reading 'lib/common/glass_widgets.dart': Error reading 'lib/common/glass_widgets.dart'  (No such file or directory)
+import '../../common/glass_widgets.dart';
+       ^
+lib/ui/boards/boards_page.dart:6:8:
+Error: Error when reading 'lib/common/glass_widgets.dart': Error reading 'lib/common/glass_widgets.dart'  (No such file or directory)
+import '../../common/glass_widgets.dart';
+       ^
+lib/ui/chat/chat_page.dart:8:8:
+Error: Error when reading 'lib/common/aether_side_nav.dart': Error reading 'lib/common/aether_side_nav.dart'  (No such file or directory)
+import '../../common/aether_side_nav.dart';
+       ^
+lib/ui/dashboard/dashboard_page.dart:8:8:
+Error: Error when reading 'lib/common/aether_side_nav.dart': Error reading 'lib/common/aether_side_nav.dart'  (No such file or directory)
+import '../../common/aether_side_nav.dart';
+       ^
+lib/ui/kanban/kanban_page.dart:10:8:
+Error: Error when reading 'lib/common/aether_side_nav.dart': Error reading 'lib/common/aether_side_nav.dart'  (No such file or directory)
+import '../../common/aether_side_nav.dart';
+       ^
+lib/ui/profile/profile_page.dart:5:8:
+Error: Error when reading 'lib/common/aether_side_nav.dart': Error reading 'lib/common/aether_side_nav.dart'  (No such file or directory)
+import '../../common/aether_side_nav.dart';
+       ^
+lib/ui/boards/boards_page.dart:7:8:
+Error: Error when reading 'lib/common/aether_side_nav.dart': Error reading 'lib/common/aether_side_nav.dart'  (No such file or directory)
+import '../../common/aether_side_nav.dart';
+       ^
+lib/ui/kanban/kanban_page.dart:11:8:
+Error: Error when reading 'lib/ui/widgets/kanban_widgets.dart': Error reading 'lib/ui/widgets/kanban_widgets.dart'  (No such file or directory)
+import '../widgets/kanban_widgets.dart';
+       ^
+lib/main.dart:180:36:
+Error: Member not found: 'GlassDecorations.navBar'.
+      decoration: GlassDecorations.navBar(true),
+                                   ^^^^^^
+lib/state_managers/state_chat.dart:625:28:
+Error: The argument type 'ProposalDraft/*1*/' can't be assigned to the parameter type 'ProposalDraft/*2*/?'.
+ - 'ProposalDraft/*1*/' is from 'package:my_ai_assistant/state_managers/state_chat.dart' ('lib/state_managers/state_chat.dart').
+ - 'ProposalDraft/*2*/' is from 'package:my_ai_assistant/models/chat_model.dart' ('lib/models/chat_model.dart').
+           confirmedDraft: d,
+                           ^
+lib/state_managers/state_chat.dart:663:26:
+Error: The argument type 'ProposalDraft/*1*/' can't be assigned to the parameter type 'ProposalDraft/*2*/?'.
+ - 'ProposalDraft/*1*/' is from 'package:my_ai_assistant/state_managers/state_chat.dart' ('lib/state_managers/state_chat.dart').
+ - 'ProposalDraft/*2*/' is from 'package:my_ai_assistant/models/chat_model.dart' ('lib/models/chat_model.dart').
+         confirmedDraft: d,
+                         ^
+lib/ui/chat/chat_page.dart:48:11:
+Error: The method 'sendMessage' isn't defined for the type 'StateChat'.
+ - 'StateChat' is from 'package:my_ai_assistant/state_managers/state_chat.dart' ('lib/state_managers/state_chat.dart').
+    state.sendMessage(text);
+          ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:60:24:
+Error: The getter 'GlassColors' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+      backgroundColor: GlassColors.background,
+                       ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:64:11:
+Error: The method 'AetherSideNav' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+          AetherSideNav(
+          ^^^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:80:46:
+Error: The getter 'GlassColors' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+                  child: _AmbientGlow(color: GlassColors.primary.withOpacity(0.05)),
+                                             ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:85:46:
+Error: The getter 'GlassColors' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+                  child: _AmbientGlow(color: GlassColors.primary.withOpacity(0.03), size: 500),
+                                             ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:102:37:
+Error: The getter 'role' isn't defined for the type 'ChatMessage'.
+ - 'ChatMessage' is from 'package:my_ai_assistant/models/chat_model.dart' ('lib/models/chat_model.dart').
+                            if (msg.role == 'assistant') {
+                                    ^^^^
+lib/ui/chat/chat_page.dart:122:47:
+Error: The getter 'pendingFiles' isn't defined for the type 'StateChat'.
+ - 'StateChat' is from 'package:my_ai_assistant/state_managers/state_chat.dart' ('lib/state_managers/state_chat.dart').
+                      pendingFiles: chatState.pendingFiles,
+                                              ^^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:124:51:
+Error: The method 'pickFiles' isn't defined for the type 'StateChat'.
+ - 'StateChat' is from 'package:my_ai_assistant/state_managers/state_chat.dart' ('lib/state_managers/state_chat.dart').
+                      onPickFile: () => chatState.pickFiles(),
+                                                  ^^^^^^^^^
+lib/ui/chat/chat_page.dart:125:54:
+Error: The method 'removeFile' isn't defined for the type 'StateChat'.
+ - 'StateChat' is from 'package:my_ai_assistant/state_managers/state_chat.dart' ('lib/state_managers/state_chat.dart').
+                      onRemoveFile: (i) => chatState.removeFile(i),
+                                                     ^^^^^^^^^^
+lib/ui/chat/chat_page.dart:164:60:
+Error: Not a constant expression.
+                    decoration: const BoxDecoration(color: GlassColors.success, shape: BoxShape.circle),
+                                                           ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:143:16:
+Error: The getter 'GlassColors' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+        color: GlassColors.surface.withOpacity(0.4),
+               ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:145:37:
+Error: The getter 'GlassColors' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+          bottom: BorderSide(color: GlassColors.glassBorder(), width: 0.8),
+                                    ^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:156:24:
+Error: The getter 'GlassText' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+                style: GlassText.headline().copyWith(fontSize: 28, letterSpacing: -1),
+                       ^^^^^^^^^
+lib/ui/chat/chat_page.dart:169:28:
+Error: The getter 'GlassText' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+                    style: GlassText.secondary().copyWith(fontSize: 12),
+                           ^^^^^^^^^
+lib/ui/chat/chat_page.dart:176:11:
+Error: The method 'GlassIconButton' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+          GlassIconButton(icon: Icons.search_rounded, isDark: widget.isDark),
+          ^^^^^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:178:11:
+Error: The method 'GlassIconButton' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+          GlassIconButton(icon: Icons.tune_rounded, isDark: widget.isDark),
+          ^^^^^^^^^^^^^^^
+lib/ui/chat/chat_page.dart:180:11:
+Error: The method 'GlassIconButton' isn't defined for the type '_ChatPageState'.
+ - '_ChatPageState' is from 'package:my_ai_assistant/ui/chat/chat_page.dart' ('lib/ui/chat/chat_page.dart').
+          GlassIconButton(icon: Icons.more_vert_rounded, isDark: widget.isDark),
+          ^^^^^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:34:24:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+      backgroundColor: GlassColors.background,
+                       ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:37:11:
+Error: The method 'AetherSideNav' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+          AetherSideNav(
+          ^^^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:54:30:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                      color: GlassColors.primary.withOpacity(0.04),
+                             ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:102:18:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+          style: GlassText.headline().copyWith(fontSize: 42, letterSpacing: -1.5),
+                 ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:110:24:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                color: GlassColors.primary.withOpacity(0.08),
+                       ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:111:53:
+Error: The getter 'ExecutiveRadius' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                                                    ^^^^^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:112:43:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                border: Border.all(color: GlassColors.primary.withOpacity(0.15)),
+                                          ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:116:24:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                style: GlassText.label().copyWith(fontSize: 11, letterSpacing: 1.5),
+                       ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:122:22:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+              style: GlassText.secondary().copyWith(fontSize: 14),
+                     ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:142:82:
+Error: Not a constant expression.
+              const ProgressMetric(label: 'Personal Growth', value: 0.42, color: GlassColors.accent),
+                                                                                 ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:183:78:
+Error: Not a constant expression.
+                    trailing: const Icon(Icons.chevron_right_rounded, color: GlassColors.onSurfaceVariant),
+                                                                             ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:178:35:
+Error: The getter 'GlassDecorations' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                      decoration: GlassDecorations.surface(isDark: widget.isDark, radius: 12),
+                                  ^^^^^^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:181:52:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                    title: Text(board.name, style: GlassText.body().copyWith(fontWeight: FontWeight.bold)),
+                                                   ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:182:66:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+                    subtitle: Text('Updated 2 hours ago', style: GlassText.secondary().copyWith(fontSize: 12)),
+                                                                 ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:221:56:
+Error: Member not found: 'edit_document_outlined'.
+              _buildActionButton('DRAFT REPORT', Icons.edit_document_outlined),
+                                                       ^^^^^^^^^^^^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:207:20:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+            style: GlassText.body().copyWith(height: 1.6, fontStyle: FontStyle.italic),
+                   ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:236:18:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+          color: GlassColors.surfaceHighest.withOpacity(0.1),
+                 ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:237:47:
+Error: The getter 'ExecutiveRadius' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+          borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                                              ^^^^^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:238:37:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+          border: Border.all(color: GlassColors.primary.withOpacity(0.05)),
+                                    ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:243:41:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+            Icon(icon, size: 16, color: GlassColors.primary.withOpacity(0.5)),
+                                        ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:245:32:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+            Text(value, style: GlassText.headline().copyWith(fontSize: 24)),
+                               ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:246:32:
+Error: The getter 'GlassText' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+            Text(label, style: GlassText.label().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant)),
+                               ^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:246:79:
+Error: The getter 'GlassColors' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+            Text(label, style: GlassText.label().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant)),
+                                                                              ^^^^^^^^^^^
+lib/ui/dashboard/dashboard_page.dart:254:12:
+Error: The method 'GlassButton' isn't defined for the type '_DashboardPageState'.
+ - '_DashboardPageState' is from 'package:my_ai_assistant/ui/dashboard/dashboard_page.dart' ('lib/ui/dashboard/dashboard_page.dart').
+    return GlassButton(
+           ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:101:49:
+Error: Not a constant expression.
+                        backgroundConfig: const AppFlowyBoardBackgroundConfig(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:105:27:
+Error: No named parameter with the name 'groupSpacing'.
+                          groupSpacing: 24,
+                          ^^^^^^^^^^^^
+/home/kimbiaw/.pub-cache/hosted/pub.dev/appflowy_board-0.1.2/lib/src/widgets/board.dart:28:9:
+Info: Found this candidate, but the arguments don't match.
+  const AppFlowyBoardConfig({
+        ^^^^^^^^^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:101:25:
+Error: No named parameter with the name 'backgroundConfig'.
+                        backgroundConfig: const AppFlowyBoardBackgroundConfig(
+                        ^^^^^^^^^^^^^^^^
+/home/kimbiaw/.pub-cache/hosted/pub.dev/appflowy_board-0.1.2/lib/src/widgets/board.dart:57:9:
+Info: Found this candidate, but the arguments don't match.
+  const AppFlowyBoard({
+        ^^^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:50:24:
+Error: The getter 'GlassColors' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+      backgroundColor: GlassColors.background,
+                       ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:53:11:
+Error: The method 'AetherSideNav' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+          AetherSideNav(
+          ^^^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:70:30:
+Error: The getter 'GlassColors' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+                      color: GlassColors.primary.withOpacity(0.03),
+                             ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:125:16:
+Error: The getter 'GlassColors' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+        color: GlassColors.surface.withOpacity(0.4),
+               ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:127:37:
+Error: The getter 'GlassColors' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+          bottom: BorderSide(color: GlassColors.glassBorder(), width: 0.8),
+                                    ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:138:24:
+Error: The getter 'GlassText' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+                style: GlassText.headline().copyWith(fontSize: 28, letterSpacing: -1),
+                       ^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:142:24:
+Error: The getter 'GlassText' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+                style: GlassText.label().copyWith(fontSize: 10, color: GlassColors.primary.withOpacity(0.6)),
+                       ^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:142:72:
+Error: The getter 'GlassColors' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+                style: GlassText.label().copyWith(fontSize: 10, color: GlassColors.primary.withOpacity(0.6)),
+                                                                       ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:147:11:
+Error: The method 'GlassButton' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+          GlassButton(
+          ^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:155:11:
+Error: The method 'GlassIconButton' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+          GlassIconButton(icon: Icons.filter_list_rounded, isDark: widget.isDark),
+          ^^^^^^^^^^^^^^^
+lib/ui/kanban/kanban_page.dart:157:11:
+Error: The method 'GlassIconButton' isn't defined for the type '_KanbanPageState'.
+ - '_KanbanPageState' is from 'package:my_ai_assistant/ui/kanban/kanban_page.dart' ('lib/ui/kanban/kanban_page.dart').
+          GlassIconButton(icon: Icons.more_vert_rounded, isDark: widget.isDark),
+          ^^^^^^^^^^^^^^^
+lib/ui/calendar/calendar_page.dart:376:43:
+Error: Too many positional arguments: 0 allowed, but 1 found.
+      decoration: GlassDecorations.surface(isDark, radius: 14),
+                                          ^
+lib/ui/theme/glass_theme.dart:89:24:
+Info: Found this candidate, but the arguments don't match.
+  static BoxDecoration surface({bool isDark = true, double radius = 16, bool hasShadow = false}) => BoxDecoration(
+                       ^^^^^^^
+lib/ui/calendar/calendar_page.dart:516:101:
+Error: Member not found: 'darkCard'.
+                        color: isToday ? GlassColors.navy.withOpacity(0.08) : (isDark ? GlassColors.darkCard : Colors.white),
+                                                                                          ^^^^^^^^
+lib/ui/auth/login_page.dart:101:64:
+Error: Not a constant expression.
+                      ? const CircularProgressIndicator(color: GlassColors.primary)
+                                                               ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:40:24:
+Error: The getter 'GlassColors' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+      backgroundColor: GlassColors.background,
+                       ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:51:28:
+Error: The getter 'GlassColors' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                  colors: [GlassColors.primary.withOpacity(0.05), Colors.transparent],
+                           ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:68:30:
+Error: The getter 'GlassText' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                      style: GlassText.headline().copyWith(
+                             ^^^^^^^^^
+lib/ui/auth/login_page.dart:77:30:
+Error: The getter 'GlassText' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                      style: GlassText.label().copyWith(
+                             ^^^^^^^^^
+lib/ui/auth/login_page.dart:79:32:
+Error: The getter 'GlassColors' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                        color: GlassColors.primary.withOpacity(0.4),
+                               ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:102:25:
+Error: The method 'GlassButton' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                      : GlassButton(
+                        ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:113:30:
+Error: The getter 'GlassText' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                      style: GlassText.label().copyWith(
+                             ^^^^^^^^^
+lib/ui/auth/login_page.dart:115:32:
+Error: The getter 'GlassColors' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                               ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:134:12:
+Error: The method 'GlassContainer' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+    return GlassContainer(
+           ^^^^^^^^^^^^^^
+lib/ui/auth/login_page.dart:137:15:
+Error: The getter 'ExecutiveRadius' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+      radius: ExecutiveRadius.m,
+              ^^^^^^^^^^^^^^^
+lib/ui/auth/login_page.dart:141:16:
+Error: The getter 'GlassText' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+        style: GlassText.body().copyWith(fontSize: 16),
+               ^^^^^^^^^
+lib/ui/auth/login_page.dart:144:22:
+Error: The getter 'GlassText' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+          hintStyle: GlassText.body().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.4)),
+                     ^^^^^^^^^
+lib/ui/auth/login_page.dart:144:55:
+Error: The getter 'GlassColors' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+          hintStyle: GlassText.body().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.4)),
+                                                      ^^^^^^^^^^^
+lib/ui/auth/login_page.dart:145:35:
+Error: The getter 'GlassColors' isn't defined for the type '_LoginPageState'.
+ - '_LoginPageState' is from 'package:my_ai_assistant/ui/auth/login_page.dart' ('lib/ui/auth/login_page.dart').
+          icon: Icon(icon, color: GlassColors.primary.withOpacity(0.5), size: 20),
+                                  ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:16:24:
+Error: The getter 'GlassColors' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+      backgroundColor: GlassColors.background,
+                       ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:19:11:
+Error: The method 'AetherSideNav' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+          AetherSideNav(
+          ^^^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:35:30:
+Error: The getter 'GlassColors' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+                      color: GlassColors.primary.withOpacity(0.03),
+                             ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:73:65:
+Error: Not a constant expression.
+            ? const Icon(Icons.person_outline, size: 60, color: GlassColors.primary)
+                                                                ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:67:39:
+Error: The getter 'GlassColors' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+            border: Border.all(color: GlassColors.primary.withOpacity(0.2), width: 2),
+                                      ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:82:22:
+Error: The getter 'GlassText' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+              style: GlassText.headline().copyWith(fontSize: 36, letterSpacing: 4),
+                     ^^^^^^^^^
+lib/ui/profile/profile_page.dart:87:22:
+Error: The getter 'GlassText' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+              style: GlassText.label().copyWith(
+                     ^^^^^^^^^
+lib/ui/profile/profile_page.dart:90:24:
+Error: The getter 'GlassColors' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+                color: GlassColors.primary.withOpacity(0.6),
+                       ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:94:13:
+Error: The method 'GlassButton' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+            GlassButton(
+            ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:109:40:
+Error: The getter 'GlassText' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+        Text('SYSTEM SETTINGS', style: GlassText.label().copyWith(letterSpacing: 2.0)),
+                                       ^^^^^^^^^
+lib/ui/profile/profile_page.dart:122:9:
+Error: The method 'GlassButton' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+        GlassButton(
+        ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:135:19:
+Error: The getter 'GlassDecorations' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+      decoration: GlassDecorations.surface(isDark: isDark, radius: ExecutiveRadius.m),
+                  ^^^^^^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:135:68:
+Error: The getter 'ExecutiveRadius' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+      decoration: GlassDecorations.surface(isDark: isDark, radius: ExecutiveRadius.m),
+                                                                   ^^^^^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:138:29:
+Error: The getter 'GlassColors' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+          Icon(icon, color: GlassColors.primary, size: 24),
+                            ^^^^^^^^^^^
+lib/ui/profile/profile_page.dart:143:34:
+Error: The getter 'GlassText' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+              Text(title, style: GlassText.label().copyWith(fontSize: 10)),
+                                 ^^^^^^^^^
+lib/ui/profile/profile_page.dart:144:33:
+Error: The getter 'GlassText' isn't defined for the type 'ProfilePage'.
+ - 'ProfilePage' is from 'package:my_ai_assistant/ui/profile/profile_page.dart' ('lib/ui/profile/profile_page.dart').
+              Text(desc, style: GlassText.secondary().copyWith(fontSize: 13)),
+                                ^^^^^^^^^
+lib/ui/boards/boards_page.dart:61:80:
+Error: Not a constant expression.
+                        ? const Center(child: CircularProgressIndicator(color: GlassColors.primary))
+                                                                               ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:32:24:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+      backgroundColor: GlassColors.background,
+                       ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:35:11:
+Error: The method 'AetherSideNav' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+          AetherSideNav(
+          ^^^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:51:30:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+                      color: GlassColors.primary.withOpacity(0.04),
+                             ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:93:16:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+        color: GlassColors.surface.withOpacity(0.4),
+               ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:94:50:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+        border: Border(bottom: BorderSide(color: GlassColors.glassBorder(), width: 0.8)),
+                                                 ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:100:20:
+Error: The getter 'GlassText' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+            style: GlassText.headline().copyWith(fontSize: 28, letterSpacing: -1),
+                   ^^^^^^^^^
+lib/ui/boards/boards_page.dart:103:11:
+Error: The method 'GlassButton' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+          GlassButton(
+          ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:120:58:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+          Icon(Icons.grid_view_rounded, size: 64, color: GlassColors.primary.withOpacity(0.2)),
+                                                         ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:122:45:
+Error: The getter 'GlassText' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+          Text('No projects found.', style: GlassText.secondary()),
+                                            ^^^^^^^^^
+lib/ui/boards/boards_page.dart:124:11:
+Error: The method 'GlassButton' isn't defined for the type '_BoardsPageState'.
+ - '_BoardsPageState' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+          GlassButton(label: 'Create your first board', isDark: widget.isDark, onPressed: () {}),
+          ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:139:12:
+Error: The method 'GlassCard' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+    return GlassCard(
+           ^^^^^^^^^
+lib/ui/boards/boards_page.dart:142:15:
+Error: The getter 'ExecutiveRadius' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+      radius: ExecutiveRadius.l,
+              ^^^^^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:163:20:
+Error: The getter 'GlassText' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+            style: GlassText.headline().copyWith(fontSize: 20, letterSpacing: 1),
+                   ^^^^^^^^^
+lib/ui/boards/boards_page.dart:170:24:
+Error: The getter 'GlassText' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+                style: GlassText.label().copyWith(fontSize: 9, color: GlassColors.onSurfaceVariant.withOpacity(0.6)),
+                       ^^^^^^^^^
+lib/ui/boards/boards_page.dart:170:71:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+                style: GlassText.label().copyWith(fontSize: 9, color: GlassColors.onSurfaceVariant.withOpacity(0.6)),
+                                                                      ^^^^^^^^^^^
+lib/ui/boards/boards_page.dart:177:24:
+Error: The getter 'GlassText' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+                style: GlassText.label().copyWith(fontSize: 9, color: GlassColors.success),
+                       ^^^^^^^^^
+lib/ui/boards/boards_page.dart:177:71:
+Error: The getter 'GlassColors' isn't defined for the type '_BoardCard'.
+ - '_BoardCard' is from 'package:my_ai_assistant/ui/boards/boards_page.dart' ('lib/ui/boards/boards_page.dart').
+                style: GlassText.label().copyWith(fontSize: 9, color: GlassColors.success),
+                                                                      ^^^^^^^^^^^
+Error: Compilation failed.
+  Command: /home/kimbiaw/snap/flutter/common/flutter/bin/cache/dart-sdk/bin/dart compile js --platform-binaries=/home/kimbiaw/snap/flutter/common/flutter/bin/cache/flutter_web_sdk/kernel --invoker=flutter_tool -Ddart.vm.product=true -DFLUTTER_VERSION=3.38.5 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=f6ff1529fd -DFLUTTER_ENGINE_REVISION=1527ae0ec5 -DFLUTTER_DART_VERSION=3.10.4 -DFLUTTER_WEB_USE_SKIA=true -DFLUTTER_WEB_USE_SKWASM=false -DFLUTTER_WEB_CANVASKIT_URL=https://www.gstatic.com/flutter-canvaskit/1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/ --native-null-assertions --no-source-maps -O4 --minify -o /run/media/kimbiaw/pro/calenda_project/my_ai_assistant/.dart_tool/flutter_build/bfce96857ce2456a850de5a89bc5cefc/app.dill --packages=/run/media/kimbiaw/pro/calenda_project/my_ai_assistant/.dart_tool/package_config.json --cfe-only /run/media/kimbiaw/pro/calenda_project/my_ai_assistant/.dart_tool/flutter_build/bfce96857ce2456a850de5a89bc5cefc/main.dart
+#0      RunResult.throwException (package:flutter_tools/src/base/process.dart:153:5)
+#1      _DefaultProcessUtils.run (package:flutter_tools/src/base/process.dart:379:19)
+<asynchronous suspension>
+#2      Dart2JSTarget.build (package:flutter_tools/src/build_system/targets/web.dart:207:5)
+<asynchronous suspension>
+#3      _BuildInstance._invokeInternal (package:flutter_tools/src/build_system/build_system.dart:895:9)
+<asynchronous suspension>
+#4      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#5      _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:833:32)
+<asynchronous suspension>
+#6      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#7      _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:833:32)
+<asynchronous suspension>
+#8      FlutterBuildSystem.build (package:flutter_tools/src/build_system/build_system.dart:653:16)
+<asynchronous suspension>
+#9      WebBuilder.buildWeb (package:flutter_tools/src/web/compile.dart:94:34)
+<asynchronous suspension>
+#10     BuildWebCommand.runCommand (package:flutter_tools/src/commands/build_web.dart:296:5)
+<asynchronous suspension>
+#11     FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1559:27)
+<asynchronous suspension>
+#12     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#13     CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+<asynchronous suspension>
+#14     FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:487:9)
+<asynchronous suspension>
+#15     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#16     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:422:5)
+<asynchronous suspension>
+#17     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+<asynchronous suspension>
+#18     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#19     main (package:flutter_tools/executable.dart:103:3)
+<asynchronous suspension>
+
+Compiling lib/main.dart for the Web...                             35.1s
+Error: Failed to compile application for the Web.

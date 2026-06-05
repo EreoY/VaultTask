@@ -1,0 +1,492 @@
+Analyzing my_ai_assistant...                                    
+
+   info • Statements in a for should be enclosed in a block • lib/ai_agent/ai_core_router.dart:296:62 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/ai_agent/ai_core_router.dart:451:49 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/ai_agent/ai_core_router.dart:554:49 • curly_braces_in_flow_control_structures
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ai_agent/ai_core_router.dart:786:76 • unnecessary_null_comparison
+warning • The operand can't be 'null', so the condition is always 'false' • lib/ai_agent/ai_core_router.dart:786:96 • unnecessary_null_comparison
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ai_agent/ai_core_router.dart:868:78 • unnecessary_null_comparison
+warning • The operand can't be 'null', so the condition is always 'false' • lib/ai_agent/ai_core_router.dart:868:98 • unnecessary_null_comparison
+   info • The private field _history could be 'final' • lib/ai_agent/ai_core_router_cf.dart:20:30 • prefer_final_fields
+warning • Unnecessary cast • lib/ai_agent/ai_core_router_cf.dart:89:29 • unnecessary_cast
+   info • Statements in an if should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:153:28 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:154:47 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:155:31 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:160:12 • curly_braces_in_flow_control_structures
+warning • The declaration 'extract' isn't referenced • lib/ai_agent/ai_core_router_cf.dart:244:17 • unused_element
+   info • Statements in an if should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:320:28 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:321:12 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/ai_agent/ai_core_router_cf.dart:337:44 • curly_braces_in_flow_control_structures
+warning • Unused import: 'package:flutter/foundation.dart' • lib/databases/api_cloudflare.dart:3:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:26:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:56:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:77:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:109:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:118:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:119:9 • avoid_print
+warning • Two keys in a map literal shouldn't be equal • lib/databases/api_cloudflare.dart:160:9 • equal_keys_in_map
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/databases/api_cloudflare.dart:160:33 • invalid_null_aware_operator
+warning • Two keys in a map literal shouldn't be equal • lib/databases/api_cloudflare.dart:184:9 • equal_keys_in_map
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/databases/api_cloudflare.dart:184:33 • invalid_null_aware_operator
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:194:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:231:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:236:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:243:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:248:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:249:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:262:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:302:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/databases/api_cloudflare.dart:328:7 • avoid_print
+   info • The import of 'package:sqflite/sqflite.dart' is unnecessary because all of the used elements are also provided by the import of 'package:sqflite_common_ffi/sqflite_ffi.dart' • lib/main.dart:8:8 • unnecessary_import
+warning • Unused import: 'ui/screens/screen_chat.dart' • lib/main.dart:16:8 • unused_import
+warning • Unused import: 'ui/widgets/glass_widgets.dart' • lib/main.dart:23:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/main.dart:39:5 • avoid_print
+warning • Unused import: 'package:flutter_dotenv/flutter_dotenv.dart' • lib/services/auth_service.dart:6:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/services/auth_service.dart:48:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/auth_service.dart:105:10 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/auth_service.dart:107:10 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/auth_service.dart:110:8 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_boards.dart:36:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_boards.dart:70:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_boards.dart:83:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_boards.dart:101:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_boards.dart:115:7 • avoid_print
+warning • Unused import: 'dart:convert' • lib/state_managers/state_chat.dart:1:8 • unused_import
+   info • Statements in a for should be enclosed in a block • lib/state_managers/state_chat.dart:180:51 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/state_managers/state_chat.dart:189:39 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/state_managers/state_chat.dart:255:29 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/state_managers/state_chat.dart:256:45 • curly_braces_in_flow_control_structures
+warning • Dead code • lib/state_managers/state_chat.dart:302:99 • dead_code
+warning • The left operand can't be null, so the right operand is never executed • lib/state_managers/state_chat.dart:302:102 • dead_null_aware_expression
+   info • Statements in a for should be enclosed in a block • lib/state_managers/state_chat.dart:341:36 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/state_managers/state_chat.dart:528:62 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/state_managers/state_chat.dart:529:14 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/state_managers/state_chat.dart:544:62 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/state_managers/state_chat.dart:545:14 • curly_braces_in_flow_control_structures
+warning • Unused import: 'dart:convert' • lib/state_managers/state_tasks.dart:6:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:39:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:98:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:123:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:146:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:169:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:213:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/state_managers/state_tasks.dart:242:7 • avoid_print
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/screen_calendar.dart:35:15 • use_build_context_synchronously
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:88:45 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:110:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:110:82 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:111:38 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:135:26 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:137:45 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:147:131 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:164:70 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:168:30 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:194:48 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:196:99 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:196:118 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:198:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:199:75 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:204:32 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:210:36 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:238:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:241:70 • deprecated_member_use
+warning • The '!' will have no effect because the receiver can't be null • lib/ui/screens/screen_calendar.dart:265:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/ui/screens/screen_calendar.dart:272:37 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/ui/screens/screen_calendar.dart:272:58 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/ui/screens/screen_calendar.dart:284:63 • unnecessary_non_null_assertion
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:322:40 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:323:42 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:323:160 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:332:45 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:343:88 • deprecated_member_use
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ui/screens/screen_calendar.dart:371:35 • unnecessary_null_comparison
+warning • Dead code • lib/ui/screens/screen_calendar.dart:371:84 • dead_code
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ui/screens/screen_calendar.dart:372:34 • unnecessary_null_comparison
+warning • Dead code • lib/ui/screens/screen_calendar.dart:372:88 • dead_code
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_calendar.dart:375:44 • extra_positional_arguments_could_be_named
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ui/screens/screen_calendar.dart:382:28 • unnecessary_null_comparison
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:391:127 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:404:38 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:408:71 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:422:52 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:427:84 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:429:52 • invocation_of_non_function_expression
+   info • Statements in a for should be enclosed in a block • lib/ui/screens/screen_calendar.dart:446:44 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/ui/screens/screen_calendar.dart:447:44 • curly_braces_in_flow_control_structures
+   info • Statements in a while should be enclosed in a block • lib/ui/screens/screen_calendar.dart:448:34 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:461:88 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:466:24 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:469:89 • deprecated_member_use
+warning • The '!' will have no effect because the receiver can't be null • lib/ui/screens/screen_calendar.dart:503:77 • unnecessary_non_null_assertion
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:515:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:517:111 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:518:98 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:533:40 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:549:110 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_calendar.dart:557:116 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:605:31 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_calendar.dart:607:18 • invocation_of_non_function_expression
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/ui/screens/screen_chat.dart:1:8 • unnecessary_import
+warning • Unused import: 'package:my_ai_assistant/models/chat_model.dart' • lib/ui/screens/screen_chat.dart:8:8 • unused_import
+warning • Unused import: '../widgets/glass_widgets.dart' • lib/ui/screens/screen_chat.dart:12:8 • unused_import
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_chat.dart:85:45 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_chat.dart:151:44 • deprecated_member_use
+  error • The getter 'lightBg' isn't defined for the type 'GlassColors' • lib/ui/screens/screen_chat.dart:151:75 • undefined_getter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_chat.dart:153:37 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_chat.dart:167:26 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_chat.dart:179:30 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_chat.dart:179:103 • deprecated_member_use
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/screens/screen_chat.dart:188:105 • undefined_getter
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_chat.dart:215:35 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_chat.dart:215:39 • unnecessary_underscores
+warning • Unused import: 'screen_kanban.dart' • lib/ui/screens/screen_home.dart:8:8 • unused_import
+warning • Unused import: '../widgets/glass_widgets.dart' • lib/ui/screens/screen_home.dart:10:8 • unused_import
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/screen_home.dart:28:22 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/screen_home.dart:30:15 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/screen_home.dart:31:9 • use_build_context_synchronously
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:46:21 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:53:53 • invocation_of_non_function_expression
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_home.dart:79:63 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_home.dart:101:63 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:154:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:159:51 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:168:49 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:168:119 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:169:65 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:185:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:185:71 • deprecated_member_use
+  error • The getter 'lightTextSecondary' isn't defined for the type 'GlassColors' • lib/ui/screens/screen_home.dart:189:96 • undefined_getter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:201:44 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_home.dart:205:45 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:208:20 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:227:73 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:230:75 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:233:49 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:258:28 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/screens/screen_home.dart:258:117 • undefined_getter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:265:44 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:265:105 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:274:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:276:52 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:282:40 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_home.dart:304:46 • extra_positional_arguments
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_home.dart:313:53 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:320:37 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:330:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:330:95 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:336:61 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_home.dart:370:44 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:372:34 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/screens/screen_home.dart:372:156 • undefined_getter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_home.dart:381:50 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:389:43 • invocation_of_non_function_expression
+  error • The getter 'lightTextPrimary' isn't defined for the type 'GlassColors' • lib/ui/screens/screen_home.dart:398:73 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_home.dart:412:55 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_home.dart:418:34 • invocation_of_non_function_expression
+   info • 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion • lib/ui/screens/screen_home.dart:449:31 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/screen_home.dart:453:21 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/ui/screens/screen_home.dart:454:42 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/screen_home.dart:481:23 • use_build_context_synchronously
+warning • Unused import: 'package:firebase_auth/firebase_auth.dart' • lib/ui/screens/screen_kanban.dart:6:8 • unused_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/ui/screens/screen_kanban.dart:7:8 • unnecessary_import
+warning • Unused import: 'dart:io' • lib/ui/screens/screen_kanban.dart:15:8 • unused_import
+warning • Unused import: 'dart:convert' • lib/ui/screens/screen_kanban.dart:16:8 • unused_import
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_kanban.dart:55:24 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_kanban.dart:55:28 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/ui/screens/screen_kanban.dart:55:33 • unnecessary_underscores
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:154:45 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_kanban.dart:205:71 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_kanban.dart:205:104 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_kanban.dart:216:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_kanban.dart:255:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_kanban.dart:257:54 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:262:37 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:276:42 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:279:18 • invocation_of_non_function_expression
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/ui/screens/screen_kanban.dart:291:42 • use_build_context_synchronously
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:308:44 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:312:18 • invocation_of_non_function_expression
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/ui/screens/screen_kanban.dart:323:42 • use_build_context_synchronously
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:396:42 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:401:24 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:408:24 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:413:42 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:422:37 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_kanban.dart:432:39 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_kanban.dart:438:56 • extra_positional_arguments
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/ui/screens/screen_kanban.dart:469:44 • use_build_context_synchronously
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_kanban.dart:502:46 • extra_positional_arguments
+warning • The value of the local variable 'primaryColor' isn't used • lib/ui/screens/screen_login.dart:15:11 • unused_local_variable
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:21:45 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_login.dart:33:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_login.dart:45:41 • deprecated_member_use
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_login.dart:59:56 • extra_positional_arguments_could_be_named
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_login.dart:76:55 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:87:32 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:96:32 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_login.dart:98:51 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:128:32 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:146:18 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:183:37 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_login.dart:190:32 • invocation_of_non_function_expression
+warning • Unused import: '../widgets/glass_widgets.dart' • lib/ui/screens/screen_profile.dart:8:8 • unused_import
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:70:45 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:78:40 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_profile.dart:89:63 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:115:32 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:151:46 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:159:44 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:172:44 • invocation_of_non_function_expression
+warning • The value of the local variable 'textCol' isn't used • lib/ui/screens/screen_profile.dart:208:11 • unused_local_variable
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_profile.dart:218:48 • extra_positional_arguments_could_be_named
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:222:67 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/screen_profile.dart:223:68 • deprecated_member_use
+warning • The value of the local variable 'textCol' isn't used • lib/ui/screens/screen_profile.dart:238:11 • unused_local_variable
+warning • The value of the local variable 'subCol' isn't used • lib/ui/screens/screen_profile.dart:239:11 • unused_local_variable
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/screens/screen_profile.dart:243:44 • extra_positional_arguments_could_be_named
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:248:30 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/screens/screen_profile.dart:249:30 • invocation_of_non_function_expression
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/ui/theme/glass_theme.dart:1:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:41:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:42:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:72:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:88:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:89:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:97:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:98:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:107:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:116:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:124:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:130:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:138:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:150:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:155:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:164:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:165:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:169:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:170:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:186:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:201:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:206:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:223:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:228:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:250:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:254:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/theme/glass_theme.dart:260:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_input_bar.dart:29:44 • deprecated_member_use
+  error • The getter 'lightBg' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_input_bar.dart:29:75 • undefined_getter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_input_bar.dart:31:34 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_input_bar.dart:48:56 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_input_bar.dart:51:28 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_input_bar.dart:56:34 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_input_bar.dart:57:81 • undefined_getter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_input_bar.dart:90:50 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_input_bar.dart:115:30 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_input_bar.dart:125:75 • undefined_getter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_input_bar.dart:142:46 • extra_positional_arguments
+  error • The named parameter 'isDark' isn't defined • lib/ui/widgets/chat_input_bar.dart:155:45 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_message_bubble.dart:54:64 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_message_bubble.dart:91:22 • invocation_of_non_function_expression
+  error • The getter 'lightTextPrimary' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_message_bubble.dart:94:75 • undefined_getter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_message_bubble.dart:162:34 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_message_bubble.dart:197:46 • extra_positional_arguments_could_be_named
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_message_bubble.dart:208:26 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_message_bubble.dart:226:30 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_message_bubble.dart:274:54 • deprecated_member_use
+   info • Unnecessary use of multiple underscores • lib/ui/widgets/chat_message_bubble.dart:280:33 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/ui/widgets/chat_message_bubble.dart:280:37 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:24:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:25:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:25:77 • deprecated_member_use
+  error • The getter 'lightTextPrimary' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_proposal_bubble.dart:26:72 • undefined_getter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_proposal_bubble.dart:57:54 • extra_positional_arguments
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:59:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:59:94 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_proposal_bubble.dart:74:36 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_proposal_bubble.dart:85:83 • undefined_getter
+   info • Unnecessary use of 'toList' in a spread • lib/ui/widgets/chat_proposal_bubble.dart:110:26 • unnecessary_to_list_in_spreads
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_proposal_bubble.dart:130:77 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:196:114 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/ui/widgets/chat_proposal_bubble.dart:214:12 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:218:105 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:285:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:285:71 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:287:45 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_proposal_bubble.dart:293:44 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:397:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:399:52 • deprecated_member_use
+   info • Unnecessary use of string interpolation • lib/ui/widgets/chat_proposal_bubble.dart:413:22 • unnecessary_string_interpolations
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:496:73 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:501:86 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:536:92 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:536:125 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:576:101 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:630:103 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:678:98 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:690:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:710:102 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_proposal_bubble.dart:710:135 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:23:67 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:40:16 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:44:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:44:80 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:58:51 • deprecated_member_use
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_widgets.dart:58:82 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:59:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:59:89 • deprecated_member_use
+  error • The getter 'lightTextSecondary' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_widgets.dart:62:103 • undefined_getter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:72:16 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_widgets.dart:76:67 • undefined_getter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_widgets.dart:118:50 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:133:32 • invocation_of_non_function_expression
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_widgets.dart:142:90 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:154:53 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:161:32 • invocation_of_non_function_expression
+  error • The getter 'lightTextSecondary' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_widgets.dart:164:94 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:190:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:190:74 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:192:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:192:93 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:201:20 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_widgets.dart:239:50 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:251:26 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:295:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:297:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:309:49 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:319:63 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:327:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:339:45 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:344:26 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/chat_widgets.dart:371:56 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/chat_widgets.dart:379:26 • invocation_of_non_function_expression
+  error • The getter 'lightTextSecondary' isn't defined for the type 'GlassColors' • lib/ui/widgets/chat_widgets.dart:382:81 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/chat_widgets.dart:445:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:194:82 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:195:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:204:103 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:229:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:229:87 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:230:105 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:259:92 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/widgets/dialog_task_detail.dart:287:39 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:339:57 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/widgets/dialog_task_detail.dart:363:37 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:395:58 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:396:48 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:442:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:442:89 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:464:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:464:84 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:466:72 • deprecated_member_use
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/ui/widgets/dialog_task_detail.dart:493:35 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:496:46 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:497:44 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:516:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:516:95 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/widgets/dialog_task_detail.dart:541:23 • use_build_context_synchronously
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ui/widgets/dialog_task_detail.dart:572:24 • unnecessary_null_comparison
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:579:47 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:580:35 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:581:35 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:582:36 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:583:35 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:584:35 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:585:52 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/ui/widgets/dialog_task_detail.dart:586:52 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:651:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:651:77 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:689:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:726:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:726:93 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:777:85 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/widgets/dialog_task_detail.dart:822:68 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:866:104 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:866:136 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/widgets/dialog_task_detail.dart:922:72 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:931:94 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:931:127 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:966:66 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:966:99 • deprecated_member_use
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ui/widgets/dialog_task_detail.dart:1063:64 • unnecessary_null_comparison
+warning • The '!' will have no effect because the receiver can't be null • lib/ui/widgets/dialog_task_detail.dart:1063:92 • unnecessary_non_null_assertion
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1083:83 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1085:76 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1097:101 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1097:127 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1123:82 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1123:115 • deprecated_member_use
+warning • The operand can't be 'null', so the condition is always 'true' • lib/ui/widgets/dialog_task_detail.dart:1127:60 • unnecessary_null_comparison
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1158:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1158:85 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1190:74 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1191:160 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1191:192 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1235:78 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1235:111 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/widgets/dialog_task_detail.dart:1277:41 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1318:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1324:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/dialog_task_detail.dart:1324:75 • deprecated_member_use
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/glass_widgets.dart:34:62 • extra_positional_arguments_could_be_named
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/glass_widgets.dart:76:43 • extra_positional_arguments
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/glass_widgets.dart:77:42 • extra_positional_arguments_could_be_named
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:151:82 • deprecated_member_use
+  error • The named parameter 'isDark' isn't defined • lib/ui/widgets/glass_widgets.dart:154:43 • undefined_named_parameter
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:165:26 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:209:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:209:79 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:212:26 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:252:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:253:32 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:256:24 • invocation_of_non_function_expression
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/ui/widgets/glass_widgets.dart:265:17 • use_null_aware_elements
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:270:28 • invocation_of_non_function_expression
+  error • The getter 'lightTextPrimary' isn't defined for the type 'GlassColors' • lib/ui/widgets/glass_widgets.dart:303:63 • undefined_getter
+  error • The getter 'lightTextMuted' isn't defined for the type 'GlassColors' • lib/ui/widgets/glass_widgets.dart:304:61 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:320:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:321:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:326:45 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:368:23 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:420:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/glass_widgets.dart:420:75 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:423:22 • invocation_of_non_function_expression
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/ui/widgets/glass_widgets.dart:449:15 • use_null_aware_elements
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/glass_widgets.dart:483:45 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:493:24 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/glass_widgets.dart:574:30 • invocation_of_non_function_expression
+warning • Unused import: '../../state_managers/state_tasks.dart' • lib/ui/widgets/kanban_widgets.dart:9:8 • unused_import
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/kanban_widgets.dart:52:54 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:60:28 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:62:28 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:62:98 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:145:32 • deprecated_member_use
+  error • The getter 'lightCard' isn't defined for the type 'GlassColors' • lib/ui/widgets/kanban_widgets.dart:146:23 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:147:55 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:147:74 • invocation_of_non_function_expression
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/kanban_widgets.dart:159:48 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:198:38 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:217:36 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:296:18 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:301:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:301:86 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:318:24 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:328:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:328:88 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:333:26 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:359:37 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:368:22 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:400:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:419:76 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:424:52 • deprecated_member_use
+  error • The named parameter 'isDark' isn't defined • lib/ui/widgets/kanban_widgets.dart:466:37 • undefined_named_parameter
+  error • Too many positional arguments: 0 expected, but 1 found • lib/ui/widgets/kanban_widgets.dart:467:38 • extra_positional_arguments
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:476:22 • invocation_of_non_function_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:503:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:505:41 • deprecated_member_use
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:514:20 • invocation_of_non_function_expression
+  error • The expression doesn't evaluate to a function, so it can't be invoked • lib/ui/widgets/kanban_widgets.dart:537:48 • invocation_of_non_function_expression
+   info • Unnecessary use of multiple underscores • lib/ui/widgets/kanban_widgets.dart:574:25 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/ui/widgets/kanban_widgets.dart:574:29 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:576:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/kanban_widgets.dart:576:71 • deprecated_member_use
+

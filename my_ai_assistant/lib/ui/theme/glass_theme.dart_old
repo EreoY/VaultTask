@@ -1,0 +1,125 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+/// Aether AI Design System (Premium Glassmorphism)
+/// Refined Abyssal Dark Palette with Misty Blue Accents
+
+class GlassColors {
+  // Aether AI Palette
+  static const Color background = Color(0xFF0F1418); // Abyssal Dark
+  static const Color surface = Color(0xFF1B2024);    // Surface Container
+  static const Color surfaceHighest = Color(0xFF30353A);
+  static const Color primary = Color(0xFFCCDEE7);   // Misty Blue
+  static const Color secondary = Color(0xFFBDC8D4); // Silver
+  static const Color tertiary = Color(0xFFCDDDE9);
+  static const Color outline = Color(0xFF43474A);    // Outline Variant
+  static const Color onSurface = Color(0xFFDFE3E9);
+  static const Color onSurfaceVariant = Color(0xFFC3C7CA);
+  
+  static const Color gold = Color(0xFFD5B370); // Luxury accent
+  static const Color success = Color(0xFF34D399);
+  static const Color warning = Color(0xFFFBBF24);
+  static const Color danger = Color(0xFFF87171);
+
+  // Legacy mappings for compatibility during migration
+  static const Color bgDeep = background;
+  static const Color bgCard = surface;
+  static const Color bgElevated = surfaceHighest;
+  static const Color bgHover = Color(0xFF262B2F);
+  static const Color textPrimary = onSurface;
+  static const Color textSecondary = onSurfaceVariant;
+  static const Color textMuted = Color(0xFF8D9194);
+  
+  static const Color navy = Color(0xFF22333A);
+  static const Color navyDeep = Color(0xFF0C1E24);
+
+  static Color glassBorder([bool isDark = true]) => outline.withOpacity(0.2);
+  static Color glassTint([bool isDark = true]) => primary.withOpacity(0.05);
+}
+
+class ExecutiveSpacing {
+  static const double unit = 8.0;
+  static const double xs = 4.0;
+  static const double s = 8.0;
+  static const double m = 16.0;
+  static const double l = 24.0;
+  static const double xl = 32.0;
+  static const double xxl = 48.0;
+  static const double stackSm = 12.0;
+  static const double stackMd = 32.0;
+  static const double containerPadding = 64.0;
+  
+  static const EdgeInsets screenPadding = EdgeInsets.symmetric(horizontal: 20, vertical: 16);
+  static const EdgeInsets desktopPadding = EdgeInsets.symmetric(horizontal: 64, vertical: 32);
+}
+
+class ExecutiveRadius {
+  static const double s = 4.0;
+  static const double m = 8.0;
+  static const double l = 12.0;
+  static const double xl = 16.0;
+  static const double circular = 100.0;
+}
+
+class GlassGradients {
+  static RadialGradient deepDepth([bool isDark = true]) => RadialGradient(
+    center: const Alignment(-0.8, -0.6),
+    radius: 1.5,
+    colors: [GlassColors.primary.withOpacity(0.05), GlassColors.background],
+  );
+
+  static LinearGradient background([bool isDark = true]) => const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [GlassColors.background, Color(0xFF0A0F13)],
+      );
+
+  static LinearGradient card([bool isDark = true]) => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          GlassColors.surface.withOpacity(0.4),
+          GlassColors.surface.withOpacity(0.2),
+        ],
+      );
+}
+
+class GlassDecorations {
+  static BoxDecoration surface({bool isDark = true, double radius = 16, bool hasShadow = false}) => BoxDecoration(
+        color: GlassColors.surface.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: GlassColors.glassBorder(), width: 0.8),
+        boxShadow: hasShadow ? [
+          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8)),
+        ] : [],
+      );
+
+  static BoxDecoration elevated({bool isDark = true, double radius = 16}) => BoxDecoration(
+        color: GlassColors.surfaceHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: GlassColors.glassBorder(), width: 1.0),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+      );
+
+  static BoxDecoration button({bool isDark = true, bool isGold = false}) {
+    return BoxDecoration(
+      color: isGold ? GlassColors.gold.withOpacity(0.1) : GlassColors.primary.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+      border: Border.all(color: isGold ? GlassColors.gold.withOpacity(0.2) : GlassColors.primary.withOpacity(0.2), width: 1),
+    );
+  }
+}
+
+class GlassText {
+  // Aether AI Headlines (Newsreader)
+  static TextStyle headline([bool isDark = true]) => GoogleFonts.newsreader(fontSize: 38, fontWeight: FontWeight.w400, color: GlassColors.primary, letterSpacing: -0.5);
+  static TextStyle title([bool isDark = true]) => GoogleFonts.newsreader(fontSize: 28, fontWeight: FontWeight.w400, color: GlassColors.onSurface);
+  static TextStyle boardTitle([bool isDark = true]) => GoogleFonts.newsreader(fontSize: 20, fontWeight: FontWeight.w400, color: GlassColors.onSurface);
+  
+  // Aether AI Body (Work Sans)
+  static TextStyle body([bool isDark = true]) => GoogleFonts.workSans(fontSize: 16, fontWeight: FontWeight.w400, color: GlassColors.onSurface, height: 1.6);
+  static TextStyle secondary([bool isDark = true]) => GoogleFonts.workSans(fontSize: 14, fontWeight: FontWeight.w400, color: GlassColors.onSurfaceVariant);
+  static TextStyle caption([bool isDark = true]) => GoogleFonts.workSans(fontSize: 12, fontWeight: FontWeight.w400, color: GlassColors.textMuted);
+  static TextStyle label([bool isDark = true]) => GoogleFonts.workSans(fontSize: 12, fontWeight: FontWeight.w600, color: GlassColors.primary, letterSpacing: 2.0);
+}
