@@ -15,6 +15,6 @@ class EnvConfig {
       }
       return 'http://localhost:8787';
     }
-    return 'https://calenda-api-worker.jitkhon1979.workers.dev';
+    return 'https://vaulttask-api-worker.jitkhon1979.workers.dev';
   }
 }

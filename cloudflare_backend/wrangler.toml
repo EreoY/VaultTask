@@ -1,12 +1,12 @@
-name = "calenda-api-worker"
+name = "vaulttask-api-worker"
 main = "cloudflare_worker.js"
 compatibility_date = "2024-03-14"
 account_id = "3cf3dea881cea4cdbe2aee3b5f2c8225"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "calenda-db"
-database_id = "7a5bc663-6cca-47a3-8346-ac7f402216bb"
+database_name = "vaulttask-db"
+database_id = "8d2ff36d-c37b-4ae5-b18e-3771142fb7c1"
 
 [durable_objects]
 bindings = [
