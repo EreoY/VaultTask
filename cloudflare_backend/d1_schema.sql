@@ -64,3 +64,35 @@ CREATE INDEX IF NOT EXISTS idx_team_boards_owner ON team_boards(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_team_workspaces_owner ON team_workspaces(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_board  ON team_tasks(board_id);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_due    ON team_tasks(due_date);
+
+-- Chat Sessions
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id TEXT PRIMARY KEY,
+  uid TEXT NOT NULL,
+  task_id TEXT DEFAULT '',
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at INTEGER DEFAULT 0,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+-- Chat Messages
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  text TEXT NOT NULL,
+  reasoning TEXT DEFAULT '',
+  is_user INTEGER NOT NULL,
+  has_draft INTEGER DEFAULT 0,
+  pending_call TEXT DEFAULT '',
+  tool_calls TEXT DEFAULT '[]',
+  attachments TEXT DEFAULT '[]',
+  timestamp TEXT NOT NULL,
+  FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+
+-- Chat Indexes
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_uid ON chat_sessions(uid);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_task ON chat_sessions(task_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+

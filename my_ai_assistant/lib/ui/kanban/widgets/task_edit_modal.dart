@@ -171,6 +171,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     for (final c in _assetNameControllers.values) {
       c.dispose();
     }
+    context.read<StateChat>().switchToGlobalContext();
     super.dispose();
   }
 

@@ -12,18 +12,59 @@ import 'package:google_generative_ai/google_generative_ai.dart' hide ChatSession
 
 // ─── StateChat ──────────────────────────────────────────────────────────────
 class StateChat extends ChangeNotifier {
-  final List<ChatMessage> _messages = [];
-  late MistyAgent _agent;
+  // Dual-Context State Variables
+  final List<ChatMessage> _globalMessages = [];
+  final List<ChatMessage> _taskMessages = [];
+  
+  late MistyAgent _globalAgent;
+  late MistyAgent _taskAgent;
+
   final String _provider = 'cf'; // Kept for compatibility if UI needs it
   final String _cfModel = MistyAgent.cfModelId;
 
-  bool _isTyping = false;
-  ProposalDraft? _draft;
+  bool _globalIsTyping = false;
+  bool _taskIsTyping = false;
+
+  ProposalDraft? _globalDraft;
+  ProposalDraft? _taskDraft;
+
+  final List<PlatformFile> _globalPendingFiles = [];
+  final List<PlatformFile> _taskPendingFiles = [];
 
   List<ChatSession> _globalSessions = [];
   ChatSession? _currentGlobalSession;
   String? _activeTaskId;
   final Map<String, String> _activeTaskSessionId = {};
+
+  // Getters that dynamically route to the active context (Global vs Task-specific)
+  List<ChatMessage> get _messages => _activeTaskId != null ? _taskMessages : _globalMessages;
+  MistyAgent get _agent => _activeTaskId != null ? _taskAgent : _globalAgent;
+  
+  bool get _isTyping => _activeTaskId != null ? _taskIsTyping : _globalIsTyping;
+  set _isTyping(bool val) {
+    if (_activeTaskId != null) {
+      _taskIsTyping = val;
+    } else {
+      _globalIsTyping = val;
+    }
+  }
+
+  ProposalDraft? get _draft => _activeTaskId != null ? _taskDraft : _globalDraft;
+  set _draft(ProposalDraft? val) {
+    if (_activeTaskId != null) {
+      _taskDraft = val;
+    } else {
+      _globalDraft = val;
+    }
+  }
+
+  List<PlatformFile> get _pendingFiles => _activeTaskId != null ? _taskPendingFiles : _globalPendingFiles;
+
+  // Public Getters
+  List<ChatMessage> get messages => _messages;
+  bool get isTyping => _isTyping;
+  ProposalDraft? get draft => _draft;
+  List<PlatformFile> get pendingFiles => _pendingFiles;
 
   List<ChatSession> get globalSessions => _globalSessions;
   ChatSession? get currentGlobalSession => _currentGlobalSession;
@@ -42,7 +83,8 @@ class StateChat extends ChangeNotifier {
   }
 
   Future<void> _initRouter() async {
-    _agent = MistyAgent();
+    _globalAgent = MistyAgent();
+    _taskAgent = MistyAgent();
   }
 
   Future<void> switchProvider(String provider) async {
@@ -74,8 +116,7 @@ class StateChat extends ChangeNotifier {
   }
 
   String? get currentApiKey => null; // Deprecated locally, uses backend proxy key
-  final List<PlatformFile> _pendingFiles = [];
-  List<PlatformFile> get pendingFiles => _pendingFiles;
+
   List<Map<String, String>> get pendingFileMaps => _pendingFiles.map((f) => {
     'name': f.name,
     'mime': _guessMimeType(f.name),
@@ -133,9 +174,7 @@ class StateChat extends ChangeNotifier {
     return map[ext] ?? 'application/octet-stream';
   }
 
-  List<ChatMessage> get messages => _messages;
-  bool get isTyping => _isTyping;
-  ProposalDraft? get draft => _draft;
+
 
   void addMessage(ChatMessage message) {
     _messages.insert(0, message);
@@ -145,7 +184,7 @@ class StateChat extends ChangeNotifier {
   void resetFullChat() async {
     final sessId = activeSessionId;
     if (sessId != null) {
-      await DbPersonalSqlite.instance.deleteChatSession(sessId);
+      await ApiCloudflare.deleteChatSession(sessId);
       if (_activeTaskId != null) {
         await startNewTaskSession(_activeTaskId!);
       } else {
@@ -197,7 +236,7 @@ class StateChat extends ChangeNotifier {
     );
 
     addMessage(userMsg);
-    await DbPersonalSqlite.instance.insertChatMessage(userMsg, sessId);
+    await ApiCloudflare.insertChatMessage(userMsg, sessId);
 
     _isTyping = true;
     notifyListeners();
@@ -247,7 +286,7 @@ class StateChat extends ChangeNotifier {
     );
     
     addMessage(aiMessage);
-    await DbPersonalSqlite.instance.insertChatMessage(aiMessage, sessId);
+    await ApiCloudflare.insertChatMessage(aiMessage, sessId);
 
     if (reply.stream != null) {
       // Handle streaming updates
@@ -280,7 +319,7 @@ class StateChat extends ChangeNotifier {
           toolCalls: aiMessage.toolCalls,
           timestamp: aiMessage.timestamp,
         );
-        await DbPersonalSqlite.instance.insertChatMessage(finalAiMsg, sessId);
+        await ApiCloudflare.insertChatMessage(finalAiMsg, sessId);
         if (reply.pendingCall != null) {
           _buildDraft(reply.pendingCall!);
         }
@@ -309,8 +348,8 @@ class StateChat extends ChangeNotifier {
   Future<void> loadGlobalSessions() async {
     final uid = AuthService().currentUser?.uid;
     if (uid == null) return;
-    final maps = await DbPersonalSqlite.instance.getChatSessions(uid, taskId: '');
-    _globalSessions = maps.map((m) => ChatSession.fromMap(m)).toList();
+    final sessions = await ApiCloudflare.getChatSessions(uid, taskId: '');
+    _globalSessions = sessions;
     if (_globalSessions.isNotEmpty) {
       await selectGlobalSession(_globalSessions.first);
     } else {
@@ -330,7 +369,7 @@ class StateChat extends ChangeNotifier {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
-    await DbPersonalSqlite.instance.insertChatSession(id, uid, 'New Session', taskId: '');
+    await ApiCloudflare.insertChatSession(id, uid, 'New Session', taskId: '');
     _globalSessions.insert(0, newSession);
     await selectGlobalSession(newSession);
   }
@@ -341,7 +380,7 @@ class StateChat extends ChangeNotifier {
     _messages.clear();
     _draft = null;
     _agent.resetSession();
-    final msgs = await DbPersonalSqlite.instance.getChatMessages(session.id);
+    final msgs = await ApiCloudflare.getChatMessages(session.id);
     _messages.addAll(msgs);
     final agentHistory = _convertMessagesToAgentHistory(msgs);
     _agent.setHistory(agentHistory);
@@ -355,13 +394,12 @@ class StateChat extends ChangeNotifier {
 
     String sessionId = _activeTaskSessionId[taskId] ?? '';
     if (sessionId.isEmpty) {
-      final maps = await DbPersonalSqlite.instance.getChatSessions(uid, taskId: taskId);
-      final sessions = maps.map((m) => ChatSession.fromMap(m)).toList();
+      final sessions = await ApiCloudflare.getChatSessions(uid, taskId: taskId);
       if (sessions.isNotEmpty) {
         sessionId = sessions.first.id;
       } else {
         sessionId = 'session_task_${taskId}_${DateTime.now().millisecondsSinceEpoch}';
-        await DbPersonalSqlite.instance.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
+        await ApiCloudflare.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
       }
       _activeTaskSessionId[taskId] = sessionId;
     }
@@ -369,7 +407,7 @@ class StateChat extends ChangeNotifier {
     _messages.clear();
     _draft = null;
     _agent.resetSession();
-    final msgs = await DbPersonalSqlite.instance.getChatMessages(sessionId);
+    final msgs = await ApiCloudflare.getChatMessages(sessionId);
     _messages.addAll(msgs);
     final agentHistory = _convertMessagesToAgentHistory(msgs);
     _agent.setHistory(agentHistory);
@@ -380,7 +418,7 @@ class StateChat extends ChangeNotifier {
     final uid = AuthService().currentUser?.uid;
     if (uid == null) return;
     final sessionId = 'session_task_${taskId}_${DateTime.now().millisecondsSinceEpoch}';
-    await DbPersonalSqlite.instance.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
+    await ApiCloudflare.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
     _activeTaskSessionId[taskId] = sessionId;
     
     _messages.clear();
@@ -390,8 +428,14 @@ class StateChat extends ChangeNotifier {
   }
 
   Future<void> renameSession(String sessionId, String newName) async {
-    await DbPersonalSqlite.instance.updateChatSessionName(sessionId, newName);
+    final uid = AuthService().currentUser?.uid;
+    if (uid == null) return;
     final idx = _globalSessions.indexWhere((s) => s.id == sessionId);
+    String taskId = '';
+    if (idx != -1) {
+      taskId = _globalSessions[idx].taskId;
+    }
+    await ApiCloudflare.insertChatSession(sessionId, uid, newName, taskId: taskId);
     if (idx != -1) {
       final old = _globalSessions[idx];
       _globalSessions[idx] = ChatSession(
@@ -410,7 +454,7 @@ class StateChat extends ChangeNotifier {
   }
 
   Future<void> deleteSession(String sessionId) async {
-    await DbPersonalSqlite.instance.deleteChatSession(sessionId);
+    await ApiCloudflare.deleteChatSession(sessionId);
     _globalSessions.removeWhere((s) => s.id == sessionId);
     if (_currentGlobalSession?.id == sessionId) {
       if (_globalSessions.isNotEmpty) {
@@ -422,6 +466,16 @@ class StateChat extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> switchToGlobalContext() async {
+    _activeTaskId = null;
+    if (_currentGlobalSession != null) {
+      await selectGlobalSession(_currentGlobalSession!);
+    } else {
+      await loadGlobalSessions();
+    }
+  }
+
 
   List<Map<String, dynamic>> _convertMessagesToAgentHistory(List<ChatMessage> msgs) {
     final chronological = msgs.reversed.toList();

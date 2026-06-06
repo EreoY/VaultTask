@@ -16,6 +16,33 @@ async function ensureSchema(db) {
       )
     `).run();
 
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        id TEXT PRIMARY KEY,
+        uid TEXT NOT NULL,
+        task_id TEXT DEFAULT '',
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at INTEGER DEFAULT 0
+      )
+    `).run();
+
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        reasoning TEXT DEFAULT '',
+        is_user INTEGER NOT NULL,
+        has_draft INTEGER DEFAULT 0,
+        pending_call TEXT DEFAULT '',
+        tool_calls TEXT DEFAULT '[]',
+        attachments TEXT DEFAULT '[]',
+        timestamp TEXT NOT NULL
+      )
+    `).run();
+
+
     try {
       await db.prepare(`ALTER TABLE team_boards ADD COLUMN workspace_id TEXT DEFAULT ''`).run();
     } catch (e) {
@@ -64,6 +91,97 @@ export default {
       const id = env.BOARD_HUB.idFromName(boardId);
       const stub = env.BOARD_HUB.get(id);
       return stub.fetch(request);
+    }
+
+    // CHAT SESSIONS ───────────────────────────
+    if (url.pathname === "/api/chat/sessions" && request.method === "GET") {
+      try {
+        const uid = url.searchParams.get("uid");
+        const taskId = url.searchParams.get("task_id") || "";
+        if (!uid) return json({ error: "Missing uid" }, 400);
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM chat_sessions WHERE uid = ? AND task_id = ? ORDER BY updated_at DESC`
+        ).bind(uid, taskId).all();
+        return json(results);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/chat/sessions" && request.method === "POST") {
+      try {
+        const { id, uid, name, task_id } = await request.json();
+        if (!id || !uid || !name) return json({ error: "Missing required fields" }, 400);
+        const now = nowMs();
+        const taskId = task_id || "";
+        await env.DB.prepare(
+          `INSERT INTO chat_sessions (id, uid, task_id, name, created_at, updated_at)
+           VALUES (?, ?, ?, ?, datetime('now'), ?)
+           ON CONFLICT(id) DO UPDATE SET name=excluded.name, updated_at=excluded.updated_at`
+        ).bind(id, uid, taskId, name, now).run();
+        return json({ success: true, id });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/chat/sessions" && request.method === "DELETE") {
+      try {
+        const id = url.searchParams.get("id");
+        if (!id) return json({ error: "Missing id" }, 400);
+        await env.DB.prepare(`DELETE FROM chat_messages WHERE session_id = ?`).bind(id).run();
+        await env.DB.prepare(`DELETE FROM chat_sessions WHERE id = ?`).bind(id).run();
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    // CHAT MESSAGES ───────────────────────────
+    if (url.pathname === "/api/chat/messages" && request.method === "GET") {
+      try {
+        const sessionId = url.searchParams.get("session_id");
+        if (!sessionId) return json({ error: "Missing session_id" }, 400);
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM chat_messages WHERE session_id = ? ORDER BY timestamp ASC`
+        ).bind(sessionId).all();
+        return json(results);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/chat/messages" && request.method === "POST") {
+      try {
+        const msg = await request.json();
+        const { id, session_id, text, reasoning, is_user, has_draft, pending_call, tool_calls, attachments, timestamp } = msg;
+        if (!id || !session_id || text === undefined) return json({ error: "Missing fields" }, 400);
+        
+        await env.DB.prepare(
+          `INSERT INTO chat_messages (id, session_id, text, reasoning, is_user, has_draft, pending_call, tool_calls, attachments, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          id,
+          session_id,
+          text,
+          reasoning || "",
+          is_user ? 1 : 0,
+          has_draft ? 1 : 0,
+          pending_call || "",
+          tool_calls || "[]",
+          attachments || "[]",
+          timestamp
+        ).run();
+
+        // Also update session updated_at
+        await env.DB.prepare(
+          `UPDATE chat_sessions SET updated_at = ? WHERE id = ?`
+        ).bind(nowMs(), session_id).run();
+
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
     }
 
     // USERS ──────────────────────────────────

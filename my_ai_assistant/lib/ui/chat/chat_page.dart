@@ -5,9 +5,6 @@ import '../../models/chat_model.dart';
 import '../../state_managers/state_chat.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
-import 'widgets/chat_widgets.dart';
-import 'widgets/chat_bubbles.dart';
-import 'widgets/chat_input.dart';
 import 'widgets/aether_chat_view.dart';
 
 class ChatPage extends StatefulWidget {
@@ -19,25 +16,14 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  bool _showSidebar = true;
-  bool _initialized = false;
+  bool _showSidebar = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StateChat>().ensureInitialized();
+      context.read<StateChat>().switchToGlobalContext();
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      final isWide = MediaQuery.of(context).size.width > 800;
-      _showSidebar = isWide;
-      _initialized = true;
-    }
   }
 
   @override
@@ -171,7 +157,12 @@ class _ChatPageState extends State<ChatPage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton.icon(
-              onPressed: () => stateChat.startNewGlobalSession(),
+              onPressed: () {
+                stateChat.startNewGlobalSession();
+                setState(() {
+                  _showSidebar = false;
+                });
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: GlassColors.primary.withOpacity(0.1),
                 foregroundColor: GlassColors.primary,
@@ -251,9 +242,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
             onTap: isEditing
                 ? null
-                : () {
-                    stateChat.selectGlobalSession(session);
-                  },
+                : () => _selectSession(session, stateChat),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -298,6 +287,13 @@ class _ChatPageState extends State<ChatPage> {
         );
       },
     );
+  }
+
+  void _selectSession(ChatSession session, StateChat stateChat) {
+    stateChat.selectGlobalSession(session);
+    setState(() {
+      _showSidebar = false;
+    });
   }
 }
 

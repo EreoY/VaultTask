@@ -6,6 +6,8 @@ import '../models/board_model.dart';
 import '../models/task_model.dart';
 import '../models/workspace_model.dart';
 import '../config/env_config.dart';
+import '../models/chat_model.dart';
+import 'package:google_generative_ai/google_generative_ai.dart' hide ChatSession;
 
 // DeltaResult is defined inline here (not imported) to avoid Flutter Web DDC
 // cross-file async return type issues (LegacyJavaScriptObject interop bug).
@@ -424,6 +426,127 @@ class ApiCloudflare {
       return WorkspaceModel.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     } else {
       throw Exception('Failed to join workspace: ${response.body}');
+    }
+  }
+
+  // ─── CHAT SYSTEM ──────────────────────────────────────
+
+  static Future<List<ChatSession>> getChatSessions(String uid, {String taskId = ''}) async {
+    final url = '$_base/api/chat/sessions?uid=$uid&task_id=$taskId';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is! List) return [];
+      return data.map((j) => ChatSession.fromMap(Map<String, dynamic>.from(j as Map))).toList();
+    } else {
+      throw Exception('Failed to get chat sessions: ${response.body}');
+    }
+  }
+
+  static Future<void> insertChatSession(String id, String uid, String name, {String taskId = ''}) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/chat/sessions'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': id,
+        'uid': uid,
+        'name': name,
+        'task_id': taskId,
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to insert chat session: ${response.body}');
+    }
+  }
+
+  static Future<void> deleteChatSession(String id) async {
+    final response = await http.delete(
+      Uri.parse('$_base/api/chat/sessions?id=$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete chat session: ${response.body}');
+    }
+  }
+
+  static Future<List<ChatMessage>> getChatMessages(String sessionId) async {
+    final url = '$_base/api/chat/messages?session_id=$sessionId';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is! List) return [];
+
+      List<ChatMessage> list = [];
+      for (final m in data) {
+        final pendingCallStr = m['pending_call'] as String? ?? '';
+        dynamic parsedPendingCall;
+        if (pendingCallStr.isNotEmpty) {
+          try {
+            final pMap = jsonDecode(pendingCallStr);
+            parsedPendingCall = FunctionCall(pMap['name'], Map<String, Object?>.from(pMap['arguments']));
+          } catch (_) {}
+        }
+
+        final toolCallsStr = m['tool_calls'] as String? ?? '[]';
+        List<ToolCallInfo> parsedToolCalls = [];
+        try {
+          final tcList = jsonDecode(toolCallsStr) as List;
+          parsedToolCalls = tcList.map((tc) => ToolCallInfo(
+            name: tc['name'].toString(),
+            arguments: Map<String, dynamic>.from(tc['arguments']),
+          )).toList();
+        } catch (_) {}
+
+        final attachmentsStr = m['attachments'] as String? ?? '[]';
+        List<Map<String, String>> parsedAttachments = [];
+        try {
+          final attList = jsonDecode(attachmentsStr) as List;
+          parsedAttachments = attList.map((a) => Map<String, String>.from(a)).toList();
+        } catch (_) {}
+
+        list.add(ChatMessage(
+          id: m['id'] as String,
+          text: m['text'] as String,
+          reasoning: m['reasoning'] as String?,
+          isUser: (m['is_user'] == 1),
+          hasDraft: (m['has_draft'] == 1),
+          pendingCall: parsedPendingCall,
+          toolCalls: parsedToolCalls,
+          attachments: parsedAttachments,
+          timestamp: DateTime.tryParse(m['timestamp'] as String? ?? '') ?? DateTime.now(),
+        ));
+      }
+      return list.reversed.toList();
+    } else {
+      throw Exception('Failed to get chat messages: ${response.body}');
+    }
+  }
+
+  static Future<void> insertChatMessage(ChatMessage message, String sessionId) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/chat/messages'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': message.id,
+        'session_id': sessionId,
+        'text': message.text,
+        'reasoning': message.reasoning ?? '',
+        'is_user': message.isUser ? 1 : 0,
+        'has_draft': message.hasDraft ? 1 : 0,
+        'pending_call': message.pendingCall != null ? jsonEncode({
+          'name': message.pendingCall.name,
+          'arguments': message.pendingCall.args,
+        }) : '',
+        'tool_calls': jsonEncode(message.toolCalls.map((tc) => {
+          'name': tc.name,
+          'arguments': tc.arguments,
+        }).toList()),
+        'attachments': jsonEncode(message.attachments),
+        'timestamp': message.timestamp.toIso8601String(),
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to insert chat message: ${response.body}');
     }
   }
 }

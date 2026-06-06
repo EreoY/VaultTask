@@ -1,7 +1,69 @@
+## Phase 97: Strict D1-based Chat Channel Separation & Sidebar UX
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงและบันทึกข้อมูลการสนทนา AI ขึ้น Cloudflare D1 แทน Local SQLite พร้อมพัฒนาสตรีมข้อความแยกและแยกการนำความจำไปใช้แบบอิสระใน StateChat เพื่อแยกความจำ AI สองฝั่ง 100% และปิด Sidebar อัตโนมัติ
+
+### Task 97.1: Add Chat Tables to D1 SQL Schema
+- **Status:** [x] Done
+- **Target Files:**
+    - `cloudflare_backend/d1_schema.sql`
+- **Action:** เพิ่มคำสั่งสร้างตาราง `chat_sessions` และ `chat_messages` ใน Schema
+- **Why:** เพื่อเพิ่มตารางในฐานข้อมูลส่วนกลางสำหรับรองรับประวัติแชท
+
+### Task 97.2: Implement Chat REST API Endpoints in Cloudflare Worker
+- **Status:** [x] Done
+- **Target Files:**
+    - `cloudflare_backend/cloudflare_worker.js`
+- **Action:** เพิ่ม HTTP API Endpoints สำหรับการเรียกดูและสร้าง Sessions/Messages ของการแชท
+- **Why:** ให้ฝั่ง Frontend สามารถบันทึกและดึงข้อมูลแชทผ่านเครือข่ายได้
+
+### Task 97.3: Implement Chat Network Services in ApiCloudflare
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/databases/api_cloudflare.dart`
+- **Action:** เขียนฟังก์ชันส่ง HTTP request ไปยัง API ของ Cloudflare Worker
+- **Why:** เป็นส่วนติดต่อรับส่งข้อมูลระยะไกล
+
+### Task 97.4: Develop Separated Global and Task Chat Streams in StateChat
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ปรับปรุง StateChat ให้ใช้ D1 APIs และแยกสตรีมประวัติตัวแปรของแชททั่วไปและแชทราย Task
+- **Why:** เพื่อให้ความคุยไม่ซ้อนทับและเก็บประวัติได้เรียบร้อย
+
+### Task 97.5: Update AetherChatView UI Context
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** ปรับปรุงให้เฝ้าดูและดึงข้อมูลจากตัวแปรสตรีม Global Chat
+- **Why:** ป้องกันการสลับข้อมูลเมื่อเปิดหน้าแชทหลัก
+
+### Task 97.6: Update TaskEditModal UI Context
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ปรับปรุงให้ดึงข้อมูลจากตัวแปรสตรีม Task Chat
+- **Why:** เพื่อแสดงประวัติแชทราย Task ที่ถูกต้อง
+
+### Task 97.7: Update ChatPage UI Context
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/chat/chat_page.dart`
+- **Action:** เปลี่ยนค่าเริ่มต้นให้ปิด Sidebar (`_showSidebar = false`) และสั่งรีเซ็ต Global Context
+- **Why:** ตอบสนองความต้องการด้านความสะอาดของ UI และการดึงข้อมูลประวัติ
+
+### Task 97.8: Database Migration & Local Verification
+- **Status:** [x] Done
+- **Action:** รันอัปเดต Schema ในเครื่อง และทดสอบการทำงานของแชทพร้อมวิเคราะห์ความถูกต้องด้วย `flutter analyze`
+- **Why:** เพื่อการันตีคุณภาพและความถูกต้องของระบบทั้งหมด
+
+---
+
 ## Phase 99: Desktop Modal Ergonomics, Overflow Prevention, and Concurrent Board Load Optimization
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
 > **Architecture Mandate:** ปรับโครงสร้างระบบโหลดบอร์ดพร้อมกันด้วย Completer ใน StateBoards, ปรับปรุงการแสดงผลโมดอลงานเป็น Centered Dialog บนหน้าจอกว้าง, ปรับแท็บคอลัมน์ขวาเป็น Wrap เพื่อแก้บัค Overflow และเพิ่มระบบ Bento Card Pagination บนหน้า Dashboard
+
 
 ### Task 99.1: Implement Completer lock in StateBoards.fetchAllBoards()
 - **Status:** [x] Done
