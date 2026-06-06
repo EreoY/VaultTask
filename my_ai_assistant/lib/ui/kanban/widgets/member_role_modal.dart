@@ -49,7 +49,7 @@ class _MemberRoleModalState extends State<MemberRoleModal> {
     
     return Container(
       padding: const EdgeInsets.all(48),
-      decoration: GlassDecorations.surface(radius: 32, hasShadow: true),
+      decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

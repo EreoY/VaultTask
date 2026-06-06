@@ -392,7 +392,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             final hasCover = coverImage != null && coverImage.url.isNotEmpty;
 
             return Container(
-              decoration: GlassDecorations.surface(radius: 32, hasShadow: true),
+              decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
               child: ListView(
                 controller: scrollController,
                 padding: EdgeInsets.zero,

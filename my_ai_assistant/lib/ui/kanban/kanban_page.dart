@@ -411,7 +411,7 @@ class _KanbanPageState extends State<KanbanPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(32),
-        decoration: GlassDecorations.surface(radius: 32),
+        decoration: GlassDecorations.solidSurface(radius: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,7 +553,7 @@ class _KanbanPageState extends State<KanbanPage> {
     showModalBottomSheet(
       context: context, backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(32), decoration: GlassDecorations.surface(radius: 24),
+        padding: const EdgeInsets.all(32), decoration: GlassDecorations.solidSurface(radius: 24),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('SELECT TARGET PHASE', style: GlassText.labelSM().copyWith(letterSpacing: 2)),
             const SizedBox(height: 24),
@@ -645,5 +645,5 @@ class _BoardInfoDialog extends StatelessWidget {
   final BoardModel board;
   const _BoardInfoDialog({required this.board});
   @override
-  Widget build(BuildContext context) => Center(child: Container(width: 400, padding: const EdgeInsets.all(32), decoration: GlassDecorations.surface(radius: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('BOARD ID', style: GlassText.labelSM()), IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))]), const SizedBox(height: 24), SelectableText(board.id, style: GlassText.bodyMD().copyWith(fontFamily: 'monospace', color: GlassColors.primary)), const SizedBox(height: 16), IconButton(icon: const Icon(Icons.copy), onPressed: () => Clipboard.setData(ClipboardData(text: board.id)))])));
+  Widget build(BuildContext context) => Center(child: Container(width: 400, padding: const EdgeInsets.all(32), decoration: GlassDecorations.solidSurface(radius: 24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('BOARD ID', style: GlassText.labelSM()), IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))]), const SizedBox(height: 24), SelectableText(board.id, style: GlassText.bodyMD().copyWith(fontFamily: 'monospace', color: GlassColors.primary)), const SizedBox(height: 16), IconButton(icon: const Icon(Icons.copy), onPressed: () => Clipboard.setData(ClipboardData(text: board.id)))])));
 }

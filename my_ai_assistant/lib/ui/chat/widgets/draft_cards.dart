@@ -322,7 +322,7 @@ class ProposalDraftCard extends StatelessWidget {
         builder: (context, setModalState) {
           return Container(
             padding: const EdgeInsets.all(32),
-            decoration: GlassDecorations.surface(radius: 24),
+            decoration: GlassDecorations.solidSurface(radius: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +366,7 @@ class ProposalDraftCard extends StatelessWidget {
         builder: (context, setModalState) {
           return Container(
             padding: const EdgeInsets.all(32),
-            decoration: GlassDecorations.surface(radius: 24),
+            decoration: GlassDecorations.solidSurface(radius: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,7 +434,7 @@ class ProposalDraftCard extends StatelessWidget {
         builder: (context, setModalState) {
           return Container(
             padding: const EdgeInsets.all(32),
-            decoration: GlassDecorations.surface(radius: 24),
+            decoration: GlassDecorations.solidSurface(radius: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -694,7 +694,7 @@ class _DashboardPageState extends State<DashboardPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.surface(radius: 24),
+          decoration: GlassDecorations.solidSurface(radius: 24),
           child: Material(
             color: Colors.transparent,
             child: Column(
@@ -778,7 +778,7 @@ class _DashboardPageState extends State<DashboardPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.surface(radius: 24),
+          decoration: GlassDecorations.solidSurface(radius: 24),
           child: Material(
             color: Colors.transparent,
             child: Column(

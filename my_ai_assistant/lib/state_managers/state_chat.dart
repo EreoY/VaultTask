@@ -32,6 +32,7 @@ class StateChat extends ChangeNotifier {
   final List<PlatformFile> _taskPendingFiles = [];
 
   List<ChatSession> _globalSessions = [];
+  List<ChatSession> _taskSessions = [];
   ChatSession? _currentGlobalSession;
   String? _activeTaskId;
   final Map<String, String> _activeTaskSessionId = {};
@@ -60,13 +61,20 @@ class StateChat extends ChangeNotifier {
 
   List<PlatformFile> get _pendingFiles => _activeTaskId != null ? _taskPendingFiles : _globalPendingFiles;
 
-  // Public Getters
-  List<ChatMessage> get messages => _messages;
-  bool get isTyping => _isTyping;
-  ProposalDraft? get draft => _draft;
-  List<PlatformFile> get pendingFiles => _pendingFiles;
+  // Public Getters (Global Context)
+  List<ChatMessage> get messages => _globalMessages;
+  bool get isTyping => _globalIsTyping;
+  ProposalDraft? get draft => _globalDraft;
+  List<PlatformFile> get pendingFiles => _globalPendingFiles;
+
+  // Public Getters (Task Context)
+  List<ChatMessage> get taskMessages => _taskMessages;
+  bool get isTaskTyping => _taskIsTyping;
+  ProposalDraft? get taskDraft => _taskDraft;
+  List<PlatformFile> get taskPendingFiles => _taskPendingFiles;
 
   List<ChatSession> get globalSessions => _globalSessions;
+  List<ChatSession> get taskSessions => _taskSessions;
   ChatSession? get currentGlobalSession => _currentGlobalSession;
   String? get activeTaskId => _activeTaskId;
   
@@ -117,7 +125,7 @@ class StateChat extends ChangeNotifier {
 
   String? get currentApiKey => null; // Deprecated locally, uses backend proxy key
 
-  List<Map<String, String>> get pendingFileMaps => _pendingFiles.map((f) => {
+  List<Map<String, String>> get pendingFileMaps => _globalPendingFiles.map((f) => {
     'name': f.name,
     'mime': _guessMimeType(f.name),
     'size': f.size.toString(),
@@ -131,7 +139,7 @@ class StateChat extends ChangeNotifier {
         withData: true,
       );
       if (result != null && result.files.isNotEmpty) {
-        _pendingFiles.addAll(result.files);
+        _globalPendingFiles.addAll(result.files);
         notifyListeners();
       }
     } catch (e) {
@@ -140,14 +148,14 @@ class StateChat extends ChangeNotifier {
   }
 
   void removeFile(int index) {
-    if (index >= 0 && index < _pendingFiles.length) {
-      _pendingFiles.removeAt(index);
+    if (index >= 0 && index < _globalPendingFiles.length) {
+      _globalPendingFiles.removeAt(index);
       notifyListeners();
     }
   }
 
   void clearPendingFiles() {
-    _pendingFiles.clear();
+    _globalPendingFiles.clear();
     notifyListeners();
   }
 
@@ -204,15 +212,15 @@ class StateChat extends ChangeNotifier {
   }
 
   // ─── Send message ──────────────────────────────────────────────────────────
-  Future<void> sendMessageToAI(String text, {String? boardId, TaskModel? activeTask}) async {
-    if (text.trim().isEmpty && _pendingFiles.isEmpty) return;
-    if (_isTyping) return;
+  Future<void> sendMessageToAI(String text, {String? boardId}) async {
+    if (text.trim().isEmpty && _globalPendingFiles.isEmpty) return;
+    if (_globalIsTyping) return;
 
-    final sessId = activeSessionId;
+    final sessId = _currentGlobalSession?.id;
     if (sessId == null) return;
 
     // Auto-rename session if it is a new global session and user sends first message
-    if (_activeTaskId == null && _currentGlobalSession != null && _currentGlobalSession!.name == 'New Session') {
+    if (_currentGlobalSession!.name == 'New Session') {
       final cleanText = text.trim();
       final words = cleanText.split(RegExp(r'\s+'));
       final limit = words.length > 5 ? 5 : words.length;
@@ -222,7 +230,7 @@ class StateChat extends ChangeNotifier {
       }
     }
 
-    final attachmentsToDisplay = _pendingFiles.map((f) => {
+    final attachmentsToDisplay = _globalPendingFiles.map((f) => {
       'name': f.name,
       'mime': _guessMimeType(f.name),
       'size': f.size.toString(),
@@ -235,15 +243,15 @@ class StateChat extends ChangeNotifier {
       attachments: attachmentsToDisplay,
     );
 
-    addMessage(userMsg);
+    _globalMessages.insert(0, userMsg);
     await ApiCloudflare.insertChatMessage(userMsg, sessId);
 
-    _isTyping = true;
+    _globalIsTyping = true;
     notifyListeners();
 
     // ─── Phase 2: R2 Upload Pipeline ──────────────────────────────────────────
     final List<Map<String, String>> uploadedAttachments = [];
-    final List<PlatformFile> filesToUpload = List.from(_pendingFiles);
+    final List<PlatformFile> filesToUpload = List.from(_globalPendingFiles);
     clearPendingFiles();
 
     for (final file in filesToUpload) {
@@ -268,10 +276,10 @@ class StateChat extends ChangeNotifier {
       }
     }
 
-    // Route to unified provider
-    final reply = await _agent.processMessageStream(text, attachments: uploadedAttachments, activeTask: activeTask);
+    // Route to unified provider using the global agent
+    final reply = await _globalAgent.processMessageStream(text, attachments: uploadedAttachments);
         
-    _isTyping = false;
+    _globalIsTyping = false;
 
     // Create the message object
     final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -285,7 +293,7 @@ class StateChat extends ChangeNotifier {
       toolCalls: reply.toolCalls,
     );
     
-    addMessage(aiMessage);
+    _globalMessages.insert(0, aiMessage);
     await ApiCloudflare.insertChatMessage(aiMessage, sessId);
 
     if (reply.stream != null) {
@@ -294,9 +302,9 @@ class StateChat extends ChangeNotifier {
       reply.stream!.listen((chunk) {
         fullText += chunk;
         // Update the message in the list
-        final index = _messages.indexWhere((m) => m.id == aiMessageId);
+        final index = _globalMessages.indexWhere((m) => m.id == aiMessageId);
         if (index != -1) {
-          _messages[index] = ChatMessage(
+          _globalMessages[index] = ChatMessage(
             id: aiMessageId,
             text: fullText,
             reasoning: aiMessage.reasoning,
@@ -328,8 +336,79 @@ class StateChat extends ChangeNotifier {
       if (reply.pendingCall != null) {
         await _buildDraft(reply.pendingCall!);
       } else {
-        _draft = null;
+        _globalDraft = null;
       }
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> sendTaskMessageToAI(String text, TaskModel activeTask) async {
+    if (text.trim().isEmpty) return;
+    if (_taskIsTyping) return;
+
+    final sessId = _activeTaskSessionId[activeTask.id];
+    if (sessId == null) return;
+
+    final userMsg = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      isUser: true,
+    );
+
+    _taskMessages.insert(0, userMsg);
+    await ApiCloudflare.insertChatMessage(userMsg, sessId);
+
+    _taskIsTyping = true;
+    notifyListeners();
+
+    // Route to unified provider using the task agent
+    final reply = await _taskAgent.processMessageStream(
+      text,
+      attachments: [],
+      activeTask: activeTask,
+    );
+
+    _taskIsTyping = false;
+
+    // Create the message object
+    final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+    final aiMessage = ChatMessage(
+      id: aiMessageId,
+      text: reply.text, // Could be empty if streaming
+      reasoning: reply.reasoning,
+      isUser: false,
+    );
+
+    _taskMessages.insert(0, aiMessage);
+    await ApiCloudflare.insertChatMessage(aiMessage, sessId);
+
+    if (reply.stream != null) {
+      // Handle streaming updates
+      String fullText = reply.text;
+      reply.stream!.listen((chunk) {
+        fullText += chunk;
+        final index = _taskMessages.indexWhere((m) => m.id == aiMessageId);
+        if (index != -1) {
+          _taskMessages[index] = ChatMessage(
+            id: aiMessageId,
+            text: fullText,
+            reasoning: aiMessage.reasoning,
+            isUser: false,
+            timestamp: aiMessage.timestamp,
+          );
+          notifyListeners();
+        }
+      }, onDone: () async {
+        final finalAiMsg = ChatMessage(
+          id: aiMessageId,
+          text: fullText,
+          reasoning: aiMessage.reasoning,
+          isUser: false,
+          timestamp: aiMessage.timestamp,
+        );
+        await ApiCloudflare.insertChatMessage(finalAiMsg, sessId);
+      });
     }
 
     notifyListeners();
@@ -377,53 +456,125 @@ class StateChat extends ChangeNotifier {
   Future<void> selectGlobalSession(ChatSession session) async {
     _currentGlobalSession = session;
     _activeTaskId = null;
-    _messages.clear();
-    _draft = null;
-    _agent.resetSession();
+    _globalMessages.clear();
+    _globalDraft = null;
+    _globalAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(session.id);
-    _messages.addAll(msgs);
+    _globalMessages.addAll(msgs);
     final agentHistory = _convertMessagesToAgentHistory(msgs);
-    _agent.setHistory(agentHistory);
+    _globalAgent.setHistory(agentHistory);
     notifyListeners();
   }
 
-  Future<void> selectTaskSession(String taskId) async {
+  Future<void> selectTaskSession(String taskId, {String? taskTitle}) async {
     _activeTaskId = taskId;
     final uid = AuthService().currentUser?.uid;
     if (uid == null) return;
 
+    final title = (taskTitle != null && taskTitle.isNotEmpty) ? taskTitle : 'Task Discussion';
+
     String sessionId = _activeTaskSessionId[taskId] ?? '';
+    final sessions = await ApiCloudflare.getChatSessions(uid, taskId: taskId);
+    _taskSessions = sessions;
+    
     if (sessionId.isEmpty) {
-      final sessions = await ApiCloudflare.getChatSessions(uid, taskId: taskId);
       if (sessions.isNotEmpty) {
         sessionId = sessions.first.id;
+        // Update session name if it has changed
+        if (taskTitle != null && sessions.first.name != taskTitle) {
+          await ApiCloudflare.insertChatSession(sessionId, uid, title, taskId: taskId);
+          final idx = _taskSessions.indexWhere((s) => s.id == sessionId);
+          if (idx != -1) {
+            final old = _taskSessions[idx];
+            _taskSessions[idx] = ChatSession(
+              id: old.id,
+              uid: old.uid,
+              taskId: old.taskId,
+              name: title,
+              createdAt: old.createdAt,
+              updatedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+          }
+        }
       } else {
         sessionId = 'session_task_${taskId}_${DateTime.now().millisecondsSinceEpoch}';
-        await ApiCloudflare.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
+        await ApiCloudflare.insertChatSession(sessionId, uid, title, taskId: taskId);
+        final newSess = ChatSession(
+          id: sessionId,
+          uid: uid,
+          taskId: taskId,
+          name: title,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
+        _taskSessions = [newSess];
       }
       _activeTaskSessionId[taskId] = sessionId;
+    } else {
+      if (taskTitle != null && taskTitle.isNotEmpty) {
+        await ApiCloudflare.insertChatSession(sessionId, uid, title, taskId: taskId);
+        final idx = _taskSessions.indexWhere((s) => s.id == sessionId);
+        if (idx != -1) {
+          final old = _taskSessions[idx];
+          _taskSessions[idx] = ChatSession(
+            id: old.id,
+            uid: old.uid,
+            taskId: old.taskId,
+            name: title,
+            createdAt: old.createdAt,
+            updatedAt: DateTime.now().millisecondsSinceEpoch,
+          );
+        }
+      }
     }
 
-    _messages.clear();
-    _draft = null;
-    _agent.resetSession();
+    _taskMessages.clear();
+    _taskDraft = null;
+    _taskAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(sessionId);
-    _messages.addAll(msgs);
+    _taskMessages.addAll(msgs);
     final agentHistory = _convertMessagesToAgentHistory(msgs);
-    _agent.setHistory(agentHistory);
+    _taskAgent.setHistory(agentHistory);
     notifyListeners();
   }
 
-  Future<void> startNewTaskSession(String taskId) async {
+  Future<void> startNewTaskSession(String taskId, {String? taskTitle}) async {
     final uid = AuthService().currentUser?.uid;
     if (uid == null) return;
+    final title = (taskTitle != null && taskTitle.isNotEmpty) ? taskTitle : 'Task Discussion';
     final sessionId = 'session_task_${taskId}_${DateTime.now().millisecondsSinceEpoch}';
-    await ApiCloudflare.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
+    
+    final newSessionName = '$title (เสสชัน ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')})';
+    await ApiCloudflare.insertChatSession(sessionId, uid, newSessionName, taskId: taskId);
     _activeTaskSessionId[taskId] = sessionId;
     
-    _messages.clear();
-    _draft = null;
-    _agent.resetSession();
+    final newSess = ChatSession(
+      id: sessionId,
+      uid: uid,
+      taskId: taskId,
+      name: newSessionName,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    _taskSessions.insert(0, newSess);
+    
+    _taskMessages.clear();
+    _taskDraft = null;
+    _taskAgent.resetSession();
+    notifyListeners();
+  }
+
+  Future<void> switchTaskSession(String taskId, String sessionId) async {
+    _activeTaskId = taskId;
+    _activeTaskSessionId[taskId] = sessionId;
+    
+    _taskMessages.clear();
+    _taskDraft = null;
+    _taskAgent.resetSession();
+    final msgs = await ApiCloudflare.getChatMessages(sessionId);
+    _taskMessages.addAll(msgs);
+    final agentHistory = _convertMessagesToAgentHistory(msgs);
+    _taskAgent.setHistory(agentHistory);
     notifyListeners();
   }
 

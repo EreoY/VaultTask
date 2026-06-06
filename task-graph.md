@@ -1676,3 +1676,192 @@
 - **Status:** [x] Done
 - **Action:** รันคำสั่ง `flutter analyze` ตรวจสอบความถูกต้องและทดลองใช้งานแอปพลิเคชัน
 - **Why:** รับประกันคุณภาพและยืนยันการแก้ปัญหาอย่างแท้จริง
+
+## Phase 102: Split-Pane Modal Layout & StateChat Integration
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+
+### Task 102.1: Context & Graph Update
+- **Status:** [x] Done
+- **Target File:** `task-graph.md`
+- **Action:** บันทึกโครงงาน Phase 102 และตั้งผังการดำเนินงานย่อยในระบบภาษาไทย
+- **Why:** เพื่อแสดงจุดยืนเชิงโครงสร้างและความถูกต้องตามข้อกำหนด Sovereign Protocol
+
+### Task 102.2: Add taskSessions State to StateChat
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เพิ่มฟิลด์ `_taskSessions` และพฤติกรรมดึงรายการประวัติสนทนาใน `selectTaskSession` พร้อมเมธอด `switchTaskSession`
+- **Why:** เพื่อป้อนประวัติเซสชันแชททั้งหมดให้โมดอลรายละเอียดงานแสดงในแถบเมนู
+
+### Task 102.3: Set Initial Tab to Chat in TaskEditModal
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** กำหนด `_activeTab = 1` เพื่อเปิดหน้าแชท (Chat) เป็นหน้าหลักเสมอเมื่อเข้าสู่หน้ารายละเอียดงาน
+- **Why:** เพื่อให้สอดคล้องกับพฤติกรรมการเปิดการแชทก่อนของแอปพลิเคชัน
+
+### Task 102.4: Build Icon-Only Glassmorphic Toggle and Dynamic Sidebar Header
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** สร้างปุ่ม Toggle ที่แสดงไอคอนเท่านั้น และสลับหัวข้อ dynamic ระหว่าง "Agent QA Discussion" และ "ประวัติคอมเม้น" บนขอบแถบแชทขวา
+- **Why:** ปรับโครงสร้างและการนำทางให้รวดเร็วและเป็นระเบียบตามความต้องการ
+
+### Task 102.5: Restructure Left Column Header Layout
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ปรับเลย์เอาต์ Header ฝั่งซ้ายให้แสดง Checkbox ติ๊กถูกสำหรับ `isCompleted`, Status Badge ของคอลัมน์ และปุ่ม "ลบการ์ด" (ไม่มีปุ่มแก้ไข)
+- **Why:** เพื่อจัดวางองค์ประกอบให้ประณีตและปรับปรุงขีดความสามารถการทำเครื่องหมายเสร็จสิ้นจากภายในโมดอล
+
+### Task 102.6: Design Darker Right Sidebar Panel & Close Button
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เพิ่มสไตล์สีพื้นหลังของ Sidebar ขวาให้มีความเข้มเด่นชัด (เช่น `Colors.black.withOpacity(0.18)` หรือออกเทาเข้ม) พร้อมติดตั้งปุ่มปิด `X` ขวาสุดของ Header คอลัมน์ขวา
+- **Why:** เพื่อให้เกิด visual separation ที่ดีระหว่างฟอร์มข้อมูลและการพูดคุย
+
+### Task 102.7: Click Outside to Close & Dimensional Update
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** หุ้ม Desktop Container ด้วย GestureDetector ทั่วทั้ง Backdrop เพื่อปิดหน้าต่างเมื่อแตะนอกกรอบ พร้อมขยายความกว้างสูงสุดเป็น 1250
+- **Why:** เพิ่มมิติความเรียบง่ายและใช้งานสะดวกตามมาตรฐาน Desktop UX
+
+### Task 102.8: Empirical Verification
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบ Syntax และตรวจสอบความถูกต้องของ layout
+- **Why:** รับประกันความเสถียรและความถูกต้องของซอร์สโค้ดทั้งหมด
+
+## Phase 103: Task Edit Modal Layout Polish & Crash Prevention
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** จัดระเบียบเลย์เอาต์ Task Edit Modal ตามที่ผู้ใช้ระบุ พร้อมแก้ไขบั๊ก Dropdown ล่มแบบ Surgical Update (ValueNotifier)
+
+### Task 103.1: Bulletproof Dropdown Value Check
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ป้องกันแอปพังช่วง Pop/Disposal Transition โดยแปลง `value` ของ DropdownButton เป็น `sessions.any((s) => s.id == activeSessionId) ? activeSessionId : null`
+- **Why:** เพื่อแก้ปัญหา `Assertion failed: items == null || items.isEmpty || value == null || items.where((DropdownMenuItem<T> item) { return item.value == value; }).length == 1`
+
+### Task 103.2: Refactor Left Column Header & Title Layout
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** 
+    - ปรับปรุง `_buildHeader()` ลบคำว่า `STRATEGIC TASK` (สตาติสติกทาร์ค) และ Checkbox ตัวเดิมออก เหลือเฉพาะ Column Badge ปุ่มลบ และปุ่มปิด
+    - ปรับปรุงการแสดงผลหัวข้อในเนื้อหาหลัก: สร้าง `Row` ล้อมรอบ Task Title โดยใช้ `ValueListenableBuilder<TaskModel>` สวมครอบ Checkbox ขนาดใหญ่ (Transform.scale) เพื่อให้อัปเดตสถานะแบบเรียลไทม์ทันทีในป็อปอัป
+- **Why:** เพื่อตอบสนองต่อเลย์เอาต์ที่คลีน สะอาดตา ตามความต้องการของผู้ใช้ และแก้ไขปัญหาปุ่มติ๊กไม่อัปเดตสถานะในป็อปอัปโดยตรง
+
+### Task 103.3: Empirical Verification
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และไม่มีข้อผิดพลาดของซอร์สโค้ด
+- **Why:** เพื่อรับรองคุณภาพและความเสถียรของแอปพลิเคชันหลังทำการอัปเดตสไตล์และแก้ไขบั๊กทั้งหมด
+
+## Phase 104: Split Layout for Task Edit Modal & Premium Dropdown Menu
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับดีไซน์ Right Column ของ Task Edit Modal ให้เป็นแบบ Split-Screen พื้นหลังแยกสี แทนการใช้ Card-in-Card ซ้อนทับ และออกแบบ Dropdown สำหรับ Session Selector ให้มินิมอลและพรีเมียมยิ่งขึ้น
+
+### Task 104.1: Refactor Task Modal Desktop Layout to Split Screen
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:**
+  - ย้าย `Padding` ของ `mainBody` เข้าไปใน Left Column และ Right Column
+  - กำหนดให้ `Row` ฝั่ง Desktop มี `crossAxisAlignment: CrossAxisAlignment.stretch`
+  - ปรับปรุงการออกแบบ Container ของ Right Column ให้ขยายสุดขอบและมีขอบโค้งมนเฉพาะมุมขวาบน/ขวาแยกสีพื้นหลังเด่นชัด
+- **Why:** เพื่อกำจัดการซ้อนการ์ด (Card inside Card) ที่ดูอึดอัด และแบ่งพาร์ทป็อปอัปครึ่งต่อครึ่งแบบสะอาดตาและสวยงามตามดีไซน์หลัก
+
+### Task 104.2: Replace Default Dropdown with Modern PopupMenuButton
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:**
+  - แปลง `DropdownButton` เป็น `PopupMenuButton<String>`
+  - ตกแต่งสไตล์ของ Toggle Button ให้ดูมินิมอลด้วยกรอบจางและลูกศรเรียบง่าย
+  - ปรับสไตล์ลิสต์เมนูย่อยของเซสชันให้น่าอ่านและไฮไลท์เซสชันที่แอคทีฟด้วยสีแบรนด์และไอคอนติ๊กถูก
+- **Why:** เพื่อยกระดับความพรีเมียม (Premium Aesthetics) และความใช้งานง่ายตามเป้าหมายของ Calenda
+
+### Task 104.3: Verification and Build Validation
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความถูกต้องของสไตล์ลิสต์และโครงสร้างภาษา
+- **Why:** รับประกันความเสถียร 100% ปราศจาก Compile errors หรือข้อผิดพลาดทางเลย์เอาต์
+
+## Phase 105: Layout Adjustments & Exception Fix
+- **Goal:** แก้ไขข้อผิดพลาด "Looking up a deactivated widget's ancestor is unsafe" ใน dispose และปรับขนาดข้อความชื่อคอลลั้มฝั่งซ้ายบนให้ชัดเจนยิ่งขึ้น
+
+### Task 105.1: Store StateChat Reference in didChangeDependencies
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:**
+  - เพิ่มตัวแปร `late StateChat _stateChat` ในสถานะคลาส `_TaskEditModalState`
+  - ทำการเซฟค่าอ้างอิง `_stateChat = context.read<StateChat>()` หรือ `Provider.of<StateChat>(context, listen: false)` ใน `didChangeDependencies()`
+  - อัปเดต `dispose()` ให้เรียกใช้ `_stateChat.switchToGlobalContext()` หลีกเลี่ยงการใช้งาน `context`
+- **Why:** ป้องกันการเกิดข้อยกเว้นตอนปิดป๊อปอัป เนื่องจาก widget ถูก deactivated ไปแล้ว
+
+### Task 105.2: Enlarge Column Name Badge in _buildHeader
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:**
+  - ปรับดีไซน์ของ Badge ชื่อคอลลั้มมุมซ้ายบนให้ใหญ่ขึ้น ชัดเจนขึ้น และใช้คู่สีแบรนด์
+- **Why:** ทำให้อ่านหัวข้อของการ์ดระบุคอลลั้มได้ง่ายและชัดเจนขึ้นตามความต้องการของผู้ใช้
+
+### Task 105.3: Verification and Build Validation
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` ตรวจสอบความถูกต้องและทดสอบระบบ
+- **Why:** มั่นใจในเสถียรภาพและคุณภาพระดับสูงของโปรเจกต์ Calenda
+
+## Phase 106: Task Title Wrapping in Edit Popup
+- **Goal:** ปรับปรุงช่องกรอกหัวข้อการ์ดงาน (Task Title) ในป๊อปอัปให้แสดงผลและแก้ไขแบบขึ้นบรรทัดใหม่ (Wrap) ได้เมื่อข้อความยาวเกินไป
+
+### Task 106.1: Allow multi-line title input in task_edit_modal.dart
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:**
+  - เปลี่ยนพารามิเตอร์ `maxLines` ใน `_buildTextField` เป็น nullable (`int? maxLines`)
+  - อัปเดต `_buildTitleSection` ให้ส่ง `maxLines: null` และ `textInputAction: TextInputAction.done` เพื่อให้หัวข้อการ์ดสามารถตัดคำขึ้นบรรทัดใหม่ได้แบบไม่จำกัดบรรทัด และยังคงส่งคำสั่ง Done คีย์บอร์ดได้ปกติ
+- **Why:** ช่วยให้การแก้ไขหัวข้อที่มีข้อความยาวๆ เป็นไปอย่างสะดวกและอ่านง่ายขึ้น
+
+### Task 106.2: Run analysis and verify build status
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` ตรวจสอบและทดสอบการรันเครื่องมือ
+- **Why:** มั่นใจในเสถียรภาพและความสมบูรณ์ของโค้ดที่แก้ไขใหม่
+
+## Phase 107: Solid Opaque Overlays for Improved Readability
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับเปลี่ยนพื้นหลังของ Popups, Dialogs, Dropdown Pickers, และ Bottom Sheets จากแบบ Glassmorphic (กึ่งโปร่งใส) เป็นแบบ Solid Opaque (ทึบแสง) เพื่อเพิ่มความชัดเจน คอนทราสต์ และความง่ายในการอ่าน ป้องกันไม่ให้ข้อความพื้นหลังแสดงทะลุขึ้นมาซ้อนทับกัน
+
+### Task 107.1: Convert Task Edit Modal Pickers to Opaque
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** อัปเดต `_showFullImage`, `_pickStatus`, `_pickLabels`, และ `_pickMembers` โดยเปลี่ยนการใช้ `GlassDecorations.surface` เป็น `GlassDecorations.solidSurface`
+- **Why:** เพื่อแก้ปัญหารายการตัวเลือกและรูปภาพที่ซ้อนทับอยู่ด้านบนมีความโปร่งแสง ทำให้อ่านยาก
+
+### Task 107.2: Convert Kanban Page Menus/Dialogs to Opaque
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** อัปเดต `_showOperativeFilterMenu`, `_showMoveMenu`, และ `_BoardInfoDialog` ให้ใช้ `GlassDecorations.solidSurface`
+- **Why:** เพื่อปรับปรุงความคมชัดและการแบ่งสัดส่วนเลเยอร์ให้ดียิ่งขึ้น
+
+### Task 107.3: Convert Column and Member Modals to Opaque
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/column_edit_modal.dart`, `my_ai_assistant/lib/ui/kanban/widgets/member_role_modal.dart`
+- **Action:** เปลี่ยนพื้นหลังของคอนเทนเนอร์หลักจาก `GlassDecorations.surface` เป็น `GlassDecorations.solidSurface`
+- **Why:** หน้าต่างแก้ไขคอลัมน์และจัดการบทบาทสมาชิกต้องมีความทึบแสงและชัดเจนเมื่อเปิดซ้อนทับบน Kanban board
+
+### Task 107.4: Convert Calendar Preview to Opaque
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** อัปเดต `_showStrategicPreview` ให้ใช้ `GlassDecorations.solidSurface`
+- **Why:** แก้ไขปัญหารายการพรีวิวของวันที่บนปฏิทินแสดงทะลุไปเห็นเส้นตารางเวลาและกล่องกิจกรรมด้านหลัง
+
+### Task 107.5: Convert Chat Draft Card Pickers to Opaque
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/draft_cards.dart`
+- **Action:** ปรับเปลี่ยน `_showColumnPicker`, `_showMemberPicker`, และ `_showLabelPicker` ให้ใช้ `GlassDecorations.solidSurface`
+- **Why:** ป้องกันไม่ให้แชทบับเบิ้ลและประวัติแชทด้านหลังทะลุมาแย่งสายตากับรายการปุ่มกดในดรอปดาวน์/บอตทอมชีตของแชทการ์ดร่าง
+
+### Task 107.6: Convert Dashboard Workspace Dialogs to Opaque
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** อัปเดต `_showJoinWorkspaceDialog` และ `_showRenameWorkspaceDialog` ให้ใช้ `GlassDecorations.solidSurface`
+- **Why:** ปรับปรุง UI การเข้าร่วมและเปลี่ยนชื่อเวิร์กสเปซให้น่าอ่านและคมเข้มขึ้น
+
+### Task 107.7: Verification and Build Validation
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และเสถียรภาพของโค้ด
+- **Why:** ตรวจสอบให้มั่นใจว่าไม่มี Compile errors หรือ Syntax issue จากการแก้ไขตกแต่งสไตล์ครั้งนี้

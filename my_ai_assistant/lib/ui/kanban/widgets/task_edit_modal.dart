@@ -92,13 +92,20 @@ class _TaskEditModalState extends State<TaskEditModal> {
   List<TaskComment> _comments = [];
   bool _isSaving = false;
   bool _isUploading = false;
-  int _activeTab = 0;
+  int _activeTab = 1;
   final _taskChatController = TextEditingController();
 
   Map<String, Map<String, String>> _availableMembers = {};
   
   // 🔄 Real-time listener for task updates while popup is open
   ValueNotifier<TaskModel>? _taskNotifier;
+  late StateChat _stateChat;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _stateChat = context.read<StateChat>();
+  }
 
   @override
   void initState() {
@@ -129,7 +136,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     if (widget.existingTask != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _refreshTaskData();
-        context.read<StateChat>().selectTaskSession(widget.existingTask!.id);
+        context.read<StateChat>().selectTaskSession(widget.existingTask!.id, taskTitle: widget.existingTask!.title);
       });
       
       // 🔄 Listen to real-time task updates while popup is open
@@ -171,7 +178,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     for (final c in _assetNameControllers.values) {
       c.dispose();
     }
-    context.read<StateChat>().switchToGlobalContext();
+    _stateChat.switchToGlobalContext();
     super.dispose();
   }
 
@@ -328,82 +335,111 @@ class _TaskEditModalState extends State<TaskEditModal> {
             _dueDate = updatedTask.dueDate;
           }
 
-          final mainBody = Padding(
-            padding: const EdgeInsets.all(48),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Left Column (Task Edit Form)
-                Expanded(
-                  flex: 5,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 48),
-                        _buildTextField(
-                          controller: _titleController,
-                          hint: 'Task Title',
-                          style: GlassText.headlineLG().copyWith(fontSize: 38),
-                          maxLines: 1,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildMetadataStrip(currentBoard),
-                        const SizedBox(height: 32),
-                        _buildTextField(
-                          controller: _descController,
-                          focusNode: _descFocusNode,
-                          hint: 'Add a strategic description...',
-                          style: GlassText.bodyLG().copyWith(fontSize: 18, color: GlassColors.onSurface.withOpacity(0.7)),
-                          maxLines: 12,
-                        ),
-                        const SizedBox(height: 48),
-                        _buildSectionTitle('OPERATIONAL ASSETS'),
-                        const SizedBox(height: 24),
-                        _buildVerticalAssetList(),
-                        const SizedBox(height: 80),
-                        if (widget.existingTask == null)
-                           _buildGhostButton('CREATE STRATEGIC TASK', _handleExplicitSave, isPrimary: true),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 48),
-                // Vertical Divider
-                Container(
-                  width: 1,
-                  height: double.infinity,
-                  color: GlassColors.ghostBorder,
-                ),
-                const SizedBox(width: 48),
-                // Right Column (Comments / Chat)
-                Expanded(
-                  flex: 4,
-                  child: widget.existingTask != null
-                      ? _buildRightTabSection(isDesktop: true)
-                      : Center(
-                          child: Text(
-                            'บันทึกงานนี้ก่อนเพื่อเริ่มการสนทนาและเขียนคอมเม้น',
-                            style: GlassText.bodyMD().copyWith(
-                              color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-                            ),
+          final mainBody = Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left Column (Task Edit Form)
+              Expanded(
+                flex: 8,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(isDesktop: true),
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildTitleSection(isDesktop: true),
+                              const SizedBox(height: 16),
+                              _buildMetadataStrip(currentBoard),
+                              const SizedBox(height: 32),
+                              _buildTextField(
+                                controller: _descController,
+                                focusNode: _descFocusNode,
+                                hint: 'Add a strategic description...',
+                                style: GlassText.bodyLG().copyWith(fontSize: 18, color: GlassColors.onSurface.withOpacity(0.7)),
+                                maxLines: 12,
+                              ),
+                              const SizedBox(height: 48),
+                              _buildSectionTitle('OPERATIONAL ASSETS'),
+                              const SizedBox(height: 24),
+                              _buildVerticalAssetList(),
+                              const SizedBox(height: 80),
+                              if (widget.existingTask == null)
+                                 _buildGhostButton('CREATE STRATEGIC TASK', _handleExplicitSave, isPrimary: true),
+                            ],
                           ),
                         ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+              // Right Column (Comments / Chat)
+              Expanded(
+                flex: 5,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.2),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                    border: Border(
+                      left: BorderSide(
+                        color: GlassColors.outlineVariant.withOpacity(0.15),
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
+                    child: widget.existingTask != null
+                        ? _buildRightTabSection(isDesktop: true)
+                        : Center(
+                            child: Text(
+                              'บันทึกงานนี้ก่อนเพื่อเริ่มการสนทนาและเขียนคอมเม้น',
+                              style: GlassText.bodyMD().copyWith(
+                                color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
           );
 
           return Material(
             color: Colors.transparent,
-            child: Center(
-              child: Container(
-                width: 1100,
-                height: MediaQuery.of(context).size.height * 0.85,
-                decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
-                child: mainBody,
-              ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Container(color: Colors.transparent),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: 1250,
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
+                    child: GestureDetector(
+                      onTap: () {}, // Prevent pop on clicking container
+                      child: mainBody,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -485,12 +521,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 32),
-                        _buildTextField(
-                          controller: _titleController,
-                          hint: 'Task Title',
-                          style: GlassText.headlineLG().copyWith(fontSize: 32),
-                          maxLines: 1,
-                        ),
+                        _buildTitleSection(isDesktop: false),
                         const SizedBox(height: 16),
                         _buildMetadataStrip(currentBoard),
                         const SizedBox(height: 24),
@@ -528,13 +559,31 @@ class _TaskEditModalState extends State<TaskEditModal> {
     }
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader({bool isDesktop = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          widget.existingTask != null ? 'STRATEGIC TASK' : 'NEW STRATEGIC TASK',
-          style: GlassText.labelSM().copyWith(letterSpacing: 2.0, color: GlassColors.primary),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: GlassColors.primary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                border: Border.all(color: GlassColors.primary.withOpacity(0.3)),
+              ),
+              child: Text(
+                _status.toUpperCase(),
+                style: GlassText.labelSM().copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: GlassColors.primary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ],
         ),
         Row(
           children: [
@@ -546,11 +595,12 @@ class _TaskEditModalState extends State<TaskEditModal> {
                   if (mounted) Navigator.pop(context);
                 },
               ),
-            IconButton(
-              icon: const Icon(Icons.close_rounded, size: 24),
-              onPressed: () => Navigator.pop(context),
-              color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-            ),
+            if (!isDesktop || widget.existingTask == null)
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 24),
+                onPressed: () => Navigator.pop(context),
+                color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+              ),
           ],
         ),
       ],
@@ -687,7 +737,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          decoration: GlassDecorations.surface(radius: 24),
+          decoration: GlassDecorations.solidSurface(radius: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -712,13 +762,21 @@ class _TaskEditModalState extends State<TaskEditModal> {
     );
   }
 
-  Widget _buildTextField({required TextEditingController controller, FocusNode? focusNode, required String hint, required TextStyle style, required int maxLines}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    FocusNode? focusNode,
+    required String hint,
+    required TextStyle style,
+    required int? maxLines,
+    TextInputAction? textInputAction,
+  }) {
     return ImeSafeTextField(
       controller: controller,
       focusNode: focusNode,
       style: style,
       maxLines: maxLines,
       minLines: 1,
+      textInputAction: textInputAction,
       onSubmitted: (_) => _autoSaveTask(),
       decoration: InputDecoration(
         hintText: hint,
@@ -726,6 +784,52 @@ class _TaskEditModalState extends State<TaskEditModal> {
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
       ),
+    );
+  }
+
+  Widget _buildTitleSection({required bool isDesktop}) {
+    final titleField = Expanded(
+      child: _buildTextField(
+        controller: _titleController,
+        hint: 'Task Title',
+        style: GlassText.headlineLG().copyWith(fontSize: isDesktop ? 38 : 32),
+        maxLines: null,
+        textInputAction: TextInputAction.done,
+      ),
+    );
+
+    if (widget.existingTask == null) {
+      return Row(
+        children: [
+          titleField,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ValueListenableBuilder<TaskModel>(
+          valueListenable: _taskNotifier ?? ValueNotifier<TaskModel>(widget.existingTask!),
+          builder: (context, task, _) {
+            return Transform.scale(
+              scale: isDesktop ? 1.5 : 1.3,
+              child: Checkbox(
+                value: task.isCompleted,
+                onChanged: (v) {
+                  final taskState = context.read<StateTasks>();
+                  taskState.updateTask(widget.board, task.copyWith(isCompleted: v ?? false));
+                },
+                activeColor: GlassColors.success,
+                side: BorderSide(color: GlassColors.primary.withOpacity(0.4), width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ExecutiveRadius.s)),
+              ),
+            );
+          },
+        ),
+        SizedBox(width: isDesktop ? 16 : 12),
+        titleField,
+      ],
     );
   }
 
@@ -782,7 +886,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(32),
-        decoration: GlassDecorations.surface(radius: 24),
+        decoration: GlassDecorations.solidSurface(radius: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: currentBoard.columns.map((col) => ListTile(
@@ -806,7 +910,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
         builder: (context, setModalState) {
           return Container(
             padding: const EdgeInsets.all(32),
-            decoration: GlassDecorations.surface(radius: 24),
+            decoration: GlassDecorations.solidSurface(radius: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -924,7 +1028,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
         builder: (context, setModalState) {
           return Container(
             padding: const EdgeInsets.all(32),
-            decoration: GlassDecorations.surface(radius: 24),
+            decoration: GlassDecorations.solidSurface(radius: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -980,6 +1084,10 @@ class _TaskEditModalState extends State<TaskEditModal> {
   }
 
   Widget _buildRightTabSection({required bool isDesktop}) {
+    final chatState = context.watch<StateChat>();
+    final sessions = chatState.taskSessions;
+    final activeSessionId = chatState.activeSessionId;
+
     final tabContent = AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
       child: _activeTab == 0
@@ -991,80 +1099,189 @@ class _TaskEditModalState extends State<TaskEditModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Tab Header
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildTabHeaderItem(0, 'ประวัติคอมเม้น', Icons.comment_outlined),
-            _buildTabHeaderItem(1, 'แชทถามเกี่ยวกับงานนี้', Icons.chat_bubble_outline_rounded),
-            if (_activeTab == 1)
-              TextButton.icon(
-                onPressed: () {
-                  if (widget.existingTask != null) {
-                    context.read<StateChat>().startNewTaskSession(widget.existingTask!.id);
-                  }
-                },
-                icon: const Icon(Icons.refresh_rounded, size: 16, color: GlassColors.primary),
-                label: Text(
-                  'เริ่มเสสชันใหม่',
-                  style: GlassText.labelSM().copyWith(color: GlassColors.primary),
+            Text(
+              _activeTab == 1 ? 'Agent QA Discussion' : 'ประวัติคอมเม้น',
+              style: GlassText.headlineMD().copyWith(fontSize: 18),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Glassmorphic toggle switch with icons only
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: GlassColors.surfaceHighest.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                    border: Border.all(color: GlassColors.ghostBorder),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Chat Icon Button (index 1)
+                      GestureDetector(
+                        onTap: () => setState(() => _activeTab = 1),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _activeTab == 1
+                                ? GlassColors.primary.withOpacity(0.15)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                          ),
+                          child: Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 16,
+                            color: _activeTab == 1
+                                ? GlassColors.primary
+                                : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      // Comment Icon Button (index 0)
+                      GestureDetector(
+                        onTap: () => setState(() => _activeTab = 0),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _activeTab == 0
+                                ? GlassColors.primary.withOpacity(0.15)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                          ),
+                          child: Icon(
+                            Icons.comment_outlined,
+                            size: 16,
+                            color: _activeTab == 0
+                                ? GlassColors.primary
+                                : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                if (isDesktop) ...[
+                  const SizedBox(width: 12),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 24),
+                    onPressed: () => Navigator.pop(context),
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
-        const SizedBox(height: 24),
+        if (_activeTab == 1 && widget.existingTask != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: PopupMenuButton<String>(
+                  tooltip: 'เลือกเสสชัน',
+                  color: const Color(0xFF1E1E2C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                    side: BorderSide(color: GlassColors.outlineVariant.withOpacity(0.2)),
+                  ),
+                  offset: const Offset(0, 48),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: GlassColors.surfaceHighest.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                      border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            sessions.any((s) => s.id == activeSessionId)
+                                ? sessions.firstWhere((s) => s.id == activeSessionId).name
+                                : 'เลือกเสสชัน...',
+                            style: GlassText.bodyMD().copyWith(
+                              color: sessions.any((s) => s.id == activeSessionId)
+                                  ? GlassColors.onSurface
+                                  : GlassColors.onSurfaceVariant.withOpacity(0.4),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                  itemBuilder: (context) {
+                    return sessions.map((sess) {
+                      final isSelected = sess.id == activeSessionId;
+                      return PopupMenuItem<String>(
+                        value: sess.id,
+                        height: 40,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                sess.name,
+                                style: GlassText.bodyMD().copyWith(
+                                  color: isSelected ? GlassColors.primary : GlassColors.onSurface,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check_rounded, color: GlassColors.primary, size: 18),
+                          ],
+                        ),
+                      );
+                    }).toList();
+                  },
+                  onSelected: (newSessionId) {
+                    if (widget.existingTask != null) {
+                      chatState.switchTaskSession(widget.existingTask!.id, newSessionId);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  if (widget.existingTask != null) {
+                    chatState.startNewTaskSession(widget.existingTask!.id, taskTitle: widget.existingTask!.title);
+                  }
+                },
+                icon: const Icon(Icons.add_comment_outlined, size: 20),
+                color: GlassColors.primary,
+                tooltip: 'เริ่มเสสชันใหม่',
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 16),
         // Tab Content
         isDesktop ? Expanded(child: tabContent) : tabContent,
       ],
     );
   }
 
-  Widget _buildTabHeaderItem(int index, String title, IconData icon) {
-    final isSelected = _activeTab == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _activeTab = index;
-        });
-      },
-      borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? GlassColors.primary.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-          border: Border.all(
-            color: isSelected ? GlassColors.primary.withOpacity(0.3) : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.5),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: GlassText.labelSM().copyWith(
-                color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.7),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTaskChatSection({bool isDesktop = false}) {
     return Consumer<StateChat>(
       builder: (context, chatState, _) {
-        final messages = chatState.messages;
-        final isTyping = chatState.isTyping;
+        final messages = chatState.taskMessages;
+        final isTyping = chatState.isTaskTyping;
 
         final listWidget = ListView.builder(
           reverse: true,
@@ -1228,7 +1445,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       comments: _comments,
     );
     
-    chatState.sendMessageToAI(text, activeTask: activeTask);
+    chatState.sendTaskMessageToAI(text, activeTask);
   }
 
   Widget _buildCommentsSection({required bool isDesktop}) {

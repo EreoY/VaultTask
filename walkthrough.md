@@ -15,6 +15,14 @@ We have successfully migrated the Calenda backend to a local execution environme
 - **API Key & Model ID**: Configured it to authenticate using the user's OpenRouter API key (with fallback) and forced the model ID to `google/gemma-4-26b-a4b-it` across both single-turn description generation and streaming chat completions.
 - **Verification**: Verified using `curl` that both local database inserts and OpenRouter chat completions work seamlessly with the local backend.
 
+## 🤖 Phase 97: Strict Chat Channel Separation & Sidebar UX
+- **Decoupled Chat Contexts**: Completely separated global chat state and task chat state within `StateChat` to prevent leakage.
+  - Global UI queries `messages` and `isTyping` from the global context.
+  - Task dialog (`TaskEditModal`) queries `taskMessages` and `isTaskTyping` from the task context.
+- **Task Session Initialization & Loading**: Fixed session loading in `StateChat.selectTaskSession` and updated the session name dynamically in Cloudflare D1 based on the task's title.
+- **Task Discussion Streams**: Introduced `StateChat.sendTaskMessageToAI` specifically tailored for task discussion (no attachment logic/draft building overheads) using a separate task agent.
+- **Verification**: Verified using static analysis that the code builds and runs correctly.
+
 ## 📦 GitHub Repository Migration (VaultTask)
 - **Git Initialization**: Initialized a new local Git repository in the workspace.
 - **Remote Linking**: Configured remote origin to link with `git@github.com:EreoY/VaultTask.git`.
