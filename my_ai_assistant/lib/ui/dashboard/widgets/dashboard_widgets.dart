@@ -37,15 +37,16 @@ class DashboardBentoCard extends StatelessWidget {
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, color: GlassColors.primary, size: 18),
+                  Icon(icon, color: GlassColors.primary, size: 20),
                   const SizedBox(width: 8),
                 ],
                 Text(
                   title.toUpperCase(),
-                  style: GlassText.label().copyWith(
-                    fontSize: 10,
-                    letterSpacing: 2.0,
-                    color: GlassColors.primary.withOpacity(0.6),
+                  style: GlassText.bodyMD().copyWith(
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w900,
+                    color: GlassColors.onSurface,
                   ),
                 ),
                 const Spacer(),

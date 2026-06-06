@@ -119,7 +119,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(boards.length, unreadCommentIds.length),
+          _buildHeader(workspaces.length),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
           
           isDesktop 
@@ -130,9 +130,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     flex: 3, 
                     child: Column(
                       children: [
-                        _buildWorkspacesCard(workspaces, boards),
+                        _buildWorkspacesList(workspaces, boards),
                         const SizedBox(height: 24),
                         _buildMilestonesCard(milestoneItems),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -145,7 +146,7 @@ class _DashboardPageState extends State<DashboardPage> {
               )
             : Column(
                 children: [
-                  _buildWorkspacesCard(workspaces, boards),
+                  _buildWorkspacesList(workspaces, boards),
                   const SizedBox(height: 24),
                   _buildMilestonesCard(milestoneItems),
                   const SizedBox(height: 24),
@@ -157,236 +158,252 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildHeader(int workspacesCount, int unreadCount) {
+  Widget _buildHeader(int workspaceCount) {
     final now = DateTime.now();
     final isSmall = MediaQuery.of(context).size.width < 600;
 
-    return Wrap(
-      spacing: 24,
-      runSpacing: 16,
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              DateFormat('MMMM d').format(now).toUpperCase(),
-              style: GlassText.labelSM().copyWith(letterSpacing: 2.0, color: GlassColors.primary),
-            ),
-            const SizedBox(height: 8),
             Text(
               'STRATEGIC HUB',
               style: GlassText.headlineXL().copyWith(
-                fontSize: isSmall ? 36 : 56,
+                fontSize: isSmall ? 28 : 44,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.0,
+                color: GlassColors.onSurface,
               ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: GlassColors.onSurface.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: GlassColors.onSurface.withOpacity(0.12)),
+              ),
+              child: Text(
+                '$workspaceCount Workspaces',
+                style: GlassText.bodyMD().copyWith(
+                  fontSize: 11,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.8),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              Icons.notifications_none_rounded,
+              color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+              size: 20,
             ),
           ],
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeaderStatChip('WORKSPACES', workspacesCount.toString(), GlassColors.primary),
-            if (unreadCount > 0) ...[
-              const SizedBox(width: 16),
-              _buildHeaderStatChip('UNREAD FEED', unreadCount.toString(), GlassColors.gold),
-            ],
-          ],
+        const SizedBox(height: 6),
+        Text(
+          DateFormat('MMMM d').format(now),
+          style: GlassText.bodyLG().copyWith(
+            color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+            fontWeight: FontWeight.normal,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildHeaderStatChip(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(value, style: GlassText.headlineLG().copyWith(fontSize: 20, color: color)),
-          const SizedBox(height: 2),
-          Text(label, style: GlassText.labelSM().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkspacesCard(List<WorkspaceModel> workspaces, List<BoardModel> boards) {
+  Widget _buildWorkspacesList(List<WorkspaceModel> workspaces, List<BoardModel> boards) {
     final boardsState = context.read<StateBoards>();
     
-    return DashboardBentoCard(
-      title: 'Active Workspaces',
-      icon: Icons.grid_view_rounded,
-      isDark: widget.isDark,
-      trailing: _buildGhostButton('JOIN WORKSPACE', Icons.group_add_rounded, onTap: () => _showJoinWorkspaceDialog(context)),
-      child: workspaces.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                'No active workspaces found. Join or create one using the command hub.',
-                style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.assignment_outlined,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'ACTIVE WORKSPACES (${workspaces.length})',
+                  style: GlassText.bodyMD().copyWith(
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w900,
+                    color: GlassColors.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            OutlinedButton.icon(
+              onPressed: () => _showJoinWorkspaceDialog(context),
+              icon: const Icon(Icons.person_add_rounded, size: 14, color: GlassColors.gold),
+              label: Text(
+                '+ JOIN WORKSPACE',
+                style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 10, fontWeight: FontWeight.bold),
               ),
-            )
-          : ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: workspaces.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
-              itemBuilder: (context, index) {
-                final workspace = workspaces[index];
-                final workspaceBoards = boards.where((b) => b.workspaceId == workspace.id).toList();
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: GlassColors.gold, width: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        workspaces.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'No active workspaces found. Join or create one.',
+                  style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: workspaces.length,
+                separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+                itemBuilder: (context, index) {
+                  final workspace = workspaces[index];
+                  final workspaceBoards = boards.where((b) => b.workspaceId == workspace.id).toList();
 
-                return InkWell(
-                  onTap: () {
-                    boardsState.setSelectedWorkspace(workspace);
-                    boardsState.setSelectedBoard(null);
-                    widget.onNavigate?.call(1);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Glassy Icon
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: GlassColors.primary.withOpacity(0.06),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: GlassColors.primary.withOpacity(0.12)),
+                  return InkWell(
+                    onTap: () {
+                      boardsState.setSelectedWorkspace(workspace);
+                      boardsState.setSelectedBoard(null);
+                      widget.onNavigate?.call(1);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: GlassColors.primary.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: GlassColors.primary.withOpacity(0.12)),
+                            ),
+                            child: Icon(
+                              workspace.type == 'personal' ? Icons.person_rounded : Icons.group_rounded,
+                              color: GlassColors.primary,
+                              size: 16,
+                            ),
                           ),
-                          child: Icon(
-                            workspace.type == 'personal' ? Icons.person_rounded : Icons.group_rounded,
-                            color: GlassColors.primary,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        
-                        // Workspace details
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    workspace.name,
-                                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: workspace.type == 'team' ? GlassColors.primary.withOpacity(0.1) : GlassColors.gold.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      workspace.name,
+                                      style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
                                     ),
-                                    child: Text(
-                                      workspace.type == 'team' ? 'TEAM' : 'PERSONAL',
-                                      style: GlassText.labelSM().copyWith(
-                                        fontSize: 7.5,
-                                        color: workspace.type == 'team' ? GlassColors.primary : GlassColors.gold,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              if (workspaceBoards.isEmpty)
-                                Text(
-                                  'No projects inside this workspace',
-                                  style: GlassText.secondary().copyWith(fontSize: 11),
-                                )
-                              else
-                                Wrap(
-                                  spacing: 6,
-                                  runSpacing: 4,
-                                  children: workspaceBoards.map((board) {
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: Color(board.color).withOpacity(0.08),
+                                        color: GlassColors.onSurface.withOpacity(0.08),
                                         borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(color: Color(board.color).withOpacity(0.15)),
                                       ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width: 5,
-                                            height: 5,
-                                            decoration: BoxDecoration(
-                                              color: Color(board.color),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            board.name,
-                                            style: GlassText.bodyMD().copyWith(
-                                              fontSize: 10,
-                                              color: GlassColors.onSurfaceVariant.withOpacity(0.8),
-                                            ),
-                                          ),
-                                        ],
+                                      child: Text(
+                                        workspace.type.toUpperCase(),
+                                        style: GlassText.labelSM().copyWith(
+                                          fontSize: 8,
+                                          color: GlassColors.onSurfaceVariant.withOpacity(0.8),
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    );
-                                  }).toList(),
+                                    ),
+                                  ],
                                 ),
-                            ],
+                                const SizedBox(height: 8),
+                                if (workspaceBoards.isEmpty)
+                                  Text(
+                                    'No projects inside this workspace',
+                                    style: GlassText.secondary().copyWith(fontSize: 11, fontStyle: FontStyle.italic),
+                                  )
+                                else
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: workspaceBoards.map((board) {
+                                      return InkWell(
+                                        onTap: () {
+                                          boardsState.setSelectedWorkspace(workspace);
+                                          boardsState.setSelectedBoard(board);
+                                          widget.onNavigate?.call(1);
+                                        },
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: GlassColors.onSurface.withOpacity(0.04),
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(color: GlassColors.onSurface.withOpacity(0.08)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: BoxDecoration(
+                                                  color: Color(board.color),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                board.name,
+                                                style: GlassText.bodyMD().copyWith(
+                                                  fontSize: 11,
+                                                  color: GlassColors.onSurface.withOpacity(0.9),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                        
-                        // Workspace popup options
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
-                          color: GlassColors.background,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          onSelected: (value) {
-                            if (value == 'copy_id') {
+                          IconButton(
+                            icon: Icon(Icons.edit_rounded, size: 16, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                            tooltip: 'Rename Workspace',
+                            onPressed: () => _showRenameWorkspaceDialog(context, workspace),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.copy_rounded, size: 16, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                            tooltip: 'Copy Workspace ID',
+                            onPressed: () {
                               Clipboard.setData(ClipboardData(text: workspace.id));
                               GlassNotifications.show(context, 'Workspace ID copied to clipboard');
-                            } else if (value == 'rename') {
-                              _showRenameWorkspaceDialog(context, workspace);
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: 'rename',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit_rounded, size: 16, color: GlassColors.primary),
-                                  const SizedBox(width: 8),
-                                  Text('Rename Workspace', style: GlassText.bodyMD()),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'copy_id',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.copy_rounded, size: 16, color: GlassColors.primary),
-                                  const SizedBox(width: 8),
-                                  Text('Copy Workspace ID', style: GlassText.bodyMD()),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ],
     );
   }
 
@@ -713,83 +730,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  void _showRenameBoardDialog(BuildContext context, BoardModel board) {
-    final controller = TextEditingController(text: board.name);
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Center(
-        child: Container(
-          width: 400,
-          margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.surface(radius: 24),
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('RENAME BOARD', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
-                const SizedBox(height: 24),
-                ImeSafeTextField(
-                  controller: controller,
-                  autofocus: true,
-                  style: GlassText.bodyLG(),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: GlassColors.primary.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final newName = controller.text.trim();
-                          if (newName.isEmpty || newName == board.name) return;
-                          final boardsState = context.read<StateBoards>();
-                          final navigator = Navigator.of(dialogContext);
-                          try {
-                            await boardsState.updateBoard(board.copyWith(name: newName));
-                            navigator.pop();
-                            GlassNotifications.show(context, 'Board renamed successfully!');
-                          } catch (e) {
-                            GlassNotifications.show(context, 'Failed to rename board: $e', isError: true);
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
-                          backgroundColor: GlassColors.gold.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showRenameWorkspaceDialog(BuildContext context, WorkspaceModel workspace) {
     final controller = TextEditingController(text: workspace.name);

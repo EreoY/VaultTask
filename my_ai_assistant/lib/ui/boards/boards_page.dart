@@ -238,7 +238,6 @@ class _BoardsPageState extends State<BoardsPage> {
                   ),
                   const SizedBox(width: 8),
                   
-                  // New Board Button
                   ElevatedButton.icon(
                     onPressed: () {
                       showModalBottomSheet(
@@ -248,13 +247,13 @@ class _BoardsPageState extends State<BoardsPage> {
                         builder: (context) => BoardEditModal(isDark: widget.isDark, workspace: selectedWorkspace),
                       );
                     },
-                    icon: const Icon(Icons.add_rounded, size: 14, color: GlassColors.onPrimary),
+                    icon: const Icon(Icons.add_rounded, size: 14, color: Colors.black87),
                     label: Text(
                       'New project', 
-                      style: GlassText.labelSM().copyWith(color: GlassColors.onPrimary, fontSize: 11, fontWeight: FontWeight.bold)
+                      style: GlassText.labelSM().copyWith(color: Colors.black87, fontSize: 11, fontWeight: FontWeight.bold)
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: GlassColors.primary,
+                      backgroundColor: GlassColors.gold,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
@@ -703,13 +702,14 @@ class _BoardsPageState extends State<BoardsPage> {
         ),
         child: Row(
           children: [
-            Icon(Icons.add_rounded, size: 16, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+            const Icon(Icons.add_rounded, size: 16, color: GlassColors.gold),
             const SizedBox(width: 8),
             Text(
               'New project',
               style: GlassText.bodyMD().copyWith(
-                color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                color: GlassColors.gold,
                 fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

@@ -614,42 +614,55 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   }
 
   Widget _buildAvatarStack(List<String> uids) {
+    if (uids.isEmpty) return const SizedBox.shrink();
     final boardState = context.read<StateBoards>();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: uids.take(3).map((uid) {
-        final profile = boardState.getMemberProfile(uid);
-        final name = profile?['name'] ?? 'Operative';
-        final photo = profile?['photo'] ?? '';
-        final color = GlassColors.getMemberColor(uid);
-        
-        final fallback = Center(
-          child: Text(
-            name.isNotEmpty ? name[0].toUpperCase() : '?',
-            style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold),
-          ),
-        );
+    final maxShown = 3;
+    final membersToShow = uids.take(maxShown).toList();
+    const double avatarSize = 26.0;
+    const double overlapSpacing = 18.0;
 
-        return Container(
-          margin: const EdgeInsets.only(left: -8),
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withOpacity(0.2),
-            border: Border.all(color: GlassColors.background, width: 2),
-          ),
-          child: ClipOval(
-            child: photo.isNotEmpty
-                ? Image.network(
-                    photo,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => fallback,
-                  )
-                : fallback,
-          ),
-        );
-      }).toList(),
+    return SizedBox(
+      width: avatarSize + (membersToShow.length - 1) * overlapSpacing,
+      height: avatarSize,
+      child: Stack(
+        children: List.generate(membersToShow.length, (index) {
+          final uid = membersToShow[index];
+          final profile = boardState.getMemberProfile(uid);
+          final name = profile?['name'] ?? 'Operative';
+          final photo = profile?['photo'] ?? '';
+          final color = GlassColors.getMemberColor(uid);
+
+          final fallback = Center(
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold),
+            ),
+          );
+
+          return Positioned(
+            left: index * overlapSpacing,
+            top: 0,
+            width: avatarSize,
+            height: avatarSize,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withOpacity(0.2),
+                border: Border.all(color: GlassColors.background, width: 2),
+              ),
+              child: ClipOval(
+                child: photo.isNotEmpty
+                    ? Image.network(
+                        photo,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => fallback,
+                      )
+                    : fallback,
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

@@ -14,7 +14,18 @@ cd ..
 # 2. Start Cloudflare Worker (Backend) in the background
 echo "[2/3] Starting backend worker locally (Miniflare)..."
 cd cloudflare_backend
-npx wrangler dev &
+
+# Free up ports 8787, 8788, 8789 to avoid port collisions
+for port in 8787 8788 8789; do
+  STALE_PID=$(lsof -t -i:$port 2>/dev/null || /usr/bin/lsof -t -i:$port 2>/dev/null || true)
+  if [ ! -z "$STALE_PID" ]; then
+    echo "Found conflicting process $STALE_PID on port $port. Freeing up port..."
+    kill -9 $STALE_PID 2>/dev/null || true
+  fi
+done
+sleep 1
+
+npx wrangler dev --port 8787 &
 BACKEND_PID=$!
 cd ..
 

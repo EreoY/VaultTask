@@ -1,24 +1,142 @@
+## Phase 96: Resolve compilation errors in StateTasks & negative margin in DailyTimeline
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** แก้ไขข้อผิดพลาดของประเภทข้อมูลในการอ้างอิง `board.columns` (ซึ่งเป็น `List<String>`) ใน `state_tasks.dart` และเปลี่ยนการจัดวาง Avatar Stack ใน `daily_timeline_view.dart` เพื่อลบมาร์จิ้นติดลบที่ส่งผลให้เกิดการขัดข้องทางไวยากรณ์
+
+### Task 96.1: Update Task Graph & Context Sync
+- **Status:** [x] Done
+- **Target Files:**
+    - `task-graph.md`
+- **Action:** กำหนดแผนงาน Phase 96 และทำ Context Re-Sync
+- **Why:** เพื่อรักษาความสม่ำเสมอของประวัติโครงการ
+
+### Task 96.2: Correct Column Query Types in StateTasks
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** แก้ไขฟังก์ชันการเข้าถึง `board.columns` จากการใช้งานเสมือน Map เป็นการจัดการข้อมูลตามประเภท `String` โดยตรงใน line 280-281 และ 426-427
+- **Why:** เพื่อแก้ไขปัญหาที่คอมไพล์โค้ดไม่ผ่าน (A value of type 'String' can't be assigned...)
+
+### Task 96.3: Refactor DailyTimeline Avatar Stack
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** แก้ไขโครงสร้าง `_buildAvatarStack(List<String> uids)` ให้ใช้ `Stack` และ `Positioned` แทนมาร์จิ้นติดลบของ Container ใน Row
+- **Why:** เพื่อป้องกันการเกิด Assertion failed: margin == null || margin.isNonNegative ในวิดเจ็ตคอนเทนเนอร์
+
+### Task 96.4: Empirical Testing & Code Verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` เพื่อยืนยันว่าไม่มีข้อผิดพลาดทางไวยากรณ์เหลืออยู่
+- **Why:** การันตีความเรียบร้อยและเสถียรภาพของแอปพลิเคชัน
+
+---
+
+## Phase 95: Task Database Sync, Solid Edit Modal & Focus Loop Fix
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงความเสถียรและความสอดคล้องของการบันทึกงานระหว่าง D1 Database กับโครงสร้าง Schema จริง, ปรับความทึบของกล่องสร้างงานเพื่อความชัดเจน และแก้ไขลูปแย่งโฟกัสของช่องกรอกรายละเอียด
+
+### Task 95.1: Update Task Graph & Context Sync
+- **Status:** [x] Done
+- **Target Files:**
+    - `task-graph.md`
+- **Action:** บันทึกแผนงานและขั้นตอนย่อยของ Phase 95 ลงในเอกสารและเริ่มดำเนินการซิงค์ข้อมูล
+- **Why:** เพื่อบันทึกประวัติการพัฒนาและคงสมานฉันท์ของสถาปัตยกรรม
+
+### Task 95.2: Align SQLite Queries in Cloudflare Backend
+- **Status:** [x] Done
+- **Target Files:**
+    - `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ลบการอ้างอิงและ Bind parameters สำหรับ `team_id` และ `time` ออกจาก SQL queries ฝั่ง POST และ PUT ของ `/api/tasks`
+- **Why:** เพื่อแก้ปัญหาระบบเซฟงานไม่ลงเนื่องจาก Schema ไม่ตรงกับ SQLite Table
+
+### Task 95.3: Update Task Edit Modal Card Background
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เปลี่ยนการใช้ `GlassDecorations.surface` เป็น `GlassDecorations.solidSurface(radius: 32, hasShadow: true)`
+- **Why:** เพื่อป้องกันการมองเห็นทะลุผ่านและเพิ่มการอ่านง่ายของข้อความ
+
+### Task 95.4: Resolve IME Safe Text Field Focus Fight Loop
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/common/ime_safe_text_field.dart`
+- **Action:** ตรวจสอบ `FocusManager.instance.primaryFocus` หากโฟกัสย้ายไปช่องกรอกอื่นให้เปลี่ยนสถานะ `_wasFocused = false` เพื่อไม่ให้เกิดลูปกะพริบแย่งโฟกัส
+- **Why:** เพื่อแก้ไขความขัดแย้งของ Focus Node บน Flutter Web
+
+### Task 95.5: Static Code Verification
+- **Status:** [x] Done
+- **Action:** ตรวจสอบความสมบูรณ์ของไวยากรณ์ด้วย `flutter analyze`
+- **Why:** เพื่อยืนยันว่าการแก้ไขทั้งหมดไม่มีข้อผิดพลาดทางโค้ด
+
+---
+
+## Phase 94: Revert Dashboard Bottom Layout to Mockup Style
+> **Architecture Mandate:** ปรับเปลี่ยนการแสดงผลในส่วนล่างของหน้าแดชบอร์ดให้ตรงตามภาพร่างการออกแบบ (Mockup) ของผู้ใช้ ได้แก่ ปุ่มเข้าร่วม Workspace, ข้อความหัวเรื่อง, ป้ายบอร์ดโครงการ และความหนาพร้อมการวางวันส่งของแถบรายการ Milestones และการแจ้งเตือน โดยยังคงหน้าตา Header ด้านบน (Strategic Hub) ที่ได้รับการอนุมัติแล้วไว้
+
+### Task 94.1: Update Task Graph
+- **Status:** [x] Done
+- **Target Files:**
+    - `task-graph.md`
+- **Action:** กำหนดแผนงาน Phase 94 และบันทึกลงในเอกสารระบุขั้นตอน
+- **Why:** เพื่อควบคุมประวัติโครงการและบันทึกความคืบหน้าให้มีคุณภาพสูงสุด
+
+### Task 94.2: Revert Workspaces UI Layout
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:**
+    - ปรับโครงสร้างส่วนหัวของ Workspaces: ซ่อน text label `:: ACTIVE WORKSPACES`
+    - แสดงไอคอน `Icons.assignment_outlined` ข้างหัวข้อ `Active Workspaces (count)` โดยให้แสดงตัวเลขในวงเล็บ (ไม่มีการแยก badge card)
+    - เปลี่ยนปุ่ม join ด้านขวาเป็นรูปแบบ outline ด้วยข้อความ `+ JOIN WORKSPACE`
+    - เปลี่ยน badge `TEAM` / `PERSONAL` ให้ใช้พื้นหลังเทาและตัวหนังสือขาวจาง
+    - เปลี่ยน project board tags จากสีพื้นทั้งอัน ให้กลายเป็นขอบมนแคปซูลสีจางที่มีจุดสีระบุบอร์ดด้านซ้าย
+
+### Task 94.3: Revert Upcoming Milestones Layout
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:**
+    - คืนค่าโครงสร้าง ListView.separated ภายในส่วนของ Milestones ให้หัวข้อของ Task อยู่ด้านซ้ายและตัวบอกวันครบกำหนด Due status อยู่ด้านขวาในบรรทัดเดียวกัน
+
+### Task 94.4: Revert Discussion Updates Layout
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:**
+    - คืนค่าโครงสร้างแถบ ListView ภายใน Discussion Updates ให้ชื่อผู้คอมเมนต์อยู่ด้านซ้ายและเวลาคอมเมนต์อยู่ด้านขวาในบรรทัดเดียวกัน
+
+### Task 94.5: Code Verification
+- **Status:** [x] Done
+- **Action:** ตรวจสอบความถูกต้องผ่าน `flutter analyze` และการคอมไพล์
+
+### Task 94.6: Manual Verification
+- **Status:** [/] In Progress
+- **Action:** ผู้ใช้อัปเดตและยืนยันการแสดงผลบนหน้าจอจริง
+
+---
+
 ## Phase 93: Startup Stability, Workspace Dashboard Correctness, and Workspace Management Updates
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
 > **Architecture Mandate:** ปรับปรุงความเสถียรของแอปพลิเคชันในช่วงเริ่มต้นโหลด (ลดการกะพริบและ redirect) ปรับปรุงหน้าจอ Active Workspaces บนแดชบอร์ดให้แสดงผล Workspace จริงพร้อมรายชื่อโปรเจกต์ภายในอย่างมินิมอล และเพิ่มการทำงานแก้ไขชื่อ Workspace และการคัดลอกรหัส Workspace (Workspace ID) ในส่วนหัวของหน้าบอร์ดโครงการ
 
 ### Task 93.1: Startup Stability & Auth Guard Safety Delay
-- **Status:** [ ] Planned
+- **Status:** [x] Done
 - **Target Files:**
     - `my_ai_assistant/lib/main.dart`
 - **Action:** เพิ่มระยะเวลาหน่วงเพื่อความปลอดภัย (Safety Delay) 800ms ในขั้นตอนเช็คสิทธิ์ผู้ใช้ของ StartupGuard บน Web/App เพื่อป้องกันเพจเปลี่ยนสถานะกะพริบก่อนโหลด Firebase Auth Token เสร็จสิ้น
 - **Why:** เพื่อแก้ปัญหาระบบหลุดไปหน้า Login แล้วเด้งกลับเข้าหน้าหลักเมื่อเริ่มเปิดแอป
 
 ### Task 93.2: StateBoards Workspace Management Update
-- **Status:** [ ] Planned
+- **Status:** [x] Done
 - **Target Files:**
     - `my_ai_assistant/lib/state_managers/state_boards.dart`
 - **Action:** เพิ่มฟังก์ชัน `updateWorkspaceName(WorkspaceModel workspace, String newName)` ที่รองรับการบันทึกลง SQLite (ถ้าเป็น personal) และเซฟลง Cloudflare (ถ้าเป็น team)
 - **Why:** เพื่อเพิ่มความสามารถในการแก้ไขชื่อและซิงค์ข้อมูลกับ backend ได้อย่างราบรื่น
 
 ### Task 93.3: Dashboard Workspace Overview Redesign & Tab Integration
-- **Status:** [ ] Planned
+- **Status:** [x] Done
 - **Target Files:**
     - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
     - `my_ai_assistant/lib/main.dart`
@@ -28,7 +146,7 @@
 - **Why:** เพื่อแก้ไขพฤติกรรมการแสดงผลผิดพลาดที่ก่อนหน้านี้แสดงบอร์ดแทน Workspace และสร้าง UX การสลับแท็บที่ดี
 
 ### Task 93.4: Boards Page Header Updates
-- **Status:** [ ] Planned
+- **Status:** [x] Done
 - **Target Files:**
     - `my_ai_assistant/lib/ui/boards/boards_page.dart`
 - **Action:**
@@ -37,7 +155,7 @@
 - **Why:** เพื่อรองรับความสามารถการแก้ไขชื่อและการคัดลอก ID ในระดับผู้บริหารอย่างสะดวกสบาย
 
 ### Task 93.5: Final Polish & Static Code Analysis
-- **Status:** [ ] Planned
+- **Status:** [x] Done
 - **Action:**
     - รันการวิเคราะห์และตรวจสอบความสมบูรณ์ผ่าน `flutter analyze`
 - **Why:** เพื่อยืนยันคุณภาพและความพร้อมก่อนส่งมอบงาน
@@ -1301,3 +1419,67 @@
 - **Status:** [x] Done
 - **Action:** รันลินเตอร์ตรวจสอบโค้ดและดีพลอยผ่าน run_local.sh เพื่อทดสอบระบบหน้าจอ E2E
 - **Why:** เพื่อรับรองคุณภาพผลลัพธ์และความสมบูรณ์ของระบบ
+
+## Phase 83: Premium Gold Cards, Custom Toast Notifications & Minimal Dashboard
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับแผงหน้าแดชบอร์ดให้มินิมอลตามแบบรูปภาพ, ปรับแจ้งเตือนกลางให้เป็น Custom Overlay และการ์ดยืนยันให้เป็นสีทองขอบทอง
+
+### Task 83.1: Context & Graph Update
+- **Status:** [x] Done
+- **Target File:** `task-graph.md`
+- **Action:** บันทึกโครงงาน Phase 83 และตั้งผังการดำเนินงานย่อยในระบบภาษาไทย
+- **Why:** เพื่อจัดเตรียมแผนและอนุมัติผังงานตาม Sovereign Protocol V2
+
+### Task 83.2: Custom Overlay-based Toast Implementation
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** แก้ไขเมธอด `GlassNotifications.show` ให้สร้าง `OverlayEntry` แบบมีเอนิเมชัน สไลด์และเฟด จำกดยางและความกว้าง พร้อมปรับแต่งสไตล์ขอบสีทองและข้อความให้ออกมาสวยงามพรีเมียม
+- **Why:** เพื่อให้การแจ้งเตือนกลาง (คัดลอก/สำเร็จ/ลบ) มีความมินิมอล ไม่ขยายยืดเต็มหน้าจอในโหมดเดสก์ท็อป และดูสวยล้ำยุค
+
+### Task 83.3: Proposal & Confirmed Cards Gold Styling
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/draft_cards.dart`
+- **Action:** ปรับรูปแบบของการ์ดแบบร่าง (`ProposalDraftCard`) และการ์ดผลลัพธ์การกระทำ (`ConfirmedActionCard`) ในช่องแชท ให้ใช้สไตล์สีทอง (`GlassColors.gold`) ทั้งขอบด้านนอกและตัวอักษรเพื่อให้อ่านง่ายขึ้น
+- **Why:** เพื่อความสวยงามพรีเมียมและความเปรียบต่างสี (Contrast) ที่เหมาะสม อ่านง่ายบนพื้นหลัง Dark Glass
+
+### Task 83.4: Minimalist Dashboard Alignment & Style Update
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart` และ `my_ai_assistant/lib/ui/dashboard/widgets/dashboard_widgets.dart`
+- **Action:** ปรับเปลี่ยนเลย์เอาต์หน้าแดชบอร์ดตามแบบ Image 1:
+    - สลับหัวข้อ "STRATEGIC HUB" ไว้บนสุดตัวหนาใหญ่และย้ายวันที่ลงมาด้านล่าง (พิมพ์ใหญ่-เล็กตามปกติ)
+    - เพิ่ม Workspace Count Pill Badge และไอคอนแจ้งเตือนในแถวหัวข้อหลัก
+    - ปรับปรุง Active Workspaces Header ให้มี Badge บอกจำนวน และปรับปรุงปุ่ม Join Workspace
+    - ปรับปรุงให้แท็กโครงการ (Board chip) ใช้สีพื้นหลังแบบทึบ (Solid board color) พร้อมตัวหนังสือและจุดสีขาว
+    - ปรับปรุง `DashboardBentoCard` ให้มีหัวข้อตัวหนาสะดุดตา และอัปเดตไอคอนของการ์ด Milestone เป็นไอคอนธง
+    - [x] Task 83.4.1: ปรับแก้ `./run_local.sh` เพื่อจัดการความขัดแย้งของ Port 8787
+    - [x] Task 83.4.2: เพิ่มฟังก์ชัน `ApiCloudflare.registerUser`
+    - [x] Task 83.4.3: เรียกใช้งาน `registerUser` ตอนเริ่มต้นใน `StateBoards`
+    - [x] Task 83.4.4: ปรับขนาดตัวอักษรของ "Active Workspaces" ให้เท่ากับหัวข้อ Bento Card
+- **Why:** เพื่อจัดลำดับสายตาและสไตล์ของหน้าแดชบอร์ดให้ตรงกับต้นแบบ Image 1 ที่มีความหรูหรา มินิมอล และเป็นสากลสูงสุด
+
+### Task 83.5: Empirical Proof & Code Audit
+- **Status:** [x] Done
+- **Action:** รันลินเตอร์วิเคราะห์โค้ดและตรวจสอบ Syntax ด้วย linter / manual audit
+- **Why:** เพื่อการันตีคุณภาพและความเสถียรของแอปพลิเคชันหลังทำการอัปเดตสไตล์และแจ้งเตือนใหม่
+
+## Phase 84: Avatar Stack & System Comments
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+
+### Task 84.1: ปรับแก้ Avatar Stack ใน `kanban_card.dart`
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`
+- **Action:** เปลี่ยนมาใช้โครงสร้าง `Stack` และ `Positioned` แทนมาร์จิ้นติดลบของ `Row`
+- **Why:** เพื่อแก้ปัญหารูปลื่นไหลล้มเหลวขัดข้อง (isNonNegative Crash) ใน Flutter
+
+### Task 84.2: ติดตั้งระบบบันทึกความเห็นการเปลี่ยนแปลงใน `StateTasks`
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** เปรียบเทียบค่าความต่างของข้อมูลเพื่อบันทึกประวัติการทำกิจกรรมอัตโนมัติเป็นภาษาไทยลงประวัติตารางความเห็น
+- **Why:** เพื่อป้อนข้อมูลการอัปเดตงานทั้งหมดไปยัง Discussion Feed บนแดชบอร์ด
+
+### Task 84.3: การทดสอบและการตรวจสอบเชิงประจักษ์ (Empirical Testing)
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` ตรวจสอบความถูกต้องและทดลองใช้งานแอปพลิเคชัน
+- **Why:** รับประกันคุณภาพและยืนยันการแก้ปัญหาอย่างแท้จริง

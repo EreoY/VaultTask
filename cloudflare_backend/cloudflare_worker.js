@@ -471,17 +471,15 @@ export default {
         const complete = is_completed ? 1 : 0;
         const now = nowMs();
         await env.DB.prepare(
-          `INSERT INTO team_tasks (id, board_id, team_id, author_uid, title, description, time, due_date, members, label_ids, status, is_completed, images, updated_at, order_index, comments)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO team_tasks (id, board_id, author_uid, title, description, due_date, members, label_ids, status, is_completed, images, updated_at, order_index, comments)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
           .bind(
             taskId,
             board_id,
-            board_id,
             author_uid,
             title,
             description || "",
-            due_date,
             due_date,
             JSON.stringify(members || []),
             JSON.stringify(label_ids || []),
@@ -504,8 +502,8 @@ export default {
            label_ids: label_ids || [],
            images: images || [],
            comments: comments || [],
-        };
-        
+         };
+         
         await notifyBoard(env, board_id, {
           kind: "task_update",
           boardId: board_id,
@@ -529,9 +527,9 @@ export default {
         
         // 🚀 Task 64.1: Perform update with provided fields
         await env.DB.prepare(
-          `UPDATE team_tasks SET title=?, description=?, time=?, due_date=?, members=?, label_ids=?, status=?, is_completed=?, images=?, updated_at=?, order_index=?, comments=? WHERE id=?`
+          `UPDATE team_tasks SET title=?, description=?, due_date=?, members=?, label_ids=?, status=?, is_completed=?, images=?, updated_at=?, order_index=?, comments=? WHERE id=?`
         ).bind(
-          taskData.title, taskData.description, taskData.due_date, taskData.due_date,
+          taskData.title, taskData.description, taskData.due_date,
           JSON.stringify(members || []), JSON.stringify(label_ids || []),
           taskData.status, complete, JSON.stringify(images || []), now,
           taskData.order_index || 0, JSON.stringify(comments || []), id

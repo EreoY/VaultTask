@@ -10,6 +10,7 @@ import '../databases/db_personal_sqlite.dart';
 import '../databases/api_cloudflare.dart';
 import '../ai_agent/tools/handlers/team_handlers.dart';
 import 'state_boards.dart';
+import 'package:intl/intl.dart';
 
 class StateTasks extends ChangeNotifier {
   StateBoards? _stateBoards;
@@ -204,14 +205,29 @@ class StateTasks extends ChangeNotifier {
 
   Future<void> addTask(BoardModel board, TaskModel task) async {
     try {
+      final now = DateTime.now();
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'system';
+      final profile = _stateBoards?.getMemberProfile(currentUid);
+      final currentUserName = profile?['name'] ?? 'Operative';
+
+      final initialComment = TaskComment(
+        id: '${now.millisecondsSinceEpoch}_sys_init',
+        userId: currentUid,
+        userName: currentUserName,
+        text: '[ระบบ] สร้างงานใหม่สำเร็จ: "${task.title}"',
+        time: now,
+      );
+      final updatedComments = List<TaskComment>.from(task.comments)..add(initialComment);
+      final taskWithComment = task.copyWith(comments: updatedComments);
+
       String id;
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
       if (board.type == 'personal') {
-        id = kIsWeb ? task.id : await DbPersonalSqlite.instance.insertTask(task.copyWith(boardId: board.id));
+        id = kIsWeb ? taskWithComment.id : await DbPersonalSqlite.instance.insertTask(taskWithComment.copyWith(boardId: board.id));
       } else {
-        id = await ApiCloudflare.insertTask(uid, task.copyWith(boardId: board.id));
+        id = await ApiCloudflare.insertTask(uid, taskWithComment.copyWith(boardId: board.id));
       }
-      final saved = task.copyWith(id: id, boardId: board.id, updatedAt: DateTime.now().millisecondsSinceEpoch);
+      final saved = taskWithComment.copyWith(id: id, boardId: board.id, updatedAt: DateTime.now().millisecondsSinceEpoch);
       _injectSingleTask(board.id, saved);
       _broadcastUpdate(board.id);
     } catch (e) { debugPrint('Error adding task: $e'); }
@@ -219,12 +235,179 @@ class StateTasks extends ChangeNotifier {
 
   Future<void> updateTask(BoardModel board, TaskModel task) async {
     try {
-      if (board.type == 'personal') {
-        if (!kIsWeb) await DbPersonalSqlite.instance.updateTask(task);
-      } else {
-        await ApiCloudflare.updateTask(task);
+      TaskModel? oldTask;
+      final list = _tasksByBoard[board.id];
+      if (list != null) {
+        try {
+          oldTask = list.firstWhere((t) => t.id == task.id);
+        } catch (_) {}
       }
-      final withTs = task.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
+
+      final systemComments = <TaskComment>[];
+      final now = DateTime.now();
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'system';
+      final profile = _stateBoards?.getMemberProfile(currentUid);
+      final currentUserName = profile?['name'] ?? 'Operative';
+
+      if (oldTask != null) {
+        int idx = 0;
+        String nextCommentId() => '${now.millisecondsSinceEpoch}_sys_${idx++}';
+
+        if (oldTask.title != task.title) {
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] เปลี่ยนชื่อเดิมจาก "${oldTask.title}" เป็น "${task.title}"',
+            time: now,
+          ));
+        }
+
+        if (oldTask.description != task.description) {
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] อัปเดตรายละเอียดงาน',
+            time: now,
+          ));
+        }
+
+        if (oldTask.status != task.status) {
+          String oldColName = oldTask.status;
+          String newColName = task.status;
+          if (board.columns.isNotEmpty) {
+            final oldCol = board.columns.firstWhere((c) => c == oldTask!.status, orElse: () => oldTask!.status);
+            final newCol = board.columns.firstWhere((c) => c == task.status, orElse: () => task.status);
+            oldColName = oldCol;
+            newColName = newCol;
+          }
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] ย้ายงานจากช่อง "$oldColName" ไปที่ "$newColName"',
+            time: now,
+          ));
+        }
+
+        if (oldTask.isCompleted != task.isCompleted) {
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] ทำเครื่องหมายงานเป็น ${task.isCompleted ? "เสร็จสิ้น" : "ยังไม่เสร็จ"}',
+            time: now,
+          ));
+        }
+
+        if (oldTask.dueDate.millisecondsSinceEpoch != task.dueDate.millisecondsSinceEpoch) {
+          final oldDateStr = DateFormat('dd/MM/yyyy HH:mm').format(oldTask.dueDate);
+          final newDateStr = DateFormat('dd/MM/yyyy HH:mm').format(task.dueDate);
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] เปลี่ยนวันครบกำหนดจาก "$oldDateStr" เป็น "$newDateStr"',
+            time: now,
+          ));
+        }
+
+        final oldMembers = oldTask.members;
+        final newMembers = task.members;
+        final addedMembers = newMembers.where((m) => !oldMembers.contains(m)).toList();
+        final removedMembers = oldMembers.where((m) => !newMembers.contains(m)).toList();
+
+        if (addedMembers.isNotEmpty) {
+          final names = addedMembers.map((uid) {
+            final profile = _stateBoards?.getMemberProfile(uid);
+            return profile?['name'] ?? uid;
+          }).join(', ');
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] มอบหมายงานให้: $names',
+            time: now,
+          ));
+        }
+        if (removedMembers.isNotEmpty) {
+          final names = removedMembers.map((uid) {
+            final profile = _stateBoards?.getMemberProfile(uid);
+            return profile?['name'] ?? uid;
+          }).join(', ');
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] ถอนการมอบหมายงานของ: $names',
+            time: now,
+          ));
+        }
+
+        final oldLabels = oldTask.labelIds;
+        final newLabels = task.labelIds;
+        final addedLabels = newLabels.where((l) => !oldLabels.contains(l)).toList();
+        final removedLabels = oldLabels.where((l) => !newLabels.contains(l)).toList();
+
+        if (addedLabels.isNotEmpty) {
+          final names = addedLabels.map((id) {
+            final label = board.labels.firstWhere((lbl) => lbl['id'] == id, orElse: () => {'name': id});
+            return label['name'] ?? id;
+          }).join(', ');
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] เพิ่มป้ายกำกับ: $names',
+            time: now,
+          ));
+        }
+        if (removedLabels.isNotEmpty) {
+          final names = removedLabels.map((id) {
+            final label = board.labels.firstWhere((lbl) => lbl['id'] == id, orElse: () => {'name': id});
+            return label['name'] ?? id;
+          }).join(', ');
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] ลบป้ายกำกับ: $names',
+            time: now,
+          ));
+        }
+
+        if (task.images.length > oldTask.images.length) {
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] เพิ่มรูปภาพในงาน',
+            time: now,
+          ));
+        } else if (task.images.length < oldTask.images.length) {
+          systemComments.add(TaskComment(
+            id: nextCommentId(),
+            userId: currentUid,
+            userName: currentUserName,
+            text: '[ระบบ] ลบรูปภาพออกจากงาน',
+            time: now,
+          ));
+        }
+      }
+
+      var updatedTask = task;
+      if (systemComments.isNotEmpty) {
+        final mergedComments = List<TaskComment>.from(task.comments)..addAll(systemComments);
+        updatedTask = task.copyWith(comments: mergedComments);
+      }
+
+      if (board.type == 'personal') {
+        if (!kIsWeb) await DbPersonalSqlite.instance.updateTask(updatedTask);
+      } else {
+        await ApiCloudflare.updateTask(updatedTask);
+      }
+      final withTs = updatedTask.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
       _injectSingleTask(board.id, withTs);
       _broadcastUpdate(board.id);
     } catch (e) { debugPrint('Error updating task: $e'); }
@@ -232,12 +415,39 @@ class StateTasks extends ChangeNotifier {
 
   Future<void> updateTaskStatus(BoardModel board, TaskModel task, String newStatus) async {
     try {
-      if (board.type == 'personal') {
-        if (!kIsWeb) await DbPersonalSqlite.instance.updateTaskStatus(task.id, newStatus);
-      } else {
-        await ApiCloudflare.updateTaskStatus(task.id, newStatus, board.id);
+      final now = DateTime.now();
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'system';
+      final profile = _stateBoards?.getMemberProfile(currentUid);
+      final currentUserName = profile?['name'] ?? 'Operative';
+
+      String oldColName = task.status;
+      String newColName = newStatus;
+      if (board.columns.isNotEmpty) {
+        final oldCol = board.columns.firstWhere((c) => c == task.status, orElse: () => task.status);
+        final newCol = board.columns.firstWhere((c) => c == newStatus, orElse: () => newStatus);
+        oldColName = oldCol;
+        newColName = newCol;
       }
-      final updated = task.copyWith(status: newStatus, updatedAt: DateTime.now().millisecondsSinceEpoch);
+
+      final comment = TaskComment(
+        id: '${now.millisecondsSinceEpoch}_sys_status',
+        userId: currentUid,
+        userName: currentUserName,
+        text: '[ระบบ] ย้ายงานจากช่อง "$oldColName" ไปที่ "$newColName"',
+        time: now,
+      );
+      final updatedComments = List<TaskComment>.from(task.comments)..add(comment);
+      final updated = task.copyWith(
+        status: newStatus,
+        comments: updatedComments,
+        updatedAt: now.millisecondsSinceEpoch,
+      );
+
+      if (board.type == 'personal') {
+        if (!kIsWeb) await DbPersonalSqlite.instance.updateTask(updated);
+      } else {
+        await ApiCloudflare.updateTask(updated);
+      }
       _injectSingleTask(board.id, updated);
       _broadcastUpdate(board.id);
     } catch (e) { debugPrint('Error updating task status: $e'); }

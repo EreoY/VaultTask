@@ -6,6 +6,7 @@ import '../../theme/glass_theme.dart';
 import 'chat_widgets.dart';
 import 'chat_bubbles.dart';
 import 'chat_input.dart';
+import '../../common/glass_widgets.dart';
 
 class AetherChatView extends StatefulWidget {
   final bool isDark;

@@ -124,8 +124,20 @@ class _ImeSafeTextFieldState extends State<ImeSafeTextField>
     // 🔒 Web IME: restore focus immediately if lost unexpectedly
     if (kIsWeb && _wasFocused && !_focusNode.hasFocus) {
       _focusRestoreTimer?.cancel();
+      
+      final primaryFocus = FocusManager.instance.primaryFocus;
+      if (primaryFocus != null && primaryFocus != _focusNode && primaryFocus.context != null) {
+        _wasFocused = false;
+        return;
+      }
+
       _focusRestoreTimer = Timer(const Duration(milliseconds: 80), () {
         if (mounted && !_focusNode.hasFocus) {
+          final currentPrimary = FocusManager.instance.primaryFocus;
+          if (currentPrimary != null && currentPrimary != _focusNode && currentPrimary.context != null) {
+            _wasFocused = false;
+            return;
+          }
           _focusNode.requestFocus();
         }
       });
@@ -150,6 +162,11 @@ class _ImeSafeTextFieldState extends State<ImeSafeTextField>
     if (kIsWeb && _wasFocused) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_focusNode.hasFocus) {
+          final primaryFocus = FocusManager.instance.primaryFocus;
+          if (primaryFocus != null && primaryFocus != _focusNode && primaryFocus.context != null) {
+            _wasFocused = false;
+            return;
+          }
           _focusNode.requestFocus();
         }
       });

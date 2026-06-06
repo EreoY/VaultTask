@@ -261,24 +261,58 @@ class KanbanTaskCard extends StatelessWidget {
   }
 
   Widget _buildAvatarStack(TaskModel currentTask) {
+    if (currentTask.members.isEmpty) return const SizedBox.shrink();
     final scale = isOverviewMode ? 0.8 : 1.0;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: currentTask.members.take(3).map((uid) {
-        final profile = memberProfiles[uid];
-        final name = profile?['name'] ?? 'Operative';
-        final photo = profile?['photo'] ?? '';
-        final color = GlassColors.getMemberColor(uid);
-        return Container(
-          margin: const EdgeInsets.only(left: -8), width: 24 * scale, height: 24 * scale,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.2), border: Border.all(color: GlassColors.background, width: 2)),
-          child: ClipOval(
-            child: photo.isNotEmpty 
-              ? Image.network(photo, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Center(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: TextStyle(fontSize: 9 * scale, color: color, fontWeight: FontWeight.bold))))
-              : Center(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: TextStyle(fontSize: 9 * scale, color: color, fontWeight: FontWeight.bold))),
-          ),
-        );
-      }).toList(),
+    final maxShown = 3;
+    final membersToShow = currentTask.members.take(maxShown).toList();
+    final double avatarSize = 24.0 * scale;
+    final double overlapSpacing = 16.0 * scale;
+
+    return SizedBox(
+      width: avatarSize + (membersToShow.length - 1) * overlapSpacing,
+      height: avatarSize,
+      child: Stack(
+        children: List.generate(membersToShow.length, (index) {
+          final uid = membersToShow[index];
+          final profile = memberProfiles[uid];
+          final name = profile?['name'] ?? 'Operative';
+          final photo = profile?['photo'] ?? '';
+          final color = GlassColors.getMemberColor(uid);
+          
+          return Positioned(
+            left: index * overlapSpacing,
+            top: 0,
+            width: avatarSize,
+            height: avatarSize,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle, 
+                color: color.withOpacity(0.2), 
+                border: Border.all(color: GlassColors.background, width: 2)
+              ),
+              child: ClipOval(
+                child: photo.isNotEmpty 
+                  ? Image.network(
+                      photo, 
+                      fit: BoxFit.cover, 
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?', 
+                          style: TextStyle(fontSize: 9 * scale, color: color, fontWeight: FontWeight.bold)
+                        )
+                      )
+                    )
+                  : Center(
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?', 
+                        style: TextStyle(fontSize: 9 * scale, color: color, fontWeight: FontWeight.bold)
+                      )
+                    ),
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

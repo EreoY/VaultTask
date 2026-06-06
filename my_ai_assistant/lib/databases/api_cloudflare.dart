@@ -323,6 +323,26 @@ class ApiCloudflare {
 
   // ─── USERS ────────────────────────────────────────────
 
+  static Future<void> registerUser(String uid, String email, String displayName) async {
+    final url = '$_base/api/users';
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: jsonEncode({
+          'uid': uid,
+          'email': email,
+          'display_name': displayName,
+        }),
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Failed to register user to Cloudflare D1: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error registering user to Cloudflare D1: $e');
+    }
+  }
+
   static Future<Map<String, Map<String, String>>> getUsersByUids(List<String> uids) async {
     if (uids.isEmpty) return {};
     final query = uids.join(',');

@@ -44,7 +44,17 @@ class StateBoards extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final uid = currentUser?.uid;
+
+      if (currentUser != null) {
+        // Ensure user registration exists in D1 before querying workspaces/boards
+        await ApiCloudflare.registerUser(
+          currentUser.uid,
+          currentUser.email ?? '',
+          currentUser.displayName ?? '',
+        );
+      }
 
       // 1. Fetch workspaces
       final localWorkspaces = kIsWeb ? <WorkspaceModel>[] : await DbPersonalSqlite.instance.getAllWorkspaces();

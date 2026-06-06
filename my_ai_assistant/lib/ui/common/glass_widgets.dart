@@ -332,61 +332,173 @@ class GlassBottomBarItem {
   });
 }
 
-class GlassNotifications {
-  static void show(BuildContext context, String message, {bool isError = false}) {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    scaffoldMessenger.clearSnackBars();
-    scaffoldMessenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        padding: EdgeInsets.zero,
-        duration: const Duration(seconds: 3),
-        content: GlassContainer(
-          isDark: true,
-          radius: 12,
-          blur: 16,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: GlassColors.surface.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isError ? GlassColors.error.withOpacity(0.5) : GlassColors.gold.withOpacity(0.5),
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
+class GlassNotificationWidget extends StatefulWidget {
+  final String message;
+  final bool isError;
+  final VoidCallback onDismiss;
+
+  const GlassNotificationWidget({
+    super.key,
+    required this.message,
+    required this.isError,
+    required this.onDismiss,
+  });
+
+  @override
+  State<GlassNotificationWidget> createState() => _GlassNotificationWidgetState();
+}
+
+class _GlassNotificationWidgetState extends State<GlassNotificationWidget> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _controller.forward();
+
+    // Auto dismiss after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _controller.reverse().then((_) {
+          if (mounted) widget.onDismiss();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
+    return SafeArea(
+      child: Align(
+        alignment: isMobile ? Alignment.topCenter : Alignment.topRight,
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: 24,
+            left: isMobile ? 24 : 0,
+            right: 24,
           ),
-          child: Row(
-            children: [
-              Icon(
-                isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-                color: isError ? GlassColors.error : GlassColors.gold,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: GlassText.bodyMD().copyWith(
-                    color: GlassColors.onSurface,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Material(
+                color: Colors.transparent,
+                child: GlassContainer(
+                  isDark: true,
+                  radius: 12,
+                  blur: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: GlassColors.surface.withOpacity(0.92),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: widget.isError ? GlassColors.error.withOpacity(0.5) : GlassColors.gold.withOpacity(0.5),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          widget.isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+                          color: widget.isError ? GlassColors.error : GlassColors.gold,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            widget.message,
+                            style: GlassText.bodyMD().copyWith(
+                              color: GlassColors.onSurface,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 16),
+                          color: GlassColors.onSurface.withOpacity(0.4),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            _controller.reverse().then((_) {
+                              if (mounted) widget.onDismiss();
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class GlassNotifications {
+  static OverlayEntry? _currentEntry;
+
+  static void show(BuildContext context, String message, {bool isError = false}) {
+    try {
+      ScaffoldMessenger.of(context).clearSnackBars();
+    } catch (_) {}
+
+    _currentEntry?.remove();
+    _currentEntry = null;
+
+    final overlay = Overlay.of(context);
+    late final OverlayEntry entry;
+    
+    entry = OverlayEntry(
+      builder: (context) => GlassNotificationWidget(
+        message: message,
+        isError: isError,
+        onDismiss: () {
+          if (_currentEntry == entry) {
+            entry.remove();
+            _currentEntry = null;
+          }
+        },
+      ),
+    );
+
+    _currentEntry = entry;
+    overlay.insert(entry);
   }
 }
 
