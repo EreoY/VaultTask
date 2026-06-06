@@ -8,7 +8,7 @@ import '../ai_agent/core/misty_agent.dart';
 import '../services/auth_service.dart';
 import '../databases/api_cloudflare.dart';
 import '../databases/db_personal_sqlite.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:google_generative_ai/google_generative_ai.dart' hide ChatSession;
 
 // ─── StateChat ──────────────────────────────────────────────────────────────
 class StateChat extends ChangeNotifier {
@@ -20,8 +20,25 @@ class StateChat extends ChangeNotifier {
   bool _isTyping = false;
   ProposalDraft? _draft;
 
+  List<ChatSession> _globalSessions = [];
+  ChatSession? _currentGlobalSession;
+  String? _activeTaskId;
+  final Map<String, String> _activeTaskSessionId = {};
+
+  List<ChatSession> get globalSessions => _globalSessions;
+  ChatSession? get currentGlobalSession => _currentGlobalSession;
+  String? get activeTaskId => _activeTaskId;
+  
+  String? get activeSessionId {
+    if (_activeTaskId != null) {
+      return _activeTaskSessionId[_activeTaskId];
+    }
+    return _currentGlobalSession?.id;
+  }
+
   StateChat() {
     _initRouter();
+    ensureInitialized();
   }
 
   Future<void> _initRouter() async {
@@ -125,17 +142,46 @@ class StateChat extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetFullChat() {
-    _messages.clear();
-    _draft = null;
-    _agent.resetSession();
-    notifyListeners();
+  void resetFullChat() async {
+    final sessId = activeSessionId;
+    if (sessId != null) {
+      await DbPersonalSqlite.instance.deleteChatSession(sessId);
+      if (_activeTaskId != null) {
+        await startNewTaskSession(_activeTaskId!);
+      } else {
+        _globalSessions.removeWhere((s) => s.id == sessId);
+        if (_globalSessions.isNotEmpty) {
+          await selectGlobalSession(_globalSessions.first);
+        } else {
+          await startNewGlobalSession();
+        }
+      }
+    } else {
+      _messages.clear();
+      _draft = null;
+      _agent.resetSession();
+      notifyListeners();
+    }
   }
 
   // ─── Send message ──────────────────────────────────────────────────────────
-  Future<void> sendMessageToAI(String text, [String? boardId]) async {
+  Future<void> sendMessageToAI(String text, {String? boardId, TaskModel? activeTask}) async {
     if (text.trim().isEmpty && _pendingFiles.isEmpty) return;
     if (_isTyping) return;
+
+    final sessId = activeSessionId;
+    if (sessId == null) return;
+
+    // Auto-rename session if it is a new global session and user sends first message
+    if (_activeTaskId == null && _currentGlobalSession != null && _currentGlobalSession!.name == 'New Session') {
+      final cleanText = text.trim();
+      final words = cleanText.split(RegExp(r'\s+'));
+      final limit = words.length > 5 ? 5 : words.length;
+      final newName = words.take(limit).join(' ');
+      if (newName.isNotEmpty) {
+        await renameSession(_currentGlobalSession!.id, newName);
+      }
+    }
 
     final attachmentsToDisplay = _pendingFiles.map((f) => {
       'name': f.name,
@@ -143,12 +189,15 @@ class StateChat extends ChangeNotifier {
       'size': f.size.toString(),
     }).toList();
 
-    addMessage(ChatMessage(
+    final userMsg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
       isUser: true,
       attachments: attachmentsToDisplay,
-    ));
+    );
+
+    addMessage(userMsg);
+    await DbPersonalSqlite.instance.insertChatMessage(userMsg, sessId);
 
     _isTyping = true;
     notifyListeners();
@@ -180,11 +229,8 @@ class StateChat extends ChangeNotifier {
       }
     }
 
-    // ─── Phase 1: Context injection is now handled automatically by MistyAgent
-    // We don't need background query calls here anymore.
-
     // Route to unified provider
-    final reply = await _agent.processMessageStream(text, attachments: uploadedAttachments);
+    final reply = await _agent.processMessageStream(text, attachments: uploadedAttachments, activeTask: activeTask);
         
     _isTyping = false;
 
@@ -201,6 +247,7 @@ class StateChat extends ChangeNotifier {
     );
     
     addMessage(aiMessage);
+    await DbPersonalSqlite.instance.insertChatMessage(aiMessage, sessId);
 
     if (reply.stream != null) {
       // Handle streaming updates
@@ -222,8 +269,18 @@ class StateChat extends ChangeNotifier {
           );
           notifyListeners();
         }
-      }, onDone: () {
-        // Finalize if needed
+      }, onDone: () async {
+        final finalAiMsg = ChatMessage(
+          id: aiMessageId,
+          text: fullText,
+          reasoning: aiMessage.reasoning,
+          isUser: false,
+          hasDraft: aiMessage.hasDraft,
+          pendingCall: aiMessage.pendingCall,
+          toolCalls: aiMessage.toolCalls,
+          timestamp: aiMessage.timestamp,
+        );
+        await DbPersonalSqlite.instance.insertChatMessage(finalAiMsg, sessId);
         if (reply.pendingCall != null) {
           _buildDraft(reply.pendingCall!);
         }
@@ -237,6 +294,168 @@ class StateChat extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  // ─── Chat Session Handlers ──────────────────────────────────────────────────
+
+  Future<void> ensureInitialized() async {
+    final uid = AuthService().currentUser?.uid;
+    if (uid == null) return;
+    if (_globalSessions.isEmpty) {
+      await loadGlobalSessions();
+    }
+  }
+
+  Future<void> loadGlobalSessions() async {
+    final uid = AuthService().currentUser?.uid;
+    if (uid == null) return;
+    final maps = await DbPersonalSqlite.instance.getChatSessions(uid, taskId: '');
+    _globalSessions = maps.map((m) => ChatSession.fromMap(m)).toList();
+    if (_globalSessions.isNotEmpty) {
+      await selectGlobalSession(_globalSessions.first);
+    } else {
+      await startNewGlobalSession();
+    }
+  }
+
+  Future<void> startNewGlobalSession() async {
+    final uid = AuthService().currentUser?.uid;
+    if (uid == null) return;
+    final id = 'session_global_${DateTime.now().millisecondsSinceEpoch}';
+    final newSession = ChatSession(
+      id: id,
+      uid: uid,
+      taskId: '',
+      name: 'New Session',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await DbPersonalSqlite.instance.insertChatSession(id, uid, 'New Session', taskId: '');
+    _globalSessions.insert(0, newSession);
+    await selectGlobalSession(newSession);
+  }
+
+  Future<void> selectGlobalSession(ChatSession session) async {
+    _currentGlobalSession = session;
+    _activeTaskId = null;
+    _messages.clear();
+    _draft = null;
+    _agent.resetSession();
+    final msgs = await DbPersonalSqlite.instance.getChatMessages(session.id);
+    _messages.addAll(msgs);
+    final agentHistory = _convertMessagesToAgentHistory(msgs);
+    _agent.setHistory(agentHistory);
+    notifyListeners();
+  }
+
+  Future<void> selectTaskSession(String taskId) async {
+    _activeTaskId = taskId;
+    final uid = AuthService().currentUser?.uid;
+    if (uid == null) return;
+
+    String sessionId = _activeTaskSessionId[taskId] ?? '';
+    if (sessionId.isEmpty) {
+      final maps = await DbPersonalSqlite.instance.getChatSessions(uid, taskId: taskId);
+      final sessions = maps.map((m) => ChatSession.fromMap(m)).toList();
+      if (sessions.isNotEmpty) {
+        sessionId = sessions.first.id;
+      } else {
+        sessionId = 'session_task_${taskId}_${DateTime.now().millisecondsSinceEpoch}';
+        await DbPersonalSqlite.instance.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
+      }
+      _activeTaskSessionId[taskId] = sessionId;
+    }
+
+    _messages.clear();
+    _draft = null;
+    _agent.resetSession();
+    final msgs = await DbPersonalSqlite.instance.getChatMessages(sessionId);
+    _messages.addAll(msgs);
+    final agentHistory = _convertMessagesToAgentHistory(msgs);
+    _agent.setHistory(agentHistory);
+    notifyListeners();
+  }
+
+  Future<void> startNewTaskSession(String taskId) async {
+    final uid = AuthService().currentUser?.uid;
+    if (uid == null) return;
+    final sessionId = 'session_task_${taskId}_${DateTime.now().millisecondsSinceEpoch}';
+    await DbPersonalSqlite.instance.insertChatSession(sessionId, uid, 'Task Discussion', taskId: taskId);
+    _activeTaskSessionId[taskId] = sessionId;
+    
+    _messages.clear();
+    _draft = null;
+    _agent.resetSession();
+    notifyListeners();
+  }
+
+  Future<void> renameSession(String sessionId, String newName) async {
+    await DbPersonalSqlite.instance.updateChatSessionName(sessionId, newName);
+    final idx = _globalSessions.indexWhere((s) => s.id == sessionId);
+    if (idx != -1) {
+      final old = _globalSessions[idx];
+      _globalSessions[idx] = ChatSession(
+        id: old.id,
+        uid: old.uid,
+        taskId: old.taskId,
+        name: newName,
+        createdAt: old.createdAt,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      if (_currentGlobalSession?.id == sessionId) {
+        _currentGlobalSession = _globalSessions[idx];
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    await DbPersonalSqlite.instance.deleteChatSession(sessionId);
+    _globalSessions.removeWhere((s) => s.id == sessionId);
+    if (_currentGlobalSession?.id == sessionId) {
+      if (_globalSessions.isNotEmpty) {
+        await selectGlobalSession(_globalSessions.first);
+      } else {
+        await startNewGlobalSession();
+      }
+    } else {
+      notifyListeners();
+    }
+  }
+
+  List<Map<String, dynamic>> _convertMessagesToAgentHistory(List<ChatMessage> msgs) {
+    final chronological = msgs.reversed.toList();
+    List<Map<String, dynamic>> history = [];
+    for (final m in chronological) {
+      if (m.isUser) {
+        final hasAttachments = m.attachments.isNotEmpty;
+        if (hasAttachments) {
+          final content = <Map<String, dynamic>>[{'type': 'text', 'text': m.text}];
+          for (final att in m.attachments) {
+            final mime = att['mime'] ?? 'application/octet-stream';
+            final b64 = att['b64'] ?? '';
+            if (b64.isNotEmpty) {
+              content.add({'type': 'image_url', 'image_url': {'url': 'data:$mime;base64,$b64'}});
+            }
+          }
+          history.add({'role': 'user', 'content': content});
+        } else {
+          history.add({'role': 'user', 'content': m.text});
+        }
+      } else {
+        final assistantEntry = <String, dynamic>{'role': 'assistant', 'content': m.text};
+        if (m.toolCalls.isNotEmpty) {
+          assistantEntry['tool_calls'] = m.toolCalls.map((tc) => {
+            'function': {
+              'name': tc.name,
+              'arguments': tc.arguments,
+            }
+          }).toList();
+        }
+        history.add(assistantEntry);
+      }
+    }
+    return history;
   }
 
   // ─── Build draft from function call ───────────────────────────────────────

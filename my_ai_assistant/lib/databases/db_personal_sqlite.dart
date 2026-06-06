@@ -1,6 +1,9 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import '../models/chat_model.dart';
 import '../models/board_model.dart';
 import '../models/task_model.dart';
 import '../models/workspace_model.dart';
@@ -21,7 +24,7 @@ class DbPersonalSqlite {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 10, onCreate: _createDB, onUpgrade: _upgradeDB);
+    return await openDatabase(path, version: 11, onCreate: _createDB, onUpgrade: _upgradeDB);
   }
 
   Future _createDB(Database db, int version) async {
@@ -68,6 +71,7 @@ CREATE TABLE personal_tasks (
   FOREIGN KEY(board_id) REFERENCES personal_boards(id)
 )
 ''');
+    await _createChatTables(db);
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -127,6 +131,11 @@ CREATE TABLE personal_workspaces (
     if (oldVersion < 10) {
       try {
         await db.execute('ALTER TABLE personal_tasks ADD COLUMN comments TEXT DEFAULT "[]"');
+      } catch (_) {}
+    }
+    if (oldVersion < 11) {
+      try {
+        await _createChatTables(db);
       } catch (_) {}
     }
   }
@@ -293,5 +302,158 @@ CREATE TABLE personal_workspaces (
       debugPrint('DB DEBUG deleteTask error: $e');
       rethrow;
     }
+  }
+
+  // ─── CHAT SYSTEM ──────────────────────────────────────
+
+  Future<void> _createChatTables(Database db) async {
+    await db.execute('''
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id TEXT PRIMARY KEY,
+  uid TEXT NOT NULL,
+  task_id TEXT DEFAULT '',
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at INTEGER DEFAULT 0
+)
+''');
+    await db.execute('''
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  text TEXT NOT NULL,
+  reasoning TEXT DEFAULT '',
+  is_user INTEGER NOT NULL,
+  has_draft INTEGER DEFAULT 0,
+  pending_call TEXT DEFAULT '',
+  tool_calls TEXT DEFAULT '[]',
+  attachments TEXT DEFAULT '[]',
+  timestamp TEXT NOT NULL,
+  FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+)
+''');
+  }
+
+  Future<void> insertChatSession(String id, String uid, String name, {String taskId = ''}) async {
+    if (kIsWeb) return;
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    await db.insert('chat_sessions', {
+      'id': id,
+      'uid': uid,
+      'task_id': taskId,
+      'name': name,
+      'created_at': now,
+      'updated_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Map<String, dynamic>>> getChatSessions(String uid, {String taskId = ''}) async {
+    if (kIsWeb) return [];
+    final db = await database;
+    return await db.query(
+      'chat_sessions',
+      where: 'uid = ? AND task_id = ?',
+      whereArgs: [uid, taskId],
+      orderBy: 'updated_at DESC',
+    );
+  }
+
+  Future<void> updateChatSessionName(String sessionId, String newName) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.update(
+      'chat_sessions',
+      {'name': newName, 'updated_at': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [sessionId],
+    );
+  }
+
+  Future<void> deleteChatSession(String sessionId) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.delete('chat_sessions', where: 'id = ?', whereArgs: [sessionId]);
+    await db.delete('chat_messages', where: 'session_id = ?', whereArgs: [sessionId]);
+  }
+
+  Future<void> insertChatMessage(ChatMessage message, String sessionId) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.update(
+      'chat_sessions',
+      {'updated_at': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [sessionId],
+    );
+    await db.insert('chat_messages', {
+      'id': message.id,
+      'session_id': sessionId,
+      'text': message.text,
+      'reasoning': message.reasoning ?? '',
+      'is_user': message.isUser ? 1 : 0,
+      'has_draft': message.hasDraft ? 1 : 0,
+      'pending_call': message.pendingCall != null ? jsonEncode({
+        'name': message.pendingCall.name,
+        'arguments': message.pendingCall.args,
+      }) : '',
+      'tool_calls': jsonEncode(message.toolCalls.map((tc) => {
+        'name': tc.name,
+        'arguments': tc.arguments,
+      }).toList()),
+      'attachments': jsonEncode(message.attachments),
+      'timestamp': message.timestamp.toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<ChatMessage>> getChatMessages(String sessionId) async {
+    if (kIsWeb) return [];
+    final db = await database;
+    final result = await db.query(
+      'chat_messages',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      orderBy: 'timestamp ASC',
+    );
+    List<ChatMessage> list = [];
+    for (final m in result) {
+      final pendingCallStr = m['pending_call'] as String? ?? '';
+      dynamic parsedPendingCall;
+      if (pendingCallStr.isNotEmpty) {
+        try {
+          final pMap = jsonDecode(pendingCallStr);
+          parsedPendingCall = FunctionCall(pMap['name'], Map<String, Object?>.from(pMap['arguments']));
+        } catch (_) {}
+      }
+      final toolCallsStr = m['tool_calls'] as String? ?? '[]';
+      List<ToolCallInfo> parsedToolCalls = [];
+      try {
+        final tcList = jsonDecode(toolCallsStr) as List;
+        parsedToolCalls = tcList.map((tc) => ToolCallInfo(
+          name: tc['name'].toString(),
+          arguments: Map<String, dynamic>.from(tc['arguments']),
+        )).toList();
+      } catch (_) {}
+
+      final attachmentsStr = m['attachments'] as String? ?? '[]';
+      List<Map<String, String>> parsedAttachments = [];
+      try {
+        final attList = jsonDecode(attachmentsStr) as List;
+        parsedAttachments = attList.map((a) => Map<String, String>.from(a)).toList();
+      } catch (_) {}
+
+      list.add(ChatMessage(
+        id: m['id'] as String,
+        text: m['text'] as String,
+        reasoning: m['reasoning'] as String?,
+        isUser: (m['is_user'] == 1),
+        hasDraft: (m['has_draft'] == 1),
+        pendingCall: parsedPendingCall,
+        toolCalls: parsedToolCalls,
+        attachments: parsedAttachments,
+        timestamp: DateTime.tryParse(m['timestamp'] as String? ?? '') ?? DateTime.now(),
+      ));
+    }
+    return list.reversed.toList();
   }
 }

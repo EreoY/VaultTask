@@ -26,6 +26,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   Set<String> _readCommentIds = {};
+  int _milestonesLimit = 3;
+  int _activityLimit = 10;
 
   @override
   void initState() {
@@ -68,15 +70,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _openTask(BuildContext context, BoardModel board, TaskModel task) {
-    showModalBottomSheet(
+    TaskEditModal.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TaskEditModal(
-        board: board,
-        existingTask: task,
-        isDark: widget.isDark,
-      ),
+      board: board,
+      existingTask: task,
+      isDark: widget.isDark,
     );
   }
 
@@ -408,7 +406,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMilestonesCard(List<MilestoneItem> milestoneItems) {
-    final displayedMilestones = milestoneItems.take(5).toList();
+    final displayedMilestones = milestoneItems.take(_milestonesLimit).toList();
+    final hasMore = milestoneItems.length > _milestonesLimit;
 
     return DashboardBentoCard(
       title: 'Upcoming Milestones',
@@ -422,86 +421,106 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
               ),
             )
-          : ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: displayedMilestones.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
-              itemBuilder: (context, index) {
-                final item = displayedMilestones[index];
-                final task = item.task;
-                final board = item.board;
-                
-                final now = DateTime.now();
-                final diff = task.dueDate.difference(now);
-                final isOverdue = diff.isNegative;
-                final daysLeft = diff.inDays;
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayedMilestones.length,
+                  separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+                  itemBuilder: (context, index) {
+                    final item = displayedMilestones[index];
+                    final task = item.task;
+                    final board = item.board;
+                    
+                    final now = DateTime.now();
+                    final diff = task.dueDate.difference(now);
+                    final isOverdue = diff.isNegative;
+                    final daysLeft = diff.inDays;
 
-                String dueText;
-                Color dueColor;
-                if (isOverdue) {
-                  dueText = 'Overdue';
-                  dueColor = GlassColors.error;
-                } else if (daysLeft == 0) {
-                  dueText = 'Due Today';
-                  dueColor = GlassColors.gold;
-                } else if (daysLeft == 1) {
-                  dueText = 'Due Tomorrow';
-                  dueColor = GlassColors.gold;
-                } else {
-                  dueText = 'Due in $daysLeft days';
-                  dueColor = GlassColors.primary;
-                }
+                    String dueText;
+                    Color dueColor;
+                    if (isOverdue) {
+                      dueText = 'Overdue';
+                      dueColor = GlassColors.error;
+                    } else if (daysLeft == 0) {
+                      dueText = 'Due Today';
+                      dueColor = GlassColors.gold;
+                    } else if (daysLeft == 1) {
+                      dueText = 'Due Tomorrow';
+                      dueColor = GlassColors.gold;
+                    } else {
+                      dueText = 'Due in $daysLeft days';
+                      dueColor = GlassColors.primary;
+                    }
 
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          task.title,
-                          style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              task.title,
+                              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            dueText.toUpperCase(),
+                            style: GlassText.labelSM().copyWith(fontSize: 8, color: dueColor, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        dueText.toUpperCase(),
-                        style: GlassText.labelSM().copyWith(fontSize: 8, color: dueColor, fontWeight: FontWeight.bold),
+                      subtitle: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Color(board.color).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              board.name.toUpperCase(),
+                              style: GlassText.labelSM().copyWith(fontSize: 8, color: Color(board.color)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            task.status.toUpperCase(),
+                            style: GlassText.secondary().copyWith(fontSize: 10),
+                          ),
+                        ],
                       ),
-                    ],
+                      trailing: Icon(Icons.chevron_right_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                      onTap: () => _openTask(context, board, task),
+                    );
+                  },
+                ),
+                if (hasMore) ...[
+                  const SizedBox(height: 16),
+                  Center(
+                    child: _buildGhostButton(
+                      '+ LOAD MORE',
+                      Icons.expand_more_rounded,
+                      onTap: () {
+                        setState(() {
+                          _milestonesLimit += 5;
+                        });
+                      },
+                    ),
                   ),
-                  subtitle: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Color(board.color).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          board.name.toUpperCase(),
-                          style: GlassText.labelSM().copyWith(fontSize: 8, color: Color(board.color)),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        task.status.toUpperCase(),
-                        style: GlassText.secondary().copyWith(fontSize: 10),
-                      ),
-                    ],
-                  ),
-                  trailing: Icon(Icons.chevron_right_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
-                  onTap: () => _openTask(context, board, task),
-                );
-              },
+                ],
+              ],
             ),
     );
   }
 
   Widget _buildActivityFeedCard(List<ActivityItem> activityItems, List<String> unreadCommentIds) {
-    final displayedActivities = activityItems.take(8).toList();
+    final displayedActivities = activityItems.take(_activityLimit).toList();
+    final hasMore = activityItems.length > _activityLimit;
 
     return DashboardBentoCard(
       title: 'Discussion Updates',
@@ -522,105 +541,124 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
               ),
             )
-          : ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: displayedActivities.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
-              itemBuilder: (context, index) {
-                final item = displayedActivities[index];
-                final comment = item.comment;
-                final task = item.task;
-                final board = item.board;
-                final isUnread = !_readCommentIds.contains(comment.id);
-                final memberColor = GlassColors.getMemberColor(comment.userId);
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayedActivities.length,
+                  separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+                  itemBuilder: (context, index) {
+                    final item = displayedActivities[index];
+                    final comment = item.comment;
+                    final task = item.task;
+                    final board = item.board;
+                    final isUnread = !_readCommentIds.contains(comment.id);
+                    final memberColor = GlassColors.getMemberColor(comment.userId);
 
-                return InkWell(
-                  onTap: () async {
-                    await _markCommentAsRead(comment.id);
-                    if (mounted) {
-                      _openTask(context, board, task);
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: memberColor.withOpacity(0.1),
-                          child: Text(
-                            comment.userName.isNotEmpty ? comment.userName[0].toUpperCase() : '?',
-                            style: GlassText.labelSM().copyWith(color: memberColor, fontSize: 10),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                    return InkWell(
+                      onTap: () async {
+                        await _markCommentAsRead(comment.id);
+                        if (mounted) {
+                          _openTask(context, board, task);
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: memberColor.withOpacity(0.1),
+                              child: Text(
+                                comment.userName.isNotEmpty ? comment.userName[0].toUpperCase() : '?',
+                                style: GlassText.labelSM().copyWith(color: memberColor, fontSize: 10),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      comment.userName,
-                                      style: GlassText.bodyMD().copyWith(
-                                        fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
-                                        fontSize: 13,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          comment.userName,
+                                          style: GlassText.bodyMD().copyWith(
+                                            fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        DateFormat('MMM d, HH:mm').format(comment.time),
+                                        style: GlassText.secondary().copyWith(
+                                          fontSize: 10,
+                                          color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'on ${task.title}',
+                                    style: GlassText.labelSM().copyWith(
+                                      fontSize: 10,
+                                      color: Color(board.color),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(height: 6),
                                   Text(
-                                    DateFormat('MMM d, HH:mm').format(comment.time),
-                                    style: GlassText.secondary().copyWith(
-                                      fontSize: 10,
-                                      color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                                    comment.text,
+                                    style: GlassText.bodyMD().copyWith(
+                                      fontSize: 12,
+                                      color: isUnread ? GlassColors.onSurface : GlassColors.onSurfaceVariant,
+                                      height: 1.4,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'on ${task.title}',
-                                style: GlassText.labelSM().copyWith(
-                                  fontSize: 10,
-                                  color: Color(board.color),
+                            ),
+                            if (isUnread) ...[
+                              const SizedBox(width: 12),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: GlassColors.gold,
+                                  shape: BoxShape.circle,
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                comment.text,
-                                style: GlassText.bodyMD().copyWith(
-                                  fontSize: 12,
-                                  color: isUnread ? GlassColors.onSurface : GlassColors.onSurfaceVariant,
-                                  height: 1.4,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
-                          ),
+                          ],
                         ),
-                        if (isUnread) ...[
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: GlassColors.gold,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
-                      ],
+                      ),
+                    );
+                  },
+                ),
+                if (hasMore) ...[
+                  const SizedBox(height: 16),
+                  Center(
+                    child: _buildGhostButton(
+                      '+ LOAD MORE',
+                      Icons.expand_more_rounded,
+                      onTap: () {
+                        setState(() {
+                          _activityLimit += 10;
+                        });
+                      },
                     ),
                   ),
-                );
-              },
+                ],
+              ],
             ),
     );
   }

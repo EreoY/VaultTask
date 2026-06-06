@@ -557,7 +557,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
       children: [
         Icon(icon, size: 14, color: GlassColors.primary.withOpacity(0.5)),
         const SizedBox(width: 8),
-        Flexible(child: Text(label, style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.primary), overflow: TextOverflow.ellipsis)),
+        Text(
+          label,
+          style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.primary),
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }

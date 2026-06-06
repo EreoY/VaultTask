@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../models/task_model.dart';
 import '../../../models/board_model.dart';
+import '../../../models/chat_model.dart';
 import '../../../state_managers/state_tasks.dart';
 import '../../../state_managers/state_boards.dart';
+import '../../../state_managers/state_chat.dart';
 import '../../../databases/api_cloudflare.dart';
 import '../../../services/auth_service.dart';
 import '../../theme/glass_theme.dart';
@@ -27,6 +29,47 @@ class TaskEditModal extends StatefulWidget {
     this.initialDate,
     required this.isDark,
   });
+
+  static Future<void> show({
+    required BuildContext context,
+    required BoardModel board,
+    TaskModel? existingTask,
+    String? initialStatus,
+    DateTime? initialDate,
+    required bool isDark,
+  }) async {
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+    if (isDesktop) {
+      await showDialog(
+        context: context,
+        barrierColor: Colors.black.withOpacity(0.6),
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          child: TaskEditModal(
+            board: board,
+            existingTask: existingTask,
+            initialStatus: initialStatus,
+            initialDate: initialDate,
+            isDark: isDark,
+          ),
+        ),
+      );
+    } else {
+      await showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => TaskEditModal(
+          board: board,
+          existingTask: existingTask,
+          initialStatus: initialStatus,
+          initialDate: initialDate,
+          isDark: isDark,
+        ),
+      );
+    }
+  }
 
   @override
   State<TaskEditModal> createState() => _TaskEditModalState();
@@ -49,6 +92,8 @@ class _TaskEditModalState extends State<TaskEditModal> {
   List<TaskComment> _comments = [];
   bool _isSaving = false;
   bool _isUploading = false;
+  int _activeTab = 0;
+  final _taskChatController = TextEditingController();
 
   Map<String, Map<String, String>> _availableMembers = {};
   
@@ -82,7 +127,10 @@ class _TaskEditModalState extends State<TaskEditModal> {
 
     // 🔄 Fetch fresh task data when opening edit modal
     if (widget.existingTask != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshTaskData());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshTaskData();
+        context.read<StateChat>().selectTaskSession(widget.existingTask!.id);
+      });
       
       // 🔄 Listen to real-time task updates while popup is open
       final taskState = context.read<StateTasks>();
@@ -119,6 +167,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     _descController.dispose();
     _descFocusNode.dispose();
     _commentController.dispose();
+    _taskChatController.dispose();
     for (final c in _assetNameControllers.values) {
       c.dispose();
     }
@@ -260,39 +309,134 @@ class _TaskEditModalState extends State<TaskEditModal> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      expand: false,
-      builder: (context, scrollController) {
-        // Task 36.5: Universal Reactive Modal
-        return Consumer2<StateBoards, StateTasks>(
-          builder: (context, boardState, taskState, _) {
-            final currentBoard = boardState.boards.firstWhere((b) => b.id == widget.board.id, orElse: () => widget.board);
+    final isDesktop = MediaQuery.of(context).size.width > 900;
+
+    if (isDesktop) {
+      return Consumer2<StateBoards, StateTasks>(
+        builder: (context, boardState, taskState, _) {
+          final currentBoard = boardState.boards.firstWhere((b) => b.id == widget.board.id, orElse: () => widget.board);
+          
+          if (widget.existingTask != null) {
+            final tasks = taskState.tasksForBoard(widget.board.id);
+            final updatedTask = tasks.firstWhere((t) => t.id == widget.existingTask!.id, orElse: () => widget.existingTask!);
             
-            // Task 36.2: Live State Reconciliation
-            if (widget.existingTask != null) {
-              final tasks = taskState.tasksForBoard(widget.board.id);
-              final updatedTask = tasks.firstWhere((t) => t.id == widget.existingTask!.id, orElse: () => widget.existingTask!);
+            _labelIds = updatedTask.labelIds;
+            _members = updatedTask.members;
+            _images = updatedTask.images;
+            _status = updatedTask.status;
+            _dueDate = updatedTask.dueDate;
+          }
+
+          final mainBody = Padding(
+            padding: const EdgeInsets.all(48),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left Column (Task Edit Form)
+                Expanded(
+                  flex: 5,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 48),
+                        _buildTextField(
+                          controller: _titleController,
+                          hint: 'Task Title',
+                          style: GlassText.headlineLG().copyWith(fontSize: 38),
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildMetadataStrip(currentBoard),
+                        const SizedBox(height: 32),
+                        _buildTextField(
+                          controller: _descController,
+                          focusNode: _descFocusNode,
+                          hint: 'Add a strategic description...',
+                          style: GlassText.bodyLG().copyWith(fontSize: 18, color: GlassColors.onSurface.withOpacity(0.7)),
+                          maxLines: 12,
+                        ),
+                        const SizedBox(height: 48),
+                        _buildSectionTitle('OPERATIONAL ASSETS'),
+                        const SizedBox(height: 24),
+                        _buildVerticalAssetList(),
+                        const SizedBox(height: 80),
+                        if (widget.existingTask == null)
+                           _buildGhostButton('CREATE STRATEGIC TASK', _handleExplicitSave, isPrimary: true),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48),
+                // Vertical Divider
+                Container(
+                  width: 1,
+                  height: double.infinity,
+                  color: GlassColors.ghostBorder,
+                ),
+                const SizedBox(width: 48),
+                // Right Column (Comments / Chat)
+                Expanded(
+                  flex: 4,
+                  child: widget.existingTask != null
+                      ? _buildRightTabSection(isDesktop: true)
+                      : Center(
+                          child: Text(
+                            'บันทึกงานนี้ก่อนเพื่อเริ่มการสนทนาและเขียนคอมเม้น',
+                            style: GlassText.bodyMD().copyWith(
+                              color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          );
+
+          return Material(
+            color: Colors.transparent,
+            child: Center(
+              child: Container(
+                width: 1100,
+                height: MediaQuery.of(context).size.height * 0.85,
+                decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
+                child: mainBody,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) {
+          return Consumer2<StateBoards, StateTasks>(
+            builder: (context, boardState, taskState, _) {
+              final currentBoard = boardState.boards.firstWhere((b) => b.id == widget.board.id, orElse: () => widget.board);
               
-              _labelIds = updatedTask.labelIds;
-              _members = updatedTask.members;
-              _images = updatedTask.images;
-              _status = updatedTask.status;
-              _dueDate = updatedTask.dueDate;
-            }
+              if (widget.existingTask != null) {
+                final tasks = taskState.tasksForBoard(widget.board.id);
+                final updatedTask = tasks.firstWhere((t) => t.id == widget.existingTask!.id, orElse: () => widget.existingTask!);
+                
+                _labelIds = updatedTask.labelIds;
+                _members = updatedTask.members;
+                _images = updatedTask.images;
+                _status = updatedTask.status;
+                _dueDate = updatedTask.dueDate;
+              }
 
-            final coverImage = _images.isEmpty 
-                ? null 
-                : _images.firstWhere((img) => img.isCover, orElse: () => _images.first);
-            final hasCover = coverImage != null && coverImage.url.isNotEmpty;
+              final coverImage = _images.isEmpty 
+                  ? null 
+                  : _images.firstWhere((img) => img.isCover, orElse: () => _images.first);
+              final hasCover = coverImage != null && coverImage.url.isNotEmpty;
 
-            return Container(
-              decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
-              child: ListView(
+              final mainBody = ListView(
                 controller: scrollController,
-                padding: EdgeInsets.zero, // Zero padding for cover bleed
+                padding: EdgeInsets.zero,
                 children: [
                   if (hasCover)
                     Container(
@@ -334,51 +478,53 @@ class _TaskEditModalState extends State<TaskEditModal> {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.all(48),
+                    padding: const EdgeInsets.all(32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeader(),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 32),
                         _buildTextField(
                           controller: _titleController,
                           hint: 'Task Title',
-                          style: GlassText.headlineLG().copyWith(fontSize: 38),
+                          style: GlassText.headlineLG().copyWith(fontSize: 32),
                           maxLines: 1,
                         ),
                         const SizedBox(height: 16),
                         _buildMetadataStrip(currentBoard),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         _buildTextField(
                           controller: _descController,
-                          focusNode: _descFocusNode,
                           hint: 'Add a strategic description...',
-                          style: GlassText.bodyLG().copyWith(fontSize: 18, color: GlassColors.onSurface.withOpacity(0.7)),
-                          maxLines: 12,
+                          style: GlassText.bodyLG().copyWith(fontSize: 16, color: GlassColors.onSurface.withOpacity(0.7)),
+                          maxLines: 8,
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 32),
                         _buildSectionTitle('OPERATIONAL ASSETS'),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                         _buildVerticalAssetList(),
                         if (widget.existingTask != null) ...[
-                          const SizedBox(height: 48),
-                          _buildSectionTitle('STRATEGIC DISCUSSION & FEED'),
-                          const SizedBox(height: 24),
-                          _buildCommentsSection(),
+                          const SizedBox(height: 32),
+                          _buildRightTabSection(isDesktop: false),
                         ],
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 48),
                         if (widget.existingTask == null)
                            _buildGhostButton('CREATE STRATEGIC TASK', _handleExplicitSave, isPrimary: true),
                       ],
                     ),
                   ),
                 ],
-              ),
-            );
-          }
-        );
-      },
-    );
+              );
+
+              return Container(
+                decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
+                child: mainBody,
+              );
+            },
+          );
+        },
+      );
+    }
   }
 
   Widget _buildHeader() {
@@ -832,16 +978,264 @@ class _TaskEditModalState extends State<TaskEditModal> {
     );
   }
 
-  Widget _buildCommentsSection() {
-    final currentUid = AuthService().currentUser?.uid ?? '';
-    final currentUserName = AuthService().currentUser?.displayName ?? 'Anonymous';
+  Widget _buildRightTabSection({required bool isDesktop}) {
+    final tabContent = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: _activeTab == 0
+          ? _buildCommentsSection(isDesktop: isDesktop)
+          : _buildTaskChatSection(isDesktop: isDesktop),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_comments.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+        // Tab Header
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildTabHeaderItem(0, 'ประวัติคอมเม้น', Icons.comment_outlined),
+            _buildTabHeaderItem(1, 'แชทถามเกี่ยวกับงานนี้', Icons.chat_bubble_outline_rounded),
+            if (_activeTab == 1)
+              TextButton.icon(
+                onPressed: () {
+                  if (widget.existingTask != null) {
+                    context.read<StateChat>().startNewTaskSession(widget.existingTask!.id);
+                  }
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: GlassColors.primary),
+                label: Text(
+                  'เริ่มเสสชันใหม่',
+                  style: GlassText.labelSM().copyWith(color: GlassColors.primary),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        // Tab Content
+        isDesktop ? Expanded(child: tabContent) : tabContent,
+      ],
+    );
+  }
+
+  Widget _buildTabHeaderItem(int index, String title, IconData icon) {
+    final isSelected = _activeTab == index;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _activeTab = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? GlassColors.primary.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+          border: Border.all(
+            color: isSelected ? GlassColors.primary.withOpacity(0.3) : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.5),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GlassText.labelSM().copyWith(
+                color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.7),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskChatSection({bool isDesktop = false}) {
+    return Consumer<StateChat>(
+      builder: (context, chatState, _) {
+        final messages = chatState.messages;
+        final isTyping = chatState.isTyping;
+
+        final listWidget = ListView.builder(
+          reverse: true,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          itemCount: messages.length,
+          itemBuilder: (context, idx) {
+            final msg = messages[idx];
+            return _buildTaskChatMessageBubble(msg);
+          },
+        );
+
+        final chatBoxContainer = Container(
+          height: isDesktop ? null : 350,
+          decoration: BoxDecoration(
+            color: GlassColors.onSurface.withOpacity(0.02),
+            borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+            border: Border.all(color: GlassColors.ghostBorder),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+            child: messages.isEmpty
+                ? Center(
+                    child: Text(
+                      'ไม่มีประวัติการพูดคุยในงานนี้\nพิมพ์แชทด้านล่างเพื่อเริ่มถาม AI เกี่ยวกับงานนี้',
+                      textAlign: TextAlign.center,
+                      style: GlassText.caption().copyWith(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                      ),
+                    ),
+                  )
+                : listWidget,
+          ),
+        );
+
+        return Column(
+          children: [
+            isDesktop ? Expanded(child: chatBoxContainer) : chatBoxContainer,
+            if (isTyping) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: GlassColors.primary),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Misty AI กำลังพิมพ์...',
+                    style: GlassText.caption().copyWith(
+                      color: GlassColors.primary.withOpacity(0.7),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            _buildTaskChatInput(chatState),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTaskChatMessageBubble(ChatMessage msg) {
+    final isMe = msg.isUser;
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isMe 
+              ? GlassColors.primary.withOpacity(0.15) 
+              : GlassColors.onSurface.withOpacity(0.05),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isMe ? 16 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 16),
+          ),
+          border: Border.all(
+            color: isMe 
+                ? GlassColors.primary.withOpacity(0.3) 
+                : GlassColors.ghostBorder,
+          ),
+        ),
+        constraints: const BoxConstraints(maxWidth: 280),
+        child: Text(
+          msg.text,
+          style: GlassText.bodyMD().copyWith(
+            color: GlassColors.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskChatInput(StateChat chatState) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: GlassColors.onSurface.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+              border: Border.all(color: GlassColors.ghostBorder),
+            ),
+            child: TextField(
+              controller: _taskChatController,
+              decoration: InputDecoration(
+                hintText: 'ถามเกี่ยวกับงานนี้...',
+                hintStyle: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: InputBorder.none,
+              ),
+              style: GlassText.bodyMD(),
+              onSubmitted: (_) => _sendTaskChatMessage(chatState),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.send_rounded, color: GlassColors.primary),
+          onPressed: () => _sendTaskChatMessage(chatState),
+        ),
+      ],
+    );
+  }
+
+  void _sendTaskChatMessage(StateChat chatState) {
+    final text = _taskChatController.text.trim();
+    if (text.isEmpty) return;
+    _taskChatController.clear();
+    
+    _autoSaveTask();
+    
+    final activeTask = widget.existingTask?.copyWith(
+      title: _titleController.text.trim(),
+      description: _descController.text.trim(),
+      dueDate: _dueDate,
+      status: _status,
+      images: _images,
+      members: _members,
+      labelIds: _labelIds,
+      comments: _comments,
+    ) ?? TaskModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      boardId: widget.board.id,
+      title: _titleController.text.trim(),
+      description: _descController.text.trim(),
+      dueDate: _dueDate,
+      type: widget.board.type,
+      status: _status,
+      images: _images,
+      members: _members,
+      labelIds: _labelIds,
+      comments: _comments,
+    );
+    
+    chatState.sendMessageToAI(text, activeTask: activeTask);
+  }
+
+  Widget _buildCommentsSection({required bool isDesktop}) {
+    final currentUid = AuthService().currentUser?.uid ?? '';
+    final currentUserName = AuthService().currentUser?.displayName ?? 'Anonymous';
+
+    final listWidget = _comments.isEmpty
+        ? Center(
             child: Text(
               'No discussion points logged yet.',
               style: GlassText.bodyMD().copyWith(
@@ -850,10 +1244,8 @@ class _TaskEditModalState extends State<TaskEditModal> {
               ),
             ),
           )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+        : ListView.separated(
+            padding: const EdgeInsets.only(bottom: 16),
             itemCount: _comments.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
@@ -912,41 +1304,132 @@ class _TaskEditModalState extends State<TaskEditModal> {
                 ],
               );
             },
-          ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: GlassColors.onSurface.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: GlassColors.ghostBorder),
+          );
+
+    final inputWidget = Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: GlassColors.onSurface.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: GlassColors.ghostBorder),
+            ),
+            child: ImeSafeTextField(
+              controller: _commentController,
+              style: GlassText.bodyMD(),
+              decoration: InputDecoration(
+                hintText: 'Add a comment or progress update...',
+                hintStyle: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.3),
                 ),
-                child: ImeSafeTextField(
-                  controller: _commentController,
-                  style: GlassText.bodyMD(),
-                  decoration: InputDecoration(
-                    hintText: 'Add a comment or progress update...',
-                    hintStyle: GlassText.bodyMD().copyWith(
-                      color: GlassColors.onSurfaceVariant.withOpacity(0.3),
-                    ),
-                    border: InputBorder.none,
-                  ),
-                  onSubmitted: (_) => _handleAddComment(currentUid, currentUserName),
-                ),
+                border: InputBorder.none,
               ),
+              onSubmitted: (_) => _handleAddComment(currentUid, currentUserName),
             ),
-            const SizedBox(width: 12),
-            IconButton(
-              icon: const Icon(Icons.send_rounded, color: GlassColors.primary),
-              onPressed: () => _handleAddComment(currentUid, currentUserName),
-            ),
-          ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        IconButton(
+          icon: const Icon(Icons.send_rounded, color: GlassColors.primary),
+          onPressed: () => _handleAddComment(currentUid, currentUserName),
         ),
       ],
     );
+
+    if (isDesktop) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: listWidget,
+          ),
+          const SizedBox(height: 16),
+          inputWidget,
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _comments.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    'No discussion points logged yet.',
+                    style: GlassText.bodyMD().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _comments.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final comment = _comments[index];
+                    final isMe = comment.userId == currentUid;
+                    final memberColor = GlassColors.getMemberColor(comment.userId);
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: memberColor.withOpacity(0.1),
+                          child: Text(
+                            comment.userName.isNotEmpty ? comment.userName[0].toUpperCase() : '?',
+                            style: GlassText.labelSM().copyWith(color: memberColor, fontSize: 11),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    comment.userName.isNotEmpty ? comment.userName : 'Unknown',
+                                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateFormat('MMM d, HH:mm').format(comment.time),
+                                    style: GlassText.secondary().copyWith(
+                                      fontSize: 10,
+                                      color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isMe ? GlassColors.primary.withOpacity(0.05) : GlassColors.onSurface.withOpacity(0.03),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: GlassColors.ghostBorder),
+                                ),
+                                child: Text(
+                                  comment.text,
+                                  style: GlassText.bodyMD().copyWith(fontSize: 13, height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+          const SizedBox(height: 24),
+          inputWidget,
+        ],
+      );
+    }
   }
 
   void _handleAddComment(String currentUid, String currentUserName) {

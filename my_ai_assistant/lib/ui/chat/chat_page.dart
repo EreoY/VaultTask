@@ -19,15 +19,47 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  bool _showSidebar = true;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StateChat>().ensureInitialized();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final isWide = MediaQuery.of(context).size.width > 800;
+      _showSidebar = isWide;
+      _initialized = true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: AetherChatView(isDark: widget.isDark),
-        ),
-      ],
+    return Consumer<StateChat>(
+      builder: (context, chatState, _) {
+        return Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: Row(
+                children: [
+                  if (_showSidebar) _buildSidebar(chatState),
+                  Expanded(
+                    child: AetherChatView(isDark: widget.isDark),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -47,9 +79,26 @@ class _ChatPageState extends State<ChatPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Misty AI',
-                style: GlassText.headlineXL().copyWith(fontSize: 48),
+              Row(
+                children: [
+                  Text(
+                    'Misty AI',
+                    style: GlassText.headlineXL().copyWith(fontSize: 48),
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    icon: Icon(
+                      _showSidebar ? Icons.menu_open_rounded : Icons.menu_rounded,
+                      color: GlassColors.primary.withOpacity(0.7),
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showSidebar = !_showSidebar;
+                      });
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Row(
@@ -107,7 +156,149 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildSidebar(StateChat stateChat) {
+    return Container(
+      width: 250,
+      decoration: BoxDecoration(
+        color: GlassColors.onSurface.withOpacity(0.01),
+        border: Border(
+          right: BorderSide(color: GlassColors.ghostBorder),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton.icon(
+              onPressed: () => stateChat.startNewGlobalSession(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: GlassColors.primary.withOpacity(0.1),
+                foregroundColor: GlassColors.primary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                  side: BorderSide(color: GlassColors.primary.withOpacity(0.2)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(
+                'New Session',
+                style: GlassText.labelSM().copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: stateChat.globalSessions.length,
+              itemBuilder: (context, index) {
+                final session = stateChat.globalSessions[index];
+                final isSelected = stateChat.currentGlobalSession?.id == session.id;
 
+                return _buildSidebarSessionItem(session, isSelected, stateChat);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarSessionItem(ChatSession session, bool isSelected, StateChat stateChat) {
+    final nameController = TextEditingController(text: session.name);
+    bool isEditing = false;
+
+    return StatefulBuilder(
+      builder: (context, setSessionState) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? GlassColors.primary.withOpacity(0.08) : Colors.transparent,
+            borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+            border: Border.all(
+              color: isSelected ? GlassColors.primary.withOpacity(0.2) : Colors.transparent,
+            ),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.only(left: 12, right: 4),
+            dense: true,
+            title: isEditing
+                ? TextField(
+                    controller: nameController,
+                    style: GlassText.bodyMD(),
+                    autofocus: true,
+                    onSubmitted: (val) async {
+                      if (val.trim().isNotEmpty) {
+                        await stateChat.renameSession(session.id, val.trim());
+                      }
+                      setSessionState(() => isEditing = false);
+                    },
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  )
+                : Text(
+                    session.name,
+                    style: GlassText.bodyMD().copyWith(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? GlassColors.primary : GlassColors.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+            onTap: isEditing
+                ? null
+                : () {
+                    stateChat.selectGlobalSession(session);
+                  },
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isSelected && !isEditing) ...[
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 14),
+                    onPressed: () {
+                      setSessionState(() => isEditing = true);
+                    },
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, size: 14),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Session'),
+                          content: const Text('Are you sure you want to delete this session?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await stateChat.deleteSession(session.id);
+                      }
+                    },
+                    color: GlassColors.error.withOpacity(0.7),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _AmbientGlow extends StatelessWidget {

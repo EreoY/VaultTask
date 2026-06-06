@@ -1,8 +1,9 @@
 import '../../services/auth_service.dart';
 import '../../databases/api_cloudflare.dart';
+import '../../models/task_model.dart';
 
 class ContextBuilder {
-  static Future<String> buildLiveContext() async {
+  static Future<String> buildLiveContext({TaskModel? activeTask}) async {
     final uid = AuthService().currentUser?.uid;
     if (uid == null) return '';
     try {
@@ -10,8 +11,23 @@ class ContextBuilder {
       final user = AuthService().currentUser;
       final myName = user?.displayName ?? 'Your Name';
       
+      final buf = StringBuffer();
+      
+      if (activeTask != null) {
+        buf.writeln('=== ACTIVE TASK CONTEXT (แชทเกี่ยวกับงานนี้เท่านั้น) ===');
+        buf.writeln('ชื่องาน (Task Title): "${activeTask.title}"');
+        buf.writeln('รหัสงาน (Task ID): ${activeTask.id}');
+        buf.writeln('คำอธิบายงาน (Description): ${activeTask.description}');
+        buf.writeln('สถานะ (Status): ${activeTask.status}');
+        buf.writeln('กำหนดส่ง (Due Date): ${activeTask.dueDate.toIso8601String()}');
+        buf.writeln('เสร็จสิ้นหรือยัง (Is Completed): ${activeTask.isCompleted}');
+        buf.writeln('====================================================');
+        buf.writeln('คุณกำลังคุยกับผู้ใช้งานเกี่ยวกับงานนี้โดยเฉพาะ กรุณาให้คำตอบและการช่วยเหลือที่เกี่ยวข้องกับงานนี้เท่านั้น');
+        buf.writeln('');
+      }
+      
       if (boards.isNotEmpty) {
-        final buf = StringBuffer('[ข้อมูลบริบทปัจจุบัน (Real-time Live Context):]\n');
+        buf.writeln('[ข้อมูลบริบทปัจจุบัน (Real-time Live Context):]\n');
         buf.writeln('- ตัวคุณคือ: $myName [UID: $uid]');
         buf.writeln('- บอร์ดของคุณและรายการงานปัจจุบัน:');
         for (final b in boards) {

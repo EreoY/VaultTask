@@ -521,15 +521,11 @@ class _CalendarPageState extends State<CalendarPage> {
       return;
     }
     final board = boardState.selectedBoard ?? boards.first;
-    showModalBottomSheet(
+    TaskEditModal.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => TaskEditModal(
-        board: board,
-        initialDate: _selectedDate,
-        isDark: widget.isDark,
-      ),
+      board: board,
+      initialDate: _selectedDate,
+      isDark: widget.isDark,
     );
   }
 

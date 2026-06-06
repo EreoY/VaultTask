@@ -1,3 +1,134 @@
+## Phase 99: Desktop Modal Ergonomics, Overflow Prevention, and Concurrent Board Load Optimization
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับโครงสร้างระบบโหลดบอร์ดพร้อมกันด้วย Completer ใน StateBoards, ปรับปรุงการแสดงผลโมดอลงานเป็น Centered Dialog บนหน้าจอกว้าง, ปรับแท็บคอลัมน์ขวาเป็น Wrap เพื่อแก้บัค Overflow และเพิ่มระบบ Bento Card Pagination บนหน้า Dashboard
+
+### Task 99.1: Implement Completer lock in StateBoards.fetchAllBoards()
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:** เพิ่ม `Completer<void>? _fetchCompleter` เพื่อแชร์ Future การโหลดบอร์ดพร้อมกัน
+- **Why:** เพื่อแก้ปัญหาสายเรียกซ้อนของหน้าจอบอร์ดสรุปงาน ส่งผลให้ไม่แสดงประวัติแจ้งเตือนและงานทันที
+
+### Task 99.2: Implement responsive Dialog helper show() in TaskEditModal
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** พัฒนา static method `show()` ใน `TaskEditModal` ให้เรียก `showDialog` บน desktop และ `showModalBottomSheet` บน mobile
+- **Why:** เพื่อย้ายการครอบความกว้างบน desktop ให้เป็น Centered Dialog
+
+### Task 99.3: Refactor layout and headers in TaskEditModal
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เปลี่ยน `Row` เป็น `Wrap` ในแถบสลับแท็บ และจัดสัดส่วน Flex 5:4 และถอด SingleChildScrollView หน้า desktop ออกเพื่อให้ส่วนแชทและคอมเม้นเลื่อนแยกกัน
+- **Why:** เพื่อแก้ปัญหา UI Overflow และอำนวยความสะดวกในการใช้งาน desktop
+
+### Task 99.4: Update modal call sites in KanbanPage, CalendarPage, and DashboardPage
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+    - `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** เปลี่ยนการใช้ `showModalBottomSheet` เป็น `TaskEditModal.show`
+- **Why:** เพื่อส่งต่อความรับผิดชอบการเลือกรูปแบบการแสดงผลที่ตอบสนอง (Responsive) ไปยัง Modal
+
+### Task 99.5: Implement dynamic pagination limits in DashboardPage
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** เพิ่มตัวแปร limits และปุ่ม "+ LOAD MORE" แบบกระจายข้อมูลเพิ่มงานทีละ 5 และประวัติแจ้งเตือนทีละ 10 รายการ
+- **Why:** ตามความต้องการของผู้ใช้ในเรื่องปริมาณและการจำกัดข้อมูลในหน้าแรก
+
+### Task 99.6: Verify implementation with flutter analyze
+- **Status:** [x] Done
+- **Action:** รันการตรวจสอบ Static Analysis เพื่อการันตีความเรียบร้อย
+- **Why:** หลีกเลี่ยงข้อผิดพลาดในการรันแอปพลิเคชัน
+
+---
+
+## Phase 98: Task Modal Splitscreen & Multi-Session Chat Manager
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงโครงสร้าง Task Details Modal เป็น Splitscreen (2 คอลัมน์) บนหน้าจอกว้าง พร้อมจัดวางแถบสลับ 2 แท็บ (Comments & Chat) และพัฒนาระบบ Session Persistence ใน SQLite สำหรับเก็บแชทภายนอกและแชทราย Task
+
+### Task 98.1: Update Task Graph and Context Sync
+- **Status:** [x] Done
+- **Target Files:**
+    - `task-graph.md`
+- **Action:** กำหนดแผนงาน Phase 98 และบันทึกลงใน Task Graph
+- **Why:** เพื่อจัดเตรียมขั้นตอนและติดตามความก้าวหน้าตามกฎของระบบ
+
+### Task 98.2: Upgrade SQLite Database Schema (db_personal_sqlite.dart) to Version 11 for Chat Sessions/Messages
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/databases/db_personal_sqlite.dart`
+- **Action:** อัปเกรดฐานข้อมูลภายใน SQLite เป็นเวอร์ชัน 11 และรันคำสั่ง SQL สร้างตาราง `chat_sessions` และ `chat_messages`
+- **Why:** เพื่อจัดเก็บประวัติการสนทนาอย่างต่อเนื่อง
+
+### Task 98.3: Implement Session-based Chat State Manager (state_chat.dart)
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** พัฒนาตัวจัดการสถานะสำหรับการโหลด Session การสร้าง Session ใหม่ การเปลี่ยนชื่อ และการลบ Session ทั้งแชทภายนอกและราย Task
+- **Why:** เพื่อเชื่อมต่ออินเตอร์เฟสกับข้อมูลแชทที่ถูกจัดเก็บใน SQLite
+
+### Task 98.4: Inject Task Context to Misty Agent (misty_agent.dart & context_builder.dart)
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+    - `my_ai_assistant/lib/ai_agent/memory/context_builder.dart`
+- **Action:** ปรับปรุง MistyAgent และ ContextBuilder ให้ยอมรับข้อมูล `activeTask` เพื่อดึงข้อมูลชื่องานและเนื้อหามาเสริมเป็นข้อมูลคำสั่งระบบสำหรับ AI
+- **Why:** เพื่อให้คำตอบของ AI สอดคล้องกับหัวข้อที่คุยในภารกิจนั้นๆ
+
+### Task 98.5: Redesign Task Edit Modal UI to Desktop Splitscreen with Comments/Chat Tabs (task_edit_modal.dart)
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ปรับอินเตอร์เฟสให้รองรับการแยก 2 คอลัมน์บนหน้าจอกว้าง โดยคอลัมน์ขวามี 2 แท็บ (Comments & Chat)
+- **Why:** เพื่อสร้างการออกแบบที่สวยงามและใช้งานร่วมกับระบบแชทราย Task
+
+### Task 98.6: Implement Sidebar Session List in Global Chat Page (chat_page.dart & aether_chat_view.dart)
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/chat/chat_page.dart`
+    - `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** เพิ่มตัวจัดการ Session หน้าแชทหลักด้านนอก (Misty AI)
+- **Why:** เพื่ออำนวยความสะดวกในการจัดหมวดหมู่การสนทนาของยูเซอร์
+
+### Task 98.7: Run flutter analyze & verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` ตรวจสอบความถูกต้องและทดสอบความเสถียร
+- **Why:** การันตีความเรียบร้อยและปราศจากข้อผิดพลาดของระบบ
+
+---
+
+## Phase 97: Resolve RenderFlex Unbounded Constraints in DailyTimeline
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** แก้ไขข้อผิดพลาดของ RenderFlex และ Unbounded width constraints ในหน้าปฏิทิน (DailyTimeline) โดยปรับการจัดวางองค์ประกอบให้รับขนาดความกว้างตามความกว้างธรรมชาติแทนการบังคับ Flex ใน Row ที่ไม่โดนครอบ
+
+### Task 97.1: Update Task Graph & Context Sync
+- **Status:** [x] Done
+- **Target Files:**
+    - `task-graph.md`
+- **Action:** กำหนดแผนงาน Phase 97 และทำ Context Re-Sync
+- **Why:** เพื่อรักษาความสม่ำเสมอของประวัติโครงการ
+
+### Task 97.2: Fix RenderFlex constraints in daily_timeline_view.dart
+- **Status:** [x] Done
+- **Target Files:**
+    - `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** แก้ไขโครงสร้าง `_buildPreviewMetadataItem` โดยการถอด `Flexible` ออกจาก `Text`
+- **Why:** เพื่อขจัดขอบเขตเงื่อนไข Flex ที่ทับซ้อนกันและทำให้เกิดข้อผิดพลาดรันไทม์
+
+### Task 97.3: Run flutter analyze and verify
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` เพื่อตรวจสอบความสมบูรณ์เชิงไวยากรณ์
+- **Why:** การันตีความเรียบร้อยและไม่มีข้อผิดพลาดเหลืออยู่
+
+---
+
 ## Phase 96: Resolve compilation errors in StateTasks & negative margin in DailyTimeline
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)

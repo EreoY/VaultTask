@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../services/auth_service.dart';
 import '../../models/chat_model.dart';
+import '../../models/task_model.dart';
 import '../memory/context_builder.dart';
 import '../skills/persona.dart';
 import '../skills/skill_task_manager.dart';
@@ -25,6 +26,11 @@ class MistyAgent {
   MistyAgent();
 
   void resetSession() => _history.clear();
+
+  void setHistory(List<Map<String, dynamic>> history) {
+    _history.clear();
+    _history.addAll(history);
+  }
 
   Map<String, String> _buildSystemMessage(String context) {
     return {
@@ -71,13 +77,13 @@ class MistyAgent {
     return jsonDecode(resp.body);
   }
 
-  Future<AiReply> processMessageStream(String message, {List<Map<String, String>>? attachments}) async {
-    return await processMessage(message, attachments: attachments);
+  Future<AiReply> processMessageStream(String message, {List<Map<String, String>>? attachments, TaskModel? activeTask}) async {
+    return await processMessage(message, attachments: attachments, activeTask: activeTask);
   }
 
-  Future<AiReply> processMessage(String message, {List<Map<String, String>>? attachments}) async {
+  Future<AiReply> processMessage(String message, {List<Map<String, String>>? attachments, TaskModel? activeTask}) async {
     final List<ToolCallInfo> allToolNames = []; // PERSISTENT TOOL LOGS
-    final liveContext = await ContextBuilder.buildLiveContext();
+    final liveContext = await ContextBuilder.buildLiveContext(activeTask: activeTask);
     final systemMessage = _buildSystemMessage(liveContext);
 
     final hasAttachments = attachments != null && attachments.isNotEmpty;

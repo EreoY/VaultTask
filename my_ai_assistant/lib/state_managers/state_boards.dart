@@ -38,8 +38,13 @@ class StateBoards extends ChangeNotifier {
 
   Map<String, String>? getMemberProfile(String uid) => _userProfiles[uid];
 
+  Completer<void>? _fetchCompleter;
+
   Future<void> fetchAllBoards() async {
-    if (_isLoading) return;
+    if (_fetchCompleter != null) {
+      return _fetchCompleter!.future;
+    }
+    _fetchCompleter = Completer<void>();
     _isLoading = true;
     notifyListeners();
 
@@ -186,6 +191,8 @@ class StateBoards extends ChangeNotifier {
       _isLoading = false;
       _refreshSelectedBoard(); // Task 34.1: Remap instance
       notifyListeners();
+      _fetchCompleter?.complete();
+      _fetchCompleter = null;
     }
   }
 

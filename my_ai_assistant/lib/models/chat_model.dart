@@ -140,3 +140,32 @@ class AiReply {
   });
 }
 
+class ChatSession {
+  final String id;
+  final String uid;
+  final String taskId;
+  final String name;
+  final DateTime createdAt;
+  final int updatedAt;
+
+  ChatSession({
+    required this.id,
+    required this.uid,
+    this.taskId = '',
+    required this.name,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory ChatSession.fromMap(Map<String, dynamic> map) {
+    return ChatSession(
+      id: map['id'] as String? ?? '',
+      uid: map['uid'] as String? ?? '',
+      taskId: map['task_id'] as String? ?? '',
+      name: map['name'] as String? ?? '',
+      createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: map['updated_at'] is int ? map['updated_at'] as int : 0,
+    );
+  }
+}
+
