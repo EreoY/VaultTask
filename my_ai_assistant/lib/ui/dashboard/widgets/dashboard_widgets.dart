@@ -40,17 +40,23 @@ class DashboardBentoCard extends StatelessWidget {
                   Icon(icon, color: GlassColors.primary, size: 20),
                   const SizedBox(width: 8),
                 ],
-                Text(
-                  title.toUpperCase(),
-                  style: GlassText.bodyMD().copyWith(
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w900,
-                    color: GlassColors.onSurface,
+                Expanded(
+                  child: Text(
+                    title.toUpperCase(),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: GlassText.bodyMD().copyWith(
+                      fontSize: 11,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w900,
+                      color: GlassColors.onSurface,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                if (trailing != null) trailing!,
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing!,
+                ],
               ],
             ),
             const SizedBox(height: 20),

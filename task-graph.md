@@ -1,3 +1,116 @@
+## Phase 102: AI Image Description Cache, Token Optimization, and Vision Tools
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** สร้างคำอธิบายรูปภาพอัตโนมัติเมื่ออัปโหลด, บันทึก metadata คำอธิบายเพื่อทำ cache ประหยัด token, สลับมาใช้คำอธิบายแทน base64 ใน turn ถัดๆ ไป, และสร้างเครื่องมือให้ agent ดึงภาพจริงเมื่อต้องการ
+
+### Task 102.1: Define and Register Vision Agent Tools
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/tools/definitions/vision_defs.dart`, `my_ai_assistant/lib/ai_agent/tools/registry.dart`
+- **Action:** กำหนดและลงทะเบียนเครื่องมือ get_actual_image และ regenerate_image_description
+
+### Task 102.2: Add AI Description Generation on Chat Image Upload
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เรียกใช้ generateAiDescription ตอนอัปโหลดรูปภาพใน sendMessageToAI และเก็บลง 'description' ใน attachments
+
+### Task 102.3: Add AI Description Generation on Kanban Image Upload
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เรียกใช้ generateAiDescription ตอนอัปโหลดรูปภาพใน _pickAndUploadImage และเซฟเข้า aiDescription ของ TaskImage
+
+### Task 102.4: Optimize Chat History Token Consumption
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ใน _convertMessagesToAgentHistory ปรับให้ใช้ text description แทน base64 image_url block ใน turn ย้อนหลัง
+
+### Task 102.5: Implement State Callbacks for MistyAgent
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`, `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** นิยามและส่ง callback สำหรับดึง base64 (onGetImageB64) และอัปเดตคำอธิบายรูปภาพ (onUpdateImageDescription) รวมถึง sync ลง Kanban
+
+### Task 102.6: Handle New Tool Execution in MistyAgent
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** ประมวลผล get_actual_image และ regenerate_image_description ใน MistyAgent โดยแทรก multimodal user message เมื่อดึงรูปจริง
+
+### Task 102.7: E2E Verification & Flutter Analyze
+- **Status:** [x] Done
+- **Action:** รัน flutter analyze และรันเครื่องเพื่อทดสอบฟังก์ชันการวิเคราะห์รูปภาพ
+
+---
+
+## Phase 101: Fix AI Chat Image Attachments & OpenRouter Delivery
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงความสามารถในการพรีวิวรูปภาพก่อนส่ง, อัปเดตข้อมูลไฟล์แนบเข้าตารางแชท และลบ tool_calls จากประวัติการแชทก่อนเรียกใช้งาน OpenRouter API
+
+### Task 101.1: Update D1 Chat Messages Mutation to INSERT OR REPLACE
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** เปลี่ยน INSERT INTO เป็น INSERT OR REPLACE INTO สำหรับ Endpoint บันทึกข้อความแชท
+
+### Task 101.2: Refactor Chat Input File Chips to Support PlatformFile Previews
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** เปลี่ยนประเภทพารามิเตอร์ pendingFiles เป็น List<PlatformFile> และใช้ Image.memory / Image.file เพื่อแสดงพรีวิวภาพ
+
+### Task 101.3: Refactor StateChat Properties and Stream Mapping
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** อัปเดต pendingFileMaps ให้ส่งคืน List<PlatformFile> ตรงๆ เพื่อรักษา bytes/path
+
+### Task 101.4: Update User Message attachments post R2 Upload
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** แทนที่ attachments ของ userMsg ด้วย R2 URL และ Base64 และบันทึกลง D1 ฐานข้อมูลหลังจากอัปโหลดเสร็จสิ้น
+
+### Task 101.5: Strip tool_calls from history for OpenRouter payload compatibility
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ล้างข้อมูล tool_calls ออกจากประวัติผู้ช่วย (assistant) ใน _convertMessagesToAgentHistory
+
+### Task 101.6: E2E Verification & Flutter Analyze
+- **Status:** [ ] Pending
+- **Action:** รันตรวจไวยากรณ์ด้วย flutter analyze และเปิดรันเครื่องเพื่อทดสอบ E2E
+
+---
+
+## Phase 100: Web File Picker Gesture Fix & Stale Process Cleanup
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ย้าย FilePicker.pickFiles() จาก StateChat (async ChangeNotifier) ไปเรียกตรงใน UI gesture callback เพื่อไม่ให้ browser block dialog, พร้อมเพิ่ม cleanup stale processes ใน run_local.sh
+
+### Task 100.1: Add addPendingFiles() to StateChat
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** แทนที่ `pickFiles()` ด้วย `addPendingFiles(List<PlatformFile>)` ที่รับไฟล์จาก UI layer
+
+### Task 100.2: Refactor AetherChatInput to call FilePicker directly
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** เปลี่ยน `onPickFile` เป็น `onFilesPicked`, เรียก `FilePicker.pickFiles()` ตรงใน `onTap` gesture
+
+### Task 100.3: Wire onFilesPicked in AetherChatView
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** อัปเดต callback เป็น `onFilesPicked` → `chatState.addPendingFiles(files)`
+
+### Task 100.4: Remove debug print spam
+- **Status:** [x] Done
+- **Target Files:** `chat_input.dart`, `aether_chat_view.dart`
+- **Action:** ลบ debugPrint จาก selector, builder, และ build method
+
+### Task 100.5: Add stale process cleanup to run_local.sh
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** เพิ่ม `pkill -f "wrangler dev"` และ `pkill -f "miniflare"` ก่อนเริ่ม backend
+
+### Task 100.6: Verify with flutter analyze
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` → 0 errors, 489 info/warnings (pre-existing withOpacity deprecations)
+
+---
+
 ## Phase 97: Strict D1-based Chat Channel Separation & Sidebar UX
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
@@ -1865,3 +1978,300 @@
 - **Status:** [x] Done
 - **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และเสถียรภาพของโค้ด
 - **Why:** ตรวจสอบให้มั่นใจว่าไม่มี Compile errors หรือ Syntax issue จากการแก้ไขตกแต่งสไตล์ครั้งนี้
+
+## Phase 108: Multi-Platform Chat File Upload Infrastructure
+- **Goal:** แก้ไขระบบการอัปโหลดไฟล์ในหน้าแชทให้ใช้งานได้บน Native Platforms ด้วยการดึงไบต์ไฟล์ผ่านทางพาธในเครื่องเป็นตัวเลือกสำรอง (Fallback)
+
+### Task 108.1: Support file bytes fallback reading on Native Platforms
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:**
+  - นำเข้า `dart:io` และ `package:flutter/foundation.dart`
+  - ปรับ R2 Upload Pipeline ในเมธอด `sendMessageToAI` ให้ดึงข้อมูลไบต์จาก `file.path` บน Native (non-web) เมื่อ `file.bytes` เป็น null
+- **Why:** เพื่อให้การอัปโหลดเอกสาร/รูปภาพบนมือถือและเดสก์ท็อปสามารถทำงานได้อย่างสมบูรณ์
+
+### Task 108.2: Run analysis and verify build status
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบข้อผิดพลาดทางไวยากรณ์และความเข้ากันได้ของโค้ด
+- **Why:** มั่นใจในเสถียรภาพและคุณภาพระดับสูงของโปรเจกต์ Calenda
+
+## Phase 109: Dashboard Milestones Filtering and Web/WebP Upload Support
+- **Goal:** ปรับปรุงการกรองงานเสร็จแล้วใน Dashboard ตามการติ๊กถูก และรองรับการอัปโหลดไฟล์สกุล `.web`/`.webp` ให้เข้ากันได้กับระบบ AI Vision
+
+### Task 109.1: Fix Upcoming Milestones Task Completion Filter
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** เปลี่ยนเงื่อนไขบรรทัดที่ 96 จากการเช็กชื่อคอลัมน์ `status` มาเป็นใช้ `!task.isCompleted` แทน
+- **Why:** เนื่องจากผู้ใช้สามารถเปลี่ยนชื่อคอลัมน์ Kanban ได้เองอย่างอิสระ การตรวจสอบด้วย checkbox `isCompleted` จะมีความแม่นยำสูงสุด
+
+### Task 109.2: Map `.web`/`.webp` Extensions to Safe MIME Type
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** อัปเดตฟังก์ชัน `_guessMimeType` ให้แมปตัวเลือก `'web': 'image/jpeg'` และแก้ตัวเลือก `'webp': 'image/jpeg'`
+- **Why:** เพื่อให้มีประเภทไฟล์รูปภาพที่ยอมรับอย่างกว้างขวาง ป้องกันไม่ให้ AI Vision API ของ OpenRouter ปฏิเสธรูปภาพเมื่อพบ MIME type ที่ไม่รู้จัก
+
+### Task 109.3: Run Build Verification and Static Analysis
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และเสถียรภาพของโค้ด
+- **Why:** มั่นใจในคุณภาพโค้ดที่อัปเดตใหม่ว่าจะทำงานได้อย่างถูกต้องสมบูรณ์
+
+## Phase 110: Fix Chat Attachment File Picking on Web
+- **Goal:** แก้ไขปุ่มแนบไฟล์ของห้องแชตให้รองรับการเปิดหน้าต่าง File Picker บนเว็บเบราว์เซอร์อย่างเสถียร
+
+### Task 110.1: Refactor GlassIconButton to use Material/InkWell
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** ปรับเปลี่ยนการทำ Button Event จาก `GestureDetector` ไปใช้ `Material` + `InkWell` เพื่อแปลง pointer events ให้กลายเป็น User Activation ที่เบราว์เซอร์ยอมรับ
+- **Why:** แก้ไขปัญหาระบบเบราว์เซอร์บล็อกหน้าต่างเลือกไฟล์ (User Activation Policy)
+
+### Task 110.2: Run Build Verification and Static Analysis
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และเสถียรภาพของโค้ด
+- **Why:** มั่นใจในคุณภาพโค้ดที่อัปเดตใหม่ว่าจะทำงานได้อย่างถูกต้องสมบูรณ์
+
+## Phase 111: Chat Attachment Diagnostics and Detailed Logging
+- **Goal:** วางระบบตรวจจับและแจ้งเตือน Log ของปุ่มแนบไฟล์แชตเพื่อให้วิเคราะห์หาสาเหตุการทำงานผิดพลาดของปุ่มบน Web
+
+### Task 111.1: Add logs to GlassIconButton
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** เพิ่ม `debugPrint` ในการกด `InkWell` ภายใน `GlassIconButton`
+- **Why:** ตรวจสอบว่า Event มาถึงระดับ UI Button หรือไม่
+
+### Task 111.2: Add logs to AetherChatInput
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** เพิ่ม `debugPrint` ในตัวตรวจรับเหตุการณ์ปุ่ม action
+- **Why:** ตรวจสอบการผ่าน Callback จาก Action Button ไปยัง Input Widget
+
+### Task 111.3: Add logs to _ChatInputArea inside aether_chat_view.dart
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** เพิ่ม `debugPrint` ในตัวสั่งการเรียก `StateChat.pickFiles`
+- **Why:** ตรวจสอบว่า Callback ของหน้าควบคุมแชตได้รับ Event หรือไม่
+
+### Task 111.4: Add logs, try-catch, and Toast/SnackBar to StateChat.pickFiles()
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เพิ่ม try-catch พร้อม log stack trace เต็มรูปแบบ, แสดงผลทางหน้าจอผ่าน SnackBar/Toast หรือ System Dialog เมื่อกดปุ่มแนบไฟล์สำเร็จ
+- **Why:** หาสาเหตุการผิดพลาดในระดับ State Logic หรือข้อผิดพลาดที่เกิดขึ้นจริงใน File Picker ของเบราว์เซอร์
+
+### Task 111.5: Run Build Verification and Static Analysis
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์ของโค้ด
+- **Why:** ตรวจสอบข้อผิดพลาดทางด้าน Syntax ของโค้ดใหม่ทั้งหมด
+
+## Phase 112: Fix Web User Activation for Chat File Uploads
+- **Goal:** แก้ไขปัญหาระบบเบราว์เซอร์บล็อกการแนบไฟล์เนื่องจากสูญเสีย User Activation จาก BackdropFilter
+
+### Task 112.1: Implement Gesture-Safe InkWell inside AetherChatInput
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** แก้ไขฟังก์ชัน `_buildActionButton` เพื่อไม่ให้เรียกใช้ `GlassIconButton` ซึ่งมี `BackdropFilter` อยู่ในลำดับ Element แต่ใช้ `InkWell` หุ้ม `Container` ที่มีสไตล์กึ่งโปร่งใสแทน เพื่อให้ Click Event ถูกส่งต่อไปยัง `FilePicker` โดยตรง
+- **Why:** รักษาสถานะ Synchronous User Activation ของเว็บเบราว์เซอร์ในการเรียกใช้ File Selector
+
+### Task 112.2: Clean Debug UI elements from StateChat.pickFiles()
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ลบการเรียกใช้งาน `ScaffoldMessenger.showSnackBar` และ `showDialog(AlertDialog)` ทั้งหมดในฟังก์ชัน `pickFiles` เพื่อลบหน้าต่างดีบัคกวนสายตาบนเว็บเบราว์เซอร์ตามที่ผู้ใช้ร้องขอ และคงเฉพาะ `debugPrint` ลงคอนโซล Terminal
+- **Why:** ทำการซ่อนดีบัคหน้าจอบนเว็บให้แสดงผลเฉพาะในคอนโซลของนักพัฒนา
+
+### Task 112.3: Run Verification and Build Status
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์ของระบบ
+- **Why:** ยืนยันว่าไม่มี Compile errors หรือประเด็นทาง Syntax จากการแก้ไขครั้งนี้
+
+## Phase 113: Implement Direct HTML Input Picker for Web Chat Attachments
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ป้องกันปัญหา Browser Focus-Loss/Cancellation Bug บน Flutter Web โดยการทำ Custom HTML File Input Picker ที่ดึงไฟล์แบบ Direct/Synchronous แทนการเรียกผ่านแพ็กเกจ file_picker บน Web
+
+### Task 113.1: Create Stub Helper File
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/utils/web_file_picker_stub.dart`
+- **Action:** สร้างฟังก์ชัน stub `pickFilesWeb()` สำหรับคอมไพล์บน Native Platforms
+- **Why:** ป้องกันปัญหาคอมไพเลอร์ฟ้องหาไลบรารี `dart:html` บนแพลตฟอร์มที่ไม่ใช่เว็บ
+
+### Task 113.2: Create Web Helper File
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/utils/web_file_picker_web.dart`
+- **Action:** สร้างฟังก์ชัน `pickFilesWeb()` โดยการใช้ `dart:html.FileUploadInputElement` ร่วมกับ `FileReader` และแนบ input เข้ากับ DOM body (`html.document.body.append`) เพื่อป้องกันปัญหาระบบ Garbage Collection ทำลาย element ก่อนผู้ใช้เลือกไฟล์เสร็จสิ้น พร้อมทั้งทำความสะอาด input ตัวเก่าเพื่อป้องกัน memory leak
+- **Why:** เพื่อดึงข้อมูลไฟล์จากเบราว์เซอร์อย่างเสถียรและป้องกันการสูญหายของ event ในบางเบราว์เซอร์
+
+### Task 113.3: Integrates Web Picker inside StateChat
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ทำ Conditional Import ไปยัง Helper ทั้งสอง และเรียกใช้ `pickFilesWeb` เมื่อตรวจสอบพบว่าอยู่ใน Web Platform และอัปเดตไฟล์แนบตาม context ห้องแชต
+- **Why:** สลับการแนบไฟล์บนเว็บเบราว์เซอร์ให้ไปใช้ Direct HTML input ทันที และเก็บไฟล์แนบแยกกันตามห้องแชตให้ถูกต้อง
+
+### Task 113.4: Verification and Static Analysis
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze`
+- **Why:** มั่นใจในเสถียรภาพและคุณภาพการคอมไพล์ว่าไม่มี syntax compile errors บนแพลตฟอร์มต่างๆ
+
+### Task 113.5: Update System Walkthrough and Documentation
+- **Status:** [x] Done
+- **Target File:** `walkthrough.md`
+- **Action:** บันทึกการแก้ไขปัญหาระบบอัปโหลดไฟล์เว็บในแบบ Direct HTML Input
+- **Why:** ยืนยันความสมบูรณ์ของงานและรักษาสภาพความชัดเจนของประวัติการออกแบบสถาปัตยกรรมแอปพลิเคชัน
+
+## Phase 114: Global Notification & Read Sync
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ย้ายสถานะการอ่านความคิดเห็น (Comment Read Status) ไปไว้ใน StateTasks เพื่อแชร์การอ่านทั่วทั้งแอปพลิเคชันและบันทึกลง SharedPreferences พร้อมเพิ่ม Badge แจ้งเตือนแสดงจำนวนที่ยังไม่อ่านบนกระดิ่ง Dashboard
+
+### Task 114.1: Update StateTasks with comment read tracking and unread comments count
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** เพิ่มตัวแปร `_readCommentIds`, โหลดและบันทึกลง SharedPreferences และสร้าง `unreadCommentsCount`
+- **Why:** เพื่อให้มีแหล่งเก็บสถานะการอ่านคอมเม้นที่อัปเดตและซิงก์กันได้ทั่วทั้งแอป
+
+### Task 114.2: Update TaskEditModal to mark task comments as read on load and updates
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เรียกใช้เมธอดทำเครื่องหมายว่าอ่านแล้วเมื่อแสดงโมดอลหรือเมื่อรับคอมเม้นใหม่ในหน้า Task
+- **Why:** เพื่อให้คอมเม้นใน Task นั้นๆ ถูกทำเครื่องหมายว่าอ่านแล้วทันทีที่ผู้ใช้เปิดดูรายละเอียดงาน
+
+### Task 114.3: Refactor DashboardPage to consume comments read state globally and display the unread notification badge
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ดึงข้อมูลการอ่านคอมเม้นจาก StateTasks และตกแต่งแถบหัวเรื่องด้วยกระดิ่งที่มี Badge จำนวนงานที่ยังไม่ได้อ่าน
+- **Why:** แสดงตัวเลขแจ้งเตือนแบบเรียลไทม์และลดความซับซ้อนของสถานะแอปพลิเคชัน
+
+### Task 114.4: Verification and static analysis with flutter analyze
+- **Status:** [x] Done
+- **Action:** รันการตรวจสอบ Static Analysis เพื่อการันตีความเรียบร้อย
+- **Why:** ป้องกันไม่ให้มี compile error หรือ type mismatch หลังจากการแก้ไขโครงสร้างของระบบการแจ้งเตือน
+
+## Phase 115: File Picker Optimization & Page State Caching
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** รักษามาตรฐานการจัดเก็บข้อมูลและการรักษาความต่อเนื่องของแอปพลิเคชันอย่างสมบูรณ์ ปรับปรุงการใช้ FilePicker และเปลี่ยน Tab Navigation ไปใช้ IndexedStack
+
+### Task 115.1: Integrate robust logging and optimize file picking method
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เปลี่ยนการเรียกใช้ FilePicker ไปเป็น `FilePicker.platform.pickFiles` และเพิ่ม debugPrint ข้อผิดพลาดและข้อมูลของไฟล์ที่เลือกอย่างครบถ้วน
+- **Why:** เพื่อตรวจสอบและระบุสาเหตุที่แท้จริงของการอัปโหลดไฟล์/การเลือกไฟล์ไม่ได้บน Web Platform
+
+### Task 115.2: Change tab switching to IndexedStack in AppShell
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/main.dart`
+- **Action:** เปลี่ยนการใช้ AnimatedSwitcher ไปเป็น IndexedStack เพื่อไม่ให้หน้าแชทและหน้าอื่นๆ รีเซ็ต/กระพริบระหว่างสลับแท็บ
+- **Why:** แก้ไขการรีโหลดของแชทโกลบอลและรักษาความต่อเนื่องของอินเทอร์เฟซผู้ใช้
+
+### Task 115.3: Static analysis verification
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อป้องกันไม่ให้มี compile error หรือ type mismatch
+- **Why:** ยืนยันความพร้อมของซอร์สโค้ดก่อนส่งมอบงานให้ผู้ใช้ทดสอบจริง
+
+## Phase 116: Notification Interaction Logic Refinement & Custom HTML Web FilePicker
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงความถูกต้องของ Notification Flow และการแนบไฟล์ผ่าน Browser Engine
+
+### Task 116.1: Correct aggressive notification mark-read behavior
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ลบ `markAllCommentsAsReadForTask` ออกจาก initState, _onTaskUpdated และ _refreshTaskData
+- **Why:** เพื่อให้การกดอ่านแจ้งเตือนเป็นแบบทีละอัน (granular) ไม่ใช้หน้าต่างข้อมูลล้างประวัติการแจ้งเตือนทั้งหมด
+
+### Task 116.2: Implement direct HTML FilePicker for Web CanvasKit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/web_file_picker_web.dart`, `my_ai_assistant/lib/state_managers/web_file_picker_stub.dart`, `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** สร้าง input element แนบเข้ากับ DOM body, ใช้ onChange synchronous handler เพื่อหลีกเลี่ยง focus cancellation และดึงข้อมูล ByteBuffer แปลงเป็น Uint8List เพื่อส่งกลับเป็น PlatformFile
+- **Why:** แก้ไขบั๊ก file_picker package คืนค่า null บน Web CanvasKit เนื่องจาก event loop/focus mismatch
+
+### Task 116.3: Static analysis verification
+- **Status:** [x] Done
+- **Action:** รันการตรวจสอบ Static Analysis เพื่อการันตีความเรียบร้อยของโค้ดใหม่
+- **Why:** มั่นใจว่าโครงสร้าง conditional import และการประกาศประเภทตัวแปร (List<File> vs FileList) ทำงานร่วมกันได้ถูกต้องโดยไม่มีข้อผิดพลาดค้างอยู่
+
+## Phase 117: Diagnostics and Verification of File Picker UI State
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ตรวจสอบและแก้ไขระบบแสดงผลของไฟล์ที่เลือกใน Chat Input (File Chips) เพื่อให้ปรากฏบนเว็บเบราว์เซอร์อย่างถูกต้อง
+
+### Task 117.1: Add diagnostic logging to StateChat, AetherChatView, and AetherChatInput
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`, `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** เพิ่ม print statements เพื่อพิมพ์สถานะเมื่อเรียกใช้ pickFiles, คืนค่าจาก FilePicker, อัปเดตลิสต์, รีบิลด์ Selector, และรับ pendingFiles
+- **Why:** ค้นหาจุดที่ทำให้ไฟล์ที่เลือกแล้วไม่ยอมแสดงผลขึ้นมาในหน้าจอของแชท
+
+### Task 117.2: Analyze debug log results and apply fix
+- **Status:** [x] Done
+- **Action:** สร้าง custom_file_picker.dart, custom_file_picker_stub.dart, และ custom_file_picker_web.dart เพื่อหลีกเลี่ยง focus loss bug ของแพ็กเกจ file_picker บนเว็บ โดยไม่ใช้ focus listener ในการยกเลิก จากนั้นนำไปเรียกใช้ใน StateChat
+- **Why:** แก้ปัญหาที่ผู้ใช้คลิกปุ่มเลือกไฟล์แล้ว file_picker ส่งคืนค่าเป็น null ทันทีเนื่องจาก focus event บน Chrome (Linux/Wayland) ทำงานเร็วเกินไป
+
+## Phase 118: Web File Picker Gesture Fix & Stale Process Cleanup
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ดึงข้อมูลไฟล์แบบ Synchronous จากการกระทำของผู้ใช้ (User Gesture) เพื่อให้เบราว์เซอร์อนุญาตให้เลือกไฟล์ตามนโยบายความปลอดภัย
+
+### Task 118.1: StateChat Restructuring
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เพิ่มฟังก์ชัน `addPendingFiles(List<PlatformFile>)` เพื่อรับไฟล์ที่เลือกได้โดยตรงจาก UI layer
+- **Why:** เพื่อแก้ปัญหานโยบายความปลอดภัย (User Activation Policy) ของเว็บเบราว์เซอร์
+
+### Task 118.2: AetherChatInput Direct Selection
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** ย้าย `FilePicker.pickFiles()` ไปรันตรงใต้ปุ่มคลิกเพื่อให้ทำงานแบบ synchronous จาก gesture ของผู้ใช้
+- **Why:** เพื่อหลีกเลี่ยง focus loss และข้อจำกัดความปลอดภัยของเบราว์เซอร์
+
+### Task 118.3: AetherChatView Wiring
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** เชื่อมต่อปุ่มเลือกไฟล์ให้นำส่งไฟล์ไปยัง `stateChat.addPendingFiles(files)`
+- **Why:** นำส่งไฟล์ที่เลือกได้สำเร็จเข้าสู่ StateChat
+
+### Task 118.4: Cleaned Code & Removed Debug Spam
+- **Status:** [x] Done
+- **Action:** ลบ log สแปมและโค้ดขยะ คืนค่าดีไซน์ความเบลอของ Glassmorphism
+- **Why:** รักษาความสะอาดและประสิทธิภาพของซอร์สโค้ดตาม Sovereign SOP
+
+### Task 118.5: Stale Process Cleanup
+- **Status:** [x] Done
+- **Target File:** `run_local.sh`
+- **Action:** ฆ่าพอร์ตชนตกค้างของ wrangler dev และ miniflare ก่อนเริ่มทำงาน
+- **Why:** ป้องกันปัญหาพอร์ตชนตอนรัน local backend
+
+### Task 118.6: Static Analysis
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` ตรวจสอบไวยากรณ์
+- **Why:** ยืนยันความสมบูรณ์ของระบบ
+
+## Phase 119: UI Overflow Fix & R2 Image Loading Stabilization
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ปรับปรุงความยืดหยุ่นของ UI ในหัวข้อบอร์ด Bento และใช้การวิเคราะห์ URL แบบ Dynamic และ Fallback ในการดึงรูปภาพ R2 Local
+
+### Task 119.1: Fix Bento Card Header Overflow
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/dashboard/widgets/dashboard_widgets.dart`
+- **Action:** นำวิดเจ็ต `Expanded` มาครอบ `Text(title.toUpperCase())` ในส่วนหัวของ `DashboardBentoCard` พร้อมกำหนด `overflow: TextOverflow.ellipsis` และ `maxLines: 1`
+- **Why:** แก้ไขปัญหากรอบแสดงผลล้น 21 พิกเซลในหน้า Dashboard
+
+### Task 119.2: Dynamic URL Protocol in Cloudflare Worker
+- **Status:** [x] Done
+- **Target File:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ปรับปรุงการคืนค่า `absoluteUrl` ใน endpoint `/api/upload` ให้ใช้ `url.protocol` แทนการฮาร์ดโค้ด `https://`
+- **Why:** ป้องกันไม่ให้แอปดึงรูปภาพด้วย `https://localhost:8787` ซึ่งไม่มีอยู่จริงตอนทดสอบโลคอล
+
+### Task 119.3: Add URL Sanitization in EnvConfig
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/config/env_config.dart`
+- **Action:** เพิ่มฟังก์ชัน `sanitizeUrl(String url)` เพื่อแปลง `https://localhost`, `https://127.0.0.1`, `https://10.0.2.2` เป็น `http://` แบบอัตโนมัติ
+- **Why:** ใช้กู้คืนลิงก์รูปภาพในฐานข้อมูล D1 ที่ถูกบันทึกเป็น `https` ไปแล้วก่อนหน้านี้ให้สามารถโหลดได้ถูกต้อง
+
+### Task 119.4: Integrate URL Sanitizer in Image Widgets
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เรียกใช้ `EnvConfig.sanitizeUrl(url)` ก่อนนำลิงก์ไปส่งให้ `Image.network` แสดงผลรูปหน้าปกและรูปภาพแนบในหน้าบอร์ดต่าง ๆ
+- **Why:** ยืนยันว่าหน้าบอร์ดและปฏิทินแสดงรูปภาพแนบทั้งหมดได้อย่างสมบูรณ์
+
+### Task 119.5: Static Analysis Verification
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และคอมไพล์ของโปรเจกต์
+- **Why:** ยืนยันว่าระบบทั้งหมดปลอดภัย ไม่มี Compile Error หรือปัญหาทางสุนทรียศาสตร์

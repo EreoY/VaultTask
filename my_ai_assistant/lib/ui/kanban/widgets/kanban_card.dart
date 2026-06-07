@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../config/env_config.dart';
 import '../../../models/task_model.dart';
 import '../../../models/board_model.dart';
 import '../../../state_managers/state_tasks.dart';
@@ -88,7 +89,7 @@ class KanbanTaskCard extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(ExecutiveRadius.s),
                   child: Image.network(
-                    coverImage.url,
+                    EnvConfig.sanitizeUrl(coverImage.url),
                     fit: BoxFit.cover, width: double.infinity, height: imageHeight,
                     errorBuilder: (context, error, stackTrace) => Center(
                       child: Icon(Icons.broken_image_outlined, size: 24, color: GlassColors.primary.withOpacity(0.3)),
@@ -293,7 +294,7 @@ class KanbanTaskCard extends StatelessWidget {
               child: ClipOval(
                 child: photo.isNotEmpty 
                   ? Image.network(
-                      photo, 
+                      EnvConfig.sanitizeUrl(photo), 
                       fit: BoxFit.cover, 
                       errorBuilder: (context, error, stackTrace) => Center(
                         child: Text(

@@ -46,4 +46,14 @@ class EnvConfig {
   static String get firebaseApiKeyWindows => dotenv.get('FIREBASE_API_KEY_WINDOWS', fallback: 'AIzaSyCmpEBLMOPw8pcSJpd4d7TCI3Sj_m4hwnc');
   static String get firebaseAppIdWindows => dotenv.get('FIREBASE_APP_ID_WINDOWS', fallback: '1:294337832265:web:8825245d47e66af24c2698');
   static String get firebaseMeasurementIdWindows => dotenv.get('FIREBASE_MEASUREMENT_ID_WINDOWS', fallback: 'G-VK669TZLB0');
+
+  /// Sanitizes image URL by replacing https with http for local backend to prevent connection failure.
+  static String sanitizeUrl(String url) {
+    if (url.startsWith('https://localhost') || 
+        url.startsWith('https://127.0.0.1') || 
+        url.startsWith('https://10.0.2.2')) {
+      return url.replaceFirst('https://', 'http://');
+    }
+    return url;
+  }
 }

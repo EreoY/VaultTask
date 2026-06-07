@@ -17,13 +17,20 @@ import '../tools/handlers/vision_handlers.dart';
 import '../tools/handlers/ui_handlers.dart';
 import 'response_parser.dart';
 import '../utils/draft_builder.dart';
+import '../../databases/api_cloudflare.dart';
 import '../../config/env_config.dart';
 
 class MistyAgent {
   static const String cfModelId = 'google/gemma-4-26b-a4b-it';
   final List<Map<String, dynamic>> _history = [];
   
-  MistyAgent();
+  final Future<Map<String, String>?> Function(String name, String? url)? onGetImageB64;
+  final Future<void> Function(String name, String? url, String newDesc)? onUpdateImageDescription;
+
+  MistyAgent({
+    this.onGetImageB64,
+    this.onUpdateImageDescription,
+  });
 
   void resetSession() => _history.clear();
 
@@ -142,6 +149,7 @@ class MistyAgent {
 
       final List<FunctionCall> actionCalls = [];
       final List<Map<String, dynamic>> turnToolHistory = [];
+      final List<Map<String, dynamic>> extraUserMessagesToInject = [];
 
       for (var toolCall in (rawToolCalls as List)) {
         final function = toolCall['function'];
@@ -156,7 +164,8 @@ class MistyAgent {
 
         if (functionName.startsWith('query_') || functionName.startsWith('list_') || 
             functionName.startsWith('check_') || functionName == 'analyze_uploaded_image' ||
-            functionName == 'show_ui_content') {
+            functionName == 'show_ui_content' || functionName == 'get_actual_image' ||
+            functionName == 'regenerate_image_description') {
           
           String toolOutput = '';
           if (functionName == 'list_team_boards') toolOutput = await QueryHandlers.handleListBoards(cleanArgs);
@@ -169,6 +178,53 @@ class MistyAgent {
           else if (functionName == 'list_personal_tasks') toolOutput = await PersonalHandlers.handleList(cleanArgs);
           else if (functionName == 'show_ui_content') toolOutput = await UIHandlers.handleShowUI(cleanArgs);
           else if (functionName == 'join_team_board') toolOutput = await TeamHandlers.handleJoin(cleanArgs);
+          else if (functionName == 'get_actual_image') {
+            final name = cleanArgs['name']?.toString() ?? '';
+            final url = cleanArgs['url']?.toString();
+            if (onGetImageB64 != null) {
+              final res = await onGetImageB64!(name, url);
+              if (res != null) {
+                final b64 = res['b64'] ?? '';
+                final mime = res['mime'] ?? 'image/jpeg';
+                toolOutput = 'SUCCESS: Loaded visual content for "$name". The image has been injected as a user message immediately following this tool response.';
+                extraUserMessagesToInject.add({
+                  'role': 'user',
+                  'content': [
+                    {'type': 'text', 'text': 'This is the actual visual content of image "$name" for you to analyze:'},
+                    {'type': 'image_url', 'image_url': {'url': 'data:$mime;base64,$b64'}}
+                  ]
+                });
+              } else {
+                toolOutput = 'ERROR: Could not retrieve image data for "$name". Check if name/url is correct.';
+              }
+            } else {
+              toolOutput = 'ERROR: onGetImageB64 callback is not registered.';
+            }
+          } else if (functionName == 'regenerate_image_description') {
+            final name = cleanArgs['name']?.toString() ?? '';
+            final url = cleanArgs['url']?.toString();
+            if (onGetImageB64 != null) {
+              final res = await onGetImageB64!(name, url);
+              if (res != null) {
+                final b64 = res['b64'] ?? '';
+                final mime = res['mime'] ?? 'image/jpeg';
+                final bytes = base64Decode(b64);
+                try {
+                  final newDesc = await ApiCloudflare.generateAiDescription(bytes, mime);
+                  if (onUpdateImageDescription != null) {
+                    await onUpdateImageDescription!(name, url, newDesc);
+                  }
+                  toolOutput = 'SUCCESS: Regenerated description for "$name": $newDesc';
+                } catch (e) {
+                  toolOutput = 'ERROR: Failed to generate description: $e';
+                }
+              } else {
+                toolOutput = 'ERROR: Could not retrieve image data for "$name".';
+              }
+            } else {
+              toolOutput = 'ERROR: onGetImageB64 callback is not registered.';
+            }
+          }
           else toolOutput = 'OK';
 
           turnToolHistory.add({'role': 'tool', 'tool_call_id': toolCall['id'] ?? 'call_${DateTime.now().millisecondsSinceEpoch}', 'content': toolOutput});
@@ -178,6 +234,7 @@ class MistyAgent {
       }
 
       for (final th in turnToolHistory) _history.add(th);
+      for (final msg in extraUserMessagesToInject) _history.add(msg);
 
       if (actionCalls.isNotEmpty) {
         final compositeReply = DraftBuilder.tryBuildComposite(actionCalls: actionCalls, responseText: responseText, allToolNames: allToolNames);

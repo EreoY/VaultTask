@@ -3,7 +3,6 @@ import '../common/ime_safe_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/board_model.dart';
 import '../../models/task_model.dart';
 import '../../models/workspace_model.dart';
@@ -25,14 +24,12 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  Set<String> _readCommentIds = {};
   int _milestonesLimit = 3;
   int _activityLimit = 10;
 
   @override
   void initState() {
     super.initState();
-    _loadReadComments();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<StateBoards>().fetchAllBoards();
       if (mounted) {
@@ -40,33 +37,6 @@ class _DashboardPageState extends State<DashboardPage> {
         context.read<StateTasks>().fetchAllTasks(boards);
       }
     });
-  }
-
-  Future<void> _loadReadComments() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList('read_comment_ids') ?? [];
-    if (mounted) {
-      setState(() {
-        _readCommentIds = list.toSet();
-      });
-    }
-  }
-
-  Future<void> _markCommentAsRead(String id) async {
-    if (_readCommentIds.contains(id)) return;
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _readCommentIds.add(id);
-    });
-    await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
-  }
-
-  Future<void> _markAllCommentsAsRead(List<String> ids) async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _readCommentIds.addAll(ids);
-    });
-    await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
   }
 
   void _openTask(BuildContext context, BoardModel board, TaskModel task) {
@@ -93,7 +63,7 @@ class _DashboardPageState extends State<DashboardPage> {
     for (final board in boards) {
       final boardTasks = tasksState.tasksForBoard(board.id);
       for (final task in boardTasks) {
-        if (task.status.toLowerCase() != 'completed' && task.status.toLowerCase() != 'done') {
+        if (!task.isCompleted) {
           milestoneItems.add(MilestoneItem(task: task, board: board));
         }
         for (final comment in task.comments) {
@@ -108,7 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityItems.sort((a, b) => b.comment.time.compareTo(a.comment.time));
 
     final unreadCommentIds = activityItems
-        .where((item) => !_readCommentIds.contains(item.comment.id))
+        .where((item) => !tasksState.readCommentIds.contains(item.comment.id))
         .map((item) => item.comment.id)
         .toList();
 
@@ -117,7 +87,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(workspaces.length),
+          _buildHeader(workspaces.length, tasksState.unreadCommentsCount),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
           
           isDesktop 
@@ -156,7 +126,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildHeader(int workspaceCount) {
+  Widget _buildHeader(int workspaceCount, int unreadCount) {
     final now = DateTime.now();
     final isSmall = MediaQuery.of(context).size.width < 600;
 
@@ -193,10 +163,42 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(
-              Icons.notifications_none_rounded,
-              color: GlassColors.onSurfaceVariant.withOpacity(0.6),
-              size: 20,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  Icons.notifications_none_rounded,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  size: 20,
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: GlassColors.error,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -521,6 +523,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildActivityFeedCard(List<ActivityItem> activityItems, List<String> unreadCommentIds) {
     final displayedActivities = activityItems.take(_activityLimit).toList();
     final hasMore = activityItems.length > _activityLimit;
+    final tasksState = context.watch<StateTasks>();
 
     return DashboardBentoCard(
       title: 'Discussion Updates',
@@ -530,7 +533,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ? _buildGhostButton(
               'MARK ALL READ',
               Icons.done_all_rounded,
-              onTap: () => _markAllCommentsAsRead(unreadCommentIds),
+              onTap: () => context.read<StateTasks>().markCommentsAsRead(unreadCommentIds),
             )
           : null,
       child: displayedActivities.isEmpty
@@ -554,12 +557,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     final comment = item.comment;
                     final task = item.task;
                     final board = item.board;
-                    final isUnread = !_readCommentIds.contains(comment.id);
+                    final isUnread = !tasksState.readCommentIds.contains(comment.id);
                     final memberColor = GlassColors.getMemberColor(comment.userId);
 
                     return InkWell(
                       onTap: () async {
-                        await _markCommentAsRead(comment.id);
+                        await context.read<StateTasks>().markCommentAsRead(comment.id);
                         if (mounted) {
                           _openTask(context, board, task);
                         }

@@ -239,7 +239,7 @@ class _ChatInputArea extends StatelessWidget {
             focusNode: focusNode,
             pendingFiles: chatState.pendingFileMaps,
             onSend: onSend,
-            onPickFile: () => chatState.pickFiles(),
+            onFilesPicked: (files) => chatState.addPendingFiles(files),
             onRemoveFile: (i) => chatState.removeFile(i),
             onPreviewImage: (url) {},
           ),
@@ -248,3 +248,4 @@ class _ChatInputArea extends StatelessWidget {
     );
   }
 }
+

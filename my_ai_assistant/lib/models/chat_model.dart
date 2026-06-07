@@ -122,6 +122,36 @@ class ChatMessage {
     this.attachments = const [],
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
+
+  ChatMessage copyWith({
+    String? id,
+    String? text,
+    String? reasoning,
+    bool? isUser,
+    bool? hasDraft,
+    ProposalDraft? draft,
+    bool? isConflictAlert,
+    dynamic pendingCall,
+    List<ToolCallInfo>? toolCalls,
+    ProposalDraft? confirmedDraft,
+    List<Map<String, String>>? attachments,
+    DateTime? timestamp,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      reasoning: reasoning ?? this.reasoning,
+      isUser: isUser ?? this.isUser,
+      hasDraft: hasDraft ?? this.hasDraft,
+      draft: draft ?? this.draft,
+      isConflictAlert: isConflictAlert ?? this.isConflictAlert,
+      pendingCall: pendingCall ?? this.pendingCall,
+      toolCalls: toolCalls ?? this.toolCalls,
+      confirmedDraft: confirmedDraft ?? this.confirmedDraft,
+      attachments: attachments ?? this.attachments,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
 }
 
 class AiReply {

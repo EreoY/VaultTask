@@ -11,3 +11,27 @@ final analyzeUploadedImageTool = FunctionDeclaration(
     requiredProperties: const ['url', 'question'],
   ),
 );
+
+final getActualImageTool = FunctionDeclaration(
+  'get_actual_image',
+  'ดึงข้อมูลรูปภาพจริง (Base64/URL) ของรูปภาพที่อ้างถึง เพื่อใช้ในการวิเคราะห์ด้วยตนเอง (Vision On Demand) เมื่อผู้ใช้หรือตัวคุณต้องการตรวจสอบรายละเอียดเชิงลึก',
+  Schema.object(
+    properties: {
+      'name': Schema.string(description: 'ชื่อไฟล์รูปภาพหรือ ID ของรูปภาพที่อ้างถึง (เช่น image.png)'),
+      'url': Schema.string(description: 'URL ของรูปภาพ (ถ้ามี)'),
+    },
+    requiredProperties: const ['name'],
+  ),
+);
+
+final regenerateImageDescriptionTool = FunctionDeclaration(
+  'regenerate_image_description',
+  'สร้างคำอธิบายภาพ (AI Description) ใหม่สำหรับรูปภาพในแชทหรือในงาน เพื่ออัปเดตคำอธิบายให้ถูกต้องยิ่งขึ้น',
+  Schema.object(
+    properties: {
+      'name': Schema.string(description: 'ชื่อไฟล์รูปภาพหรือ ID ของรูปภาพที่ต้องการเจเนอเรตคำอธิบายใหม่'),
+      'url': Schema.string(description: 'URL ของรูปภาพ (ถ้ามี)'),
+    },
+    requiredProperties: const ['name'],
+  ),
+);

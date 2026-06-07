@@ -1,6 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
 import '../models/chat_model.dart';
 import '../models/board_model.dart';
 import '../models/task_model.dart';
@@ -12,6 +17,8 @@ import 'package:google_generative_ai/google_generative_ai.dart' hide ChatSession
 
 // ─── StateChat ──────────────────────────────────────────────────────────────
 class StateChat extends ChangeNotifier {
+  static final onImageDescriptionRegenerated = StreamController<Map<String, dynamic>>.broadcast();
+
   // Dual-Context State Variables
   final List<ChatMessage> _globalMessages = [];
   final List<ChatMessage> _taskMessages = [];
@@ -36,6 +43,7 @@ class StateChat extends ChangeNotifier {
   ChatSession? _currentGlobalSession;
   String? _activeTaskId;
   final Map<String, String> _activeTaskSessionId = {};
+  bool _isLoadingGlobalContext = false;
 
   // Getters that dynamically route to the active context (Global vs Task-specific)
   List<ChatMessage> get _messages => _activeTaskId != null ? _taskMessages : _globalMessages;
@@ -87,12 +95,138 @@ class StateChat extends ChangeNotifier {
 
   StateChat() {
     _initRouter();
+    _initImageDescriptionListener();
     ensureInitialized();
   }
 
   Future<void> _initRouter() async {
-    _globalAgent = MistyAgent();
-    _taskAgent = MistyAgent();
+    _globalAgent = MistyAgent(
+      onGetImageB64: _getImageB64,
+      onUpdateImageDescription: _updateImageDescription,
+    );
+    _taskAgent = MistyAgent(
+      onGetImageB64: _getImageB64,
+      onUpdateImageDescription: _updateImageDescription,
+    );
+  }
+
+  void _initImageDescriptionListener() {
+    onImageDescriptionRegenerated.stream.listen((event) {
+      final url = event['url'] as String?;
+      final description = event['aiDescription'] as String?;
+      if (url == null || description == null) return;
+
+      bool changed = false;
+
+      // Update global messages in memory
+      for (int i = 0; i < _globalMessages.length; i++) {
+        final msg = _globalMessages[i];
+        final hasMatch = msg.attachments.any((att) => att['url'] == url);
+        if (hasMatch) {
+          final updatedAtt = msg.attachments.map((att) {
+            if (att['url'] == url) {
+              return Map<String, String>.from(att)..['description'] = description;
+            }
+            return att;
+          }).toList();
+          final updatedMsg = msg.copyWith(attachments: updatedAtt);
+          _globalMessages[i] = updatedMsg;
+          final sessId = _currentGlobalSession?.id;
+          if (sessId != null) {
+            _saveChatMessageToDb(updatedMsg, sessId);
+          }
+          changed = true;
+        }
+      }
+
+      // Update task messages in memory
+      for (int i = 0; i < _taskMessages.length; i++) {
+        final msg = _taskMessages[i];
+        final hasMatch = msg.attachments.any((att) => att['url'] == url);
+        if (hasMatch) {
+          final updatedAtt = msg.attachments.map((att) {
+            if (att['url'] == url) {
+              return Map<String, String>.from(att)..['description'] = description;
+            }
+            return att;
+          }).toList();
+          final updatedMsg = msg.copyWith(attachments: updatedAtt);
+          _taskMessages[i] = updatedMsg;
+          final sessId = _activeTaskId != null ? _activeTaskSessionId[_activeTaskId] : null;
+          if (sessId != null) {
+            _saveChatMessageToDb(updatedMsg, sessId);
+          }
+          changed = true;
+        }
+      }
+
+      if (changed) notifyListeners();
+    });
+  }
+
+  Future<void> _saveChatMessageToDb(ChatMessage updatedMsg, String sessionId) async {
+    try {
+      await DbPersonalSqlite.instance.insertChatMessage(updatedMsg, sessionId);
+      await ApiCloudflare.insertChatMessage(updatedMsg, sessionId);
+    } catch (e) {
+      debugPrint('Error saving chat message update: $e');
+    }
+  }
+
+  Future<Map<String, String>?> _getImageB64(String name, String? url) async {
+    // 1. Search in global messages attachments
+    for (final msg in _globalMessages) {
+      for (final att in msg.attachments) {
+        if (att['name'] == name || (url != null && att['url'] == url)) {
+          final b64 = att['b64'] ?? '';
+          final mime = att['mime'] ?? 'image/jpeg';
+          if (b64.isNotEmpty) {
+            return {'b64': b64, 'mime': mime};
+          }
+        }
+      }
+    }
+    // 2. Search in task messages attachments
+    for (final msg in _taskMessages) {
+      for (final att in msg.attachments) {
+        if (att['name'] == name || (url != null && att['url'] == url)) {
+          final b64 = att['b64'] ?? '';
+          final mime = att['mime'] ?? 'image/jpeg';
+          if (b64.isNotEmpty) {
+            return {'b64': b64, 'mime': mime};
+          }
+        }
+      }
+    }
+    // 3. Download from URL
+    final targetUrl = url ?? '';
+    if (targetUrl.isNotEmpty && targetUrl.startsWith('http')) {
+      try {
+        final uri = Uri.parse(targetUrl);
+        final resp = await http.get(uri);
+        if (resp.statusCode == 200) {
+          final b64 = base64Encode(resp.bodyBytes);
+          final ext = targetUrl.split('.').last.split('?').first.toLowerCase();
+          String mime = 'image/jpeg';
+          if (ext == 'png') mime = 'image/png';
+          else if (ext == 'gif') mime = 'image/gif';
+          else if (ext == 'webp') mime = 'image/webp';
+          return {'b64': b64, 'mime': mime};
+        }
+      } catch (e) {
+        debugPrint('Error getting image from url: $e');
+      }
+    }
+    return null;
+  }
+
+  Future<void> _updateImageDescription(String name, String? url, String newDesc) async {
+    // Publish event for all listeners to update
+    onImageDescriptionRegenerated.add({
+      'name': name,
+      'url': url,
+      'aiDescription': newDesc,
+    });
   }
 
   Future<void> switchProvider(String provider) async {
@@ -125,37 +259,25 @@ class StateChat extends ChangeNotifier {
 
   String? get currentApiKey => null; // Deprecated locally, uses backend proxy key
 
-  List<Map<String, String>> get pendingFileMaps => _globalPendingFiles.map((f) => {
-    'name': f.name,
-    'mime': _guessMimeType(f.name),
-    'size': f.size.toString(),
-  }).toList();
+  List<PlatformFile> get pendingFileMaps => _pendingFiles;
 
-  Future<void> pickFiles() async {
-    try {
-      final result = await FilePicker.pickFiles(
-        allowMultiple: true,
-        type: FileType.any,
-        withData: true,
-      );
-      if (result != null && result.files.isNotEmpty) {
-        _globalPendingFiles.addAll(result.files);
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Error picking files: $e');
-    }
+  /// Receives already-picked files from the UI layer.
+  /// Called AFTER FilePicker.pickFiles() completes in the gesture callback.
+  void addPendingFiles(List<PlatformFile> files) {
+    if (files.isEmpty) return;
+    _pendingFiles.addAll(files);
+    notifyListeners();
   }
 
   void removeFile(int index) {
-    if (index >= 0 && index < _globalPendingFiles.length) {
-      _globalPendingFiles.removeAt(index);
+    if (index >= 0 && index < _pendingFiles.length) {
+      _pendingFiles.removeAt(index);
       notifyListeners();
     }
   }
 
   void clearPendingFiles() {
-    _globalPendingFiles.clear();
+    _pendingFiles.clear();
     notifyListeners();
   }
 
@@ -256,7 +378,10 @@ class StateChat extends ChangeNotifier {
 
     for (final file in filesToUpload) {
       try {
-        final bytes = file.bytes;
+        Uint8List? bytes = file.bytes;
+        if (bytes == null && !kIsWeb && file.path != null) {
+          bytes = await io.File(file.path!).readAsBytes();
+        }
         if (bytes == null) continue;
         final res = await ApiCloudflare.uploadImage(
           bytes, 
@@ -264,15 +389,41 @@ class StateChat extends ChangeNotifier {
           path: 'tmp', // Transient storage
         );
         if (res['url'] != null) {
+          final mime = _guessMimeType(file.name);
+          String aiDescription = '';
+          if (mime.startsWith('image/')) {
+            try {
+              aiDescription = await ApiCloudflare.generateAiDescription(bytes, mime);
+            } catch (e) {
+              debugPrint('Error generating description: $e');
+            }
+          }
           uploadedAttachments.add({
             'name': file.name,
             'url': res['url'].toString(),
-            'mime': _guessMimeType(file.name),
+            'mime': mime,
             'b64': base64Encode(bytes),
+            'description': aiDescription,
           });
         }
       } catch (e) {
         debugPrint('Upload failed for ${file.name}: $e');
+      }
+    }
+
+    if (uploadedAttachments.isNotEmpty) {
+      final idx = _globalMessages.indexWhere((m) => m.id == userMsg.id);
+      if (idx != -1) {
+        final updatedUserMsg = ChatMessage(
+          id: userMsg.id,
+          text: userMsg.text,
+          isUser: userMsg.isUser,
+          attachments: uploadedAttachments,
+          timestamp: userMsg.timestamp,
+        );
+        _globalMessages[idx] = updatedUserMsg;
+        notifyListeners();
+        await ApiCloudflare.insertChatMessage(updatedUserMsg, sessId);
       }
     }
 
@@ -456,10 +607,10 @@ class StateChat extends ChangeNotifier {
   Future<void> selectGlobalSession(ChatSession session) async {
     _currentGlobalSession = session;
     _activeTaskId = null;
-    _globalMessages.clear();
     _globalDraft = null;
     _globalAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(session.id);
+    _globalMessages.clear();
     _globalMessages.addAll(msgs);
     final agentHistory = _convertMessagesToAgentHistory(msgs);
     _globalAgent.setHistory(agentHistory);
@@ -528,10 +679,10 @@ class StateChat extends ChangeNotifier {
       }
     }
 
-    _taskMessages.clear();
     _taskDraft = null;
     _taskAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(sessionId);
+    _taskMessages.clear();
     _taskMessages.addAll(msgs);
     final agentHistory = _convertMessagesToAgentHistory(msgs);
     _taskAgent.setHistory(agentHistory);
@@ -619,11 +770,17 @@ class StateChat extends ChangeNotifier {
   }
 
   Future<void> switchToGlobalContext() async {
-    _activeTaskId = null;
-    if (_currentGlobalSession != null) {
-      await selectGlobalSession(_currentGlobalSession!);
-    } else {
-      await loadGlobalSessions();
+    if (_isLoadingGlobalContext) return;
+    _isLoadingGlobalContext = true;
+    try {
+      _activeTaskId = null;
+      if (_currentGlobalSession != null) {
+        await selectGlobalSession(_currentGlobalSession!);
+      } else {
+        await loadGlobalSessions();
+      }
+    } finally {
+      _isLoadingGlobalContext = false;
     }
   }
 
@@ -635,32 +792,51 @@ class StateChat extends ChangeNotifier {
       if (m.isUser) {
         final hasAttachments = m.attachments.isNotEmpty;
         if (hasAttachments) {
-          final content = <Map<String, dynamic>>[{'type': 'text', 'text': m.text}];
+          final List<String> descriptionLines = [];
+          final List<Map<String, dynamic>> remainingImageUrls = [];
+          
           for (final att in m.attachments) {
-            final mime = att['mime'] ?? 'application/octet-stream';
+            final name = att['name'] ?? 'image';
+            final description = att['description'] ?? '';
+            final mime = att['mime'] ?? '';
             final b64 = att['b64'] ?? '';
-            if (b64.isNotEmpty) {
-              content.add({'type': 'image_url', 'image_url': {'url': 'data:$mime;base64,$b64'}});
+            
+            if (mime.startsWith('image/') && description.isNotEmpty) {
+              descriptionLines.add('[Attached Image "$name" Description: $description]');
+            } else if (b64.isNotEmpty) {
+              remainingImageUrls.add({
+                'type': 'image_url', 
+                'image_url': {'url': 'data:$mime;base64,$b64'}
+              });
             }
           }
-          history.add({'role': 'user', 'content': content});
+          
+          if (descriptionLines.isNotEmpty || remainingImageUrls.isNotEmpty) {
+            final StringBuffer textBuffer = StringBuffer(m.text);
+            if (descriptionLines.isNotEmpty) {
+              if (textBuffer.isNotEmpty) textBuffer.writeln();
+              textBuffer.write(descriptionLines.join('\n'));
+            }
+            final content = <Map<String, dynamic>>[{'type': 'text', 'text': textBuffer.toString()}];
+            content.addAll(remainingImageUrls);
+            history.add({'role': 'user', 'content': content});
+          } else {
+            history.add({'role': 'user', 'content': m.text});
+          }
         } else {
           history.add({'role': 'user', 'content': m.text});
         }
       } else {
         final assistantEntry = <String, dynamic>{'role': 'assistant', 'content': m.text};
-        if (m.toolCalls.isNotEmpty) {
-          assistantEntry['tool_calls'] = m.toolCalls.map((tc) => {
-            'function': {
-              'name': tc.name,
-              'arguments': tc.arguments,
-            }
-          }).toList();
-        }
         history.add(assistantEntry);
       }
     }
     return history;
+  }
+
+  // Public test helper to expose history conversion
+  List<Map<String, dynamic>> testConvertMessagesToAgentHistory(List<ChatMessage> msgs) {
+    return _convertMessagesToAgentHistory(msgs);
   }
 
   // ─── Build draft from function call ───────────────────────────────────────

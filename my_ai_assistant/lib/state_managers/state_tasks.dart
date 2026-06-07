@@ -4,20 +4,39 @@ import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task_model.dart';
 import '../models/board_model.dart';
 import '../databases/db_personal_sqlite.dart';
 import '../databases/api_cloudflare.dart';
 import '../ai_agent/tools/handlers/team_handlers.dart';
 import 'state_boards.dart';
+import 'state_chat.dart';
 import 'package:intl/intl.dart';
 
 class StateTasks extends ChangeNotifier {
   StateBoards? _stateBoards;
   StreamSubscription<String>? _teamHandlerSub;
   StreamSubscription<String>? _boardChangeSub;
+  StreamSubscription<Map<String, dynamic>>? _descriptionRegenSub;
+
+  Set<String> _readCommentIds = {};
+  Set<String> get readCommentIds => _readCommentIds;
+
+  int get unreadCommentsCount {
+    int count = 0;
+    for (final task in allTasks) {
+      for (final comment in task.comments) {
+        if (!_readCommentIds.contains(comment.id)) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
 
   StateTasks() {
+    _loadReadComments();
     // Listen to AI handler changes for immediate refresh
     _teamHandlerSub = TeamHandlers.onBoardChange.listen((boardId) {
       debugPrint('🤖 AI triggered board change: $boardId');
@@ -48,6 +67,127 @@ class StateTasks extends ChangeNotifier {
         debugPrint('📋 Board fetch error for board $boardId: $e');
       });
     });
+
+    // 🖼️ Listen to AI image description regeneration events
+    _descriptionRegenSub = StateChat.onImageDescriptionRegenerated.stream.listen((event) async {
+      final name = event['name'] as String?;
+      final url = event['url'] as String?;
+      final description = event['aiDescription'] as String?;
+      if (description == null) return;
+
+      bool changed = false;
+
+      // Scan all tasks in _tasksByBoard
+      for (final entry in _tasksByBoard.entries) {
+        final boardId = entry.key;
+        final tasks = entry.value;
+
+        // Try to find if the board is personal or team
+        final board = _stateBoards?.boards.firstWhere(
+          (b) => b.id == boardId,
+          orElse: () => BoardModel(
+            id: boardId,
+            name: '',
+            type: boardId.contains('_') ? 'team' : 'personal',
+            ownerUid: '',
+            columns: [],
+            members: [],
+          ),
+        );
+        final boardType = board?.type ?? 'personal';
+
+        for (int i = 0; i < tasks.length; i++) {
+          final task = tasks[i];
+          final hasMatch = task.images.any((img) => img.url == url || (url == null && img.r2Key == name));
+          if (hasMatch) {
+            final updatedImages = task.images.map((img) {
+              if (img.url == url || (url == null && img.r2Key == name)) {
+                return img.copyWith(aiDescription: description);
+              }
+              return img;
+            }).toList();
+
+            final updatedTask = task.copyWith(
+              images: updatedImages,
+              updatedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+
+            // Persist
+            try {
+              if (boardType == 'personal') {
+                if (!kIsWeb) {
+                  await DbPersonalSqlite.instance.updateTask(updatedTask);
+                }
+              } else {
+                await ApiCloudflare.updateTask(updatedTask);
+              }
+            } catch (e) {
+              debugPrint('Error persisting regenerated image description: $e');
+            }
+
+            // Update in-memory
+            tasks[i] = updatedTask;
+            final notifier = _taskNotifiers[task.id];
+            if (notifier != null) {
+              notifier.value = updatedTask;
+            }
+            changed = true;
+
+            // Broadcast
+            _broadcastUpdate(boardId);
+          }
+        }
+      }
+
+      if (changed) notifyListeners();
+    });
+  }
+
+  Future<void> _loadReadComments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('read_comment_ids') ?? [];
+      _readCommentIds = list.toSet();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading read comments: $e');
+    }
+  }
+
+  Future<void> markCommentAsRead(String id) async {
+    if (_readCommentIds.contains(id)) return;
+    _readCommentIds.add(id);
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
+    } catch (e) {
+      debugPrint('Error saving read comment: $e');
+    }
+  }
+
+  Future<void> markCommentsAsRead(List<String> ids) async {
+    bool changed = false;
+    for (final id in ids) {
+      if (!_readCommentIds.contains(id)) {
+        _readCommentIds.add(id);
+        changed = true;
+      }
+    }
+    if (changed) {
+      notifyListeners();
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
+      } catch (e) {
+        debugPrint('Error saving read comments: $e');
+      }
+    }
+  }
+
+  Future<void> markAllCommentsAsReadForTask(TaskModel task) async {
+    final commentIds = task.comments.map((c) => c.id).toList();
+    await markCommentsAsRead(commentIds);
   }
 
   // 🚀 Restore for main.dart
@@ -568,6 +708,7 @@ class StateTasks extends ChangeNotifier {
   void dispose() {
     _teamHandlerSub?.cancel();
     _boardChangeSub?.cancel();
+    _descriptionRegenSub?.cancel();
     for (final ch in _channels.values) {
       Supabase.instance.client.removeChannel(ch);
     }

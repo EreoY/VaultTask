@@ -315,9 +315,10 @@ class _AppShellState extends State<AppShell> {
                               board: selectedBoard,
                               isDark: false,
                             )
-                          : KeyedSubtree(
-                              key: ValueKey('screen_$_index'),
-                              child: _screens[_index],
+                          : IndexedStack(
+                              key: const ValueKey('screens_stack'),
+                              index: _index,
+                              children: _screens,
                             ),
                     ),
                   ),

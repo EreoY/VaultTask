@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../../config/env_config.dart';
 import '../../../models/task_model.dart';
 import '../../../models/board_model.dart';
 import '../../../state_managers/state_boards.dart';
@@ -410,7 +411,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                             child: ClipRRect(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                               child: Image.network(
-                                coverImage.url,
+                                EnvConfig.sanitizeUrl(coverImage.url),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   color: GlassColors.surfaceHighest.withOpacity(0.1),
@@ -587,7 +588,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(ExecutiveRadius.s),
               child: Image.network(
-                img.url,
+                EnvConfig.sanitizeUrl(img.url),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Center(
                   child: Icon(Icons.broken_image_outlined, size: 16, color: GlassColors.primary.withOpacity(0.3)),
@@ -657,7 +658,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
               child: ClipOval(
                 child: photo.isNotEmpty
                     ? Image.network(
-                        photo,
+                        EnvConfig.sanitizeUrl(photo),
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => fallback,
                       )

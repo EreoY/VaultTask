@@ -158,7 +158,7 @@ export default {
         if (!id || !session_id || text === undefined) return json({ error: "Missing fields" }, 400);
         
         await env.DB.prepare(
-          `INSERT INTO chat_messages (id, session_id, text, reasoning, is_user, has_draft, pending_call, tool_calls, attachments, timestamp)
+          `INSERT OR REPLACE INTO chat_messages (id, session_id, text, reasoning, is_user, has_draft, pending_call, tool_calls, attachments, timestamp)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).bind(
           id,
@@ -540,7 +540,7 @@ export default {
           httpMetadata: { contentType: fileContentType },
         });
 
-        const absoluteUrl = `https://${url.host}/api/images/${key}`;
+        const absoluteUrl = `${url.protocol}//${url.host}/api/images/${key}`;
 
         return json({ success: true, key, url: absoluteUrl });
       } catch (err) {

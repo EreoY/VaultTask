@@ -21,6 +21,12 @@ class ContextBuilder {
         buf.writeln('สถานะ (Status): ${activeTask.status}');
         buf.writeln('กำหนดส่ง (Due Date): ${activeTask.dueDate.toIso8601String()}');
         buf.writeln('เสร็จสิ้นหรือยัง (Is Completed): ${activeTask.isCompleted}');
+        if (activeTask.images.isNotEmpty) {
+          buf.writeln('รูปภาพที่แนบในงานนี้ (Task Attached Images):');
+          for (final img in activeTask.images) {
+            buf.writeln('  ▸ ชื่อรูป: "${img.r2Key}" | URL: "${img.url}" | คำอธิบาย (AI Description): "${img.aiDescription}"');
+          }
+        }
         buf.writeln('====================================================');
         buf.writeln('คุณกำลังคุยกับผู้ใช้งานเกี่ยวกับงานนี้โดยเฉพาะ กรุณาให้คำตอบและการช่วยเหลือที่เกี่ยวข้องกับงานนี้เท่านั้น');
         buf.writeln('');
@@ -58,7 +64,10 @@ class ContextBuilder {
               final statusStr = t.isCompleted ? 'เสร็จแล้ว' : 'ยังไม่เสร็จ';
               // Convert member UIDs to names for AI convenience in text, but keep ID for tool logic
               final tMemberNames = t.members.map((muid) => memberNames[muid]?['name'] ?? muid).join(', ');
-              buf.writeln('      - [ID: ${t.id}] "${t.title}" | สถานะ: ${t.status} ($statusStr) | ผู้รับผิดชอบ: $tMemberNames');
+              final imagesSummary = t.images.isNotEmpty
+                  ? ' | รูปภาพ: ' + t.images.map((img) => '"${img.r2Key}" (คำอธิบาย: ${img.aiDescription})').join(', ')
+                  : '';
+              buf.writeln('      - [ID: ${t.id}] "${t.title}" | สถานะ: ${t.status} ($statusStr) | ผู้รับผิดชอบ: $tMemberNames$imagesSummary');
             }
           }
         }

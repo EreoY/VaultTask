@@ -13,6 +13,13 @@ cd ..
 
 # 2. Start Cloudflare Worker (Backend) in the background
 echo "[2/3] Starting backend worker locally (Miniflare)..."
+
+# Kill any stale wrangler/miniflare processes from previous runs
+echo "Cleaning up stale wrangler processes..."
+pkill -f "wrangler dev" 2>/dev/null || true
+pkill -f "miniflare" 2>/dev/null || true
+sleep 1
+
 cd cloudflare_backend
 
 # Free up ports 8787, 8788, 8789 to avoid port collisions

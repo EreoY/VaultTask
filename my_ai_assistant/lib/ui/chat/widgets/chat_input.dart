@@ -1,4 +1,7 @@
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/glass_widgets.dart';
 import '../../common/ime_safe_text_field.dart';
@@ -7,9 +10,9 @@ class AetherChatInput extends StatelessWidget {
   final bool isDark;
   final TextEditingController controller;
   final FocusNode? focusNode;
-  final List<Map<String, String>> pendingFiles;
+  final List<PlatformFile> pendingFiles;
   final VoidCallback onSend;
-  final VoidCallback onPickFile;
+  final Function(List<PlatformFile>) onFilesPicked;
   final Function(int) onRemoveFile;
   final Function(String) onPreviewImage;
 
@@ -20,7 +23,7 @@ class AetherChatInput extends StatelessWidget {
     this.focusNode,
     required this.pendingFiles,
     required this.onSend,
-    required this.onPickFile,
+    required this.onFilesPicked,
     required this.onRemoveFile,
     required this.onPreviewImage,
   });
@@ -40,6 +43,7 @@ class AetherChatInput extends StatelessWidget {
         children: [
           if (pendingFiles.isNotEmpty)
             _buildFileChips(),
+
           GlassContainer(
             isDark: isDark,
             padding: const EdgeInsets.all(8),
@@ -47,9 +51,33 @@ class AetherChatInput extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildActionButton(
-                  icon: Icons.attach_file_rounded,
-                  onTap: onPickFile,
+                // 🔑 Use Material IconButton instead of GlassIconButton.
+                // GlassIconButton wraps with GlassContainer which has BackdropFilter
+                // that interferes with the file picker's hit test on Flutter Web.
+                IconButton(
+                  onPressed: () async {
+                    try {
+                      final result = await FilePicker.pickFiles();
+                      if (result != null && result.files.isNotEmpty) {
+                        onFilesPicked(result.files);
+                      }
+                    } catch (e) {
+                      debugPrint('Error picking files: $e');
+                    }
+                  },
+                  icon: Icon(
+                    Icons.attach_file_rounded,
+                    color: GlassColors.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: GlassColors.glassSurface,
+                    fixedSize: const Size(44, 44),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(22),
+                      side: BorderSide(color: GlassColors.glassBorder()),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -100,8 +128,8 @@ class AetherChatInput extends StatelessWidget {
         children: pendingFiles.asMap().entries.map((entry) {
           final i = entry.key;
           final f = entry.value;
-          final isImage = f['mime']?.startsWith('image/') ?? false;
-          final hasUrl = f['url'] != null && f['url'] != 'local';
+          final mime = _guessMimeType(f.name);
+          final isImage = mime.startsWith('image/');
 
           return Container(
             padding: const EdgeInsets.all(6),
@@ -109,26 +137,31 @@ class AetherChatInput extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (isImage && hasUrl) ...[
-                  GestureDetector(
-                    onTap: () => onPreviewImage(f['url']!),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                      child: Image.network(f['url']!, width: 40, height: 40, fit: BoxFit.cover),
+                if (isImage) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: f.bytes != null
+                          ? Image.memory(f.bytes!, fit: BoxFit.cover)
+                          : (!kIsWeb && f.path != null
+                              ? Image.file(io.File(f.path!), fit: BoxFit.cover)
+                              : const Icon(Icons.image, size: 20, color: GlassColors.primary)),
                     ),
                   ),
                   const SizedBox(width: 10),
                 ] else ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(_fileTypeIcon(f['mime']), size: 20, color: GlassColors.primary),
+                    child: Icon(_fileTypeIcon(mime), size: 20, color: GlassColors.primary),
                   ),
                 ],
                 Flexible(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 140),
                     child: Text(
-                      f['name']!,
+                      f.name,
                       overflow: TextOverflow.ellipsis,
                       style: GlassText.caption().copyWith(fontSize: 12),
                     ),
@@ -149,6 +182,14 @@ class AetherChatInput extends StatelessWidget {
     );
   }
 
+  String _guessMimeType(String? filename) {
+    final ext = filename?.split('.').last.toLowerCase() ?? '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].contains(ext)) {
+      return 'image/$ext';
+    }
+    return 'application/octet-stream';
+  }
+
   IconData _fileTypeIcon(String? mime) {
     if (mime == null) return Icons.insert_drive_file_outlined;
     if (mime.startsWith('image/')) return Icons.image_outlined;
@@ -160,15 +201,6 @@ class AetherChatInput extends StatelessWidget {
     if (mime.contains('powerpoint') || mime.contains('presentation')) return Icons.slideshow_outlined;
     if (mime.startsWith('text/')) return Icons.text_snippet_outlined;
     return Icons.insert_drive_file_outlined;
-  }
-
-  Widget _buildActionButton({required IconData icon, required VoidCallback onTap}) {
-    return GlassIconButton(
-      icon: icon,
-      onPressed: onTap,
-      isDark: isDark,
-      size: 44,
-    );
   }
 
   Widget _buildSendButton() {

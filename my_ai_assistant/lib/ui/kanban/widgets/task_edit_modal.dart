@@ -10,6 +10,7 @@ import '../../../state_managers/state_tasks.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../../state_managers/state_chat.dart';
 import '../../../databases/api_cloudflare.dart';
+import '../../../config/env_config.dart';
 import '../../../services/auth_service.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/glass_widgets.dart';
@@ -299,11 +300,25 @@ class _TaskEditModalState extends State<TaskEditModal> {
       final bytes = await xFile.readAsBytes();
       final result = await ApiCloudflare.uploadImage(bytes, xFile.name);
       
+      String mimeType = 'image/jpeg';
+      final ext = xFile.name.split('.').last.toLowerCase();
+      if (ext == 'png') mimeType = 'image/png';
+      else if (ext == 'gif') mimeType = 'image/gif';
+      else if (ext == 'webp') mimeType = 'image/webp';
+
+      String aiDescription = '';
+      try {
+        aiDescription = await ApiCloudflare.generateAiDescription(bytes, mimeType);
+      } catch (e) {
+        debugPrint('Error generating description: $e');
+      }
+      
       final newImage = TaskImage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         url: result['url'],
         r2Key: result['key'] ?? '',
         isCover: _images.isEmpty,
+        aiDescription: aiDescription,
       );
 
       setState(() => _images.add(newImage));
@@ -488,7 +503,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                             child: ClipRRect(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                               child: Image.network(
-                                coverImage.url,
+                                EnvConfig.sanitizeUrl(coverImage.url),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   color: GlassColors.surfaceHighest.withOpacity(0.1),
@@ -683,7 +698,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(ExecutiveRadius.s),
                 child: Image.network(
-                  img.url,
+                  EnvConfig.sanitizeUrl(img.url),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Center(
                     child: Icon(Icons.broken_image_outlined, size: 16, color: GlassColors.primary.withOpacity(0.3)),
@@ -746,7 +761,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                 elevation: 0,
                 leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
               ),
-               Flexible(child: Image.network(url, fit: BoxFit.contain)),
+               Flexible(child: Image.network(EnvConfig.sanitizeUrl(url), fit: BoxFit.contain)),
               const SizedBox(height: 24),
             ],
           ),
