@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../models/chat_model.dart';
 import '../../theme/glass_theme.dart';
+import '../../../config/env_config.dart';
 
 // Modular Widgets
 import 'draft_cards.dart';
@@ -9,6 +12,7 @@ import 'structured_ui_bubbles.dart';
 import 'technical_logs.dart';
 
 class UserMessageBubble extends StatelessWidget {
+  static final Map<String, Uint8List> _b64Cache = {};
   final ChatMessage message;
   final bool isDark;
   const UserMessageBubble({super.key, required this.message, required this.isDark});
@@ -57,18 +61,80 @@ class UserMessageBubble extends StatelessWidget {
           final isImage = mime.startsWith('image/');
 
           if (isImage) {
+            final b64 = a['b64'] ?? '';
+            final isFailed = url == 'error' || url.isEmpty;
+            final sanitizedUrl = EnvConfig.sanitizeUrl(url);
+
             return Container(
-              width: 120,
-              height: 120,
+              width: 200,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: GlassColors.ghostBorder),
+                color: GlassColors.surfaceHighest.withOpacity(0.05),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 24)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 184,
+                      height: 110,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          b64.isNotEmpty
+                              ? Image.memory(
+                                  _b64Cache.putIfAbsent(b64, () => base64Decode(b64)),
+                                  fit: BoxFit.cover,
+                                  gaplessPlayback: true,
+                                  errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 24)),
+                                )
+                              : (isFailed
+                                  ? const Center(child: Icon(Icons.broken_image, size: 24))
+                                  : Image.network(
+                                      sanitizedUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 24)),
+                                    )),
+                          if (isFailed)
+                            Container(
+                              color: Colors.black.withOpacity(0.55),
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 24),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Failed',
+                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    a['name'] ?? 'Image',
+                    style: GlassText.caption().copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  CollapsibleDescription(
+                    description: a['description'] ?? '',
+                    isDark: isDark,
+                  ),
+                ],
               ),
             );
           }
@@ -225,6 +291,96 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
               )
             : const SizedBox.shrink(),
         ),
+      ],
+    );
+  }
+}
+
+class CollapsibleDescription extends StatefulWidget {
+  final String description;
+  final bool isDark;
+
+  const CollapsibleDescription({
+    super.key,
+    required this.description,
+    required this.isDark,
+  });
+
+  @override
+  State<CollapsibleDescription> createState() => _CollapsibleDescriptionState();
+}
+
+class _CollapsibleDescriptionState extends State<CollapsibleDescription> {
+  bool _isExpanded = false;
+
+  @override
+  void didUpdateWidget(covariant CollapsibleDescription oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.description.isEmpty && widget.description.isNotEmpty) {
+      _isExpanded = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEmpty = widget.description.isEmpty;
+    final text = isEmpty ? 'กำลังวิเคราะห์รูปภาพด้วย AI...' : widget.description;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: isEmpty
+              ? null
+              : () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isEmpty
+                      ? Icons.hourglass_empty_rounded
+                      : (_isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
+                  size: 14,
+                  color: GlassColors.primary.withOpacity(0.8),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isEmpty ? 'กำลังวิเคราะห์รูปภาพด้วย AI...' : '🤖 คำอธิบาย AI',
+                  style: GlassText.caption().copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: GlassColors.primary.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_isExpanded && !isEmpty) ...[
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: widget.isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: GlassColors.ghostBorder),
+            ),
+            child: Text(
+              text,
+              style: GlassText.caption().copyWith(
+                color: widget.isDark ? Colors.white60 : Colors.black54,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

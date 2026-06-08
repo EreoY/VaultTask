@@ -816,10 +816,27 @@ export default {
     if (url.pathname === "/api/ai/chat" && request.method === "POST") {
       try {
         const body = await request.json();
-        const { model, messages, tools, uid, stream } = body;
+        const { model, messages, tools, uid, stream, session_id, assistant_message_id } = body;
         
+        let userQuestion = "";
+        if (messages && messages.length > 0) {
+          for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].role === "user") {
+              const content = messages[i].content;
+              if (typeof content === "string") {
+                userQuestion = content;
+              } else if (Array.isArray(content)) {
+                const textPart = content.find(part => part.type === "text");
+                userQuestion = textPart ? textPart.text : "";
+              }
+              break;
+            }
+          }
+        }
+
         console.log(`\n🤖 [AI CHAT] Request received - User: ${uid}`);
         console.log(`🤖 [AI CHAT] Messages count: ${messages ? messages.length : 0}`);
+        console.log(`🤖 [AI CHAT] User Question: "${userQuestion.trim().replace(/\n/g, ' ')}"`);
         if (tools && tools.length > 0) {
           console.log(`🤖 [AI CHAT] Tools offered: ${tools.map(t => t.function.name).join(", ")}`);
         } else {
@@ -843,17 +860,38 @@ export default {
         const sysIdx = messagesWithTime.findIndex(m => m.role === "system");
         
         if (sysIdx !== -1) {
-          messagesWithTime[sysIdx] = { 
-            ...messagesWithTime[sysIdx], 
-            content: `${serverTimeText}\n\n${messagesWithTime[sysIdx].content}` 
+          messagesWithTime[sysIdx] = {
+            ...messagesWithTime[sysIdx],
+            content: `${messagesWithTime[sysIdx].content}\n\n[System Info]\n${serverTimeText}`
           };
         } else {
-          messagesWithTime.unshift({ role: "system", content: serverTimeText });
+          messagesWithTime.unshift({
+            role: "system",
+            content: `[System Info]\n${serverTimeText}`
+          });
+        }
+
+        // Standardize prompt image payloads
+        let normalizedMessages = messagesWithTime;
+        if (messagesWithTime && messagesWithTime.length > 0) {
+          normalizedMessages = messagesWithTime.map(m => {
+            if (m.role === "user" && m.content && typeof m.content === "string") {
+              return { ...m, content: [{ type: "text", text: m.content }] };
+            }
+            return m;
+          });
         }
 
         const actualModel = "google/gemma-4-26b-a4b-it";
-        console.log(`🤖 [AI CHAT] Forwarding to OpenRouter (Model: ${actualModel})`);
         
+        const requestBody = {
+          model: actualModel,
+          messages: normalizedMessages,
+          tools: (tools && tools.length > 0) ? tools : undefined,
+          stream: stream
+        };
+
+        console.log(`🤖 [AI CHAT] Forwarding to OpenRouter (Model: ${actualModel})`);
         const geminiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -862,22 +900,32 @@ export default {
             "HTTP-Referer": "https://calenda.flow",
             "X-Title": "Calenda Flow"
           },
-          body: JSON.stringify({
-            model: actualModel,
-            messages: messagesWithTime,
-            tools: (tools && tools.length > 0) ? tools : undefined,
-            stream: stream
-          })
+          body: JSON.stringify(requestBody)
         });
-        
+
         if (!geminiResponse.ok) {
-          const data = await geminiResponse.json();
-          console.error(`❌ [AI CHAT] OpenRouter error (Status: ${geminiResponse.status}):`, JSON.stringify(data));
-          return json({ error: data }, geminiResponse.status);
+          let errText = "Failed to fetch response from OpenRouter";
+          const status = geminiResponse.status;
+          try {
+            const errData = await geminiResponse.json();
+            errText = errData.error?.message || JSON.stringify(errData);
+          } catch (e) {}
+          console.error(`❌ [AI CHAT] OpenRouter API Error: Status ${status} - ${errText}`);
+          return json({ error: { message: errText } }, status);
         }
-        
+
+        const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(part => part.type === "image_url"));
+
         if (stream) {
-          console.log(`🤖 [AI CHAT] Streaming response started`);
+          console.log(`┌──────────────────────────────────────────────────────────┐`);
+          console.log(`│ 🤖 Calenda AI Chat Streaming Started                     │`);
+          console.log(`├──────────────────────────────────────────────────────────┤`);
+          console.log(`│ User ID   : ${uid.padEnd(44)} │`);
+          console.log(`│ Session ID: ${(session_id || "N/A").padEnd(44)} │`);
+          console.log(`│ Images    : ${(hasImages ? "Detected" : "None").padEnd(44)} │`);
+          console.log(`│ Outcome   : Streaming chunks to client...                │`);
+          console.log(`└──────────────────────────────────────────────────────────┘`);
+
           return new Response(geminiResponse.body, {
             headers: {
               ...corsHeaders(),
@@ -889,30 +937,90 @@ export default {
         }
 
         const data = await geminiResponse.json();
-        
-        // Detailed Logging of Token Usage and Choices
-        if (data.usage) {
-          console.log(`📊 [AI CHAT] Usage - Prompt: ${data.usage.prompt_tokens}, Completion: ${data.usage.completion_tokens}, Total: ${data.usage.total_tokens}`);
-        } else {
-          console.log(`📊 [AI CHAT] Usage data not returned`);
-        }
 
-        if (data.choices && data.choices.length > 0) {
-          const choice = data.choices[0];
-          const msg = choice.message;
+        // Write assistant response to D1 database for non-streaming calls
+        if (session_id && assistant_message_id) {
+          const choice = data.choices?.[0];
+          const msg = choice?.message;
           if (msg) {
-            if (msg.tool_calls && msg.tool_calls.length > 0) {
-              console.log(`⚙️ [AI CHAT] Tool Calls requested:`);
-              msg.tool_calls.forEach((tc, idx) => {
-                console.log(`  [${idx + 1}] Function: ${tc.function.name}`);
-                console.log(`      Args: ${tc.function.arguments}`);
-              });
-            } else if (msg.content) {
-              const preview = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
-              console.log(`💬 [AI CHAT] Assistant Response: "${preview.replace(/\n/g, ' ')}"`);
+            const responseText = msg.content || "";
+            const rawToolCalls = msg.tool_calls;
+            
+            try {
+              await env.DB.prepare(
+                `INSERT OR REPLACE INTO chat_messages (id, session_id, text, reasoning, is_user, has_draft, pending_call, tool_calls, attachments, timestamp)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              ).bind(
+                assistant_message_id,
+                session_id,
+                responseText,
+                choice.reasoning || "",
+                0, // is_user = false
+                0, // has_draft = false
+                "", // pending_call = empty
+                rawToolCalls ? JSON.stringify(rawToolCalls) : "[]",
+                "[]", // attachments = empty for assistant
+                Date.now()
+              ).run();
+
+              // Update session updated_at
+              await env.DB.prepare(
+                `UPDATE chat_sessions SET updated_at = ? WHERE id = ?`
+              ).bind(Date.now(), session_id).run();
+              
+              console.log(`💾 [AI CHAT] Assistant response persisted to D1 (ID: ${assistant_message_id})`);
+            } catch (dbErr) {
+              console.error(`❌ [AI CHAT] D1 persistence failed: ${dbErr.message}`);
             }
           }
         }
+
+        // Detailed Logging of Token Usage and Costs
+        let promptTokens = 0;
+        let completionTokens = 0;
+        let totalTokens = 0;
+        let costUsd = 0.0;
+        
+        if (data.usage) {
+          promptTokens = data.usage.prompt_tokens || 0;
+          completionTokens = data.usage.completion_tokens || 0;
+          totalTokens = data.usage.total_tokens || 0;
+          costUsd = (promptTokens * 0.07 + completionTokens * 0.34) / 1000000;
+        }
+
+        const choice = data.choices?.[0];
+        const msg = choice?.message;
+        let outcome = "No response";
+        if (msg) {
+          if (msg.tool_calls && msg.tool_calls.length > 0) {
+            outcome = `Tool Calls [${msg.tool_calls.map(tc => tc.function.name).join(", ")}]`;
+          } else if (msg.content) {
+            const preview = msg.content.length > 60 ? msg.content.substring(0, 60).replace(/\n/g, " ") + "..." : msg.content.replace(/\n/g, " ");
+            outcome = `Message: "${preview}"`;
+          }
+        }
+
+        console.log(`┌──────────────────────────────────────────────────────────┐`);
+        console.log(`│ 🤖 Calenda AI Chat Session Summary                       │`);
+        console.log(`├──────────────────────────────────────────────────────────┤`);
+        console.log(`│ User ID   : ${uid.padEnd(44)} │`);
+        console.log(`│ Session ID: ${(session_id || "N/A").padEnd(44)} │`);
+        console.log(`│ Images    : ${(hasImages ? "Detected" : "None").padEnd(44)} │`);
+        console.log(`│ Tokens    : ${("Prompt: " + promptTokens + " | Completion: " + completionTokens + " | Total: " + totalTokens).padEnd(44)} │`);
+        console.log(`│ Est. Cost : $${costUsd.toFixed(6).padEnd(43)} │`);
+        console.log(`│ Outcome   : ${outcome.padEnd(44)} │`);
+        console.log(`└──────────────────────────────────────────────────────────┘`);
+        
+        let fullResponse = "No response";
+        if (msg) {
+          if (msg.tool_calls && msg.tool_calls.length > 0) {
+            fullResponse = `Tool Calls:\n${JSON.stringify(msg.tool_calls, null, 2)}`;
+          } else if (msg.content) {
+            fullResponse = msg.content;
+          }
+        }
+        console.log(`💬 [User Question (Full)]:\n${userQuestion}`);
+        console.log(`🤖 [AI Response (Full)]:\n${fullResponse}\n────────────────────────────────────────────────────────────`);
         
         return json({ result: data });
       } catch (err) {

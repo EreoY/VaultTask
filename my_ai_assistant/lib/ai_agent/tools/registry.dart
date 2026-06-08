@@ -19,8 +19,6 @@ final List<FunctionDeclaration> allAiTools = [
   checkBoardUpdatesTool,
   checkMemberRolesTool,
   checkConflictTool,
-  analyzeUploadedImageTool,
-  getActualImageTool,
-  regenerateImageDescriptionTool,
+  updateImageDescriptionTool,
   UIDefs.showUIContent,
 ];

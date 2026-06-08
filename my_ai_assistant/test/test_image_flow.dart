@@ -223,5 +223,39 @@ void main() {
       print('✅ Chronological integrity verified: All 5 turns preserved and ordered correctly.');
       print('✅ Context validation: No messages or details were dropped during conversion.');
     });
+
+    test('TC-08: Sliding Window of Last 14 Messages', () {
+      print('\n--- [TC-08] Test: Sliding Window of Last 14 Messages ---');
+      final stateChat = TestStateChat();
+
+      // Create a long conversation of 20 messages (reverse chronological order)
+      // indices: 0 (latest) to 19 (oldest)
+      final List<ChatMessage> longConversation = List.generate(20, (index) {
+        final id = 'msg_$index';
+        final isUser = index % 2 == 0;
+        return ChatMessage(
+          id: id,
+          isUser: isUser,
+          text: 'Message $index',
+          timestamp: DateTime.now().subtract(Duration(minutes: index)),
+        );
+      });
+
+      // Convert to history
+      final history = stateChat.testConvertMessagesToAgentHistory(longConversation);
+
+      // It should limit the history to exactly 14 messages
+      expect(history.length, 14);
+
+      // Since the source is in reverse chronological order,
+      // the last 14 messages are indices 0 to 13.
+      // When converted to chronological order, the first item in the history list should be the oldest among the last 14,
+      // which corresponds to index 13 ('Message 13').
+      // The last item in the history list should be the latest message, which is index 0 ('Message 0').
+      expect(history.first['content'], 'Message 13');
+      expect(history.last['content'], 'Message 0');
+
+      print('✅ Sliding window verified: History correctly capped at 14 messages and ordered chronologically.');
+    });
   });
 }

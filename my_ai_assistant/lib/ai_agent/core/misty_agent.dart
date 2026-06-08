@@ -17,7 +17,6 @@ import '../tools/handlers/vision_handlers.dart';
 import '../tools/handlers/ui_handlers.dart';
 import 'response_parser.dart';
 import '../utils/draft_builder.dart';
-import '../../databases/api_cloudflare.dart';
 import '../../config/env_config.dart';
 
 class MistyAgent {
@@ -69,7 +68,12 @@ class MistyAgent {
     },
   };
 
-  Future<Map<String, dynamic>> _callCfApi(Map<String, String> systemMsg, {bool stream = false}) async {
+  Future<Map<String, dynamic>> _callCfApi(
+    Map<String, String> systemMsg, {
+    bool stream = false,
+    String? sessionId,
+    String? assistantMessageId,
+  }) async {
     final body = {
       'uid': AuthService().currentUser?.uid ?? '', 
       'model': cfModelId,
@@ -77,6 +81,8 @@ class MistyAgent {
       'tools': allAiTools.map((fd) => _convertTool(fd)).toList(),
       'max_tokens': 1500,
       'stream': stream,
+      if (sessionId != null) 'session_id': sessionId,
+      if (assistantMessageId != null) 'assistant_message_id': assistantMessageId,
     };
     final resp = await http.post(Uri.parse('${EnvConfig.backendUrl}/api/ai/chat'), 
         headers: {'Content-Type': 'application/json'}, body: jsonEncode(body));
@@ -84,18 +90,42 @@ class MistyAgent {
     return jsonDecode(resp.body);
   }
 
-  Future<AiReply> processMessageStream(String message, {List<Map<String, String>>? attachments, TaskModel? activeTask}) async {
-    return await processMessage(message, attachments: attachments, activeTask: activeTask);
+  Future<AiReply> processMessageStream(
+    String message, {
+    List<Map<String, String>>? attachments,
+    TaskModel? activeTask,
+    String? sessionId,
+    String? assistantMessageId,
+  }) async {
+    return await processMessage(
+      message,
+      attachments: attachments,
+      activeTask: activeTask,
+      sessionId: sessionId,
+      assistantMessageId: assistantMessageId,
+    );
   }
 
-  Future<AiReply> processMessage(String message, {List<Map<String, String>>? attachments, TaskModel? activeTask}) async {
+  Future<AiReply> processMessage(
+    String message, {
+    List<Map<String, String>>? attachments,
+    TaskModel? activeTask,
+    String? sessionId,
+    String? assistantMessageId,
+  }) async {
     final List<ToolCallInfo> allToolNames = []; // PERSISTENT TOOL LOGS
     final liveContext = await ContextBuilder.buildLiveContext(activeTask: activeTask);
     final systemMessage = _buildSystemMessage(liveContext);
 
     final hasAttachments = attachments != null && attachments.isNotEmpty;
     if (hasAttachments) {
-      final content = <Map<String, dynamic>>[{'type': 'text', 'text': message}];
+      String enrichedText = message;
+      for (final att in attachments) {
+        final name = att['name'] ?? 'image';
+        final url = att['url'] ?? '';
+        enrichedText += '\n[Attached Image Name: "$name", URL: "$url"]';
+      }
+      final content = <Map<String, dynamic>>[{'type': 'text', 'text': enrichedText}];
       
       // Send ALL file types (image, audio, video, pdf) as inline data URIs
       // Gemini's OpenAI-compatible endpoint supports multimodal input via image_url with data URI
@@ -112,7 +142,11 @@ class MistyAgent {
     }
 
     try {
-      final response = await _callCfApi(systemMessage);
+      final response = await _callCfApi(
+        systemMessage,
+        sessionId: sessionId,
+        assistantMessageId: assistantMessageId,
+      );
       final result = response['result'];
       if (result == null) return AiReply(text: 'The AI service is not responding. Please try again.');
       
@@ -137,11 +171,14 @@ class MistyAgent {
 
       responseText = ResponseParser.cleanText(responseText);
 
-      final assistantEntry = <String, dynamic>{'role': 'assistant', 'content': responseText};
-      if (rawToolCalls != null && (rawToolCalls as List).isNotEmpty) {
-        assistantEntry['tool_calls'] = rawToolCalls;
-      }
-      _history.add(assistantEntry);
+       final assistantEntry = <String, dynamic>{
+         'role': 'assistant',
+         'content': responseText.isNotEmpty ? responseText : null,
+       };
+       if (rawToolCalls != null && (rawToolCalls as List).isNotEmpty) {
+         assistantEntry['tool_calls'] = rawToolCalls;
+       }
+       _history.add(assistantEntry);
 
       if (rawToolCalls == null || (rawToolCalls as List).isEmpty) {
         return AiReply(text: responseText, reasoning: null, toolCalls: allToolNames);
@@ -165,7 +202,7 @@ class MistyAgent {
         if (functionName.startsWith('query_') || functionName.startsWith('list_') || 
             functionName.startsWith('check_') || functionName == 'analyze_uploaded_image' ||
             functionName == 'show_ui_content' || functionName == 'get_actual_image' ||
-            functionName == 'regenerate_image_description') {
+            functionName == 'update_image_description') {
           
           String toolOutput = '';
           if (functionName == 'list_team_boards') toolOutput = await QueryHandlers.handleListBoards(cleanArgs);
@@ -200,29 +237,15 @@ class MistyAgent {
             } else {
               toolOutput = 'ERROR: onGetImageB64 callback is not registered.';
             }
-          } else if (functionName == 'regenerate_image_description') {
+          } else if (functionName == 'update_image_description') {
             final name = cleanArgs['name']?.toString() ?? '';
             final url = cleanArgs['url']?.toString();
-            if (onGetImageB64 != null) {
-              final res = await onGetImageB64!(name, url);
-              if (res != null) {
-                final b64 = res['b64'] ?? '';
-                final mime = res['mime'] ?? 'image/jpeg';
-                final bytes = base64Decode(b64);
-                try {
-                  final newDesc = await ApiCloudflare.generateAiDescription(bytes, mime);
-                  if (onUpdateImageDescription != null) {
-                    await onUpdateImageDescription!(name, url, newDesc);
-                  }
-                  toolOutput = 'SUCCESS: Regenerated description for "$name": $newDesc';
-                } catch (e) {
-                  toolOutput = 'ERROR: Failed to generate description: $e';
-                }
-              } else {
-                toolOutput = 'ERROR: Could not retrieve image data for "$name".';
-              }
+            final description = cleanArgs['description']?.toString() ?? '';
+            if (onUpdateImageDescription != null) {
+              await onUpdateImageDescription!(name, url, description);
+              toolOutput = 'SUCCESS: Updated description for "$name" to: $description';
             } else {
-              toolOutput = 'ERROR: onGetImageB64 callback is not registered.';
+              toolOutput = 'ERROR: onUpdateImageDescription callback is not registered.';
             }
           }
           else toolOutput = 'OK';
@@ -241,8 +264,33 @@ class MistyAgent {
         if (compositeReply != null) return compositeReply;
       }
 
+      bool canSkipSecondCall = responseText.trim().isNotEmpty;
+      if (canSkipSecondCall) {
+        for (var toolCall in (rawToolCalls as List)) {
+          final function = toolCall['function'];
+          if (function == null) continue;
+          final name = function['name']?.toString() ?? '';
+          if (name.startsWith('query_') || name.startsWith('list_') || name.startsWith('check_') ||
+              name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_') ||
+              name.startsWith('move_') || name == 'join_team_board') {
+            if (name != 'update_image_description') {
+              canSkipSecondCall = false;
+              break;
+            }
+          }
+        }
+      }
+
+      if (canSkipSecondCall) {
+        return AiReply(text: responseText, reasoning: null, toolCalls: allToolNames);
+      }
+
       if (turnToolHistory.isNotEmpty) {
-        final secRes = await _callCfApi(systemMessage);
+        final secRes = await _callCfApi(
+          systemMessage,
+          sessionId: sessionId,
+          assistantMessageId: assistantMessageId,
+        );
         final secResult = secRes['result'];
         String secText = '';
         if (secResult?['choices'] != null && (secResult['choices'] as List).isNotEmpty) {
@@ -255,7 +303,7 @@ class MistyAgent {
         }
         
         secText = ResponseParser.cleanText(secText);
-        _history.add({'role': 'assistant', 'content': secText});
+        _history.add({'role': 'assistant', 'content': secText.isNotEmpty ? secText : null});
         return AiReply(text: secText.trim(), reasoning: null, toolCalls: allToolNames);
       }
 

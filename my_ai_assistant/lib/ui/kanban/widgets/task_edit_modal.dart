@@ -300,33 +300,61 @@ class _TaskEditModalState extends State<TaskEditModal> {
       final bytes = await xFile.readAsBytes();
       final result = await ApiCloudflare.uploadImage(bytes, xFile.name);
       
-      String mimeType = 'image/jpeg';
-      final ext = xFile.name.split('.').last.toLowerCase();
-      if (ext == 'png') mimeType = 'image/png';
-      else if (ext == 'gif') mimeType = 'image/gif';
-      else if (ext == 'webp') mimeType = 'image/webp';
-
-      String aiDescription = '';
-      try {
-        aiDescription = await ApiCloudflare.generateAiDescription(bytes, mimeType);
-      } catch (e) {
-        debugPrint('Error generating description: $e');
-      }
-      
+      final imageId = DateTime.now().millisecondsSinceEpoch.toString();
       final newImage = TaskImage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: imageId,
         url: result['url'],
         r2Key: result['key'] ?? '',
         isCover: _images.isEmpty,
-        aiDescription: aiDescription,
+        name: xFile.name,
+        aiDescription: '', // empty initially, loaded in bg
       );
 
-      setState(() => _images.add(newImage));
+      setState(() {
+        _images.add(newImage);
+        _isUploading = false; // Stop spinner immediately
+      });
       await _autoSaveTask();
+
+      // Trigger AI description in the background
+      _generateAndSaveDescriptionInBackground(imageId, bytes, xFile.name);
     } catch (e) {
       debugPrint('Upload Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('อัปโหลดไฟล์ล้มเหลว: $e')),
+      );
     } finally {
       if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _generateAndSaveDescriptionInBackground(String imageId, List<int> bytes, String fileName) async {
+    String mimeType = 'image/jpeg';
+    final ext = fileName.split('.').last.toLowerCase();
+    if (ext == 'png') mimeType = 'image/png';
+    else if (ext == 'gif') mimeType = 'image/gif';
+    else if (ext == 'webp') mimeType = 'image/webp';
+
+    try {
+      final aiDescription = await ApiCloudflare.generateAiDescription(bytes, mimeType);
+      if (mounted) {
+        setState(() {
+          _images = _images.map((img) {
+            if (img.id == imageId) {
+              return img.copyWith(aiDescription: aiDescription);
+            }
+            return img;
+          }).toList();
+          
+          // Re-initialize controller with the description if it was not edited
+          if (_assetNameControllers.containsKey(imageId)) {
+            // Keep using the edited text if the user started typing
+          }
+        });
+        await _autoSaveTask();
+      }
+    } catch (e) {
+      debugPrint('Background AI description failed: $e');
     }
   }
 
@@ -672,7 +700,10 @@ class _TaskEditModalState extends State<TaskEditModal> {
   Widget _buildAssetRow(TaskImage img) {
     // Task 36.2: Persistent Controller Implementation
     if (!_assetNameControllers.containsKey(img.id)) {
-      _assetNameControllers[img.id] = TextEditingController(text: img.aiDescription.isEmpty ? 'ASSET_${img.id.substring(img.id.length - 4)}' : img.aiDescription);
+      final displayName = img.name.isNotEmpty 
+          ? img.name 
+          : (img.r2Key.isNotEmpty ? img.r2Key.split('/').last : 'ASSET_${img.id.substring(img.id.length - 4)}');
+      _assetNameControllers[img.id] = TextEditingController(text: displayName);
     }
     final nameController = _assetNameControllers[img.id]!;
 
@@ -709,20 +740,35 @@ class _TaskEditModalState extends State<TaskEditModal> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: TextField(
-              controller: nameController,
-              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
-              onSubmitted: (v) {
-                setState(() {
-                   _images = _images.map((i) => i.id == img.id ? i.copyWith(aiDescription: v) : i).toList();
-                });
-                _autoSaveTask();
-              },
-              decoration: const InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+                  onSubmitted: (v) {
+                    setState(() {
+                       _images = _images.map((i) => i.id == img.id ? i.copyWith(name: v) : i).toList();
+                    });
+                    _autoSaveTask();
+                  },
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  img.aiDescription.isEmpty 
+                      ? 'กำลังวิเคราะห์คำอธิบายด้วย AI...' 
+                      : img.aiDescription,
+                  style: GlassText.caption().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
           IconButton(

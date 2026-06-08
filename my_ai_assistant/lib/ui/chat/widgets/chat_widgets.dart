@@ -23,10 +23,11 @@ class ChatAI {
         border: Border.all(color: GlassColors.primary.withOpacity(0.2), width: 1),
       ),
       child: ClipOval(
-        child: Image.network(
-          'https://lh3.googleusercontent.com/aida/ADBb0ugfElGryoSxHiQG8g0YT_8ZwY6_I6HlONFPgZkJuRbObFd34UOVhZi0n2RynDI6KvoizFY_s_1haaSn5Ui0MC2JZl1RoR1t6i5eNhzXx9lPUsngUeiyamn2FT3TNuZkO4JLyJy-phlYOV_oUqrWEoz0bY773xaJx0OZdxovpQp6xiRFsXFGrxz_csJa7ahOr-SXmZoixx2i50NVy67EZSButUARdLGeI_i8veid1lV0jioPizxva1zt7_JO9RqtB5QGeeAC0AaXcA',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => fallback,
+        child: Container(
+          color: GlassColors.primary.withOpacity(0.1),
+          child: const Center(
+            child: Text('🤖', style: TextStyle(fontSize: 22)),
+          ),
         ),
       ),
     );

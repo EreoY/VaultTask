@@ -1,3 +1,209 @@
+## Phase 110: AI Chat UI Sync Optimization & Reactivity Hardening
+
+> **Architecture Mandate:** ปรับปรุงการซิงค์ข้อมูลรูปภาพและคำบรรยาย AI ในหน้าแชทหลักให้สะท้อนบน UI ทันทีโดยไม่มีดีเลย์ (Reactivity Hardening) ผ่านการแปลง Message List Selector ให้ดึงค่า Signature ที่ครบถ้วน, ตรวจสุขภาพการทำ message sanitization ป้องกันข้อมูลสำคัญสูญหาย, และอัปเกรด CollapsibleDescription ให้ตอบสนองทันทีแบบ Auto-expand
+
+### Task 110.1: Optimize Message List Selector
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** เปลี่ยน Selector ใน _MessageList ให้ทำงานแบบ Signature-based เปรียบเทียบครอบคลุม attachments, text, id และ isTyping ของทุกข้อความ
+
+### Task 110.2: Safely Sanitize Messages
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** แก้ไข _sanitizeLoadedMessages ให้ใช้ m.copyWith ในการล้าง base64 รูปภาพแนบเพื่อไม่ให้ทำฟิลด์ draft และอื่นๆ ตกหล่นสูญหาย
+
+### Task 110.3: Collapsible Description Auto-Expansion
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** แก้ไข CollapsibleDescription ให้กางคำอธิบายออกทันทีที่อัปเดตข้อมูลเสร็จสิ้น
+
+### Task 110.4: Verify & Audit Compilation
+- **Status:** [x] Done
+- **Action:** รันตรวจความผิดพลาดการคอมไพล์และทดสอบระบบ E2E ในแอปจริง
+
+---
+
+## Phase 109: OpenRouter Native Integration & D1 Persistence OVERHAUL
+
+> **Architecture Mandate:** ยกเลิก Custom Retry Loop ใน Cloudflare Worker เพื่อกลับไปพึ่งพาระบบ Native Auto-Routing ของ OpenRouter เต็มตัวเพื่อฟื้นฟูความเร็วในการตอบสนอง (Latency) ในเทิร์นการเรียกใช้งานครั้งแรก พร้อมทั้งเชื่อมระบบ D1 SQLite writeback สำหรับผู้ช่วย และทำความสะอาด Log ในฝั่งเซิร์ฟเวอร์ให้อ่านง่ายเป็นบล็อกสำคัญ
+
+### Task 109.1: Remove Retry Loop & Simplify Fetch to OpenRouter
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ลบ `while(attempts < maxAttempts)`, `ignoredProviders` และเงื่อนไข ignore ทั้งหมด ให้เหลือเพียงการยิง fetch ไปยัง OpenRouter รอบเดียวตรงๆ
+
+### Task 109.2: Complete D1 Persistence for Assistant Response
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ในฝั่ง Worker หากได้รับการตอบกลับที่สำเร็จและไม่ใช่ stream ให้แปลงและบันทึกข้อความหรือ tool calls ของผู้ช่วยลงฐานข้อมูล D1 SQLite `chat_messages` ทันทีด้วย `INSERT OR REPLACE` เพื่อรองรับกรณี Client รีเฟรชหน้าระหว่างการสตรีมหรือหลังตอบเสร็จ
+
+### Task 109.3: Simplify Server Log Blocks (High-Impact Logging)
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** แทนที่การพิมพ์ raw JSON ที่ยาวเหยียดด้วยล็อกข้อมูลแบบสรุป แสดงภาพรวมการคุย (พิกัดแชท, รูปภาพที่พบ, โทเค็นที่ใช้, ค่าใช้จ่ายโดยประมาณเป็น USD และรหัสตอบกลับ)
+
+### Task 109.4: Forensic Audit & End-to-End Verification
+- **Status:** [x] Done
+- **Action:** สั่งรันและทดสอบส่งข้อความแชทและอัปโหลดรูปภาพเพื่อยืนยันความเร็วในการตอบสนอง ข้อมูลลงฐานข้อมูลครบถ้วน และ Log คลีนสวยงาม
+
+---
+
+## Phase 108: Single Agent Image Description Pipeline & Collapsible UI
+
+> **Architecture Mandate:** ปรับปรุงการจัดการรูปภาพแนบในประวัติแชทให้ประมวลผลผ่าน Agent เพียงตัวเดียว (Single Agent Execution) โดยตัวหลักจะวิเคราะห์ภาพแล้วเรียกใช้เครื่องมือ `update_image_description` เพื่อทำการบันทึกและพยากรณ์ข้อมูลในเทิร์นเดียวกันโดยไม่มีกระบวนการเรียกซ้ำซ้อนในพื้นหลัง พร้อมทั้งปรับแต่งหน้าตาคำอธิบายภาพในแชทให้ซ่อนอยู่ใน Widget Dropdown พับเก็บได้เพื่อลดความรกรุงรังของหน้าจอ
+
+### Task 108.1: Define and register updateImageDescriptionTool
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/tools/definitions/vision_defs.dart`, `my_ai_assistant/lib/ai_agent/tools/registry.dart`
+- **Action:** เพิ่มคำนิยามและการลงทะเบียนของเครื่องมือ `update_image_description` สำหรับการเซฟคำบรรยายของภาพโดยตรง
+
+### Task 108.2: Implement update_image_description execution handler
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** เพิ่มฟังก์ชันในการจับคู่ Tool และส่งพารามิเตอร์ของรูปภาพกับคำบรรยายที่ Agent สร้างเองไปยังคอลแบ็ก `onUpdateImageDescription`
+
+### Task 108.3: Remove parallel background image description task
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ลบเมธอด `_generateChatImageDescriptionInBackground` และจุดเรียกใช้งานทั้งหมดออกไปอย่างถาวร
+
+### Task 108.4: Update system rules in skill_vision.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/skills/skill_vision.dart`
+- **Action:** เพิ่มกฎการทำงานของ Skill Vision เพื่อให้ Agent เรียกใช้เครื่องมือบันทึกคำอธิบายรูปภาพเสมอเมื่ออัปโหลดภาพครั้งแรก
+
+### Task 108.5: Build CollapsibleDescription widget in chat bubbles
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** สร้าง Widget ตัวใหม่เพื่อเก็บเนื้อหาคำบรรยายภาพพับได้ และแสดงเฉพาะชื่อภาพเป็นหลักในประวัติแชท
+
+### Task 108.6: Validate compilation with flutter analyze
+- **Status:** [x] Done
+- **Action:** ตรวจสอบความถูกต้องและทดสอบระบบในแอปพลิเคชันจริง
+
+---
+
+## Phase 107: Resolve 500 Chat Message Errors & Strip Base64 on Save
+
+> **Architecture Mandate:** ป้องกันการเกิดข้อผิดพลาด D1_ERROR (SQLITE_TOOBIG) / 500 Internal Server Error เมื่อทำการบันทึกข้อความแชทที่มีภาพแนบขนาดใหญ่ โดยการกรอง (strip) ฟิลด์ `b64` ออกจากอาร์เรย์ `attachments` ก่อนจะส่งไปบันทึกยัง Cloudflare D1 Database และ Local SQLite Database โดยในหน้าระดับ Memory จะยังคงมีข้อมูล base64 เพื่อใช้ในการแสดงผลและส่ง AI ในรอบแรกได้อย่างราบรื่น
+
+### Task 107.1: Strip b64 field in ApiCloudflare.insertChatMessage
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/databases/api_cloudflare.dart`
+- **Action:** กรองฟิลด์ `b64` ออกจาก `attachments` แต่ละตัว ก่อนทำการส่ง POST ไปยัง Cloudflare `/api/chat/messages`
+
+### Task 107.2: Strip b64 field in LocalSqlite.insertChatMessage
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/databases/db_personal_sqlite.dart`
+- **Action:** กรองฟิลด์ `b64` ออกจาก `attachments` แต่ละตัว ก่อนบันทึกเข้าสู่ local SQLite database
+
+### Task 107.3: Verify using Node Integration Test Script
+- **Status:** [x] Done
+- **Action:** ทดสอบยิง payload รูปภาพขนาดใหญ่ (>3MB) ไปยัง API เพื่อตรวจสอบว่าการขจัด base64 ป้องกัน error SQLITE_TOOBIG สำเร็จ
+
+### Task 107.4: Verify in Browser & Compile Integrity
+- **Status:** [x] Done
+- **Action:** ตรวจสอบด้วย `flutter analyze` และทดลองอัปโหลดรูปภาพผ่าน UI ให้ AI วิเคราะห์ว่าไม่เกิด 500 Internal Server Error อีกต่อไป
+
+---
+
+## Phase 106: Non-blocking Task Image Uploads & Chat Media Visual Cache Sync
+
+> **Architecture Mandate:** แยก name และ aiDescription ออกจากกันใน TaskImage, ทำขั้นตอนคำนวณคำอธิบายรูปภาพผ่าน AI ให้เป็นแบบ Non-blocking (Asynchronous Background Generation) ทั้งใน Task Modal และหน้าแชทหลัก โดยประวัติแชทจะเห็นภาพทันที และใช้คำอธิบายในการคุยรอบถัดไปเพื่อประหยัด Token
+
+### Task 106.1: Add name Field to TaskImage Model
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/models/task_model.dart`
+- **Action:** เพิ่มฟิลด์ `name` เพื่อแยกชื่อไฟล์ภาพออกมาจาก `aiDescription` โดยยังรักษาระบบ JSON serialization แบบย้อนกลับได้ (backwards-compatible)
+
+### Task 106.2: Refactor Task Modal Image Upload to Non-blocking
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ย้ายการเรียก AI Description ไปทำงานใน Background, อัปเดตรูปภาพขึ้น UI และสั่ง Auto-save ทันทีเมื่ออัปโหลด R2 เสร็จสิ้น, ปรับปรุง TextField แสดงชื่อไฟล์และ Subtitle คำอธิบายภาพ
+
+### Task 106.3: Refactor Chat Page Image Upload to Non-blocking & Separate Layout
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** อัปโหลด R2 แล้วส่งข้อความพร้อม base64 ไปหา AI ทันทีในเทิร์นแรกโดยไม่ต้องรอคิว AI Description, ย้าย AI Description ไปทำงานใน Background และทำการอัปเดตประวัติแชท/ฐานข้อมูลพร้อมรีซิงก์ประวัติประมวลผลของโมเดลเมื่อคำอธิบายถูกสร้างเสร็จ, ปรับปรุงดีไซน์ประวัติแชทให้แยกชื่อภาพและคำอธิบายอย่างสวยงาม
+
+### Task 106.4: Validate Code Compiler Integrity
+- **Status:** [x] Done
+- **Action:** ตรวจสอบด้วย `flutter analyze` และสั่งรัน unit test `test_image_flow.dart` สำเร็จครบถ้วน 100%
+
+---
+
+## Phase 105: Chat Image Upload — R2-First Blocking Pattern & Code Cleanup
+
+> **Architecture Mandate:** Refactor chat image upload ให้เป็น blocking R2-first pattern เหมือน Kanban, ลบ split Phase 1/Phase 2 flow ที่รกและมี bug
+
+### Task 105.1: Fix _handleSend for File-Only Sends
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** แก้ `_handleSend` ให้ส่งได้แม้ text ว่างแต่มีไฟล์แนบ
+
+### Task 105.2: Refactor sendMessageToAI — R2-First Blocking Upload
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** Refactor จาก ~210 บรรทัด → ~110 บรรทัด: Upload R2 ก่อน (blocking) → สร้าง message ครั้งเดียวด้วย URL จริง → ส่ง AI / fail → แจ้งเตือนทันที
+
+### Task 105.3: Remove Hardcoded CORS-Blocked Avatar URL
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_widgets.dart`
+- **Action:** ลบ hardcoded Google avatar URL ที่ CORS block เปลี่ยนเป็น emoji icon
+
+### Task 105.4: Verify with flutter analyze
+- **Status:** [x] Done
+- **Action:** `flutter analyze` — 0 errors, 0 new warnings
+
+---
+
+## Phase 104: Critical Performance Fix — Timer Rebuild Loop, Base64 Cache, Unmounted Context
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** แก้ไขปัญหาแอปค้างทุกหน้า เกิดจาก Timer.periodic(1s) + IndexedStack rebuild ทั้ง widget tree ทุกวินาที, base64Decode sync ใน build(), และ unmounted context access
+
+### Task 104.1: Replace Timer.periodic with Scoped StreamBuilders
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** ลบ `Timer.periodic(1s)` ที่ rebuild ทั้ง CalendarPage ทุกวินาที เปลี่ยนเป็น `StreamBuilder` เฉพาะ clock text (1s) และ minute indicator (10s) เท่านั้น
+
+### Task 104.2: Cache base64Decode in Chat Bubbles
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** เพิ่ม `static _b64Cache` cache สำหรับ `base64Decode` ป้องกัน decode ซ้ำทุก build + skip Image.network เมื่อ URL ว่าง/error
+
+### Task 104.3: Fix Unmounted Context in CalendarPage
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เพิ่ม `if (!mounted) return;` หลัง `await boardState.fetchAllBoards()` ก่อนเข้าถึง `context`
+
+### Task 104.4: Verify with flutter analyze
+- **Status:** [x] Done
+- **Action:** `flutter analyze` — 0 errors, 0 new warnings
+
+---
+
+## Phase 103: Bypass Image Spinner, Handle Failed/Empty URLs, and History Context Cleanup
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ยกเลิกการแสดง Spinner (CircularProgressIndicator) ในหน้าแชทเมื่อรูปภาพไม่มี URL (ให้แสดงสถานะ Failed ทันที) และกรองรูปภาพที่ล้มเหลวออกจากการแปลงประวัติแชทเพื่อป้องกันการส่ง Base64 ซ้ำซ้อนไปยังโมเดล AI
+
+### Task 103.1: Update Chat Bubble States to Bypass Spinner
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** เปลี่ยนเงื่อนไข `isFailed` เป็น `url == 'error' || url.isEmpty` และลบเงื่อนไข `isUploading` พร้อมตัวหมุน CircularProgressIndicator ทั้งหมดออก
+
+### Task 103.2: Filter out Failed/Empty Attachments in History Conversion
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** อัปเดตฟังก์ชัน `_convertMessagesToAgentHistory` ข้ามภาพที่มี `url == 'error'` หรือ `url.isEmpty` เพื่อไม่ให้ Base64 ไปค้างในบริบทแชทถัดไป
+
+### Task 103.3: Verify via Tests & Flutter Analyze
+- **Status:** [x] Done
+- **Action:** ตรวจสอบความถูกต้องด้วยคำสั่ง `flutter test test/test_image_flow.dart` และ `flutter analyze`
+
+---
+
 ## Phase 102: AI Image Description Cache, Token Optimization, and Vision Tools
 
 > **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
@@ -70,7 +276,7 @@
 - **Action:** ล้างข้อมูล tool_calls ออกจากประวัติผู้ช่วย (assistant) ใน _convertMessagesToAgentHistory
 
 ### Task 101.6: E2E Verification & Flutter Analyze
-- **Status:** [ ] Pending
+- **Status:** [x] Done
 - **Action:** รันตรวจไวยากรณ์ด้วย flutter analyze และเปิดรันเครื่องเพื่อทดสอบ E2E
 
 ---
@@ -2275,3 +2481,133 @@
 - **Status:** [x] Done
 - **Action:** รันคำสั่ง `flutter analyze` เพื่อตรวจสอบความสมบูรณ์และคอมไพล์ของโปรเจกต์
 - **Why:** ยืนยันว่าระบบทั้งหมดปลอดภัย ไม่มี Compile Error หรือปัญหาทางสุนทรียศาสตร์
+
+## Phase 120: Upload Notifications, Progress Overlays & Permanent Storage
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** เพิ่มการส่งแจ้งเตือนผลการอัปโหลดผ่านสตรีมเพื่อแสดง Toast บน UI, ซ้อน Progress Loader แสดงสถานะขณะส่งรูปภาพ, และบันทึกข้อมูลแนบลงโฟลเดอร์ chats ถาวรใน R2
+
+### Task 120.1: Add Broadcast Stream and Status Logging to StateChat
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เพิ่ม static StreamControllers `onUploadError` และ `onUploadSuccess` และเปลี่ยน R2 Path เป็น 'chats' พร้อมส่ง event
+- **Why:** ช่วยให้ UI รับทราบสถานะและประวัติแชทถูกเก็บอย่างปลอดภัยถาวร
+
+### Task 120.2: Add Upload Progress Overlay to Chat Bubble Attachments
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** ซ้อน CircularProgressIndicator บนภาพแนบที่ค่า url ยังเป็นค่าว่าง (isUploading)
+- **Why:** เพื่อให้เกิด visual feedback ที่พรีเมียมและสวยงามระหว่างที่ไฟล์กำลังส่ง
+
+### Task 120.3: Wire Stream Notifications in AetherChatView
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`
+- **Action:** สมัครรับสตรีม `StateChat.onUploadSuccess` และ `onUploadError` และแสดง GlassNotifications.show
+- **Why:** ให้ผู้ใช้ปลายทางทราบสถานะการอัปโหลดแบบ real-time บนหน้าจอแชท
+
+### Task 120.4: E2E Verification & Static Analysis
+- **Status:** [x] Done
+- **Action:** รันตรวจไวยากรณ์ด้วย flutter analyze และรัน test suite test_image_flow.dart
+- **Why:** ยืนยันว่าการส่งรูปภาพ, ระบบแจ้งเตือน และโครงสร้างโค้ดทั้งหมดทำงานได้อย่างสมบูรณ์
+
+---
+
+## Phase 121: Handle Image Upload Failures & Infinite Spinner Resolution
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** แก้ไขปัญหารูปภาพแนบหมุนค้างตลอดกาลเมื่อเกิดข้อผิดพลาดในการอัปโหลด โดยอัปเดตสถานะด้วย 'url': 'error' เพื่อปิด Spinner และแสดงรูปแจ้งเตือนความผิดพลาด พร้อมทั้งทำการล้าง URL และตรวจจับความถูกต้องผ่าน EnvConfig
+
+### Task 121.1: Catch Upload Failures and Set 'url': 'error'
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** อัปเดตลูป R2 Pipeline ให้บันทึกสถานะ 'url': 'error' ทั้งในกรณีที่หาข้อมูลไบต์ไม่ได้ หรือ API ล้มเหลว/โยนข้อผิดพลาดออกมา เพื่อส่งสัญญาณแจ้งเตือนไปยัง UI
+- **Why:** เพื่อเปลี่ยนสถานะแนบไฟล์ให้เป็นอิสระจากการหมุนโหลดค้าง (Infinite Spinner Loop)
+
+### Task 121.2: Sanitize URLs and Add Red Error Indicator in Bubble
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** สรรค์สร้าง UI Overlay สีแดงเตือน "Failed" ทับบนการแสดงผลแนบไฟล์รูปภาพที่การอัปโหลดขัดข้อง (`url == 'error'`) พร้อมแปลง URL โลคอลผ่าน `EnvConfig.sanitizeUrl(url)`
+- **Why:** เพื่อให้เกิดการตอบสนองเชิงภาพ (Visual Feedback) ที่ชัดเจนและสมบูรณ์แบบแก่ผู้ใช้งานเมื่อระบบขัดข้อง
+
+### Task 121.3: Run Tests and Verify
+- **Status:** [x] Done
+- **Action:** ตรวจสอบความถูกต้องด้วยการรัน `flutter test test/test_image_flow.dart` และ `flutter analyze`
+- **Why:** ป้องกันไม่ให้เกิดปัญหาถดถอย (Regression) และรักษาคุณภาพความเรียบร้อยของสุนทรียศาสตร์โครงสร้างโค้ด
+
+---
+
+## Phase 122: Multimodal AI Vision Pipeline Optimization
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ลด Latency ของโมเดลโดยใช้ Sliding Window สำหรับประวัติการสนทนา ล้อมรั้วความเสถียรด้วย Retry Loop และบันทึกคำตอบของ AI ลงฐานข้อมูล D1 โดยตรงจากระบบหลังบ้านเพื่อความปลอดภัยของข้อมูล
+
+### Task 122.1: Context Window Truncation (Sliding Window)
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ปรับลดประวัติการสนทนาที่ส่งให้ AI เหลือเพียง 14 ข้อความล่าสุด
+- **Why:** เพื่อลด Token bloat และยกระดับความเร็วในการตอบสนองให้เป็นระดับ Premium
+
+### Task 122.2: ID Propagation in MistyAgent
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** เพิ่มพารามิเตอร์ `sessionId` และ `assistantMessageId` ในการยิง Request ไปยัง Cloudflare Backend Worker
+- **Why:** เพื่อให้ Backend มีข้อมูลสำหรับอ้างอิงและบันทึกข้อความอย่างมีประสิทธิภาพ
+
+### Task 122.3: StateChat Integration for ID Passing
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** อัปเดตส่วนควบคุมการส่งข้อความ (`sendMessageToAI`) เพื่อสร้างและส่งต่อไอดีของข้อความ/เซสชันไปหา AI Agent
+- **Why:** ส่งต่อไอดีต้นทางให้ Backend เก็บข้อมูลใน SQLite D1 ได้อย่างเสถียร
+
+### Task 122.4: Worker Provider Fallback Retry Loop & Direct Persistence
+- **Status:** [x] Done
+- **Target File:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** พัฒนาระบบสำรองคิว (3-attempt retry loop) ข้ามผู้ให้บริการที่ล้มเหลว และรัน Query บันทึกคำตอบ AI ลง D1 SQLite โดยตรงก่อน Response คืนสู่ไคลเอนต์
+- **Why:** เพื่อปกป้องความถูกต้องและความครบถ้วนของข้อมูลประวัติการทำธุรกรรม (Data Atomicity)
+
+### Task 122.5: Build Verification and Test Suite Execution
+- **Status:** [x] Done
+- **Action:** ยืนยันความสมบูรณ์และเสถียรภาพโดยผ่านการตรวจสอบด้วย `flutter analyze` และการรัน unit tests ทั้งหมด รวมถึง TC-08 สำหรับ Sliding Window บน `test_image_flow.dart`
+- **Why:** มั่นใจในคุณภาพโค้ดระดับสุดยอดของ Calenda AI
+
+---
+
+## Phase 123: AI Chat Vision Latency Optimization & Logging Hardening
+
+> **Workflow Mandate:** อัปเดต Task Graph และ Re-Sync ทุกครั้งที่จบ 1 Task ย่อย (Rule 0 & V2.1 Protocol)
+> **Architecture Mandate:** ลด Latency ในการวิเคราะห์รูปภาพด้วย AI ให้ตอบสนองในรอบเดียว (Single-Turn) และขยายระบบการบันทึก Log ใน Cloudflare Worker เพื่อการดีบัคที่ง่ายดาย
+
+### Task 123.1: Cloudflare Worker Logging Hardening
+- **Status:** [x] Done
+- **Target File:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ปรับแก้การจัดหน้า Log ของ Worker ให้สามารถแสดงคำถามผู้ใช้ล่าสุด และคำตอบหรือการเรียกเครื่องมือฉบับเต็มของ AI เพื่อเพิ่มความสามารถในการตรวจสอบและดีบัคผ่าน Terminal
+- **Why:** ให้ผู้ใช้ตรวจสอบสถานะการทำงานของโมเดลและการตอบกลับจริงได้อย่างมีประสิทธิภาพ
+
+### Task 123.2: MistyAgent Single-Turn Skip & Metadata Injection
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** ใส่ข้อมูล Metadata ของไฟล์แนบ (ชื่อและ URL) ใน Prompt แรกเพื่อเชื่อมโยงกับรูปภาพ Base64 และสร้างตรรกะ `canSkipSecondCall` เพื่อปิดระบบ sequential call หากมีเพียง Side-effect tools
+- **Why:** สิ้นสุดปัญหาความล่าช้าสะสมและประหยัด Token การส่งรูปภาพ Base64 ซ้ำสองรอบ
+
+### Task 123.3: StateChat History Convert Image Metadata
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** ปรับตรรกะแปลงประวัติการสนทนาใน `_convertMessagesToAgentHistory` เพื่อให้รวมข้อมูลชื่อและ URL ภาพล่าสุดที่ยังไม่มี Description
+- **Why:** รักษาความต่อเนื่องและความเสถียรของประวัติการถามคำถามแบบต่อยอด
+
+### Task 123.4: Synchronous History Cache Refresh
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** แก้ไขฟังก์ชัน `_initImageDescriptionListener` ให้โหลดและสั่ง Re-Sync ประวัติการสนทนาเข้าสู่ตัวแปร `_globalAgent` และ `_taskAgent` ทันทีเมื่ออัปเดตคำอธิบายภาพสำเร็จ
+- **Why:** ป้องกันไม่ให้โมเดลไม่รู้ตัวถึงการเปลี่ยนแปลงคำบรรยายภาพล่าสุดเมื่อมีข้อความถัดไปเข้ามาทันที
+
+### Task 123.5: Redundant Vision Tools Deprecation
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ai_agent/tools/registry.dart`
+- **Action:** นำเอา `analyzeUploadedImageTool` และ `getActualImageTool` ออกจากรายการ `allAiTools`
+- **Why:** บังคับให้ AI ใช้ความสามารถ Native Vision มองภาพจากเนื้อความโดยตรง ป้องกันข้อผิดพลาดจากการประมวลผลเครื่องมือซ้ำซ้อน
+
+### Task 123.6: Verify and Build Analysis
+- **Status:** [x] Done
+- **Action:** รันการตรวจสอบความถูกต้องด้วย `flutter analyze` และการรัน unit tests บน `test_image_flow.dart`
+- **Why:** ยืนยันความเสถียรและความพร้อมใช้งานระดับพรีเมียมของระบบ

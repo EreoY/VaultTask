@@ -523,6 +523,12 @@ class ApiCloudflare {
   }
 
   static Future<void> insertChatMessage(ChatMessage message, String sessionId) async {
+    final cleanedAttachments = message.attachments.map((a) {
+      final copy = Map<String, String>.from(a);
+      copy.remove('b64');
+      return copy;
+    }).toList();
+
     final response = await http.post(
       Uri.parse('$_base/api/chat/messages'),
       headers: _headers,
@@ -541,7 +547,7 @@ class ApiCloudflare {
           'name': tc.name,
           'arguments': tc.arguments,
         }).toList()),
-        'attachments': jsonEncode(message.attachments),
+        'attachments': jsonEncode(cleanedAttachments),
         'timestamp': message.timestamp.toIso8601String(),
       }),
     );

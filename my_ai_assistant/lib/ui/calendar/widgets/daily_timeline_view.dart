@@ -34,20 +34,18 @@ class DailyTimelineView extends StatefulWidget {
 class _DailyTimelineViewState extends State<DailyTimelineView> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _currentHourKey = GlobalKey(); // 🚀 Task 74.2: Precise Sentinel
-  Timer? _timer;
+
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) setState(() {});
-    });
+
     _scrollToCurrentHour();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+
     _scrollController.dispose();
     super.dispose();
   }
@@ -157,8 +155,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     final isCurrentHour = isToday && now.hour == hour;
     
     final hh = DateFormat('HH').format(DateTime(2024, 1, 1, hour));
-    final mm = DateFormat('mm').format(now);
-    final ss = DateFormat('ss').format(now);
+
     final hasTasks = hourTasks.isNotEmpty;
     
     final timeColumnWidth = isMobile ? 60.0 : 80.0;
@@ -193,15 +190,23 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                     Center(
                       key: isCurrentHour ? _currentHourKey : null, // 🚀 Task 74.2: Marker Key
                       child: isCurrentHour
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(hh, style: GlassText.headlineXL().copyWith(fontSize: isMobile ? 24 : 34, height: 0.9, color: GlassColors.gold, fontWeight: FontWeight.w900)),
-                                Text(mm, style: GlassText.headlineXL().copyWith(fontSize: isMobile ? 24 : 34, height: 0.9, color: GlassColors.gold.withOpacity(0.5), fontWeight: FontWeight.w900)),
-                                const SizedBox(height: 2),
-                                // 🚀 Task 74.3: Digital Pulse Restoration
-                                Text(ss, style: GlassText.labelSM().copyWith(fontSize: isMobile ? 9 : 10, color: GlassColors.gold.withOpacity(0.3), fontWeight: FontWeight.w900, fontFamily: 'monospace')),
-                              ],
+                          ? StreamBuilder(
+                              stream: Stream.periodic(const Duration(seconds: 1)),
+                              builder: (context, _) {
+                                final t = DateTime.now();
+                                final curMm = DateFormat('mm').format(t);
+                                final curSs = DateFormat('ss').format(t);
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(hh, style: GlassText.headlineXL().copyWith(fontSize: isMobile ? 24 : 34, height: 0.9, color: GlassColors.gold, fontWeight: FontWeight.w900)),
+                                    Text(curMm, style: GlassText.headlineXL().copyWith(fontSize: isMobile ? 24 : 34, height: 0.9, color: GlassColors.gold.withOpacity(0.5), fontWeight: FontWeight.w900)),
+                                    const SizedBox(height: 2),
+                                    // 🚀 Task 74.3: Digital Pulse Restoration
+                                    Text(curSs, style: GlassText.labelSM().copyWith(fontSize: isMobile ? 9 : 10, color: GlassColors.gold.withOpacity(0.3), fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+                                  ],
+                                );
+                              },
                             )
                           : Text(
                               '$hh:00',
@@ -239,37 +244,43 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           
           if (isCurrentHour)
             Positioned.fill(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: (now.minute / 60) * (isMobile ? 100 : 120),
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(width: timeColumnWidth - 3), 
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: GlassColors.gold,
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.8), blurRadius: 8)],
-                        ),
+              child: StreamBuilder(
+                stream: Stream.periodic(const Duration(seconds: 10)),
+                builder: (context, _) {
+                  final t = DateTime.now();
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: (t.minute / 60) * (isMobile ? 100 : 120),
                       ),
-                      Expanded(
-                        child: Container(
-                          height: 1.5,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.red.withOpacity(0.8), Colors.red.withOpacity(0.0)],
+                      child: Row(
+                        children: [
+                          SizedBox(width: timeColumnWidth - 3), 
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: GlassColors.gold,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.8), blurRadius: 8)],
                             ),
                           ),
-                        ),
+                          Expanded(
+                            child: Container(
+                              height: 1.5,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.red.withOpacity(0.8), Colors.red.withOpacity(0.0)],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
         ],

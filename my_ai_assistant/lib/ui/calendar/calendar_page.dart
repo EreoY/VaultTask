@@ -36,6 +36,7 @@ class _CalendarPageState extends State<CalendarPage> {
       if (!mounted) return;
       final boardState = context.read<StateBoards>();
       await boardState.fetchAllBoards();
+      if (!mounted) return;
       // 🔄 Refresh task data when navigating to calendar
       final taskState = context.read<StateTasks>();
       await taskState.fetchAllTasks(boardState.boards);

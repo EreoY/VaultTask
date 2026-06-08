@@ -6,6 +6,7 @@ class TaskImage {
   final String r2Key;
   final bool isCover;
   final String aiDescription;
+  final String name;
 
   TaskImage({
     required this.id,
@@ -13,6 +14,7 @@ class TaskImage {
     required this.r2Key,
     this.isCover = false,
     this.aiDescription = '',
+    this.name = '',
   });
 
   factory TaskImage.fromMap(Map<String, dynamic> map) {
@@ -22,6 +24,7 @@ class TaskImage {
       r2Key: map['r2_key'] as String? ?? '',
       isCover: (map['is_cover'] == 1 || map['is_cover'] == true),
       aiDescription: map['ai_description'] as String? ?? '',
+      name: map['name'] as String? ?? '',
     );
   }
 
@@ -32,6 +35,7 @@ class TaskImage {
       'r2_key': r2Key,
       'is_cover': isCover ? 1 : 0,
       'ai_description': aiDescription,
+      'name': name,
     };
   }
 
@@ -42,6 +46,7 @@ class TaskImage {
       'r2Key': r2Key,
       'isCover': isCover,
       'aiDescription': aiDescription,
+      'name': name,
     };
   }
 
@@ -52,6 +57,7 @@ class TaskImage {
       r2Key: (json['r2Key'] ?? json['r2_key'])?.toString() ?? '',
       isCover: json['isCover'] == true || json['is_cover'] == 1 || json['isCover'] == 1,
       aiDescription: (json['aiDescription'] ?? json['ai_description'])?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
     );
   }
 
@@ -61,6 +67,7 @@ class TaskImage {
     String? r2Key,
     bool? isCover,
     String? aiDescription,
+    String? name,
   }) {
     return TaskImage(
       id: id ?? this.id,
@@ -68,6 +75,7 @@ class TaskImage {
       r2Key: r2Key ?? this.r2Key,
       isCover: isCover ?? this.isCover,
       aiDescription: aiDescription ?? this.aiDescription,
+      name: name ?? this.name,
     );
   }
 }

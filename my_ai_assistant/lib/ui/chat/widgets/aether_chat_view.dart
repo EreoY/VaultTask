@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../state_managers/state_chat.dart';
@@ -21,9 +22,13 @@ class _AetherChatViewState extends State<AetherChatView> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
+  StreamSubscription? _uploadErrorSub;
+  StreamSubscription? _uploadSuccessSub;
 
   @override
   void dispose() {
+    _uploadErrorSub?.cancel();
+    _uploadSuccessSub?.cancel();
     _focusNode.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -35,6 +40,16 @@ class _AetherChatViewState extends State<AetherChatView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
+    });
+    _uploadErrorSub = StateChat.onUploadError.stream.listen((msg) {
+      if (mounted) {
+        GlassNotifications.show(context, msg, isError: true);
+      }
+    });
+    _uploadSuccessSub = StateChat.onUploadSuccess.stream.listen((msg) {
+      if (mounted) {
+        GlassNotifications.show(context, msg);
+      }
     });
   }
 
@@ -50,9 +65,8 @@ class _AetherChatViewState extends State<AetherChatView> {
 
   void _handleSend() {
     final text = _controller.text.trim();
-    if (text.isEmpty) return;
-
     final state = context.read<StateChat>();
+    if (text.isEmpty && state.pendingFiles.isEmpty) return;
     state.sendMessageToAI(text);
     _controller.clear();
     _scrollToBottom();
@@ -157,12 +171,23 @@ class _MessageList extends StatelessWidget {
   Widget build(BuildContext context) {
     final horizontalPadding = isFloating ? 16.0 : ExecutiveSpacing.containerPadding(context);
 
-    // Selector uses a hash of (message count + last message text hashCode)
-    // so it rebuilds both when new messages arrive AND during streaming.
-    return Selector<StateChat, int>(
+    // Selector uses a signature string of the chat state (length, isTyping, message content, attachments description, draft confirmation)
+    // so it rebuilds reactively on any state updates.
+    return Selector<StateChat, String>(
       selector: (_, chat) {
-        if (chat.messages.isEmpty) return 0;
-        return Object.hash(chat.messages.length, chat.messages.first.text.hashCode);
+        if (chat.messages.isEmpty) return 'empty_${chat.isTyping}';
+        final buffer = StringBuffer();
+        buffer.write('${chat.messages.length}_${chat.isTyping}_');
+        for (final msg in chat.messages) {
+          buffer.write('${msg.id}_${msg.text.hashCode}_');
+          for (final att in msg.attachments) {
+            buffer.write('${att['name']}_${att['url']}_${att['description'] ?? ''}_');
+          }
+          if (msg.draft != null) {
+            buffer.write('${msg.draft!.isConfirmed}_');
+          }
+        }
+        return buffer.toString();
       },
       builder: (_, _, __) {
         final chatState = context.read<StateChat>();

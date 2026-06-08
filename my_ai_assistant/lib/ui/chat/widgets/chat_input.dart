@@ -57,7 +57,7 @@ class AetherChatInput extends StatelessWidget {
                 IconButton(
                   onPressed: () async {
                     try {
-                      final result = await FilePicker.pickFiles();
+                      final result = await FilePicker.pickFiles(withData: true);
                       if (result != null && result.files.isNotEmpty) {
                         onFilesPicked(result.files);
                       }

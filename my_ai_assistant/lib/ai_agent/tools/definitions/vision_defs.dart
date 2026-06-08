@@ -24,14 +24,15 @@ final getActualImageTool = FunctionDeclaration(
   ),
 );
 
-final regenerateImageDescriptionTool = FunctionDeclaration(
-  'regenerate_image_description',
-  'สร้างคำอธิบายภาพ (AI Description) ใหม่สำหรับรูปภาพในแชทหรือในงาน เพื่ออัปเดตคำอธิบายให้ถูกต้องยิ่งขึ้น',
+final updateImageDescriptionTool = FunctionDeclaration(
+  'update_image_description',
+  'อัปเดตหรือกำหนดคำอธิบาย (AI Description) ให้กับรูปภาพที่ผู้ใช้อัปโหลดเข้ามาในแชทหรือรูปภาพในระบบ โดยคำอธิบายนี้คุณเขียนขึ้นมาเองจากการดูภาพ',
   Schema.object(
     properties: {
-      'name': Schema.string(description: 'ชื่อไฟล์รูปภาพหรือ ID ของรูปภาพที่ต้องการเจเนอเรตคำอธิบายใหม่'),
+      'name': Schema.string(description: 'ชื่อไฟล์รูปภาพหรือ ID ของรูปภาพที่อ้างถึง'),
       'url': Schema.string(description: 'URL ของรูปภาพ (ถ้ามี)'),
+      'description': Schema.string(description: 'คำอธิบายของรูปภาพภาษาไทยที่มีความถูกต้องและกระชับ (ความยาวประมาณ 1-2 ประโยค)'),
     },
-    requiredProperties: const ['name'],
+    requiredProperties: const ['name', 'description'],
   ),
 );

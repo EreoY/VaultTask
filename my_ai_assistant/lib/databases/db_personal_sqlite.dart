@@ -386,6 +386,11 @@ CREATE TABLE IF NOT EXISTS chat_messages (
       where: 'id = ?',
       whereArgs: [sessionId],
     );
+    final cleanedAttachments = message.attachments.map((a) {
+      final copy = Map<String, String>.from(a);
+      copy.remove('b64');
+      return copy;
+    }).toList();
     await db.insert('chat_messages', {
       'id': message.id,
       'session_id': sessionId,
@@ -401,7 +406,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
         'name': tc.name,
         'arguments': tc.arguments,
       }).toList()),
-      'attachments': jsonEncode(message.attachments),
+      'attachments': jsonEncode(cleanedAttachments),
       'timestamp': message.timestamp.toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }

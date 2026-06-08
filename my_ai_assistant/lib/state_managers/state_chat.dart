@@ -18,6 +18,8 @@ import 'package:google_generative_ai/google_generative_ai.dart' hide ChatSession
 // ─── StateChat ──────────────────────────────────────────────────────────────
 class StateChat extends ChangeNotifier {
   static final onImageDescriptionRegenerated = StreamController<Map<String, dynamic>>.broadcast();
+  static final onUploadError = StreamController<String>.broadcast();
+  static final onUploadSuccess = StreamController<String>.broadcast();
 
   // Dual-Context State Variables
   final List<ChatMessage> _globalMessages = [];
@@ -113,18 +115,20 @@ class StateChat extends ChangeNotifier {
   void _initImageDescriptionListener() {
     onImageDescriptionRegenerated.stream.listen((event) {
       final url = event['url'] as String?;
+      final name = event['name'] as String?;
       final description = event['aiDescription'] as String?;
-      if (url == null || description == null) return;
+      if (description == null || (url == null && name == null)) return;
 
       bool changed = false;
 
       // Update global messages in memory
       for (int i = 0; i < _globalMessages.length; i++) {
         final msg = _globalMessages[i];
-        final hasMatch = msg.attachments.any((att) => att['url'] == url);
+        final hasMatch = msg.attachments.any((att) => 
+            (url != null && att['url'] == url) || (name != null && att['name'] == name));
         if (hasMatch) {
           final updatedAtt = msg.attachments.map((att) {
-            if (att['url'] == url) {
+            if ((url != null && att['url'] == url) || (name != null && att['name'] == name)) {
               return Map<String, String>.from(att)..['description'] = description;
             }
             return att;
@@ -142,10 +146,11 @@ class StateChat extends ChangeNotifier {
       // Update task messages in memory
       for (int i = 0; i < _taskMessages.length; i++) {
         final msg = _taskMessages[i];
-        final hasMatch = msg.attachments.any((att) => att['url'] == url);
+        final hasMatch = msg.attachments.any((att) => 
+            (url != null && att['url'] == url) || (name != null && att['name'] == name));
         if (hasMatch) {
           final updatedAtt = msg.attachments.map((att) {
-            if (att['url'] == url) {
+            if ((url != null && att['url'] == url) || (name != null && att['name'] == name)) {
               return Map<String, String>.from(att)..['description'] = description;
             }
             return att;
@@ -160,7 +165,11 @@ class StateChat extends ChangeNotifier {
         }
       }
 
-      if (changed) notifyListeners();
+      if (changed) {
+        _globalAgent.setHistory(_convertMessagesToAgentHistory(_globalMessages));
+        _taskAgent.setHistory(_convertMessagesToAgentHistory(_taskMessages));
+        notifyListeners();
+      }
     });
   }
 
@@ -341,39 +350,20 @@ class StateChat extends ChangeNotifier {
     final sessId = _currentGlobalSession?.id;
     if (sessId == null) return;
 
-    // Auto-rename session if it is a new global session and user sends first message
+    // Auto-rename session on first message
     if (_currentGlobalSession!.name == 'New Session') {
-      final cleanText = text.trim();
-      final words = cleanText.split(RegExp(r'\s+'));
-      final limit = words.length > 5 ? 5 : words.length;
-      final newName = words.take(limit).join(' ');
-      if (newName.isNotEmpty) {
-        await renameSession(_currentGlobalSession!.id, newName);
-      }
+      final words = text.trim().split(RegExp(r'\s+'));
+      final newName = words.take(5).join(' ');
+      if (newName.isNotEmpty) await renameSession(_currentGlobalSession!.id, newName);
     }
-
-    final attachmentsToDisplay = _globalPendingFiles.map((f) => {
-      'name': f.name,
-      'mime': _guessMimeType(f.name),
-      'size': f.size.toString(),
-    }).toList();
-
-    final userMsg = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: text,
-      isUser: true,
-      attachments: attachmentsToDisplay,
-    );
-
-    _globalMessages.insert(0, userMsg);
-    await ApiCloudflare.insertChatMessage(userMsg, sessId);
 
     _globalIsTyping = true;
     notifyListeners();
 
-    // ─── Phase 2: R2 Upload Pipeline ──────────────────────────────────────────
-    final List<Map<String, String>> uploadedAttachments = [];
+    // ─── Step 1: Upload files to R2 (blocking) ─────────────────────────
+    final List<Map<String, String>> attachments = [];
     final List<PlatformFile> filesToUpload = List.from(_globalPendingFiles);
+    final List<Uint8List> uploadedBytesList = [];
     clearPendingFiles();
 
     for (final file in filesToUpload) {
@@ -382,106 +372,84 @@ class StateChat extends ChangeNotifier {
         if (bytes == null && !kIsWeb && file.path != null) {
           bytes = await io.File(file.path!).readAsBytes();
         }
-        if (bytes == null) continue;
-        final res = await ApiCloudflare.uploadImage(
-          bytes, 
-          file.name, 
-          path: 'tmp', // Transient storage
-        );
-        if (res['url'] != null) {
-          final mime = _guessMimeType(file.name);
-          String aiDescription = '';
-          if (mime.startsWith('image/')) {
-            try {
-              aiDescription = await ApiCloudflare.generateAiDescription(bytes, mime);
-            } catch (e) {
-              debugPrint('Error generating description: $e');
-            }
-          }
-          uploadedAttachments.add({
-            'name': file.name,
-            'url': res['url'].toString(),
-            'mime': mime,
-            'b64': base64Encode(bytes),
-            'description': aiDescription,
-          });
+        if (bytes == null) {
+          onUploadError.add('ไม่สามารถอ่านไฟล์ "${file.name}"');
+          continue;
         }
+
+        final res = await ApiCloudflare.uploadImage(bytes, file.name, path: 'chats');
+        if (res['url'] == null) {
+          onUploadError.add('อัปโหลด "${file.name}" ล้มเหลว: ไม่ได้ URL');
+          continue;
+        }
+
+        final mime = _guessMimeType(file.name);
+        attachments.add({
+          'name': file.name,
+          'url': res['url'].toString(),
+          'mime': mime,
+          'b64': base64Encode(bytes),
+          'description': '', // empty initially, loaded in bg
+        });
+        uploadedBytesList.add(bytes);
+        onUploadSuccess.add('อัปโหลด "${file.name}" สำเร็จ');
       } catch (e) {
         debugPrint('Upload failed for ${file.name}: $e');
+        onUploadError.add('อัปโหลด "${file.name}" ล้มเหลว: $e');
       }
     }
 
-    if (uploadedAttachments.isNotEmpty) {
-      final idx = _globalMessages.indexWhere((m) => m.id == userMsg.id);
-      if (idx != -1) {
-        final updatedUserMsg = ChatMessage(
-          id: userMsg.id,
-          text: userMsg.text,
-          isUser: userMsg.isUser,
-          attachments: uploadedAttachments,
-          timestamp: userMsg.timestamp,
-        );
-        _globalMessages[idx] = updatedUserMsg;
-        notifyListeners();
-        await ApiCloudflare.insertChatMessage(updatedUserMsg, sessId);
-      }
-    }
+    // ─── Step 2: Create & persist user message ─────────────────────────
+    final userMsg = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      isUser: true,
+      attachments: attachments,
+    );
+    _globalMessages.insert(0, userMsg);
+    notifyListeners();
+    await ApiCloudflare.insertChatMessage(userMsg, sessId);
 
-    // Route to unified provider using the global agent
-    final reply = await _globalAgent.processMessageStream(text, attachments: uploadedAttachments);
-        
+    // Sync agent history (excluding the new userMsg) to strip base64 from historical messages
+    final historyMsgs = _globalMessages.skip(1).toList();
+    final agentHistory = _convertMessagesToAgentHistory(historyMsgs);
+    _globalAgent.setHistory(agentHistory);
+
+    // ─── Step 3: Send to AI agent ──────────────────────────────────────
+    final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+    final reply = await _globalAgent.processMessageStream(
+      text, 
+      attachments: attachments,
+      sessionId: sessId,
+      assistantMessageId: aiMessageId,
+    );
     _globalIsTyping = false;
 
-    // Create the message object
-    final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+    // ─── Step 4: Handle AI response ────────────────────────────────────
     final aiMessage = ChatMessage(
       id: aiMessageId,
-      text: reply.text, // Could be empty if streaming
+      text: reply.text,
       reasoning: reply.reasoning,
       isUser: false,
       hasDraft: reply.pendingCall != null,
       pendingCall: reply.pendingCall,
       toolCalls: reply.toolCalls,
     );
-    
     _globalMessages.insert(0, aiMessage);
     await ApiCloudflare.insertChatMessage(aiMessage, sessId);
 
     if (reply.stream != null) {
-      // Handle streaming updates
       String fullText = reply.text;
       reply.stream!.listen((chunk) {
         fullText += chunk;
-        // Update the message in the list
         final index = _globalMessages.indexWhere((m) => m.id == aiMessageId);
         if (index != -1) {
-          _globalMessages[index] = ChatMessage(
-            id: aiMessageId,
-            text: fullText,
-            reasoning: aiMessage.reasoning,
-            isUser: false,
-            hasDraft: aiMessage.hasDraft,
-            pendingCall: aiMessage.pendingCall,
-            toolCalls: aiMessage.toolCalls,
-            timestamp: aiMessage.timestamp,
-          );
+          _globalMessages[index] = aiMessage.copyWith(text: fullText);
           notifyListeners();
         }
       }, onDone: () async {
-        final finalAiMsg = ChatMessage(
-          id: aiMessageId,
-          text: fullText,
-          reasoning: aiMessage.reasoning,
-          isUser: false,
-          hasDraft: aiMessage.hasDraft,
-          pendingCall: aiMessage.pendingCall,
-          toolCalls: aiMessage.toolCalls,
-          timestamp: aiMessage.timestamp,
-        );
-        await ApiCloudflare.insertChatMessage(finalAiMsg, sessId);
-        if (reply.pendingCall != null) {
-          _buildDraft(reply.pendingCall!);
-        }
+        await ApiCloudflare.insertChatMessage(aiMessage.copyWith(text: fullText), sessId);
+        if (reply.pendingCall != null) _buildDraft(reply.pendingCall!);
       });
     } else {
       if (reply.pendingCall != null) {
@@ -513,17 +481,24 @@ class StateChat extends ChangeNotifier {
     _taskIsTyping = true;
     notifyListeners();
 
+    // Sync agent history (excluding the new userMsg) to strip base64 from historical messages
+    final historyMsgs = _taskMessages.skip(1).toList();
+    final agentHistory = _convertMessagesToAgentHistory(historyMsgs);
+    _taskAgent.setHistory(agentHistory);
+
     // Route to unified provider using the task agent
+    final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
     final reply = await _taskAgent.processMessageStream(
       text,
       attachments: [],
       activeTask: activeTask,
+      sessionId: sessId,
+      assistantMessageId: aiMessageId,
     );
 
     _taskIsTyping = false;
 
     // Create the message object
-    final aiMessageId = DateTime.now().millisecondsSinceEpoch.toString();
     final aiMessage = ChatMessage(
       id: aiMessageId,
       text: reply.text, // Could be empty if streaming
@@ -610,9 +585,10 @@ class StateChat extends ChangeNotifier {
     _globalDraft = null;
     _globalAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(session.id);
+    final sanitizedMsgs = _sanitizeLoadedMessages(msgs);
     _globalMessages.clear();
-    _globalMessages.addAll(msgs);
-    final agentHistory = _convertMessagesToAgentHistory(msgs);
+    _globalMessages.addAll(sanitizedMsgs);
+    final agentHistory = _convertMessagesToAgentHistory(sanitizedMsgs);
     _globalAgent.setHistory(agentHistory);
     notifyListeners();
   }
@@ -682,9 +658,10 @@ class StateChat extends ChangeNotifier {
     _taskDraft = null;
     _taskAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(sessionId);
+    final sanitizedMsgs = _sanitizeLoadedMessages(msgs);
     _taskMessages.clear();
-    _taskMessages.addAll(msgs);
-    final agentHistory = _convertMessagesToAgentHistory(msgs);
+    _taskMessages.addAll(sanitizedMsgs);
+    final agentHistory = _convertMessagesToAgentHistory(sanitizedMsgs);
     _taskAgent.setHistory(agentHistory);
     notifyListeners();
   }
@@ -723,8 +700,9 @@ class StateChat extends ChangeNotifier {
     _taskDraft = null;
     _taskAgent.resetSession();
     final msgs = await ApiCloudflare.getChatMessages(sessionId);
-    _taskMessages.addAll(msgs);
-    final agentHistory = _convertMessagesToAgentHistory(msgs);
+    final sanitizedMsgs = _sanitizeLoadedMessages(msgs);
+    _taskMessages.addAll(sanitizedMsgs);
+    final agentHistory = _convertMessagesToAgentHistory(sanitizedMsgs);
     _taskAgent.setHistory(agentHistory);
     notifyListeners();
   }
@@ -785,29 +763,69 @@ class StateChat extends ChangeNotifier {
   }
 
 
+  List<ChatMessage> _sanitizeLoadedMessages(List<ChatMessage> msgs) {
+    return msgs.map((m) {
+      if (m.isUser && m.attachments.isNotEmpty) {
+        final cleanedAttachments = m.attachments.map((a) {
+          final url = a['url'] ?? '';
+          if (url.isEmpty) {
+            final copy = Map<String, String>.from(a);
+            copy['url'] = 'error';
+            return copy;
+          }
+          return a;
+        }).toList();
+        return m.copyWith(attachments: cleanedAttachments);
+      }
+      return m;
+    }).toList();
+  }
+
   List<Map<String, dynamic>> _convertMessagesToAgentHistory(List<ChatMessage> msgs) {
-    final chronological = msgs.reversed.toList();
+    // Capping the history to the most recent 14 messages (approx. 7 turns) to limit context size
+    final recentMsgs = msgs.take(14).toList();
+    final chronological = recentMsgs.reversed.toList();
     List<Map<String, dynamic>> history = [];
-    for (final m in chronological) {
+    
+    int lastUserIndex = -1;
+    for (int i = chronological.length - 1; i >= 0; i--) {
+      if (chronological[i].isUser) {
+        lastUserIndex = i;
+        break;
+      }
+    }
+
+    for (int i = 0; i < chronological.length; i++) {
+      final m = chronological[i];
       if (m.isUser) {
         final hasAttachments = m.attachments.isNotEmpty;
         if (hasAttachments) {
           final List<String> descriptionLines = [];
           final List<Map<String, dynamic>> remainingImageUrls = [];
+          final isLatestUserMsg = (i == lastUserIndex);
           
           for (final att in m.attachments) {
             final name = att['name'] ?? 'image';
             final description = att['description'] ?? '';
             final mime = att['mime'] ?? '';
             final b64 = att['b64'] ?? '';
+            final url = att['url'] ?? '';
             
-            if (mime.startsWith('image/') && description.isNotEmpty) {
-              descriptionLines.add('[Attached Image "$name" Description: $description]');
-            } else if (b64.isNotEmpty) {
-              remainingImageUrls.add({
-                'type': 'image_url', 
-                'image_url': {'url': 'data:$mime;base64,$b64'}
-              });
+            // Skip failed/empty attachments completely
+            if (url == 'error' || url.isEmpty) continue;
+            
+            if (mime.startsWith('image/')) {
+              if (description.isNotEmpty) {
+                descriptionLines.add('[Attached Image "$name" Description: $description]');
+              } else if (isLatestUserMsg && b64.isNotEmpty) {
+                descriptionLines.add('[Attached Image Name: "$name", URL: "$url"]');
+                remainingImageUrls.add({
+                  'type': 'image_url', 
+                  'image_url': {'url': 'data:$mime;base64,$b64'}
+                });
+              } else {
+                descriptionLines.add('[Attached Image "$name" (No description available)]');
+              }
             }
           }
           
@@ -827,7 +845,8 @@ class StateChat extends ChangeNotifier {
           history.add({'role': 'user', 'content': m.text});
         }
       } else {
-        final assistantEntry = <String, dynamic>{'role': 'assistant', 'content': m.text};
+        final contentText = m.text.trim().isEmpty ? '[วิเคราะห์และดำเนินการสำเร็จ]' : m.text;
+        final assistantEntry = <String, dynamic>{'role': 'assistant', 'content': contentText};
         history.add(assistantEntry);
       }
     }
