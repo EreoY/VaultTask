@@ -555,5 +555,33 @@ class ApiCloudflare {
       throw Exception('Failed to insert chat message: ${response.body}');
     }
   }
+
+  static Future<List<String>> getReadCommentIds(String uid) async {
+    final url = '$_base/api/comments/reads?uid=$uid';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return List<String>.from(data.map((e) => e.toString()));
+      }
+      return [];
+    } else {
+      throw Exception('Failed to get read comments: ${response.body}');
+    }
+  }
+
+  static Future<void> markCommentsAsRead(String uid, List<String> commentIds) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/comments/read'),
+      headers: _headers,
+      body: jsonEncode({
+        'uid': uid,
+        'comment_ids': commentIds,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to mark comments as read: ${response.body}');
+    }
+  }
 }
 

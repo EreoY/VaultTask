@@ -96,3 +96,13 @@ CREATE INDEX IF NOT EXISTS idx_chat_sessions_uid ON chat_sessions(uid);
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_task ON chat_sessions(task_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
 
+-- Comment Read Tracking (persisted cross-device)
+CREATE TABLE IF NOT EXISTS task_comment_reads (
+  comment_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  read_at INTEGER DEFAULT (strftime('%s','now')*1000),
+  PRIMARY KEY (comment_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_task_comment_reads_user ON task_comment_reads(user_id);
+
+

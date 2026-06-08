@@ -121,7 +121,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       _labelIds = List.from(widget.existingTask!.labelIds);
       _comments = List.from(widget.existingTask!.comments);
     } else {
-      _dueDate = widget.initialDate ?? DateTime.now().add(const Duration(days: 1));
+      _dueDate = widget.initialDate ?? DateTime(1970, 1, 1);
       _status = widget.initialStatus ?? (widget.board.columns.isNotEmpty ? widget.board.columns.first : 'todo');
     }
 
@@ -664,7 +664,15 @@ class _TaskEditModalState extends State<TaskEditModal> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _buildMetadataItem(icon: Icons.layers_outlined, label: _status.toUpperCase(), onTap: () => _pickStatus(currentBoard)),
-          _buildMetadataItem(icon: Icons.calendar_today_rounded, label: DateFormat('MMM d').format(_dueDate).toUpperCase(), onTap: _pickDate),
+          _buildMetadataItem(
+            icon: Icons.calendar_today_rounded, 
+            label: _dueDate.year == 1970 ? "NO DATE" : DateFormat('MMM d').format(_dueDate).toUpperCase(), 
+            onTap: _pickDate,
+            onClear: _dueDate.year == 1970 ? null : () {
+              setState(() => _dueDate = DateTime(1970, 1, 1));
+              _autoSaveTask();
+            },
+          ),
           _buildMetadataItem(icon: Icons.label_outline_rounded, label: '${_labelIds.length} LABELS', onTap: () => _pickLabels(currentBoard)),
           _buildMetadataItem(icon: Icons.group_outlined, label: '${_members.length} OPERATIVES', onTap: () => _pickMembers(currentBoard)),
         ],
@@ -672,18 +680,34 @@ class _TaskEditModalState extends State<TaskEditModal> {
     );
   }
 
-  Widget _buildMetadataItem({required IconData icon, required String label, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: GlassColors.primary.withOpacity(0.5)),
-          const SizedBox(width: 8),
-          Text(label, style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.primary)),
+  Widget _buildMetadataItem({required IconData icon, required String label, required VoidCallback onTap, VoidCallback? onClear}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: GlassColors.primary.withOpacity(0.5)),
+              const SizedBox(width: 8),
+              Text(label, style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.primary)),
+            ],
+          ),
+        ),
+        if (onClear != null) ...[
+          const SizedBox(width: 6),
+          InkWell(
+            onTap: onClear,
+            borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Icon(Icons.close_rounded, size: 12, color: GlassColors.primary.withOpacity(0.5)),
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -918,9 +942,10 @@ class _TaskEditModalState extends State<TaskEditModal> {
   }
 
   Future<void> _pickDate() async {
+    final DateTime initial = _dueDate.year == 1970 ? DateTime.now() : _dueDate;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _dueDate,
+      initialDate: initial,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
       builder: (context, child) => Theme(

@@ -2666,3 +2666,59 @@
 - **Status:** [x] Done
 - **Action:** ตรวจสอบความเสถียรของการรันด้วยอุปกรณ์ `web-server`
 - **Why:** เพื่อให้มั่นใจได้ว่าเซิร์ฟเวอร์รันตลอดชีพและ Chrome ปกติสามารถโหลดภาพและใช้งานได้โดยไม่สะดุด
+
+## Phase 126: Kanban Operative Filter Toggle
+
+### Task 126.1: Setup & State Definition
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ประกาศตัวแปร enum `OperativeFilterMode` และเพิ่ม state สำหรับ `_filterMode` และ `_selectedOperativeId`
+- **Why:** เพื่อใช้เก็บสถานะและระบุตัวกรองที่เลือกสำหรับโหมดตัวกรองแบบ 3 สถานะ
+
+### Task 126.2: UI Component Construction
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** สร้าง UI ของตัวควบคุม segmented control แบบ glassmorphic สำหรับโหมดตัวกรอง และแทนที่ปุ่มไอคอนตัวกรองเดิม
+- **Why:** เพื่อปรับปรุงการสลับสถานะของตัวกรองให้เข้าถึงได้ง่ายและรวดเร็วแบบเรียลไทม์
+
+### Task 126.3: Selection Menu Sync
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** อัปเดตฟังก์ชัน `_showOperativeFilterMenu` ให้ซิงค์กับสถานะตัวกรอง 3 โหมดที่สร้างใหม่
+- **Why:** เพื่อให้การเลือกผู้ใช้งานในโหมดแมนนวลทำงานร่วมกับตัวเลือกบน Toggle ได้ถูกต้อง
+
+### Task 126.4: Verification
+- **Status:** [x] Done
+- **Action:** รันการตรวจสอบความถูกต้องด้วย `flutter analyze` และทดสอบฟังก์ชันการทำงานบนเบราว์เซอร์
+- **Why:** ยืนยันความสมบูรณ์และประสิทธิภาพของตัวกรองใหม่
+
+## Phase 127: Kanban Calendar Integration
+
+### Task 127.1: Add State & Imports
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** เพิ่ม `import 'package:intl/intl.dart';` และประกาศตัวแปร `bool _isCalendarMode = false;` และ `DateTime _calendarMonth = DateTime.now();` ใน `_KanbanPageState`
+- **Why:** เพื่อรองรับโครงสร้างข้อมูลที่จำเป็นสำหรับมุมมองปฏิทินและการแสดงวันเดือนปี
+
+### Task 127.2: Implement View Switcher Toggle
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ปรับแต่ง `_buildHeader` ให้รองรับการกดเพื่อสลับมุมมองระหว่าง Kanban และ Calendar ทั้งใน Desktop และ Mobile
+- **Why:** เพื่อให้ผู้ใช้งานสลับมุมมองไปมาได้รวดเร็วตามความต้องการ
+
+### Task 127.3: Build Monthly Calendar Grid Widget
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** พัฒนาฟังก์ชัน `_buildCalendarView`, `_buildCalendarGrid`, และ `_buildCalendarTaskCard` โดยเซลล์วันที่ใช้ `DragTarget<TaskModel>` เพื่อให้ลากงานมาปล่อยเปลี่ยนวันได้
+- **Why:** สร้างระบบปฏิทินรายเดือนแบบตอบสนองพร้อมการลากวางวันที่ทำงานร่วมกับ State Management
+
+### Task 127.4: Build Unscheduled Task Bucket
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** พัฒนาฟังก์ชัน `_buildUnscheduledBucket` และ `_buildBucketTaskCard` โดยเชื่อมต่อ `DragTarget<TaskModel>` เพื่อยกเลิกกำหนดวันของงานให้เป็น Epoch 0 เมื่อนำมาวาง
+- **Why:** เพื่อแยกจัดการงานที่ยังไม่ได้กำหนดวันให้เป็นระเบียบและเอื้อต่อการจัดสรรเวลาทีหลัง
+
+### Task 127.5: Verification
+- **Status:** [x] Done
+- **Action:** ทดสอบการคอมไพล์และวิเคราะห์ประสิทธิภาพของหน้าปฏิทิน การลากวาง และการซิงค์ข้อมูลกับ Backend D1
+- **Why:** ยืนยันความเสถียรและความถูกต้องในการอัปเดตข้อมูลการทำแผนของแอป

@@ -145,9 +145,15 @@ class StateTasks extends ChangeNotifier {
 
   Future<void> _loadReadComments() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList('read_comment_ids') ?? [];
-      _readCommentIds = list.toSet();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final d1Reads = await ApiCloudflare.getReadCommentIds(uid);
+        _readCommentIds = d1Reads.toSet();
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final list = prefs.getStringList('read_comment_ids') ?? [];
+        _readCommentIds = list.toSet();
+      }
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading read comments: $e');
@@ -161,6 +167,11 @@ class StateTasks extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
+      
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await ApiCloudflare.markCommentsAsRead(uid, [id]);
+      }
     } catch (e) {
       debugPrint('Error saving read comment: $e');
     }
@@ -168,9 +179,11 @@ class StateTasks extends ChangeNotifier {
 
   Future<void> markCommentsAsRead(List<String> ids) async {
     bool changed = false;
+    final List<String> newIds = [];
     for (final id in ids) {
       if (!_readCommentIds.contains(id)) {
         _readCommentIds.add(id);
+        newIds.add(id);
         changed = true;
       }
     }
@@ -179,6 +192,11 @@ class StateTasks extends ChangeNotifier {
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
+        
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null && newIds.isNotEmpty) {
+          await ApiCloudflare.markCommentsAsRead(uid, newIds);
+        }
       } catch (e) {
         debugPrint('Error saving read comments: $e');
       }
@@ -285,6 +303,7 @@ class StateTasks extends ChangeNotifier {
   Future<void> fetchAllTasks(List<BoardModel> boards) async {
     _isLoading = true;
     notifyListeners();
+    await _loadReadComments();
     for (final b in boards) {
       await fetchTasksForBoard(b, silent: true);
     }
@@ -306,6 +325,10 @@ class StateTasks extends ChangeNotifier {
     if (!silent) {
       _isLoading = true;
       notifyListeners();
+    }
+    
+    if (_readCommentIds.isEmpty) {
+      await _loadReadComments();
     }
 
     try {

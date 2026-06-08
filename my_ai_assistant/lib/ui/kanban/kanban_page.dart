@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../common/ime_safe_text_field.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../models/board_model.dart';
@@ -14,6 +15,8 @@ import 'widgets/kanban_column.dart';
 import 'widgets/task_edit_modal.dart';
 import 'widgets/column_edit_modal.dart';
 import 'widgets/member_role_modal.dart';
+
+enum OperativeFilterMode { all, mine, select }
 
 class KanbanPage extends StatefulWidget {
   final BoardModel board;
@@ -32,7 +35,11 @@ class KanbanPage extends StatefulWidget {
 class _KanbanPageState extends State<KanbanPage> {
   bool _isSelectMode = false;
   bool _isOverviewMode = false; // 🚀 Tactical Zoom State
+  bool _isCalendarMode = false;
+  DateTime _calendarMonth = DateTime.now();
+  OperativeFilterMode _filterMode = OperativeFilterMode.all;
   String? _activeOperativeId; // 🚀 null = ALL
+  String? _selectedOperativeId; // 🚀 Chosen operative for select mode
   final Set<String> _selectedTaskIds = {};
   StateTasks? _taskStateRef;
   
@@ -160,6 +167,9 @@ class _KanbanPageState extends State<KanbanPage> {
                       child: Consumer<StateBoards>(
                         builder: (context, boardState, child) {
                           final latestBoard = boardState.selectedBoard ?? board;
+                          if (_isCalendarMode) {
+                            return _buildCalendarView(latestBoard, context);
+                          }
                           return ListView.builder(
                             controller: _horizontalScrollController,
                             scrollDirection: Axis.horizontal,
@@ -294,20 +304,34 @@ class _KanbanPageState extends State<KanbanPage> {
           Row(
             children: [
               if (!isMobile) ...[
+                _buildGhostButton(
+                  _isCalendarMode ? 'KANBAN VIEW' : 'CALENDAR VIEW',
+                  _isCalendarMode ? Icons.dashboard_customize_outlined : Icons.calendar_month_rounded,
+                  onTap: () => setState(() => _isCalendarMode = !_isCalendarMode),
+                ),
+                const SizedBox(width: 12),
                 _buildGhostButton('ADD PHASE', Icons.view_column_rounded, onTap: () => _showColumnSettings(currentBoard)),
                 const SizedBox(width: 12),
                 _buildGhostButton(_isSelectMode ? 'EXIT BULK' : 'BULK ACTION', Icons.checklist_rtl_rounded, onTap: () => setState(() { _isSelectMode = !_isSelectMode; if (!_isSelectMode) _selectedTaskIds.clear(); })),
                 const SizedBox(width: 12),
                 _buildGhostButton('NEW TASK', Icons.add_rounded, onTap: () => _showAddTask(currentBoard)),
               ],
-              // 🚀 Mobile-only Bulk Action toggle to save space
-              if (isMobile)
+              // 🚀 Mobile-only toggles
+              if (isMobile) ...[
+                _buildActionIcon(
+                  _isCalendarMode ? Icons.dashboard_customize_outlined : Icons.calendar_month_rounded,
+                  onTap: () => setState(() => _isCalendarMode = !_isCalendarMode),
+                  color: _isCalendarMode ? GlassColors.gold : null,
+                  size: 36,
+                ),
+                const SizedBox(width: 8),
                 _buildActionIcon(
                   _isSelectMode ? Icons.checklist_rounded : Icons.checklist_rtl_rounded,
                   onTap: () => setState(() { _isSelectMode = !_isSelectMode; if (!_isSelectMode) _selectedTaskIds.clear(); }),
                   color: _isSelectMode ? GlassColors.gold : null,
                   size: 36,
                 ),
+              ],
             ],
           ),
         ],
@@ -419,16 +443,22 @@ class _KanbanPageState extends State<KanbanPage> {
             Text('STRATEGIC OPERATIVE FILTER', style: GlassText.labelSM().copyWith(letterSpacing: 2.0, color: GlassColors.gold)),
             const SizedBox(height: 24),
             ListTile(
-              leading: Icon(Icons.group_rounded, color: _activeOperativeId == null ? GlassColors.primary : Colors.white30),
-              title: Text('ALL OPERATIVES', style: GlassText.bodyMD().copyWith(fontWeight: _activeOperativeId == null ? FontWeight.bold : FontWeight.normal)),
-              onTap: () { setState(() => _activeOperativeId = null); Navigator.pop(context); },
+              leading: Icon(Icons.group_rounded, color: _filterMode == OperativeFilterMode.all ? GlassColors.primary : Colors.white30),
+              title: Text('ALL OPERATIVES', style: GlassText.bodyMD().copyWith(fontWeight: _filterMode == OperativeFilterMode.all ? FontWeight.bold : FontWeight.normal)),
+              onTap: () {
+                setState(() {
+                  _filterMode = OperativeFilterMode.all;
+                  _activeOperativeId = null;
+                });
+                Navigator.pop(context);
+              },
             ),
             const Divider(color: Colors.white10),
             ...board.members.map((uid) {
               final profile = boardState.getMemberProfile(uid);
               final name = profile?['name'] ?? 'Operative';
               final color = GlassColors.getMemberColor(uid);
-              final isSelected = _activeOperativeId == uid;
+              final isSelected = _filterMode == OperativeFilterMode.select && _activeOperativeId == uid;
 
               return ListTile(
                 leading: Container(
@@ -438,7 +468,14 @@ class _KanbanPageState extends State<KanbanPage> {
                 ),
                 title: Text(name.toUpperCase(), style: GlassText.bodyMD().copyWith(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                 trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: GlassColors.primary, size: 20) : null,
-                onTap: () { setState(() => _activeOperativeId = uid); Navigator.pop(context); },
+                onTap: () {
+                  setState(() {
+                    _filterMode = OperativeFilterMode.select;
+                    _selectedOperativeId = uid;
+                    _activeOperativeId = uid;
+                  });
+                  Navigator.pop(context);
+                },
               );
             }).toList(),
             const SizedBox(height: 24),
@@ -448,11 +485,137 @@ class _KanbanPageState extends State<KanbanPage> {
     );
   }
 
+  Widget _buildToggleItem(
+    String label, {
+    required bool isSelected,
+    required VoidCallback onTap,
+    required IconData icon,
+    bool showDropdownArrow = false,
+    bool isMobile = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 8 : 12,
+            vertical: isMobile ? 6 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? GlassColors.primary.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: isMobile ? 12 : 14,
+                color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.4),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label.toUpperCase(),
+                style: GlassText.labelSM().copyWith(
+                  color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isMobile ? 9 : 10,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (showDropdownArrow) ...[
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.arrow_drop_down_rounded,
+                  size: isMobile ? 14 : 16,
+                  color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.4),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterToggleBar(BoardModel currentBoard, bool isMobile) {
+    final currentUserId = AuthService().currentUser?.uid;
+    String selectLabel = isMobile ? "SELECT" : "SELECT OPERATIVE";
+    if (_filterMode == OperativeFilterMode.select && _selectedOperativeId != null) {
+      final profile = context.read<StateBoards>().getMemberProfile(_selectedOperativeId!);
+      if (profile != null) {
+        selectLabel = profile['name'] ?? selectLabel;
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: GlassColors.onSurface.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: GlassColors.ghostBorder, width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleItem(
+            isMobile ? "ALL" : "ALL",
+            isSelected: _filterMode == OperativeFilterMode.all,
+            icon: Icons.group_rounded,
+            isMobile: isMobile,
+            onTap: () {
+              setState(() {
+                _filterMode = OperativeFilterMode.all;
+                _activeOperativeId = null;
+              });
+            },
+          ),
+          _buildToggleItem(
+            isMobile ? "MINE" : "MY TASKS",
+            isSelected: _filterMode == OperativeFilterMode.mine,
+            icon: Icons.person_rounded,
+            isMobile: isMobile,
+            onTap: () {
+              setState(() {
+                _filterMode = OperativeFilterMode.mine;
+                _activeOperativeId = currentUserId;
+              });
+            },
+          ),
+          _buildToggleItem(
+            selectLabel,
+            isSelected: _filterMode == OperativeFilterMode.select,
+            icon: Icons.filter_list_rounded,
+            showDropdownArrow: true,
+            isMobile: isMobile,
+            onTap: () {
+              if (_filterMode == OperativeFilterMode.select) {
+                _showOperativeFilterMenu(context, currentBoard);
+              } else {
+                if (_selectedOperativeId == null) {
+                  _showOperativeFilterMenu(context, currentBoard);
+                } else {
+                  setState(() {
+                    _filterMode = OperativeFilterMode.select;
+                    _activeOperativeId = _selectedOperativeId;
+                  });
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildClusterOperatives(BoardModel currentBoard) {
     final boardState = context.watch<StateBoards>();
     final members = currentBoard.members;
     final visibleMembers = members.take(3).toList();
     final remainingCount = members.length - visibleMembers.length;
+    final isMobile = Responsive.isMobile(context);
 
     return Row(
       children: [
@@ -507,31 +670,10 @@ class _KanbanPageState extends State<KanbanPage> {
         Container(width: 1, height: 20, color: GlassColors.ghostBorder),
         const SizedBox(width: 16),
 
-        // --- 🚀 Filter Button ---
-        Stack(
-          children: [
-            _buildActionIcon(
-              Icons.filter_list_rounded,
-              size: 36,
-              onTap: () => _showOperativeFilterMenu(context, currentBoard),
-              color: _activeOperativeId != null ? GlassColors.primary : null,
-            ),
-            if (_activeOperativeId != null)
-              Positioned(
-                right: 4, top: 4,
-                child: Container(
-                  width: 8, height: 8,
-                  decoration: BoxDecoration(
-                    color: GlassColors.gold,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black, width: 1.5),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        // --- 🚀 Glass 3-State Filter Toggle ---
+        _buildFilterToggleBar(currentBoard, isMobile),
         
-        const SizedBox(width: 8),
+        const SizedBox(width: 16),
 
         // --- 🚀 Gear Settings ---
         _buildUnifiedBoardMenu(currentBoard),
@@ -636,6 +778,494 @@ class _KanbanPageState extends State<KanbanPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCalendarView(BoardModel board, BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final taskState = context.watch<StateTasks>();
+    final tasks = taskState.tasksForBoard(board.id);
+    
+    // Filter tasks based on current filters
+    final filteredTasks = tasks.where((t) {
+      if (_filterMode == OperativeFilterMode.mine) {
+        final currentUid = AuthService().currentUser?.uid;
+        return t.members.contains(currentUid);
+      } else if (_filterMode == OperativeFilterMode.select && _activeOperativeId != null) {
+        return t.members.contains(_activeOperativeId);
+      }
+      return true;
+    }).toList();
+
+    final scheduledTasks = filteredTasks.where((t) => t.dueDate.year != 1970).toList();
+    final unscheduledTasks = filteredTasks.where((t) => t.dueDate.year == 1970).toList();
+
+    final calendarWidget = _buildCalendarGrid(scheduledTasks, board, context);
+    final bucketWidget = _buildUnscheduledBucket(unscheduledTasks, board, context);
+
+    if (isMobile) {
+      return Column(
+        children: [
+          Expanded(child: calendarWidget),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 180,
+            child: bucketWidget,
+          ),
+        ],
+      );
+    } else {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: calendarWidget),
+          const SizedBox(width: 24),
+          SizedBox(
+            width: 300,
+            height: double.infinity,
+            child: bucketWidget,
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildCalendarGrid(List<TaskModel> scheduledTasks, BoardModel board, BuildContext context) {
+    final firstDay = DateTime(_calendarMonth.year, _calendarMonth.month, 1);
+    final startOffset = firstDay.weekday == 7 ? 0 : firstDay.weekday;
+    final totalDaysInMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1, 0).day;
+    
+    final daysList = <DateTime?>[];
+    for (int i = 0; i < startOffset; i++) {
+      daysList.add(null);
+    }
+    for (int i = 1; i <= totalDaysInMonth; i++) {
+      daysList.add(DateTime(_calendarMonth.year, _calendarMonth.month, i));
+    }
+    
+    while (daysList.length % 7 != 0) {
+      daysList.add(null);
+    }
+
+    final weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(color: GlassColors.ghostBorder),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: GlassColors.primary.withOpacity(0.7), size: 18),
+                onPressed: () => setState(() {
+                  _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month - 1);
+                }),
+              ),
+              Text(
+                DateFormat('MMMM yyyy').format(_calendarMonth).toUpperCase(),
+                style: GlassText.headlineLG().copyWith(
+                  color: GlassColors.gold,
+                  fontSize: 18,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_forward_ios_rounded, color: GlassColors.primary.withOpacity(0.7), size: 18),
+                onPressed: () => setState(() {
+                  _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1);
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: weekdays.map((day) => Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    day,
+                    style: GlassText.labelSM().copyWith(
+                      color: GlassColors.onSurface.withOpacity(0.4),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            )).toList(),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: GridView.builder(
+              itemCount: daysList.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1.1,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemBuilder: (context, index) {
+                final date = daysList[index];
+                if (date == null) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                    ),
+                  );
+                }
+
+                final dayTasks = scheduledTasks.where((t) {
+                  return t.dueDate.year == date.year &&
+                      t.dueDate.month == date.month &&
+                      t.dueDate.day == date.day;
+                }).toList();
+
+                final isToday = DateUtils.isSameDay(date, DateTime.now());
+
+                return DragTarget<TaskModel>(
+                  onAcceptWithDetails: (details) async {
+                    final task = details.data;
+                    final updatedTask = task.copyWith(dueDate: date);
+                    final taskState = context.read<StateTasks>();
+                    await taskState.updateTask(board, updatedTask);
+                    if (mounted) {
+                      GlassNotifications.show(context, 'TASK RESCHEDULED TO ${DateFormat('MMM d').format(date).toUpperCase()}');
+                    }
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    final isOver = candidateData.isNotEmpty;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        color: isOver
+                            ? GlassColors.gold.withOpacity(0.1)
+                            : (isToday ? GlassColors.primary.withOpacity(0.05) : Colors.white.withOpacity(0.01)),
+                        borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                        border: Border.all(
+                          color: isOver
+                              ? GlassColors.gold
+                              : (isToday ? GlassColors.primary.withOpacity(0.4) : GlassColors.ghostBorder),
+                          width: isOver || isToday ? 1.5 : 1,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${date.day}',
+                                style: GlassText.bodyMD().copyWith(
+                                  fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
+                                  color: isToday
+                                      ? GlassColors.primary
+                                      : GlassColors.onSurface.withOpacity(0.8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                              if (dayTasks.isNotEmpty)
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: GlassColors.gold,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: dayTasks.length,
+                              itemBuilder: (context, tIndex) {
+                                final task = dayTasks[tIndex];
+                                return _buildCalendarTaskCard(task, board, context);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarTaskCard(TaskModel task, BoardModel board, BuildContext context) {
+    final state = context.read<StateTasks>();
+    final notifier = state.getTaskNotifier(task.id);
+    
+    final cardContent = (TaskModel currentTask) => Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: currentTask.isCompleted 
+            ? GlassColors.success.withOpacity(0.1) 
+            : GlassColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: currentTask.isCompleted 
+              ? GlassColors.success.withOpacity(0.3) 
+              : GlassColors.primary.withOpacity(0.15),
+          width: 0.5,
+        ),
+      ),
+      child: Text(
+        currentTask.title.toUpperCase(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GlassText.bodyMD().copyWith(
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
+          decoration: currentTask.isCompleted ? TextDecoration.lineThrough : null,
+          color: currentTask.isCompleted 
+              ? GlassColors.success.withOpacity(0.7) 
+              : GlassColors.onSurface.withOpacity(0.9),
+        ),
+      ),
+    );
+
+    final widgetBody = notifier == null
+        ? cardContent(task)
+        : ValueListenableBuilder<TaskModel>(
+            valueListenable: notifier,
+            builder: (context, latestTask, _) => cardContent(latestTask),
+          );
+
+    return Draggable<TaskModel>(
+      data: task,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: 140,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: GlassColors.gold),
+          ),
+          child: Text(
+            task.title.toUpperCase(),
+            style: GlassText.bodyMD().copyWith(fontSize: 10, color: Colors.white),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.3, child: widgetBody),
+      child: GestureDetector(
+        onTap: () => _onTaskTap(task),
+        child: widgetBody,
+      ),
+    );
+  }
+
+  Widget _buildUnscheduledBucket(List<TaskModel> unscheduledTasks, BoardModel board, BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    return DragTarget<TaskModel>(
+      onAcceptWithDetails: (details) async {
+        final task = details.data;
+        if (task.dueDate.year == 1970) return;
+        final updatedTask = task.copyWith(dueDate: DateTime(1970, 1, 1));
+        final taskState = context.read<StateTasks>();
+        await taskState.updateTask(board, updatedTask);
+        if (mounted) {
+          GlassNotifications.show(context, 'TASK UNSCHEDULED');
+        }
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isOver = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isOver ? GlassColors.gold.withOpacity(0.08) : Colors.white.withOpacity(0.02),
+            borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+            border: Border.all(
+              color: isOver ? GlassColors.gold : GlassColors.ghostBorder,
+              width: isOver ? 1.5 : 1,
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'UNSCHEDULED',
+                      style: GlassText.labelSM().copyWith(
+                        color: GlassColors.gold,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: GlassColors.gold.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${unscheduledTasks.length}',
+                      style: GlassText.labelSM().copyWith(
+                        color: GlassColors.gold,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: unscheduledTasks.isEmpty
+                    ? Center(
+                        child: Text(
+                          'DRAG HERE TO UNSCHEDULE',
+                          textAlign: TextAlign.center,
+                          style: GlassText.bodyMD().copyWith(
+                            color: GlassColors.onSurface.withOpacity(0.3),
+                            fontSize: 11,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: isMobile ? Axis.horizontal : Axis.vertical,
+                        itemCount: unscheduledTasks.length,
+                        itemBuilder: (context, index) {
+                          final task = unscheduledTasks[index];
+                          return Container(
+                            width: isMobile ? 180 : double.infinity,
+                            margin: isMobile 
+                                ? const EdgeInsets.only(right: 12, bottom: 4) 
+                                : const EdgeInsets.only(bottom: 8),
+                            child: _buildBucketTaskCard(task, board, context),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBucketTaskCard(TaskModel task, BoardModel board, BuildContext context) {
+    final state = context.read<StateTasks>();
+    final notifier = state.getTaskNotifier(task.id);
+
+    final cardContent = (TaskModel currentTask) => Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+        border: Border.all(color: GlassColors.ghostBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: Checkbox(
+                  value: currentTask.isCompleted,
+                  onChanged: (v) async {
+                    final updated = currentTask.copyWith(isCompleted: v ?? false);
+                    await state.updateTask(board, updated);
+                  },
+                  activeColor: GlassColors.success,
+                  side: BorderSide(color: GlassColors.primary.withOpacity(0.4), width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  currentTask.title.toUpperCase(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GlassText.headlineLG().copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    decoration: currentTask.isCompleted ? TextDecoration.lineThrough : null,
+                    color: currentTask.isCompleted ? GlassColors.onSurface.withOpacity(0.3) : GlassColors.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (currentTask.labelIds.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: board.labels.where((l) => currentTask.labelIds.contains(l['id'])).map((l) {
+                final color = Color(l['color'] as int? ?? GlassColors.primary.value);
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: color.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    (l['name'] as String).toUpperCase(),
+                    style: GlassText.labelSM().copyWith(fontSize: 6, color: color, fontWeight: FontWeight.bold),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    final widgetBody = notifier == null
+        ? cardContent(task)
+        : ValueListenableBuilder<TaskModel>(
+            valueListenable: notifier,
+            builder: (context, latestTask, _) => cardContent(latestTask),
+          );
+
+    return Draggable<TaskModel>(
+      data: task,
+      feedback: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: 200,
+          child: Opacity(opacity: 0.9, child: widgetBody),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.2, child: widgetBody),
+      child: GestureDetector(
+        onTap: () => _onTaskTap(task),
+        child: widgetBody,
       ),
     );
   }

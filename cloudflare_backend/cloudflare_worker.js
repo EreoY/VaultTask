@@ -39,9 +39,20 @@ async function ensureSchema(db) {
         tool_calls TEXT DEFAULT '[]',
         attachments TEXT DEFAULT '[]',
         timestamp TEXT NOT NULL
+    `).run();
+
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS task_comment_reads (
+        comment_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        read_at INTEGER DEFAULT (strftime('%s','now')*1000),
+        PRIMARY KEY (comment_id, user_id)
       )
     `).run();
 
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_task_comment_reads_user ON task_comment_reads(user_id)
+    `).run();
 
     try {
       await db.prepare(`ALTER TABLE team_boards ADD COLUMN workspace_id TEXT DEFAULT ''`).run();
@@ -239,6 +250,39 @@ export default {
           `SELECT uid, display_name, email, photo_url FROM users WHERE uid IN (${placeholders})`
         ).bind(...uids).all();
         return json(results);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    // COMMENT READS ───────────────────────────
+    if (url.pathname === "/api/comments/reads" && request.method === "GET") {
+      try {
+        const uid = url.searchParams.get("uid");
+        if (!uid) return json({ error: "Missing uid" }, 400);
+        const { results } = await env.DB.prepare(
+          `SELECT comment_id FROM task_comment_reads WHERE user_id = ?`
+        ).bind(uid).all();
+        return json(results.map(r => r.comment_id));
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/comments/read" && request.method === "POST") {
+      try {
+        const { uid, comment_ids } = await request.json();
+        if (!uid || !comment_ids || !Array.isArray(comment_ids)) {
+          return json({ error: "Missing uid or comment_ids array" }, 400);
+        }
+        if (comment_ids.length > 0) {
+          const stmt = env.DB.prepare(
+            `INSERT OR IGNORE INTO task_comment_reads (comment_id, user_id) VALUES (?, ?)`
+          );
+          const batch = comment_ids.map(id => stmt.bind(id, uid));
+          await env.DB.batch(batch);
+        }
+        return json({ success: true });
       } catch (err) {
         return json({ error: err.message }, 500);
       }
