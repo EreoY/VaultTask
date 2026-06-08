@@ -2611,3 +2611,47 @@
 - **Status:** [x] Done
 - **Action:** รันการตรวจสอบความถูกต้องด้วย `flutter analyze` และการรัน unit tests บน `test_image_flow.dart`
 - **Why:** ยืนยันความเสถียรและความพร้อมใช้งานระดับพรีเมียมของระบบ
+
+## Phase 124: Image Stabilization and Single-Turn Response Optimization
+
+### Task 124.1: Background AI Description Generation
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/state_managers/state_chat.dart`
+- **Action:** เพิ่ม `_generateDescriptionInBg` และเรียกใช้เมื่ออัปโหลดรูปภาพใน `sendMessageToAI`
+- **Why:** ทำให้คำบรรยายภาพทำงานในพื้นหลังทันทีเมื่ออัปโหลด ป้องกันปัญหาโหลดค้าง
+
+### Task 124.2: SkillVision Rules Prompt Tuning
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ai_agent/skills/skill_vision.dart`
+- **Action:** อัปเดต `rules` ให้บอกโมเดลว่าคำบรรยายภาพทำอัตโนมัติ ไม่ต้องสั่ง `update_image_description` รอบแรก
+- **Why:** เพื่อให้โมเดลตอบกลับในรอบเดียว (Single-Turn) และประหยัด Token / ลดความช้า
+
+### Task 124.3: UserMessageBubble ValueKey Injection
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** ใส่ `key: ValueKey(sanitizedUrl)` ที่ `Image.network`
+- **Why:** เพื่อให้เกิดการวาดรูปภาพใหม่เมื่อมี URL ป้องกันปัญหาแคช element ของ Flutter
+
+### Task 124.4: Complete Flow Verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` เพื่อตรวจสอบการคอมไพล์และเช็คระบบโดยรวม
+- **Why:** เพื่อความพร้อมใช้งานระดับพรีเมียมตามมาตรฐานของ Calenda
+
+## Phase 125: Fix Port Binding and Local Storage Session Persistence
+
+### Task 125.1: Modify run_local.sh
+- **Status:** [x] Done
+
+- **Target File:** `run_local.sh`
+- **Action:** เพิ่มอาร์กิวเมนต์ `--web-port=8080` ให้คำสั่ง `flutter run`
+- **Why:** เพื่อกำหนดพอร์ตคงที่ ป้องกันความสับสนของ Origin ในเบราเซอร์ และช่วยให้ Local Storage/SQLite สามารถแชร์ข้อมูลกันได้สมบูรณ์
+
+### Task 125.2: Test Local Execution
+- **Status:** [x] Done
+- **Action:** รัน `./run_local.sh` เพื่อตรวจสอบการจับคู่พอร์ต 8080 และโหลดหน้าแอป/รูปภาพบน Chrome หลัก
+- **Why:** ยืนยันว่าหน้าเว็บและภาพถูกดึงจาก Origin เดียวกันได้โดยสมบูรณ์
+
+### Task 125.3: Update Documentation & Sync
+- **Status:** [x] Done
+- **Action:** ปรับปรุงเอกสารโครงการและบันทึกสถานะการทำภารกิจ
+- **Why:** รักษาระบบฐานข้อมูลความรู้ให้สอดคล้องกันตาม Sovereign Protocol

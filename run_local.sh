@@ -51,4 +51,4 @@ sleep 3
 # 3. Start Flutter Frontend Web on Chrome
 echo "[3/3] Starting Flutter application on Chrome..."
 cd my_ai_assistant
-flutter run -d chrome
+flutter run -d chrome --web-port=8080

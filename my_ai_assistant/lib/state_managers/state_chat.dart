@@ -173,6 +173,20 @@ class StateChat extends ChangeNotifier {
     });
   }
 
+  void _generateDescriptionInBg(Uint8List bytes, String filename, String url, String mime) {
+    ApiCloudflare.generateAiDescription(bytes, mime).then((desc) {
+      if (desc.isNotEmpty) {
+        onImageDescriptionRegenerated.add({
+          'name': filename,
+          'url': url,
+          'aiDescription': desc,
+        });
+      }
+    }).catchError((e) {
+      debugPrint('Background AI description generation failed: $e');
+    });
+  }
+
   Future<void> _saveChatMessageToDb(ChatMessage updatedMsg, String sessionId) async {
     try {
       await DbPersonalSqlite.instance.insertChatMessage(updatedMsg, sessionId);
@@ -384,15 +398,20 @@ class StateChat extends ChangeNotifier {
         }
 
         final mime = _guessMimeType(file.name);
+        final imageUrl = res['url'].toString();
         attachments.add({
           'name': file.name,
-          'url': res['url'].toString(),
+          'url': imageUrl,
           'mime': mime,
           'b64': base64Encode(bytes),
           'description': '', // empty initially, loaded in bg
         });
         uploadedBytesList.add(bytes);
         onUploadSuccess.add('อัปโหลด "${file.name}" สำเร็จ');
+
+        if (mime.startsWith('image/')) {
+          _generateDescriptionInBg(bytes, file.name, imageUrl, mime);
+        }
       } catch (e) {
         debugPrint('Upload failed for ${file.name}: $e');
         onUploadError.add('อัปโหลด "${file.name}" ล้มเหลว: $e');

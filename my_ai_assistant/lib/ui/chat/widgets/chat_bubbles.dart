@@ -97,6 +97,7 @@ class UserMessageBubble extends StatelessWidget {
                                   ? const Center(child: Icon(Icons.broken_image, size: 24))
                                   : Image.network(
                                       sanitizedUrl,
+                                      key: ValueKey(sanitizedUrl),
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 24)),
                                     )),
