@@ -50,7 +50,7 @@ class KanbanColumnWidget extends StatelessWidget {
 
     return Container(
       width: columnWidth,
-      margin: EdgeInsets.only(right: isOverviewMode ? 16 : 24),
+      margin: EdgeInsets.zero,
       child: DragTarget<TaskModel>(
         onAcceptWithDetails: (details) {
           final task = details.data;
@@ -122,6 +122,7 @@ class KanbanColumnWidget extends StatelessWidget {
                       );
                     },
                   ),
+                  const SizedBox(height: 8),
                   // Independent Task List
                   Expanded(
                     child: Consumer<StateTasks>(

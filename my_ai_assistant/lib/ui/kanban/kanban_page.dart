@@ -153,6 +153,7 @@ class _KanbanPageState extends State<KanbanPage> {
         Column(
           children: [
             _buildHeader(board, context),
+            _buildViewSwitcherStrip(board, isMobile),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -164,59 +165,63 @@ class _KanbanPageState extends State<KanbanPage> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: Consumer<StateBoards>(
-                        builder: (context, boardState, child) {
-                          final latestBoard = boardState.selectedBoard ?? board;
-                          if (_isCalendarMode) {
-                            return _buildCalendarView(latestBoard, context);
-                          }
-                          return ListView.builder(
-                            controller: _horizontalScrollController,
-                            scrollDirection: Axis.horizontal,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: latestBoard.columns.length,
-                            itemBuilder: (context, index) {
-                              final columnName = latestBoard.columns[index];
-                              return DragTarget<int>(
-                                onAcceptWithDetails: (details) => _reorderColumns(details.data, index),
-                                builder: (context, candidateData, rejectedData) {
-                                  return Row(
-                                    children: [
-                                      if (candidateData.isNotEmpty && _activeOperativeId == null)
-                                        AnimatedContainer(
-                                          duration: const Duration(milliseconds: 200),
-                                          width: _isOverviewMode ? 80 : 120,
-                                          margin: const EdgeInsets.only(right: 24),
-                                          decoration: BoxDecoration(
-                                            color: GlassColors.gold.withOpacity(0.05),
-                                            borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-                                            border: Border.all(color: GlassColors.gold.withOpacity(0.3), width: 1.5),
-                                          ),
-                                          child: Center(child: Text('INSERT PHASE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 8, letterSpacing: 2))),
-                                        ),
-                                      KanbanColumnWidget(
-                                        board: latestBoard,
-                                        columnName: columnName,
-                                        isDark: widget.isDark,
-                                        isSelectMode: _isSelectMode,
-                                        selectedTaskIds: _selectedTaskIds,
-                                        onTaskTap: _onTaskTap,
-                                        onTaskSelect: _onTaskSelect,
-                                        onAdd: () => _showAddTask(latestBoard, columnName),
-                                        onSettings: () => _showColumnSettings(latestBoard, columnName),
-                                        columnIndex: index,
-                                        activeOperativeId: _activeOperativeId,
-                                        isOverviewMode: _isOverviewMode,
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-
-                            },
-                          );
-                        },
-                      ),
+                      child: _isCalendarMode
+                          ? _buildCalendarView(board, context)
+                          : Consumer<StateBoards>(
+                              builder: (context, boardState, child) {
+                                final latestBoard = boardState.selectedBoard ?? board;
+                                return ListView.builder(
+                                  controller: _horizontalScrollController,
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  itemCount: latestBoard.columns.length,
+                                  itemBuilder: (context, index) {
+                                    final columnName = latestBoard.columns[index];
+                                    return DragTarget<int>(
+                                      onAcceptWithDetails: (details) => _reorderColumns(details.data, index),
+                                      builder: (context, candidateData, rejectedData) {
+                                        return Row(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            if (index > 0) ...[
+                                              SizedBox(width: _isOverviewMode ? 16 : 24),
+                                            ],
+                                            if (candidateData.isNotEmpty && _activeOperativeId == null)
+                                              AnimatedContainer(
+                                                duration: const Duration(milliseconds: 200),
+                                                width: _isOverviewMode ? 80 : 120,
+                                                margin: const EdgeInsets.only(right: 12),
+                                                decoration: BoxDecoration(
+                                                  color: GlassColors.gold.withOpacity(0.05),
+                                                  borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+                                                  border: Border.all(color: GlassColors.gold.withOpacity(0.3), width: 1.5),
+                                                ),
+                                                child: Center(child: Text('INSERT PHASE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 8, letterSpacing: 2))),
+                                              ),
+                                            KanbanColumnWidget(
+                                              board: latestBoard,
+                                              columnName: columnName,
+                                              isDark: widget.isDark,
+                                              isSelectMode: _isSelectMode,
+                                              selectedTaskIds: _selectedTaskIds,
+                                              onTaskTap: _onTaskTap,
+                                              onTaskSelect: _onTaskSelect,
+                                              onAdd: () => _showAddTask(latestBoard, columnName),
+                                              onSettings: () => _showColumnSettings(latestBoard, columnName),
+                                              columnIndex: index,
+                                              activeOperativeId: _activeOperativeId,
+                                              isOverviewMode: _isOverviewMode,
+                                            ),
+                                            if (index == latestBoard.columns.length - 1)
+                                              SizedBox(width: _isOverviewMode ? 16 : 24),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                     ),
                     SizedBox(height: ExecutiveSpacing.stackMd(context)),
                   ],
@@ -275,66 +280,185 @@ class _KanbanPageState extends State<KanbanPage> {
     final isTablet = Responsive.isTablet(context);
 
     return Container(
-      padding: EdgeInsets.fromLTRB(ExecutiveSpacing.containerPadding(context), ExecutiveSpacing.containerPadding(context), ExecutiveSpacing.containerPadding(context), 24),
+      padding: EdgeInsets.fromLTRB(
+        ExecutiveSpacing.containerPadding(context),
+        ExecutiveSpacing.containerPadding(context),
+        ExecutiveSpacing.containerPadding(context),
+        16,
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          _buildNavButton(Icons.arrow_back_ios_new_rounded, () => context.read<StateBoards>().setSelectedBoard(null)),
+          const SizedBox(width: 24),
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildNavButton(Icons.arrow_back_ios_new_rounded, () => context.read<StateBoards>().setSelectedBoard(null)),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(currentBoard.name, style: GlassText.headlineXL().copyWith(fontSize: isTablet ? 32 : 48), overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 8),
-                      Text('${currentBoard.type.toUpperCase()} PROJECT • ${currentBoard.columns.length} STRATEGIC PHASES', style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6), fontSize: 12)),
-                      const SizedBox(height: 16),
-                      // 🚀 Unified Cluster Strip (Avatars + Filter + Gear)
-                      _buildClusterOperatives(currentBoard),
-                    ],
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        currentBoard.name,
+                        style: GlassText.headlineXL().copyWith(fontSize: isTablet ? 32 : 48),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildUnifiedBoardMenu(currentBoard),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${currentBoard.type.toUpperCase()} PROJECT • ${currentBoard.columns.length} STRATEGIC PHASES',
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildViewSwitcherStrip(BoardModel currentBoard, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 32,
+        vertical: 0,
+      ),
+      child: Column(
+        children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (!isMobile) ...[
-                _buildGhostButton(
-                  _isCalendarMode ? 'KANBAN VIEW' : 'CALENDAR VIEW',
-                  _isCalendarMode ? Icons.dashboard_customize_outlined : Icons.calendar_month_rounded,
-                  onTap: () => setState(() => _isCalendarMode = !_isCalendarMode),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: GlassColors.ghostBorder),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildSegmentButton(
+                              label: 'BOARD',
+                              icon: Icons.dashboard_customize_outlined,
+                              isActive: !_isCalendarMode,
+                              onTap: () => setState(() => _isCalendarMode = false),
+                              isMobile: isMobile,
+                            ),
+                            _buildSegmentButton(
+                              label: 'CALENDAR',
+                              icon: Icons.calendar_month_rounded,
+                              isActive: _isCalendarMode,
+                              onTap: () => setState(() => _isCalendarMode = true),
+                              isMobile: isMobile,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildFilterToggleBar(currentBoard, isMobile),
+                      const SizedBox(width: 12),
+                      _buildAvatarStack(currentBoard, isMobile),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 12),
-                _buildGhostButton('ADD PHASE', Icons.view_column_rounded, onTap: () => _showColumnSettings(currentBoard)),
-                const SizedBox(width: 12),
-                _buildGhostButton(_isSelectMode ? 'EXIT BULK' : 'BULK ACTION', Icons.checklist_rtl_rounded, onTap: () => setState(() { _isSelectMode = !_isSelectMode; if (!_isSelectMode) _selectedTaskIds.clear(); })),
-                const SizedBox(width: 12),
-                _buildGhostButton('NEW TASK', Icons.add_rounded, onTap: () => _showAddTask(currentBoard)),
-              ],
-              // 🚀 Mobile-only toggles
-              if (isMobile) ...[
-                _buildActionIcon(
-                  _isCalendarMode ? Icons.dashboard_customize_outlined : Icons.calendar_month_rounded,
-                  onTap: () => setState(() => _isCalendarMode = !_isCalendarMode),
-                  color: _isCalendarMode ? GlassColors.gold : null,
-                  size: 36,
-                ),
-                const SizedBox(width: 8),
-                _buildActionIcon(
-                  _isSelectMode ? Icons.checklist_rounded : Icons.checklist_rtl_rounded,
-                  onTap: () => setState(() { _isSelectMode = !_isSelectMode; if (!_isSelectMode) _selectedTaskIds.clear(); }),
-                  color: _isSelectMode ? GlassColors.gold : null,
-                  size: 36,
-                ),
-              ],
+              ),
+              const SizedBox(width: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isMobile) ...[
+                    _buildGhostButton('ADD PHASE', Icons.view_column_rounded, onTap: () => _showColumnSettings(currentBoard), isMobile: isMobile),
+                    const SizedBox(width: 12),
+                    _buildGhostButton(_isSelectMode ? 'EXIT BULK' : 'BULK ACTION', Icons.checklist_rtl_rounded, onTap: () => setState(() { _isSelectMode = !_isSelectMode; if (!_isSelectMode) _selectedTaskIds.clear(); }), isMobile: isMobile),
+                    const SizedBox(width: 12),
+                    _buildGhostButton('NEW TASK', Icons.add_rounded, onTap: () => _showAddTask(currentBoard), isMobile: isMobile),
+                  ] else ...[
+                    _buildActionIcon(
+                      Icons.view_column_rounded,
+                      onTap: () => _showColumnSettings(currentBoard),
+                      size: 36,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionIcon(
+                      _isSelectMode ? Icons.checklist_rounded : Icons.checklist_rtl_rounded,
+                      onTap: () => setState(() { _isSelectMode = !_isSelectMode; if (!_isSelectMode) _selectedTaskIds.clear(); }),
+                      color: _isSelectMode ? GlassColors.gold : null,
+                      size: 36,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionIcon(
+                      Icons.add_rounded,
+                      onTap: () => _showAddTask(currentBoard),
+                      size: 36,
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
+          const SizedBox(height: 12),
+          Container(
+            height: 1,
+            color: GlassColors.ghostBorder,
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSegmentButton({
+    required String label,
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+    required bool isMobile,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 12 : 16,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isActive ? GlassColors.gold.withOpacity(0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive ? GlassColors.gold : GlassColors.onSurface.withOpacity(0.4),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GlassText.labelSM().copyWith(
+                fontSize: isMobile ? 9 : 10,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: isActive ? GlassColors.gold : GlassColors.onSurface.withOpacity(0.4),
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -610,49 +734,54 @@ class _KanbanPageState extends State<KanbanPage> {
     );
   }
 
-  Widget _buildClusterOperatives(BoardModel currentBoard) {
+  Widget _buildAvatarStack(BoardModel currentBoard, bool isMobile) {
     final boardState = context.watch<StateBoards>();
     final members = currentBoard.members;
     final visibleMembers = members.take(3).toList();
     final remainingCount = members.length - visibleMembers.length;
-    final isMobile = Responsive.isMobile(context);
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // --- 👥 Avatar Stack (Max 3) ---
         ...visibleMembers.map((uid) {
           final profile = boardState.getMemberProfile(uid);
           final color = GlassColors.getMemberColor(uid);
           final name = profile?['name'] ?? 'Operative';
           final photo = profile?['photo'] ?? '';
           return Padding(
-            padding: const EdgeInsets.only(right: 8), 
+            padding: const EdgeInsets.only(right: 6),
             child: Container(
               width: 32, height: 32,
               decoration: BoxDecoration(
-                shape: BoxShape.circle, 
+                shape: BoxShape.circle,
                 color: color.withOpacity(0.15),
                 border: Border.all(color: GlassColors.ghostBorder, width: 0.5),
               ),
               child: ClipOval(
-                child: photo.isNotEmpty 
-                  ? Image.network(
-                      photo, 
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Center(
-                        child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: TextStyle(fontSize: 12, color: color))
+                child: photo.isNotEmpty
+                    ? Image.network(
+                        photo,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    )
-                  : Center(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: TextStyle(fontSize: 12, color: color))),
               ),
-            )
+            ),
           );
         }).toList(),
-
-        // --- ➕ Remaining Count ---
         if (remainingCount > 0)
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 6),
             child: Container(
               width: 32, height: 32,
               decoration: BoxDecoration(
@@ -661,29 +790,20 @@ class _KanbanPageState extends State<KanbanPage> {
                 border: Border.all(color: GlassColors.ghostBorder, width: 0.5),
               ),
               child: Center(
-                child: Text('+$remainingCount', style: GlassText.label().copyWith(fontSize: 10, color: GlassColors.onSurfaceVariant.withOpacity(0.5))),
+                child: Text(
+                  '+$remainingCount',
+                  style: GlassText.label().copyWith(fontSize: 10, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                ),
               ),
             ),
           ),
-
-        const SizedBox(width: 8),
-        Container(width: 1, height: 20, color: GlassColors.ghostBorder),
-        const SizedBox(width: 16),
-
-        // --- 🚀 Glass 3-State Filter Toggle ---
-        _buildFilterToggleBar(currentBoard, isMobile),
-        
-        const SizedBox(width: 16),
-
-        // --- 🚀 Gear Settings ---
-        _buildUnifiedBoardMenu(currentBoard),
       ],
     );
   }
 
   Widget _buildNavButton(IconData icon, VoidCallback onTap, {double size = 44}) => GestureDetector(onTap: onTap, child: Container(padding: EdgeInsets.all(size == 32 ? 6 : 12), decoration: BoxDecoration(borderRadius: BorderRadius.circular(ExecutiveRadius.circular), border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.3))), child: Icon(icon, size: size == 32 ? 16 : 18, color: GlassColors.onSurface)));
-  Widget _buildGhostButton(String label, IconData icon, {VoidCallback? onTap}) => GestureDetector(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), decoration: BoxDecoration(color: GlassColors.gold.withOpacity(0.1), borderRadius: BorderRadius.circular(ExecutiveRadius.circular), border: Border.all(color: GlassColors.gold.withOpacity(0.3))), child: Row(children: [Icon(icon, size: 18, color: GlassColors.gold), const SizedBox(width: 8), Text(label, style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 10))])));
-  Widget _buildActionIcon(IconData icon, {VoidCallback? onTap, Color? color, double size = 44}) => GestureDetector(onTap: onTap, child: Container(width: size, height: size, alignment: Alignment.center, decoration: BoxDecoration(borderRadius: BorderRadius.circular(ExecutiveRadius.circular), border: Border.all(color: (color ?? GlassColors.outlineVariant).withOpacity(0.3))), child: Icon(icon, size: 18, color: color ?? GlassColors.onSurface)));
+  Widget _buildGhostButton(String label, IconData icon, {VoidCallback? onTap, bool isMobile = false}) => GestureDetector(onTap: onTap, child: Container(padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: 8), decoration: BoxDecoration(color: GlassColors.gold.withOpacity(0.1), borderRadius: BorderRadius.circular(ExecutiveRadius.circular), border: Border.all(color: GlassColors.gold.withOpacity(0.3))), child: Row(children: [Icon(icon, size: 14, color: GlassColors.gold), const SizedBox(width: 6), Text(label, style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 10))])));
+  Widget _buildActionIcon(IconData icon, {VoidCallback? onTap, Color? color, double size = 36}) => GestureDetector(onTap: onTap, child: Container(width: size, height: size, alignment: Alignment.center, decoration: BoxDecoration(borderRadius: BorderRadius.circular(ExecutiveRadius.circular), border: Border.all(color: (color ?? GlassColors.outlineVariant).withOpacity(0.3))), child: Icon(icon, size: 16, color: color ?? GlassColors.onSurface)));
 
   void _showAddTask(BoardModel board, [String? col]) => TaskEditModal.show(context: context, board: board, initialStatus: col, isDark: widget.isDark);
   void _showColumnSettings(BoardModel board, [String? col]) => showModalBottomSheet(context: context, backgroundColor: Colors.transparent, isScrollControlled: true, builder: (context) => ColumnEditModal(board: board, existingColumn: col));

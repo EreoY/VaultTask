@@ -2722,3 +2722,64 @@
 - **Status:** [x] Done
 - **Action:** ทดสอบการคอมไพล์และวิเคราะห์ประสิทธิภาพของหน้าปฏิทิน การลากวาง และการซิงค์ข้อมูลกับ Backend D1
 - **Why:** ยืนยันความเสถียรและความถูกต้องในการอัปเดตข้อมูลการทำแผนของแอป
+
+## Phase 128: Kanban Layout Refinement + Calendar Real-time Fix + D1 Bug
+
+### Task 128.1: Fix D1 Migration Bug
+- **Status:** [x] Done
+- **Target File:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** เพิ่มวงเล็บปิด `)` ใน CREATE TABLE `chat_messages` ที่ขาดหายไป
+- **Why:** แก้ SQLITE_ERROR: incomplete input ที่ทำให้ migration ล้มเหลว
+
+### Task 128.2: Fix Calendar Real-time Update
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ย้าย calendar view ออกจาก `Consumer<StateBoards>` เพื่อให้ rebuild เมื่อ `_calendarMonth` เปลี่ยนผ่าน setState
+- **Why:** แก้บั๊กที่ UI ปฏิทินไม่อัปเดตเมื่อเลื่อนเดือน
+
+### Task 128.3: Add Column Dividers & Header Border
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** เพิ่มเส้นคั่นแนวตั้งระหว่างคอลัมน์ + เส้นใต้ header เพื่อให้ดูเหมือนตาราง
+- **Why:** ปรับ layout ให้อ่านง่ายขึ้นตามที่ผู้ใช้ร้องขอ
+
+### Task 128.4: Move View Switcher to Content Area
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ย้ายปุ่ม Calendar/Kanban toggle จาก header หลักมาอยู่เหนือ content area
+- **Why:** ให้ผู้ใช้เข้าถึงปุ่มสลับมุมมองได้ง่ายขึ้น
+
+### Task 128.5: Verification
+- **Status:** [x] Done
+- **Action:** `flutter analyze` + ตรวจ SQL syntax + ทดสอบ UI
+
+## Phase 129: Unified Kanban Control Strip & Header Layout Reorganization
+
+### Task 129.1: Header Layout Cleanup & Settings Relocation
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ลบเมนูจัดการเดิมออกจาก `_buildHeader` และย้ายปุ่มรูปเฟืองไปต่อท้ายชื่อบอร์ด
+- **Why:** เพื่อจัดระเบียบให้พื้นที่ด้านบนสะอาดตาและวางเฟืองให้สังเกตง่าย
+
+### Task 129.2: Create Compact Member Avatar Stack Widget
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** สร้าง `_buildAvatarStack` สำหรับการจัดเรียงรูปสมาชิกในแนวนอนที่ความสูง 32-36px
+- **Why:** เพื่อแสดงรายการสมาชิกในบอร์ดในแนวตั้งแถบเดียวกับโหมดสลับและฟิลเตอร์
+
+### Task 129.3: Redesign View Switcher Strip Layout
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ปรับ `_buildViewSwitcherStrip` โดยใส่ Switcher, Filter, และ Avatar Stack ในแถบซ้าย ( scrollable ) และยึดปุ่มจัดการเดิมในแถบขวา
+- **Why:** รวมศูนย์ฟังก์ชันการทำงาน และรองรับ Responsive ป้องกัน Pixel Overflow
+
+### Task 129.4: Standardize Buttons & Icons Size to Switcher Height
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ปรับขนาดและ Padding ของ `_buildGhostButton` และ `_buildActionIcon` ให้เหมาะสมที่ความสูง 32-36px
+- **Why:** สร้างเอกภาพและรักษา Premium Aesthetics ในหน้าจอ
+
+### Task 129.5: E2E Verification & Analysis
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` เพื่อตรวจสอบความเรียบร้อยของโค้ดและการคอมไพล์ทั้งหมด
+- **Why:** เพื่อรับประกันความเสถียร 100% ปราศจากบั๊กและสไตล์มีเดียที่ถูกต้อง

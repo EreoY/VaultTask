@@ -673,7 +673,9 @@ class StateTasks extends ChangeNotifier {
     int idx = tasks.indexWhere((t) => t.id == updatedTask.id);
     if (idx != -1) {
       final existing = tasks[idx];
-      bool structuralChange = existing.status != updatedTask.status || existing.orderIndex != updatedTask.orderIndex;
+      bool structuralChange = existing.status != updatedTask.status || 
+                             existing.orderIndex != updatedTask.orderIndex ||
+                             existing.dueDate.millisecondsSinceEpoch != updatedTask.dueDate.millisecondsSinceEpoch;
       if (existing.updatedAt < updatedTask.updatedAt || structuralChange) {
         tasks[idx] = updatedTask;
         _tasksByBoard[boardId] = List.from(tasks);
@@ -693,7 +695,11 @@ class StateTasks extends ChangeNotifier {
     for (var nt in newTasks) {
       final n = _taskNotifiers[nt.id]; if (n != null) n.value = nt; else _taskNotifiers[nt.id] = ValueNotifier(nt);
       final existing = taskMap[nt.id];
-      if (existing == null || existing.updatedAt != nt.updatedAt || existing.status != nt.status || existing.orderIndex != nt.orderIndex) {
+      if (existing == null || 
+          existing.updatedAt != nt.updatedAt || 
+          existing.status != nt.status || 
+          existing.orderIndex != nt.orderIndex ||
+          existing.dueDate.millisecondsSinceEpoch != nt.dueDate.millisecondsSinceEpoch) {
         taskMap[nt.id] = nt;
         changed = true;
       }
@@ -704,6 +710,7 @@ class StateTasks extends ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   final Map<String, int> _reconnectAttempts = {};
   void _scheduleReconnect(BoardModel board) {

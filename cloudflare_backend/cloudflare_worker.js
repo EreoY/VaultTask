@@ -39,6 +39,7 @@ async function ensureSchema(db) {
         tool_calls TEXT DEFAULT '[]',
         attachments TEXT DEFAULT '[]',
         timestamp TEXT NOT NULL
+      )
     `).run();
 
     await db.prepare(`
