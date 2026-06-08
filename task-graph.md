@@ -2655,3 +2655,14 @@
 - **Status:** [x] Done
 - **Action:** ปรับปรุงเอกสารโครงการและบันทึกสถานะการทำภารกิจ
 - **Why:** รักษาระบบฐานข้อมูลความรู้ให้สอดคล้องกันตาม Sovereign Protocol
+
+### Task 125.4: Use web-server Device in run_local.sh
+- **Status:** [x] Done
+- **Target File:** `run_local.sh`
+- **Action:** เปลี่ยนจาก `-d chrome` เป็น `-d web-server`
+- **Why:** เพื่อไม่ให้เซสชันของ Flutter ดับลงเมื่อผู้ใช้ปิดหรือเปิดเบราเซอร์ ช่วยให้เซิร์ฟเวอร์รันอยู่ตลอดกาลอย่างมั่นคง
+
+### Task 125.5: Verify stability of web-server
+- **Status:** [x] Done
+- **Action:** ตรวจสอบความเสถียรของการรันด้วยอุปกรณ์ `web-server`
+- **Why:** เพื่อให้มั่นใจได้ว่าเซิร์ฟเวอร์รันตลอดชีพและ Chrome ปกติสามารถโหลดภาพและใช้งานได้โดยไม่สะดุด
