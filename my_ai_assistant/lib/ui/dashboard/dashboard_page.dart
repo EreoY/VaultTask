@@ -31,11 +31,10 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<StateBoards>().fetchAllBoards();
-      if (mounted) {
-        final boards = context.read<StateBoards>().boards;
-        context.read<StateTasks>().fetchAllTasks(boards);
-      }
+      final boardsState = context.read<StateBoards>();
+      await boardsState.fetchAllBoards();
+      if (!mounted) return;
+      await context.read<StateTasks>().fetchAllTasks(boardsState.boards);
     });
   }
 
@@ -67,7 +66,9 @@ class _DashboardPageState extends State<DashboardPage> {
           milestoneItems.add(MilestoneItem(task: task, board: board));
         }
         for (final comment in task.comments) {
-          activityItems.add(ActivityItem(comment: comment, task: task, board: board));
+          activityItems.add(
+            ActivityItem(comment: comment, task: task, board: board),
+          );
         }
       }
     }
@@ -89,38 +90,41 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           _buildHeader(workspaces.length, tasksState.unreadCommentsCount),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
-          
-          isDesktop 
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3, 
-                    child: Column(
-                      children: [
-                        _buildWorkspacesList(workspaces, boards),
-                        const SizedBox(height: 24),
-                        _buildMilestonesCard(milestoneItems),
-                        const SizedBox(height: 24),
-                      ],
+
+          isDesktop
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        children: [
+                          _buildWorkspacesList(workspaces, boards),
+                          const SizedBox(height: 24),
+                          _buildMilestonesCard(milestoneItems),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(width: ExecutiveSpacing.gutter(context)),
-                  Expanded(
-                    flex: 2, 
-                    child: _buildActivityFeedCard(activityItems, unreadCommentIds),
-                  ),
-                ],
-              )
-            : Column(
-                children: [
-                  _buildWorkspacesList(workspaces, boards),
-                  const SizedBox(height: 24),
-                  _buildMilestonesCard(milestoneItems),
-                  const SizedBox(height: 24),
-                  _buildActivityFeedCard(activityItems, unreadCommentIds),
-                ],
-              ),
+                    SizedBox(width: ExecutiveSpacing.gutter(context)),
+                    Expanded(
+                      flex: 2,
+                      child: _buildActivityFeedCard(
+                        activityItems,
+                        unreadCommentIds,
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    _buildWorkspacesList(workspaces, boards),
+                    const SizedBox(height: 24),
+                    _buildMilestonesCard(milestoneItems),
+                    const SizedBox(height: 24),
+                    _buildActivityFeedCard(activityItems, unreadCommentIds),
+                  ],
+                ),
         ],
       ),
     );
@@ -151,7 +155,9 @@ class _DashboardPageState extends State<DashboardPage> {
               decoration: BoxDecoration(
                 color: GlassColors.onSurface.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: GlassColors.onSurface.withOpacity(0.12)),
+                border: Border.all(
+                  color: GlassColors.onSurface.withOpacity(0.12),
+                ),
               ),
               child: Text(
                 '$workspaceCount Workspaces',
@@ -214,9 +220,12 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildWorkspacesList(List<WorkspaceModel> workspaces, List<BoardModel> boards) {
+  Widget _buildWorkspacesList(
+    List<WorkspaceModel> workspaces,
+    List<BoardModel> boards,
+  ) {
     final boardsState = context.read<StateBoards>();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -244,15 +253,28 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             OutlinedButton.icon(
               onPressed: () => _showJoinWorkspaceDialog(context),
-              icon: const Icon(Icons.person_add_rounded, size: 14, color: GlassColors.gold),
+              icon: const Icon(
+                Icons.person_add_rounded,
+                size: 14,
+                color: GlassColors.gold,
+              ),
               label: Text(
                 '+ JOIN WORKSPACE',
-                style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 10, fontWeight: FontWeight.bold),
+                style: GlassText.labelSM().copyWith(
+                  color: GlassColors.gold,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: GlassColors.gold, width: 1),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
             ),
           ],
@@ -263,17 +285,22 @@ class _DashboardPageState extends State<DashboardPage> {
                 padding: const EdgeInsets.all(24.0),
                 child: Text(
                   'No active workspaces found. Join or create one.',
-                  style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                  ),
                 ),
               )
             : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: workspaces.length,
-                separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+                separatorBuilder: (context, index) =>
+                    Divider(height: 1, color: GlassColors.ghostBorder),
                 itemBuilder: (context, index) {
                   final workspace = workspaces[index];
-                  final workspaceBoards = boards.where((b) => b.workspaceId == workspace.id).toList();
+                  final workspaceBoards = boards
+                      .where((b) => b.workspaceId == workspace.id)
+                      .toList();
 
                   return InkWell(
                     onTap: () {
@@ -283,7 +310,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 8,
+                      ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -293,10 +323,14 @@ class _DashboardPageState extends State<DashboardPage> {
                             decoration: BoxDecoration(
                               color: GlassColors.primary.withOpacity(0.06),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: GlassColors.primary.withOpacity(0.12)),
+                              border: Border.all(
+                                color: GlassColors.primary.withOpacity(0.12),
+                              ),
                             ),
                             child: Icon(
-                              workspace.type == 'personal' ? Icons.person_rounded : Icons.group_rounded,
+                              workspace.type == 'personal'
+                                  ? Icons.person_rounded
+                                  : Icons.group_rounded,
                               color: GlassColors.primary,
                               size: 16,
                             ),
@@ -310,20 +344,27 @@ class _DashboardPageState extends State<DashboardPage> {
                                   children: [
                                     Text(
                                       workspace.name,
-                                      style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+                                      style: GlassText.bodyMD().copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: GlassColors.onSurface.withOpacity(0.08),
+                                        color: GlassColors.onSurface
+                                            .withOpacity(0.08),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         workspace.type.toUpperCase(),
                                         style: GlassText.labelSM().copyWith(
                                           fontSize: 8,
-                                          color: GlassColors.onSurfaceVariant.withOpacity(0.8),
+                                          color: GlassColors.onSurfaceVariant
+                                              .withOpacity(0.8),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -334,7 +375,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                 if (workspaceBoards.isEmpty)
                                   Text(
                                     'No projects inside this workspace',
-                                    style: GlassText.secondary().copyWith(fontSize: 11, fontStyle: FontStyle.italic),
+                                    style: GlassText.secondary().copyWith(
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic,
+                                    ),
                                   )
                                 else
                                   Wrap(
@@ -343,17 +387,28 @@ class _DashboardPageState extends State<DashboardPage> {
                                     children: workspaceBoards.map((board) {
                                       return InkWell(
                                         onTap: () {
-                                          boardsState.setSelectedWorkspace(workspace);
+                                          boardsState.setSelectedWorkspace(
+                                            workspace,
+                                          );
                                           boardsState.setSelectedBoard(board);
                                           widget.onNavigate?.call(1);
                                         },
                                         borderRadius: BorderRadius.circular(16),
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: GlassColors.onSurface.withOpacity(0.04),
-                                            borderRadius: BorderRadius.circular(16),
-                                            border: Border.all(color: GlassColors.onSurface.withOpacity(0.08)),
+                                            color: GlassColors.onSurface
+                                                .withOpacity(0.04),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            border: Border.all(
+                                              color: GlassColors.onSurface
+                                                  .withOpacity(0.08),
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -369,11 +424,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                               const SizedBox(width: 8),
                                               Text(
                                                 board.name,
-                                                style: GlassText.bodyMD().copyWith(
-                                                  fontSize: 11,
-                                                  color: GlassColors.onSurface.withOpacity(0.9),
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                                style: GlassText.bodyMD()
+                                                    .copyWith(
+                                                      fontSize: 11,
+                                                      color: GlassColors
+                                                          .onSurface
+                                                          .withOpacity(0.9),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -385,16 +444,34 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.edit_rounded, size: 16, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                            icon: Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: GlassColors.onSurfaceVariant.withOpacity(
+                                0.5,
+                              ),
+                            ),
                             tooltip: 'Rename Workspace',
-                            onPressed: () => _showRenameWorkspaceDialog(context, workspace),
+                            onPressed: () =>
+                                _showRenameWorkspaceDialog(context, workspace),
                           ),
                           IconButton(
-                            icon: Icon(Icons.copy_rounded, size: 16, color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                            icon: Icon(
+                              Icons.copy_rounded,
+                              size: 16,
+                              color: GlassColors.onSurfaceVariant.withOpacity(
+                                0.5,
+                              ),
+                            ),
                             tooltip: 'Copy Workspace ID',
                             onPressed: () {
-                              Clipboard.setData(ClipboardData(text: workspace.id));
-                              GlassNotifications.show(context, 'Workspace ID copied to clipboard');
+                              Clipboard.setData(
+                                ClipboardData(text: workspace.id),
+                              );
+                              GlassNotifications.show(
+                                context,
+                                'Workspace ID copied to clipboard',
+                              );
                             },
                           ),
                         ],
@@ -420,7 +497,9 @@ class _DashboardPageState extends State<DashboardPage> {
               padding: const EdgeInsets.all(24.0),
               child: Text(
                 'No pending milestones.',
-                style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                style: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                ),
               ),
             )
           : Column(
@@ -430,12 +509,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: displayedMilestones.length,
-                  separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: GlassColors.ghostBorder),
                   itemBuilder: (context, index) {
                     final item = displayedMilestones[index];
                     final task = item.task;
                     final board = item.board;
-                    
+
                     final now = DateTime.now();
                     final diff = task.dueDate.difference(now);
                     final isOverdue = diff.isNegative;
@@ -464,7 +544,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           Expanded(
                             child: Text(
                               task.title,
-                              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+                              style: GlassText.bodyMD().copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -472,21 +554,31 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 8),
                           Text(
                             dueText.toUpperCase(),
-                            style: GlassText.labelSM().copyWith(fontSize: 8, color: dueColor, fontWeight: FontWeight.bold),
+                            style: GlassText.labelSM().copyWith(
+                              fontSize: 8,
+                              color: dueColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
                       subtitle: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Color(board.color).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               board.name.toUpperCase(),
-                              style: GlassText.labelSM().copyWith(fontSize: 8, color: Color(board.color)),
+                              style: GlassText.labelSM().copyWith(
+                                fontSize: 8,
+                                color: Color(board.color),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -496,7 +588,10 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      trailing: Icon(Icons.chevron_right_rounded, color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                      ),
                       onTap: () => _openTask(context, board, task),
                     );
                   },
@@ -520,7 +615,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildActivityFeedCard(List<ActivityItem> activityItems, List<String> unreadCommentIds) {
+  Widget _buildActivityFeedCard(
+    List<ActivityItem> activityItems,
+    List<String> unreadCommentIds,
+  ) {
     final displayedActivities = activityItems.take(_activityLimit).toList();
     final hasMore = activityItems.length > _activityLimit;
     final tasksState = context.watch<StateTasks>();
@@ -533,7 +631,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ? _buildGhostButton(
               'MARK ALL READ',
               Icons.done_all_rounded,
-              onTap: () => context.read<StateTasks>().markCommentsAsRead(unreadCommentIds),
+              onTap: () => context.read<StateTasks>().markCommentsAsRead(
+                unreadCommentIds,
+              ),
             )
           : null,
       child: displayedActivities.isEmpty
@@ -541,7 +641,9 @@ class _DashboardPageState extends State<DashboardPage> {
               padding: const EdgeInsets.all(24.0),
               child: Text(
                 'No recent updates or discussion points.',
-                style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5)),
+                style: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                ),
               ),
             )
           : Column(
@@ -551,18 +653,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: displayedActivities.length,
-                  separatorBuilder: (context, index) => Divider(height: 1, color: GlassColors.ghostBorder),
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: GlassColors.ghostBorder),
                   itemBuilder: (context, index) {
                     final item = displayedActivities[index];
                     final comment = item.comment;
                     final task = item.task;
                     final board = item.board;
-                    final isUnread = !tasksState.readCommentIds.contains(comment.id);
-                    final memberColor = GlassColors.getMemberColor(comment.userId);
+                    final isUnread = !tasksState.readCommentIds.contains(
+                      comment.id,
+                    );
+                    final memberColor = GlassColors.getMemberColor(
+                      comment.userId,
+                    );
 
                     return InkWell(
                       onTap: () async {
-                        await context.read<StateTasks>().markCommentAsRead(comment.id);
+                        await context.read<StateTasks>().markCommentAsRead(
+                          comment.id,
+                        );
                         if (mounted) {
                           _openTask(context, board, task);
                         }
@@ -576,8 +685,13 @@ class _DashboardPageState extends State<DashboardPage> {
                               radius: 14,
                               backgroundColor: memberColor.withOpacity(0.1),
                               child: Text(
-                                comment.userName.isNotEmpty ? comment.userName[0].toUpperCase() : '?',
-                                style: GlassText.labelSM().copyWith(color: memberColor, fontSize: 10),
+                                comment.userName.isNotEmpty
+                                    ? comment.userName[0].toUpperCase()
+                                    : '?',
+                                style: GlassText.labelSM().copyWith(
+                                  color: memberColor,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -591,7 +705,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                         child: Text(
                                           comment.userName,
                                           style: GlassText.bodyMD().copyWith(
-                                            fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                                            fontWeight: isUnread
+                                                ? FontWeight.bold
+                                                : FontWeight.w600,
                                             fontSize: 13,
                                           ),
                                           maxLines: 1,
@@ -600,10 +716,13 @@ class _DashboardPageState extends State<DashboardPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        DateFormat('MMM d, HH:mm').format(comment.time),
+                                        DateFormat(
+                                          'MMM d, HH:mm',
+                                        ).format(comment.time),
                                         style: GlassText.secondary().copyWith(
                                           fontSize: 10,
-                                          color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                                          color: GlassColors.onSurfaceVariant
+                                              .withOpacity(0.4),
                                         ),
                                       ),
                                     ],
@@ -621,7 +740,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                     comment.text,
                                     style: GlassText.bodyMD().copyWith(
                                       fontSize: 12,
-                                      color: isUnread ? GlassColors.onSurface : GlassColors.onSurfaceVariant,
+                                      color: isUnread
+                                          ? GlassColors.onSurface
+                                          : GlassColors.onSurfaceVariant,
                                       height: 1.4,
                                     ),
                                     maxLines: 2,
@@ -681,7 +802,14 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Icon(icon, size: 14, color: GlassColors.gold),
             const SizedBox(width: 8),
-            Text(label, style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 9, letterSpacing: 1.0)),
+            Text(
+              label,
+              style: GlassText.labelSM().copyWith(
+                color: GlassColors.gold,
+                fontSize: 9,
+                letterSpacing: 1.0,
+              ),
+            ),
           ],
         ),
       ),
@@ -704,9 +832,20 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('JOIN TEAM WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                Text(
+                  'JOIN TEAM WORKSPACE',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
-                Text('Enter the Workspace ID shared by your colleague.', style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant)),
+                Text(
+                  'Enter the Workspace ID shared by your colleague.',
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 ImeSafeTextField(
                   controller: controller,
@@ -714,15 +853,20 @@ class _DashboardPageState extends State<DashboardPage> {
                   style: GlassText.bodyLG(),
                   decoration: InputDecoration(
                     hintText: 'e.g., default_team_xxxx',
-                    hintStyle: GlassText.bodyLG().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                    hintStyle: GlassText.bodyLG().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                    ),
                     filled: true,
                     fillColor: GlassColors.primary.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
                 const SizedBox(height: 32),
-                 Row(
+                Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
@@ -730,9 +874,18 @@ class _DashboardPageState extends State<DashboardPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -746,19 +899,37 @@ class _DashboardPageState extends State<DashboardPage> {
                           try {
                             await boardsState.joinWorkspaceById(id);
                             navigator.pop();
-                            GlassNotifications.show(context, 'Joined workspace successfully!');
+                            GlassNotifications.show(
+                              context,
+                              'Joined workspace successfully!',
+                            );
                           } catch (e) {
                             navigator.pop();
-                            GlassNotifications.show(context, 'Failed to join workspace: $e', isError: true);
+                            GlassNotifications.show(
+                              context,
+                              'Failed to join workspace: $e',
+                              isError: true,
+                            );
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.gold,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.gold.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'JOIN WORKSPACE',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -771,8 +942,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-
-  void _showRenameWorkspaceDialog(BuildContext context, WorkspaceModel workspace) {
+  void _showRenameWorkspaceDialog(
+    BuildContext context,
+    WorkspaceModel workspace,
+  ) {
     final controller = TextEditingController(text: workspace.name);
     showDialog(
       context: context,
@@ -788,7 +961,13 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RENAME WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                Text(
+                  'RENAME WORKSPACE',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 ImeSafeTextField(
                   controller: controller,
@@ -797,7 +976,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: GlassColors.primary.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
@@ -810,9 +992,18 @@ class _DashboardPageState extends State<DashboardPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -820,24 +1011,47 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: OutlinedButton(
                         onPressed: () async {
                           final newName = controller.text.trim();
-                          if (newName.isEmpty || newName == workspace.name) return;
+                          if (newName.isEmpty || newName == workspace.name) {
+                            return;
+                          }
                           final boardsState = context.read<StateBoards>();
                           final navigator = Navigator.of(dialogContext);
                           try {
-                            await boardsState.updateWorkspaceName(workspace, newName);
+                            await boardsState.updateWorkspaceName(
+                              workspace,
+                              newName,
+                            );
                             navigator.pop();
-                            GlassNotifications.show(context, 'Workspace renamed successfully!');
+                            GlassNotifications.show(
+                              context,
+                              'Workspace renamed successfully!',
+                            );
                           } catch (e) {
-                            GlassNotifications.show(context, 'Failed to rename workspace: $e', isError: true);
+                            GlassNotifications.show(
+                              context,
+                              'Failed to rename workspace: $e',
+                              isError: true,
+                            );
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.gold,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.gold.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'RENAME',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -861,5 +1075,9 @@ class ActivityItem {
   final TaskComment comment;
   final TaskModel task;
   final BoardModel board;
-  ActivityItem({required this.comment, required this.task, required this.board});
+  ActivityItem({
+    required this.comment,
+    required this.task,
+    required this.board,
+  });
 }

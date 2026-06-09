@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show ChangeNotifier, kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart'
+    show ChangeNotifier, kIsWeb, debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/board_model.dart';
 import '../models/workspace_model.dart';
@@ -10,7 +11,8 @@ class StateBoards extends ChangeNotifier {
   // 🔄 Broadcast stream for board structure changes (columns, labels, etc.)
   static final _boardChangeController = StreamController<String>.broadcast();
   static Stream<String> get onBoardChange => _boardChangeController.stream;
-  static void _notifyBoardChange(String boardId) => _boardChangeController.add(boardId);
+  static void _notifyBoardChange(String boardId) =>
+      _boardChangeController.add(boardId);
 
   List<WorkspaceModel> _workspaces = [];
   WorkspaceModel? _selectedWorkspace;
@@ -34,7 +36,8 @@ class StateBoards extends ChangeNotifier {
     notifyListeners();
   }
 
-  final Map<String, Map<String, String>> _userProfiles = {}; // UID -> {name, photo}
+  final Map<String, Map<String, String>> _userProfiles =
+      {}; // UID -> {name, photo}
 
   Map<String, String>? getMemberProfile(String uid) => _userProfiles[uid];
 
@@ -48,6 +51,7 @@ class StateBoards extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    bool preserveMissingSelectedBoard = false;
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       final uid = currentUser?.uid;
@@ -62,7 +66,9 @@ class StateBoards extends ChangeNotifier {
       }
 
       // 1. Fetch workspaces
-      final localWorkspaces = kIsWeb ? <WorkspaceModel>[] : await DbPersonalSqlite.instance.getAllWorkspaces();
+      final localWorkspaces = kIsWeb
+          ? <WorkspaceModel>[]
+          : await DbPersonalSqlite.instance.getAllWorkspaces();
       List<WorkspaceModel> remoteWorkspaces = [];
       if (uid != null) {
         try {
@@ -71,11 +77,13 @@ class StateBoards extends ChangeNotifier {
           debugPrint('Error fetching remote workspaces: $e');
         }
       }
-      
+
       _workspaces = [...localWorkspaces, ...remoteWorkspaces];
 
       // 2. Auto-provision default workspaces if empty
-      bool hasPersonalDefault = _workspaces.any((w) => w.type == 'personal' && w.id == 'default_personal');
+      bool hasPersonalDefault = _workspaces.any(
+        (w) => w.type == 'personal' && w.id == 'default_personal',
+      );
       if (!hasPersonalDefault && !kIsWeb) {
         final personalDefault = WorkspaceModel(
           id: 'default_personal',
@@ -89,7 +97,9 @@ class StateBoards extends ChangeNotifier {
         _workspaces.add(personalDefault);
       }
 
-      bool hasTeamDefault = _workspaces.any((w) => w.type == 'team' && w.id == 'default_team_${uid}');
+      bool hasTeamDefault = _workspaces.any(
+        (w) => w.type == 'team' && w.id == 'default_team_$uid',
+      );
       if (!hasTeamDefault && uid != null) {
         final teamDefault = WorkspaceModel(
           id: 'default_team_$uid',
@@ -121,19 +131,26 @@ class StateBoards extends ChangeNotifier {
         _selectedWorkspace = _workspaces.first;
       } else if (_selectedWorkspace != null) {
         try {
-          _selectedWorkspace = _workspaces.firstWhere((w) => w.id == _selectedWorkspace!.id);
+          _selectedWorkspace = _workspaces.firstWhere(
+            (w) => w.id == _selectedWorkspace!.id,
+          );
         } catch (_) {
-          _selectedWorkspace = _workspaces.isNotEmpty ? _workspaces.first : null;
+          _selectedWorkspace = _workspaces.isNotEmpty
+              ? _workspaces.first
+              : null;
         }
       }
 
       // 3. Fetch boards
-      final personalBoards = kIsWeb ? <BoardModel>[] : await DbPersonalSqlite.instance.getAllBoards();
+      final personalBoards = kIsWeb
+          ? <BoardModel>[]
+          : await DbPersonalSqlite.instance.getAllBoards();
       List<BoardModel> teamBoards = [];
       if (uid != null) {
         try {
           teamBoards = await ApiCloudflare.getBoards(uid);
         } catch (e) {
+          preserveMissingSelectedBoard = true;
           debugPrint('Error fetching team boards: $e');
         }
       }
@@ -146,7 +163,9 @@ class StateBoards extends ChangeNotifier {
           await DbPersonalSqlite.instance.updateBoard(updated);
         }
       }
-      final finalPersonalBoards = kIsWeb ? <BoardModel>[] : await DbPersonalSqlite.instance.getAllBoards();
+      final finalPersonalBoards = kIsWeb
+          ? <BoardModel>[]
+          : await DbPersonalSqlite.instance.getAllBoards();
 
       // For team boards
       for (final tb in teamBoards) {
@@ -165,6 +184,7 @@ class StateBoards extends ChangeNotifier {
         try {
           finalTeamBoards = await ApiCloudflare.getBoards(uid);
         } catch (_) {
+          preserveMissingSelectedBoard = true;
           finalTeamBoards = teamBoards;
         }
       } else {
@@ -189,18 +209,21 @@ class StateBoards extends ChangeNotifier {
       debugPrint('Error fetching boards: $e');
     } finally {
       _isLoading = false;
-      _refreshSelectedBoard(); // Task 34.1: Remap instance
+      _refreshSelectedBoard(
+        preserveMissingSelectedBoard: preserveMissingSelectedBoard,
+      ); // Task 34.1: Remap instance
       notifyListeners();
       _fetchCompleter?.complete();
       _fetchCompleter = null;
     }
   }
 
-  void _refreshSelectedBoard() {
+  void _refreshSelectedBoard({bool preserveMissingSelectedBoard = false}) {
     if (_selectedBoard == null) return;
     try {
       _selectedBoard = _boards.firstWhere((b) => b.id == _selectedBoard!.id);
     } catch (_) {
+      if (preserveMissingSelectedBoard) return;
       _selectedBoard = null;
     }
   }
@@ -259,7 +282,10 @@ class StateBoards extends ChangeNotifier {
     }
   }
 
-  Future<void> updateWorkspaceName(WorkspaceModel workspace, String newName) async {
+  Future<void> updateWorkspaceName(
+    WorkspaceModel workspace,
+    String newName,
+  ) async {
     try {
       final updated = workspace.copyWith(name: newName);
       if (workspace.type == 'personal') {
@@ -334,7 +360,7 @@ class StateBoards extends ChangeNotifier {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
       final ws = await ApiCloudflare.joinWorkspace(uid, workspaceId);
-      
+
       final exists = _workspaces.any((w) => w.id == ws.id);
       if (!exists) {
         _workspaces.add(ws);
@@ -344,11 +370,11 @@ class StateBoards extends ChangeNotifier {
           _workspaces[idx] = ws;
         }
       }
-      
+
       _selectedWorkspace = ws;
-      
+
       await fetchAllBoards();
-      
+
       notifyListeners();
       return ws;
     } catch (e) {
@@ -361,9 +387,10 @@ class StateBoards extends ChangeNotifier {
     try {
       await ApiCloudflare.removeMember(board.id, targetUid);
       // Update local state
-      final updatedMembers = List<String>.from(board.members)..remove(targetUid);
+      final updatedMembers = List<String>.from(board.members)
+        ..remove(targetUid);
       final updatedBoard = board.copyWith(members: updatedMembers);
-      
+
       final idx = _boards.indexWhere((b) => b.id == board.id);
       if (idx != -1) {
         _boards[idx] = updatedBoard;

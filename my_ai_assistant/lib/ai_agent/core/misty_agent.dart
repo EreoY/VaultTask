@@ -81,8 +81,8 @@ class MistyAgent {
       'tools': allAiTools.map((fd) => _convertTool(fd)).toList(),
       'max_tokens': 1500,
       'stream': stream,
-      if (sessionId != null) 'session_id': sessionId,
-      if (assistantMessageId != null) 'assistant_message_id': assistantMessageId,
+      'session_id': ?sessionId,
+      'assistant_message_id': ?assistantMessageId,
     };
     final resp = await http.post(Uri.parse('${EnvConfig.backendUrl}/api/ai/chat'), 
         headers: {'Content-Type': 'application/json'}, body: jsonEncode(body));
@@ -188,7 +188,7 @@ class MistyAgent {
       final List<Map<String, dynamic>> turnToolHistory = [];
       final List<Map<String, dynamic>> extraUserMessagesToInject = [];
 
-      for (var toolCall in (rawToolCalls as List)) {
+      for (var toolCall in rawToolCalls) {
         final function = toolCall['function'];
         if (function == null) continue;
         final functionName = function['name'];
@@ -205,8 +205,9 @@ class MistyAgent {
             functionName == 'update_image_description') {
           
           String toolOutput = '';
-          if (functionName == 'list_team_boards') toolOutput = await QueryHandlers.handleListBoards(cleanArgs);
-          else if (functionName == 'query_team_tasks') toolOutput = await QueryHandlers.handleQueryTeamTasks(cleanArgs);
+          if (functionName == 'list_team_boards') {
+            toolOutput = await QueryHandlers.handleListBoards(cleanArgs);
+          } else if (functionName == 'query_team_tasks') toolOutput = await QueryHandlers.handleQueryTeamTasks(cleanArgs);
           else if (functionName == 'query_board_members') toolOutput = await QueryHandlers.handleQueryBoardMembers(cleanArgs);
           else if (functionName == 'check_board_updates') toolOutput = await QueryHandlers.handleCheckUpdates(cleanArgs);
           else if (functionName == 'check_member_roles') toolOutput = await QueryHandlers.handleCheckRoles(cleanArgs);
@@ -256,8 +257,12 @@ class MistyAgent {
         }
       }
 
-      for (final th in turnToolHistory) _history.add(th);
-      for (final msg in extraUserMessagesToInject) _history.add(msg);
+      for (final th in turnToolHistory) {
+        _history.add(th);
+      }
+      for (final msg in extraUserMessagesToInject) {
+        _history.add(msg);
+      }
 
       if (actionCalls.isNotEmpty) {
         final compositeReply = DraftBuilder.tryBuildComposite(actionCalls: actionCalls, responseText: responseText, allToolNames: allToolNames);
@@ -266,7 +271,7 @@ class MistyAgent {
 
       bool canSkipSecondCall = responseText.trim().isNotEmpty;
       if (canSkipSecondCall) {
-        for (var toolCall in (rawToolCalls as List)) {
+        for (var toolCall in rawToolCalls) {
           final function = toolCall['function'];
           if (function == null) continue;
           final name = function['name']?.toString() ?? '';
@@ -296,8 +301,11 @@ class MistyAgent {
         if (secResult?['choices'] != null && (secResult['choices'] as List).isNotEmpty) {
           final secMessageObj = secResult['choices'][0]['message'];
           final secParts = secMessageObj['content'] is List ? secMessageObj['content'] as List : null;
-          if (secParts != null) secText = ResponseParser.extractTextFromParts(secParts);
-          else secText = secMessageObj['content']?.toString() ?? '';
+          if (secParts != null) {
+            secText = ResponseParser.extractTextFromParts(secParts);
+          } else {
+            secText = secMessageObj['content']?.toString() ?? '';
+          }
         } else {
           secText = secResult?['response']?.toString() ?? secResult?['text']?.toString() ?? '';
         }

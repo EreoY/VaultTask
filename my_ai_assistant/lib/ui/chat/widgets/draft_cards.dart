@@ -6,7 +6,6 @@ import '../../../models/chat_model.dart';
 import '../../../state_managers/state_chat.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../theme/glass_theme.dart';
-import '../../common/glass_widgets.dart';
 
 class ProposalDraftCard extends StatelessWidget {
   final bool isDark;
@@ -342,7 +341,7 @@ class ProposalDraftCard extends StatelessWidget {
                        Navigator.pop(context);
                      },
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 24),
                 Center(child: DraftActionButton(label: 'DONE', onTap: () => Navigator.pop(context), isPrimary: true)),
               ],
@@ -409,7 +408,7 @@ class ProposalDraftCard extends StatelessWidget {
                        });
                     },
                   );
-                }).toList(),
+                }),
                 if (board.members.isEmpty)
                   Text('No members in this board.', style: GlassText.secondary()),
                 const SizedBox(height: 24),
@@ -460,7 +459,7 @@ class ProposalDraftCard extends StatelessWidget {
                        });
                     },
                   );
-                }).toList(),
+                }),
                 if (board.labels.isEmpty)
                   Text('No labels configured for this board.', style: GlassText.secondary()),
                 const SizedBox(height: 24),
@@ -567,7 +566,7 @@ class ConfirmedActionCard extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

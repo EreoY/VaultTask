@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import '../../../services/auth_service.dart';
 import '../../../databases/db_personal_sqlite.dart';
 import '../../../models/board_model.dart';
 import '../../../models/task_model.dart';

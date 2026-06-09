@@ -231,8 +231,9 @@ class StateChat extends ChangeNotifier {
           final b64 = base64Encode(resp.bodyBytes);
           final ext = targetUrl.split('.').last.split('?').first.toLowerCase();
           String mime = 'image/jpeg';
-          if (ext == 'png') mime = 'image/png';
-          else if (ext == 'gif') mime = 'image/gif';
+          if (ext == 'png') {
+            mime = 'image/png';
+          } else if (ext == 'gif') mime = 'image/gif';
           else if (ext == 'webp') mime = 'image/webp';
           return {'b64': b64, 'mime': mime};
         }
@@ -912,7 +913,9 @@ class StateChat extends ChangeNotifier {
       try {
         if (args['id'] != null) idsToFetch.add(args['id'].toString());
         if (args['ids'] is List) {
-          for (final id in (args['ids'] as List)) idsToFetch.add(id.toString());
+          for (final id in (args['ids'] as List)) {
+            idsToFetch.add(id.toString());
+          }
         }
         final multi = args['_multi_payloads'] as List?;
         if (fc.name == 'synthetic_batch' && args['tasks'] is List) {
@@ -926,7 +929,9 @@ class StateChat extends ChangeNotifier {
             final pid = (p as Map)['id'] ?? p['ids'];
             if (pid != null) {
               if (pid is List) {
-                for (final id in pid) idsToFetch.add(id.toString());
+                for (final id in pid) {
+                  idsToFetch.add(id.toString());
+                }
               } else {
                 idsToFetch.add(pid.toString());
               }
@@ -1043,7 +1048,9 @@ class StateChat extends ChangeNotifier {
 
     final allMemberUids = <String>{};
     if (selectedBoard != null) allMemberUids.addAll(selectedBoard.members);
-    for (final t in existingTasks) allMemberUids.addAll(t.members);
+    for (final t in existingTasks) {
+      allMemberUids.addAll(t.members);
+    }
     
     Map<String, Map<String, String>> userProfiles = {};
     if (allMemberUids.isNotEmpty) {
@@ -1277,13 +1284,17 @@ class StateChat extends ChangeNotifier {
           
           bool membersChanged = t.members.length != (t.originalMembers?.length ?? 0);
           if (!membersChanged && t.originalMembers != null) {
-             for (var m in t.members) if (!t.originalMembers!.contains(m)) { membersChanged = true; break; }
+             for (var m in t.members) {
+               if (!t.originalMembers!.contains(m)) { membersChanged = true; break; }
+             }
           }
           if (membersChanged) args['members'] = t.members;
 
           bool labelsChanged = t.labelIds.length != (t.originalLabelIds?.length ?? 0);
           if (!labelsChanged && t.originalLabelIds != null) {
-             for (var l in t.labelIds) if (!t.originalLabelIds!.contains(l)) { labelsChanged = true; break; }
+             for (var l in t.labelIds) {
+               if (!t.originalLabelIds!.contains(l)) { labelsChanged = true; break; }
+             }
           }
           if (labelsChanged) args['label_ids'] = t.labelIds;
           

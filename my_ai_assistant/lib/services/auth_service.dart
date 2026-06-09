@@ -3,7 +3,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/env_config.dart';
 
@@ -52,7 +51,7 @@ class AuthService {
 
   Future<void> signOut() async {
     if (!kIsWeb && _googleSignIn != null) {
-      await _googleSignIn!.signOut();
+      await _googleSignIn.signOut();
     }
     await _auth.signOut();
   }

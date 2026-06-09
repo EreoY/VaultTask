@@ -21,6 +21,7 @@ class StateTasks extends ChangeNotifier {
   StreamSubscription<Map<String, dynamic>>? _descriptionRegenSub;
 
   Set<String> _readCommentIds = {};
+  bool _readCommentsLoaded = false;
   Set<String> get readCommentIds => _readCommentIds;
 
   int get unreadCommentsCount {
@@ -42,109 +43,133 @@ class StateTasks extends ChangeNotifier {
       debugPrint('🤖 AI triggered board change: $boardId');
       // 🛡️ Don't rely on _stateBoards being initialized yet
       final board = BoardModel(
-        id: boardId, name: '', type: 'team', ownerUid: '', columns: [],
+        id: boardId,
+        name: '',
+        type: 'team',
+        ownerUid: '',
+        columns: [],
         members: const [],
       );
-      fetchTasksForBoard(board, silent: true).then((_) {
-        debugPrint('🤖 AI fetch completed for board: $boardId');
-        // Notify other clients via Supabase Broadcast
-        _broadcastUpdate(boardId);
-      }).catchError((e) {
-        debugPrint('🤖 AI fetch error for board $boardId: $e');
-      });
+      fetchTasksForBoard(board, silent: true)
+          .then((_) {
+            debugPrint('🤖 AI fetch completed for board: $boardId');
+            // Notify other clients via Supabase Broadcast
+            _broadcastUpdate(boardId);
+          })
+          .catchError((e) {
+            debugPrint('🤖 AI fetch error for board $boardId: $e');
+          });
     });
     // 🔄 Listen to board structure changes (columns, labels, etc.)
     _boardChangeSub = StateBoards.onBoardChange.listen((boardId) {
       debugPrint('📋 Board structure change: $boardId');
       final board = BoardModel(
-        id: boardId, name: '', type: 'team', ownerUid: '', columns: [],
+        id: boardId,
+        name: '',
+        type: 'team',
+        ownerUid: '',
+        columns: [],
         members: const [],
       );
-      fetchTasksForBoard(board, silent: true).then((_) {
-        debugPrint('📋 Board fetch completed for board: $boardId');
-        _broadcastUpdate(boardId);
-      }).catchError((e) {
-        debugPrint('📋 Board fetch error for board $boardId: $e');
-      });
+      fetchTasksForBoard(board, silent: true)
+          .then((_) {
+            debugPrint('📋 Board fetch completed for board: $boardId');
+            _broadcastUpdate(boardId);
+          })
+          .catchError((e) {
+            debugPrint('📋 Board fetch error for board $boardId: $e');
+          });
     });
 
     // 🖼️ Listen to AI image description regeneration events
-    _descriptionRegenSub = StateChat.onImageDescriptionRegenerated.stream.listen((event) async {
-      final name = event['name'] as String?;
-      final url = event['url'] as String?;
-      final description = event['aiDescription'] as String?;
-      if (description == null) return;
+    _descriptionRegenSub = StateChat.onImageDescriptionRegenerated.stream
+        .listen((event) async {
+          final name = event['name'] as String?;
+          final url = event['url'] as String?;
+          final description = event['aiDescription'] as String?;
+          if (description == null) return;
 
-      bool changed = false;
+          bool changed = false;
 
-      // Scan all tasks in _tasksByBoard
-      for (final entry in _tasksByBoard.entries) {
-        final boardId = entry.key;
-        final tasks = entry.value;
+          // Scan all tasks in _tasksByBoard
+          for (final entry in _tasksByBoard.entries) {
+            final boardId = entry.key;
+            final tasks = entry.value;
 
-        // Try to find if the board is personal or team
-        final board = _stateBoards?.boards.firstWhere(
-          (b) => b.id == boardId,
-          orElse: () => BoardModel(
-            id: boardId,
-            name: '',
-            type: boardId.contains('_') ? 'team' : 'personal',
-            ownerUid: '',
-            columns: [],
-            members: [],
-          ),
-        );
-        final boardType = board?.type ?? 'personal';
-
-        for (int i = 0; i < tasks.length; i++) {
-          final task = tasks[i];
-          final hasMatch = task.images.any((img) => img.url == url || (url == null && img.r2Key == name));
-          if (hasMatch) {
-            final updatedImages = task.images.map((img) {
-              if (img.url == url || (url == null && img.r2Key == name)) {
-                return img.copyWith(aiDescription: description);
-              }
-              return img;
-            }).toList();
-
-            final updatedTask = task.copyWith(
-              images: updatedImages,
-              updatedAt: DateTime.now().millisecondsSinceEpoch,
+            // Try to find if the board is personal or team
+            final board = _stateBoards?.boards.firstWhere(
+              (b) => b.id == boardId,
+              orElse: () => BoardModel(
+                id: boardId,
+                name: '',
+                type: boardId.contains('_') ? 'team' : 'personal',
+                ownerUid: '',
+                columns: [],
+                members: [],
+              ),
             );
+            final boardType = board?.type ?? 'personal';
 
-            // Persist
-            try {
-              if (boardType == 'personal') {
-                if (!kIsWeb) {
-                  await DbPersonalSqlite.instance.updateTask(updatedTask);
+            for (int i = 0; i < tasks.length; i++) {
+              final task = tasks[i];
+              final hasMatch = task.images.any(
+                (img) => img.url == url || (url == null && img.r2Key == name),
+              );
+              if (hasMatch) {
+                final updatedImages = task.images.map((img) {
+                  if (img.url == url || (url == null && img.r2Key == name)) {
+                    return img.copyWith(aiDescription: description);
+                  }
+                  return img;
+                }).toList();
+
+                final updatedTask = task.copyWith(
+                  images: updatedImages,
+                  updatedAt: DateTime.now().millisecondsSinceEpoch,
+                );
+
+                // Persist
+                try {
+                  if (boardType == 'personal') {
+                    if (!kIsWeb) {
+                      await DbPersonalSqlite.instance.updateTask(updatedTask);
+                    }
+                  } else {
+                    await ApiCloudflare.updateTask(updatedTask);
+                  }
+                } catch (e) {
+                  debugPrint(
+                    'Error persisting regenerated image description: $e',
+                  );
                 }
-              } else {
-                await ApiCloudflare.updateTask(updatedTask);
+
+                // Update in-memory
+                tasks[i] = updatedTask;
+                final notifier = _taskNotifiers[task.id];
+                if (notifier != null) {
+                  notifier.value = updatedTask;
+                }
+                changed = true;
+
+                // Broadcast
+                _broadcastUpdate(boardId);
               }
-            } catch (e) {
-              debugPrint('Error persisting regenerated image description: $e');
             }
-
-            // Update in-memory
-            tasks[i] = updatedTask;
-            final notifier = _taskNotifiers[task.id];
-            if (notifier != null) {
-              notifier.value = updatedTask;
-            }
-            changed = true;
-
-            // Broadcast
-            _broadcastUpdate(boardId);
           }
-        }
-      }
 
-      if (changed) notifyListeners();
-    });
+          if (changed) notifyListeners();
+        });
   }
 
-  Future<void> _loadReadComments() async {
+  bool _sameStringSet(Set<String> a, Set<String> b) {
+    if (a.length != b.length) return false;
+    return a.containsAll(b);
+  }
+
+  Future<void> _loadReadComments({bool force = false}) async {
+    if (_readCommentsLoaded && !force) return;
     try {
+      final previous = Set<String>.from(_readCommentIds);
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         final d1Reads = await ApiCloudflare.getReadCommentIds(uid);
@@ -154,11 +179,20 @@ class StateTasks extends ChangeNotifier {
         final list = prefs.getStringList('read_comment_ids') ?? [];
         _readCommentIds = list.toSet();
       }
-      notifyListeners();
+      _readCommentsLoaded = true;
+      if (force) {
+        if (!_sameStringSet(previous, _readCommentIds)) {
+          notifyListeners();
+        }
+      } else {
+        notifyListeners();
+      }
     } catch (e) {
       debugPrint('Error loading read comments: $e');
     }
   }
+
+  Future<void> refreshReadComments() => _loadReadComments(force: true);
 
   Future<void> markCommentAsRead(String id) async {
     if (_readCommentIds.contains(id)) return;
@@ -167,7 +201,7 @@ class StateTasks extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
-      
+
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         await ApiCloudflare.markCommentsAsRead(uid, [id]);
@@ -192,7 +226,7 @@ class StateTasks extends ChangeNotifier {
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setStringList('read_comment_ids', _readCommentIds.toList());
-        
+
         final uid = FirebaseAuth.instance.currentUser?.uid;
         if (uid != null && newIds.isNotEmpty) {
           await ApiCloudflare.markCommentsAsRead(uid, newIds);
@@ -216,10 +250,14 @@ class StateTasks extends ChangeNotifier {
   final Map<String, List<TaskModel>> _tasksByBoard = {};
   final Map<String, ValueNotifier<TaskModel>> _taskNotifiers = {};
   bool _isLoading = false;
+  bool _allTasksLoaded = false;
+  Future<void>? _fetchAllTasksFuture;
 
   bool get isLoading => _isLoading;
-  
-  ValueNotifier<TaskModel>? getTaskNotifier(String taskId) => _taskNotifiers[taskId];
+  bool get allTasksLoaded => _allTasksLoaded;
+
+  ValueNotifier<TaskModel>? getTaskNotifier(String taskId) =>
+      _taskNotifiers[taskId];
 
   // 🚀 Restore for dashboard and calendar
   List<TaskModel> get allTasks {
@@ -232,7 +270,9 @@ class StateTasks extends ChangeNotifier {
 
   int get totalCompletedCount => allTasks.where((t) => t.isCompleted).length;
   int get totalInProgressCount => allTasks.where((t) => !t.isCompleted).length;
-  int get totalUpcomingCount => allTasksWithDueDate.where((t) => !t.isCompleted && t.dueDate.isAfter(DateTime.now())).length;
+  int get totalUpcomingCount => allTasksWithDueDate
+      .where((t) => !t.isCompleted && t.dueDate.isAfter(DateTime.now()))
+      .length;
 
   List<TaskModel> tasksForBoard(String boardId) {
     final list = _tasksByBoard[boardId] ?? [];
@@ -257,14 +297,20 @@ class StateTasks extends ChangeNotifier {
     _connecting[board.id] = true;
     try {
       final channel = Supabase.instance.client.channel('board_${board.id}');
-      channel.onBroadcast(
-        event: 'update',
-        callback: (payload) async {
-          debugPrint('📨 Supabase Broadcast received for board ${board.id}: $payload');
-          await fetchTasksForBoard(board, silent: true);
-          if (_stateBoards != null) { await _stateBoards!.fetchSingleBoard(board.id); } 
-        },
-      ).subscribe();
+      channel
+          .onBroadcast(
+            event: 'update',
+            callback: (payload) async {
+              debugPrint(
+                '📨 Supabase Broadcast received for board ${board.id}: $payload',
+              );
+              await fetchTasksForBoard(board, silent: true);
+              if (_stateBoards != null) {
+                await _stateBoards!.fetchSingleBoard(board.id);
+              }
+            },
+          )
+          .subscribe();
 
       _channels[board.id] = channel;
       debugPrint('✅ Subscribed to Supabase Broadcast for board: ${board.id}');
@@ -290,7 +336,10 @@ class StateTasks extends ChangeNotifier {
       try {
         ch.sendBroadcastMessage(
           event: 'update',
-          payload: {'action': 'refresh', 'timestamp': DateTime.now().toIso8601String()},
+          payload: {
+            'action': 'refresh',
+            'timestamp': DateTime.now().toIso8601String(),
+          },
         );
         debugPrint('📢 Broadcast sent for board: $boardId');
       } catch (e) {
@@ -301,12 +350,24 @@ class StateTasks extends ChangeNotifier {
 
   // 🚀 For dashboard initialization
   Future<void> fetchAllTasks(List<BoardModel> boards) async {
+    final hasLoadedEveryBoard = boards.every(
+      (b) => _tasksByBoard.containsKey(b.id),
+    );
+    if (_allTasksLoaded && hasLoadedEveryBoard) return;
+    if (_fetchAllTasksFuture != null) return _fetchAllTasksFuture;
+    _fetchAllTasksFuture = _fetchAllTasksInternal(boards);
+    await _fetchAllTasksFuture;
+    _fetchAllTasksFuture = null;
+  }
+
+  Future<void> _fetchAllTasksInternal(List<BoardModel> boards) async {
     _isLoading = true;
     notifyListeners();
     await _loadReadComments();
     for (final b in boards) {
-      await fetchTasksForBoard(b, silent: true);
+      await fetchTasksForBoard(b, silent: true, notifyWhenSilent: false);
     }
+    _allTasksLoaded = true;
     _isLoading = false;
     notifyListeners();
   }
@@ -321,30 +382,43 @@ class StateTasks extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTasksForBoard(BoardModel board, {bool silent = false}) async {
+  Future<void> fetchTasksForBoard(
+    BoardModel board, {
+    bool silent = false,
+    bool notifyWhenSilent = true,
+  }) async {
     if (!silent) {
       _isLoading = true;
       notifyListeners();
     }
-    
-    if (_readCommentIds.isEmpty) {
+
+    if (!_readCommentsLoaded) {
       await _loadReadComments();
     }
 
     try {
-      final latestBoard = _stateBoards?.boards.firstWhere((b) => b.id == board.id, orElse: () => board) ?? board;
+      final latestBoard =
+          _stateBoards?.boards.firstWhere(
+            (b) => b.id == board.id,
+            orElse: () => board,
+          ) ??
+          board;
 
       List<TaskModel> tasks;
       if (latestBoard.type == 'personal') {
-        tasks = kIsWeb ? [] : await DbPersonalSqlite.instance.getTasksByBoard(latestBoard.id);
+        tasks = kIsWeb
+            ? []
+            : await DbPersonalSqlite.instance.getTasksByBoard(latestBoard.id);
       } else {
         tasks = await ApiCloudflare.getTasksByBoard(latestBoard.id);
       }
-      
+
       if (latestBoard.columns.isNotEmpty) {
         tasks = tasks.map((t) {
           final trimmedStatus = t.status.trim();
-          final statusMatch = latestBoard.columns.any((col) => col.trim() == trimmedStatus);
+          final statusMatch = latestBoard.columns.any(
+            (col) => col.trim() == trimmedStatus,
+          );
           if (!statusMatch) {
             return t.copyWith(status: latestBoard.columns.first);
           }
@@ -355,14 +429,20 @@ class StateTasks extends ChangeNotifier {
       // 🚀 Sync individual notifiers
       for (var t in tasks) {
         final n = _taskNotifiers[t.id];
-        if (n != null) n.value = t; else _taskNotifiers[t.id] = ValueNotifier(t);
+        if (n != null) {
+          n.value = t;
+        } else {
+          _taskNotifiers[t.id] = ValueNotifier(t);
+        }
       }
       _updateLastVersion(latestBoard.id, tasks);
     } catch (e) {
       debugPrint('Error fetching tasks for board ${board.id}: $e');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (!silent || notifyWhenSilent) {
+        notifyListeners();
+      }
     }
   }
 
@@ -380,20 +460,34 @@ class StateTasks extends ChangeNotifier {
         text: '[ระบบ] สร้างงานใหม่สำเร็จ: "${task.title}"',
         time: now,
       );
-      final updatedComments = List<TaskComment>.from(task.comments)..add(initialComment);
+      final updatedComments = List<TaskComment>.from(task.comments)
+        ..add(initialComment);
       final taskWithComment = task.copyWith(comments: updatedComments);
 
       String id;
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
       if (board.type == 'personal') {
-        id = kIsWeb ? taskWithComment.id : await DbPersonalSqlite.instance.insertTask(taskWithComment.copyWith(boardId: board.id));
+        id = kIsWeb
+            ? taskWithComment.id
+            : await DbPersonalSqlite.instance.insertTask(
+                taskWithComment.copyWith(boardId: board.id),
+              );
       } else {
-        id = await ApiCloudflare.insertTask(uid, taskWithComment.copyWith(boardId: board.id));
+        id = await ApiCloudflare.insertTask(
+          uid,
+          taskWithComment.copyWith(boardId: board.id),
+        );
       }
-      final saved = taskWithComment.copyWith(id: id, boardId: board.id, updatedAt: DateTime.now().millisecondsSinceEpoch);
+      final saved = taskWithComment.copyWith(
+        id: id,
+        boardId: board.id,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
       _injectSingleTask(board.id, saved);
       _broadcastUpdate(board.id);
-    } catch (e) { debugPrint('Error adding task: $e'); }
+    } catch (e) {
+      debugPrint('Error adding task: $e');
+    }
   }
 
   Future<void> updateTask(BoardModel board, TaskModel task) async {
@@ -417,151 +511,210 @@ class StateTasks extends ChangeNotifier {
         String nextCommentId() => '${now.millisecondsSinceEpoch}_sys_${idx++}';
 
         if (oldTask.title != task.title) {
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] เปลี่ยนชื่อเดิมจาก "${oldTask.title}" เป็น "${task.title}"',
-            time: now,
-          ));
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text:
+                  '[ระบบ] เปลี่ยนชื่อเดิมจาก "${oldTask.title}" เป็น "${task.title}"',
+              time: now,
+            ),
+          );
         }
 
         if (oldTask.description != task.description) {
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] อัปเดตรายละเอียดงาน',
-            time: now,
-          ));
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] อัปเดตรายละเอียดงาน',
+              time: now,
+            ),
+          );
         }
 
         if (oldTask.status != task.status) {
           String oldColName = oldTask.status;
           String newColName = task.status;
           if (board.columns.isNotEmpty) {
-            final oldCol = board.columns.firstWhere((c) => c == oldTask!.status, orElse: () => oldTask!.status);
-            final newCol = board.columns.firstWhere((c) => c == task.status, orElse: () => task.status);
+            final oldCol = board.columns.firstWhere(
+              (c) => c == oldTask!.status,
+              orElse: () => oldTask!.status,
+            );
+            final newCol = board.columns.firstWhere(
+              (c) => c == task.status,
+              orElse: () => task.status,
+            );
             oldColName = oldCol;
             newColName = newCol;
           }
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] ย้ายงานจากช่อง "$oldColName" ไปที่ "$newColName"',
-            time: now,
-          ));
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] ย้ายงานจากช่อง "$oldColName" ไปที่ "$newColName"',
+              time: now,
+            ),
+          );
         }
 
         if (oldTask.isCompleted != task.isCompleted) {
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] ทำเครื่องหมายงานเป็น ${task.isCompleted ? "เสร็จสิ้น" : "ยังไม่เสร็จ"}',
-            time: now,
-          ));
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text:
+                  '[ระบบ] ทำเครื่องหมายงานเป็น ${task.isCompleted ? "เสร็จสิ้น" : "ยังไม่เสร็จ"}',
+              time: now,
+            ),
+          );
         }
 
-        if (oldTask.dueDate.millisecondsSinceEpoch != task.dueDate.millisecondsSinceEpoch) {
-          final oldDateStr = DateFormat('dd/MM/yyyy HH:mm').format(oldTask.dueDate);
-          final newDateStr = DateFormat('dd/MM/yyyy HH:mm').format(task.dueDate);
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] เปลี่ยนวันครบกำหนดจาก "$oldDateStr" เป็น "$newDateStr"',
-            time: now,
-          ));
+        if (oldTask.dueDate.millisecondsSinceEpoch !=
+            task.dueDate.millisecondsSinceEpoch) {
+          final oldDateStr = DateFormat(
+            'dd/MM/yyyy HH:mm',
+          ).format(oldTask.dueDate);
+          final newDateStr = DateFormat(
+            'dd/MM/yyyy HH:mm',
+          ).format(task.dueDate);
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text:
+                  '[ระบบ] เปลี่ยนวันครบกำหนดจาก "$oldDateStr" เป็น "$newDateStr"',
+              time: now,
+            ),
+          );
         }
 
         final oldMembers = oldTask.members;
         final newMembers = task.members;
-        final addedMembers = newMembers.where((m) => !oldMembers.contains(m)).toList();
-        final removedMembers = oldMembers.where((m) => !newMembers.contains(m)).toList();
+        final addedMembers = newMembers
+            .where((m) => !oldMembers.contains(m))
+            .toList();
+        final removedMembers = oldMembers
+            .where((m) => !newMembers.contains(m))
+            .toList();
 
         if (addedMembers.isNotEmpty) {
-          final names = addedMembers.map((uid) {
-            final profile = _stateBoards?.getMemberProfile(uid);
-            return profile?['name'] ?? uid;
-          }).join(', ');
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] มอบหมายงานให้: $names',
-            time: now,
-          ));
+          final names = addedMembers
+              .map((uid) {
+                final profile = _stateBoards?.getMemberProfile(uid);
+                return profile?['name'] ?? uid;
+              })
+              .join(', ');
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] มอบหมายงานให้: $names',
+              time: now,
+            ),
+          );
         }
         if (removedMembers.isNotEmpty) {
-          final names = removedMembers.map((uid) {
-            final profile = _stateBoards?.getMemberProfile(uid);
-            return profile?['name'] ?? uid;
-          }).join(', ');
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] ถอนการมอบหมายงานของ: $names',
-            time: now,
-          ));
+          final names = removedMembers
+              .map((uid) {
+                final profile = _stateBoards?.getMemberProfile(uid);
+                return profile?['name'] ?? uid;
+              })
+              .join(', ');
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] ถอนการมอบหมายงานของ: $names',
+              time: now,
+            ),
+          );
         }
 
         final oldLabels = oldTask.labelIds;
         final newLabels = task.labelIds;
-        final addedLabels = newLabels.where((l) => !oldLabels.contains(l)).toList();
-        final removedLabels = oldLabels.where((l) => !newLabels.contains(l)).toList();
+        final addedLabels = newLabels
+            .where((l) => !oldLabels.contains(l))
+            .toList();
+        final removedLabels = oldLabels
+            .where((l) => !newLabels.contains(l))
+            .toList();
 
         if (addedLabels.isNotEmpty) {
-          final names = addedLabels.map((id) {
-            final label = board.labels.firstWhere((lbl) => lbl['id'] == id, orElse: () => {'name': id});
-            return label['name'] ?? id;
-          }).join(', ');
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] เพิ่มป้ายกำกับ: $names',
-            time: now,
-          ));
+          final names = addedLabels
+              .map((id) {
+                final label = board.labels.firstWhere(
+                  (lbl) => lbl['id'] == id,
+                  orElse: () => {'name': id},
+                );
+                return label['name'] ?? id;
+              })
+              .join(', ');
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] เพิ่มป้ายกำกับ: $names',
+              time: now,
+            ),
+          );
         }
         if (removedLabels.isNotEmpty) {
-          final names = removedLabels.map((id) {
-            final label = board.labels.firstWhere((lbl) => lbl['id'] == id, orElse: () => {'name': id});
-            return label['name'] ?? id;
-          }).join(', ');
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] ลบป้ายกำกับ: $names',
-            time: now,
-          ));
+          final names = removedLabels
+              .map((id) {
+                final label = board.labels.firstWhere(
+                  (lbl) => lbl['id'] == id,
+                  orElse: () => {'name': id},
+                );
+                return label['name'] ?? id;
+              })
+              .join(', ');
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] ลบป้ายกำกับ: $names',
+              time: now,
+            ),
+          );
         }
 
         if (task.images.length > oldTask.images.length) {
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] เพิ่มรูปภาพในงาน',
-            time: now,
-          ));
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] เพิ่มรูปภาพในงาน',
+              time: now,
+            ),
+          );
         } else if (task.images.length < oldTask.images.length) {
-          systemComments.add(TaskComment(
-            id: nextCommentId(),
-            userId: currentUid,
-            userName: currentUserName,
-            text: '[ระบบ] ลบรูปภาพออกจากงาน',
-            time: now,
-          ));
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text: '[ระบบ] ลบรูปภาพออกจากงาน',
+              time: now,
+            ),
+          );
         }
       }
 
       var updatedTask = task;
       if (systemComments.isNotEmpty) {
-        final mergedComments = List<TaskComment>.from(task.comments)..addAll(systemComments);
+        final mergedComments = List<TaskComment>.from(task.comments)
+          ..addAll(systemComments);
         updatedTask = task.copyWith(comments: mergedComments);
       }
 
@@ -570,13 +723,21 @@ class StateTasks extends ChangeNotifier {
       } else {
         await ApiCloudflare.updateTask(updatedTask);
       }
-      final withTs = updatedTask.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
+      final withTs = updatedTask.copyWith(
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
       _injectSingleTask(board.id, withTs);
       _broadcastUpdate(board.id);
-    } catch (e) { debugPrint('Error updating task: $e'); }
+    } catch (e) {
+      debugPrint('Error updating task: $e');
+    }
   }
 
-  Future<void> updateTaskStatus(BoardModel board, TaskModel task, String newStatus) async {
+  Future<void> updateTaskStatus(
+    BoardModel board,
+    TaskModel task,
+    String newStatus,
+  ) async {
     try {
       final now = DateTime.now();
       final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'system';
@@ -586,8 +747,14 @@ class StateTasks extends ChangeNotifier {
       String oldColName = task.status;
       String newColName = newStatus;
       if (board.columns.isNotEmpty) {
-        final oldCol = board.columns.firstWhere((c) => c == task.status, orElse: () => task.status);
-        final newCol = board.columns.firstWhere((c) => c == newStatus, orElse: () => newStatus);
+        final oldCol = board.columns.firstWhere(
+          (c) => c == task.status,
+          orElse: () => task.status,
+        );
+        final newCol = board.columns.firstWhere(
+          (c) => c == newStatus,
+          orElse: () => newStatus,
+        );
         oldColName = oldCol;
         newColName = newCol;
       }
@@ -599,7 +766,8 @@ class StateTasks extends ChangeNotifier {
         text: '[ระบบ] ย้ายงานจากช่อง "$oldColName" ไปที่ "$newColName"',
         time: now,
       );
-      final updatedComments = List<TaskComment>.from(task.comments)..add(comment);
+      final updatedComments = List<TaskComment>.from(task.comments)
+        ..add(comment);
       final updated = task.copyWith(
         status: newStatus,
         comments: updatedComments,
@@ -613,15 +781,27 @@ class StateTasks extends ChangeNotifier {
       }
       _injectSingleTask(board.id, updated);
       _broadcastUpdate(board.id);
-    } catch (e) { debugPrint('Error updating task status: $e'); }
+    } catch (e) {
+      debugPrint('Error updating task status: $e');
+    }
   }
 
-  void reorderWithinColumn(BoardModel board, String columnId, int fromIndex, int toIndex) {
+  void reorderWithinColumn(
+    BoardModel board,
+    String columnId,
+    int fromIndex,
+    int toIndex,
+  ) {
     final list = _tasksByBoard[board.id];
     if (list == null) return;
     final fullList = List<TaskModel>.from(list);
     final sameCol = fullList.where((t) => t.status == columnId).toList();
-    if (fromIndex < 0 || fromIndex >= sameCol.length || toIndex < 0 || toIndex >= sameCol.length) return;
+    if (fromIndex < 0 ||
+        fromIndex >= sameCol.length ||
+        toIndex < 0 ||
+        toIndex >= sameCol.length) {
+      return;
+    }
     final moving = sameCol.removeAt(fromIndex);
     sameCol.insert(toIndex, moving);
 
@@ -631,20 +811,30 @@ class StateTasks extends ChangeNotifier {
     int sameColIdx = 0;
     for (final t in fullList) {
       if (t.status == columnId) {
-        final ut = sameCol[sameColIdx].copyWith(orderIndex: sameColIdx, updatedAt: now);
+        final ut = sameCol[sameColIdx].copyWith(
+          orderIndex: sameColIdx,
+          updatedAt: now,
+        );
         rebuilt.add(ut);
         updates.add({'id': ut.id, 'order_index': ut.orderIndex});
         // Update notifier instantly
-        final n = _taskNotifiers[ut.id]; if (n != null) n.value = ut; else _taskNotifiers[ut.id] = ValueNotifier(ut);
+        final n = _taskNotifiers[ut.id];
+        if (n != null) {
+          n.value = ut;
+        } else {
+          _taskNotifiers[ut.id] = ValueNotifier(ut);
+        }
         sameColIdx++;
-      } else { rebuilt.add(t); }
+      } else {
+        rebuilt.add(t);
+      }
     }
     _tasksByBoard[board.id] = rebuilt;
     notifyListeners();
-    if (board.type != 'personal') { 
+    if (board.type != 'personal') {
       ApiCloudflare.updateTaskOrder(board.id, updates).then((_) {
         _broadcastUpdate(board.id);
-      }); 
+      });
     }
   }
 
@@ -662,20 +852,28 @@ class StateTasks extends ChangeNotifier {
         notifyListeners();
       }
       _broadcastUpdate(board.id);
-    } catch (e) { debugPrint('Error deleting task: $e'); }
+    } catch (e) {
+      debugPrint('Error deleting task: $e');
+    }
   }
 
   void _injectSingleTask(String boardId, TaskModel updatedTask) {
     final tasks = _tasksByBoard[boardId] ?? [];
     final notifier = _taskNotifiers[updatedTask.id];
-    if (notifier != null) notifier.value = updatedTask; else _taskNotifiers[updatedTask.id] = ValueNotifier(updatedTask);
+    if (notifier != null) {
+      notifier.value = updatedTask;
+    } else {
+      _taskNotifiers[updatedTask.id] = ValueNotifier(updatedTask);
+    }
 
     int idx = tasks.indexWhere((t) => t.id == updatedTask.id);
     if (idx != -1) {
       final existing = tasks[idx];
-      bool structuralChange = existing.status != updatedTask.status || 
-                             existing.orderIndex != updatedTask.orderIndex ||
-                             existing.dueDate.millisecondsSinceEpoch != updatedTask.dueDate.millisecondsSinceEpoch;
+      bool structuralChange =
+          existing.status != updatedTask.status ||
+          existing.orderIndex != updatedTask.orderIndex ||
+          existing.dueDate.millisecondsSinceEpoch !=
+              updatedTask.dueDate.millisecondsSinceEpoch;
       if (existing.updatedAt < updatedTask.updatedAt || structuralChange) {
         tasks[idx] = updatedTask;
         _tasksByBoard[boardId] = List.from(tasks);
@@ -690,16 +888,24 @@ class StateTasks extends ChangeNotifier {
 
   void _applyAtomicUpdate(String boardId, List<TaskModel> newTasks) {
     final currentTasks = _tasksByBoard[boardId] ?? [];
-    final Map<String, TaskModel> taskMap = {for (var t in currentTasks) t.id: t};
+    final Map<String, TaskModel> taskMap = {
+      for (var t in currentTasks) t.id: t,
+    };
     bool changed = false;
     for (var nt in newTasks) {
-      final n = _taskNotifiers[nt.id]; if (n != null) n.value = nt; else _taskNotifiers[nt.id] = ValueNotifier(nt);
+      final n = _taskNotifiers[nt.id];
+      if (n != null) {
+        n.value = nt;
+      } else {
+        _taskNotifiers[nt.id] = ValueNotifier(nt);
+      }
       final existing = taskMap[nt.id];
-      if (existing == null || 
-          existing.updatedAt != nt.updatedAt || 
-          existing.status != nt.status || 
+      if (existing == null ||
+          existing.updatedAt != nt.updatedAt ||
+          existing.status != nt.status ||
           existing.orderIndex != nt.orderIndex ||
-          existing.dueDate.millisecondsSinceEpoch != nt.dueDate.millisecondsSinceEpoch) {
+          existing.dueDate.millisecondsSinceEpoch !=
+              nt.dueDate.millisecondsSinceEpoch) {
         taskMap[nt.id] = nt;
         changed = true;
       }
@@ -710,7 +916,6 @@ class StateTasks extends ChangeNotifier {
       notifyListeners();
     }
   }
-
 
   final Map<String, int> _reconnectAttempts = {};
   void _scheduleReconnect(BoardModel board) {

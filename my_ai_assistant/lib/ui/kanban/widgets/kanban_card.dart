@@ -138,12 +138,11 @@ class KanbanTaskCard extends StatelessWidget {
                     runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (currentTask.dueDate != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: GlassColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
-                          child: Text(DateFormat('MMM d').format(currentTask.dueDate).toUpperCase(), style: GlassText.labelSM().copyWith(fontSize: 8, fontWeight: FontWeight.bold, color: GlassColors.primary.withOpacity(0.7))),
-                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: GlassColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+                        child: Text(DateFormat('MMM d').format(currentTask.dueDate).toUpperCase(), style: GlassText.labelSM().copyWith(fontSize: 8, fontWeight: FontWeight.bold, color: GlassColors.primary.withOpacity(0.7))),
+                      ),
                       if (isOverviewMode && currentTask.labelIds.isNotEmpty)
                         ...board.labels.where((l) => currentTask.labelIds.contains(l['id'])).map((l) {
                           final color = Color(l['color'] as int? ?? GlassColors.primary.value);

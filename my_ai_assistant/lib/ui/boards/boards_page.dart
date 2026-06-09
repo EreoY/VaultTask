@@ -26,19 +26,13 @@ class BoardsPage extends StatefulWidget {
 
 class _BoardsPageState extends State<BoardsPage> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StateBoards>().fetchAllBoards();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final boardsState = context.watch<StateBoards>();
     final selectedWorkspace = boardsState.selectedWorkspace;
-    final boards = selectedWorkspace != null 
-        ? boardsState.boards.where((b) => b.workspaceId == selectedWorkspace.id).toList()
+    final boards = selectedWorkspace != null
+        ? boardsState.boards
+              .where((b) => b.workspaceId == selectedWorkspace.id)
+              .toList()
         : <BoardModel>[];
     final isMobile = Responsive.isMobile(context);
 
@@ -49,34 +43,41 @@ class _BoardsPageState extends State<BoardsPage> {
         _buildWorkspaceTabs(context, boardsState),
         const SizedBox(height: 16),
         Expanded(
-          child: boardsState.isLoading 
-            ? const Center(child: CircularProgressIndicator(color: GlassColors.primary))
-            : SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
-                    vertical: 16,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: GlassColors.outlineVariant.withOpacity(0.15),
-                        width: 1,
-                      ),
+          child: boardsState.isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: GlassColors.primary),
+                )
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile
+                          ? 16
+                          : ExecutiveSpacing.containerPadding(context),
+                      vertical: 16,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildTableHeader(),
-                        ...boards.map((board) => _buildBoardRow(context, board, boardsState)),
-                        _buildNewProjectRow(selectedWorkspace),
-                      ],
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: GlassColors.outlineVariant.withOpacity(0.15),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTableHeader(),
+                          ...boards.map(
+                            (board) =>
+                                _buildBoardRow(context, board, boardsState),
+                          ),
+                          _buildNewProjectRow(selectedWorkspace),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
         ),
       ],
     );
@@ -115,7 +116,9 @@ class _BoardsPageState extends State<BoardsPage> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isSelected ? GlassColors.primary : Colors.transparent,
+                    color: isSelected
+                        ? GlassColors.primary
+                        : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -124,17 +127,25 @@ class _BoardsPageState extends State<BoardsPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    workspace.type == 'personal' ? Icons.person_outline_rounded : Icons.group_outlined,
+                    workspace.type == 'personal'
+                        ? Icons.person_outline_rounded
+                        : Icons.group_outlined,
                     size: 14,
-                    color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                    color: isSelected
+                        ? GlassColors.primary
+                        : GlassColors.onSurfaceVariant.withOpacity(0.5),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     workspace.name,
                     style: GlassText.bodyMD().copyWith(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.6),
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? GlassColors.onSurface
+                          : GlassColors.onSurfaceVariant.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -148,7 +159,7 @@ class _BoardsPageState extends State<BoardsPage> {
 
   Widget _buildHeader(BuildContext context, WorkspaceModel? selectedWorkspace) {
     final isMobile = Responsive.isMobile(context);
-    
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
@@ -162,32 +173,47 @@ class _BoardsPageState extends State<BoardsPage> {
           // Breadcrumbs
           Row(
             children: [
-              Icon(Icons.home_rounded, size: 12, color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+              Icon(
+                Icons.home_rounded,
+                size: 12,
+                color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+              ),
               const SizedBox(width: 4),
               Text(
-                'Workspace HQ', 
-                style: GlassText.bodyMD().copyWith(fontSize: 11, color: GlassColors.onSurfaceVariant.withOpacity(0.5))
+                'Workspace HQ',
+                style: GlassText.bodyMD().copyWith(
+                  fontSize: 11,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                ),
               ),
               const SizedBox(width: 6),
               Text(
-                '/', 
-                style: GlassText.bodyMD().copyWith(fontSize: 11, color: GlassColors.onSurfaceVariant.withOpacity(0.2))
+                '/',
+                style: GlassText.bodyMD().copyWith(
+                  fontSize: 11,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.2),
+                ),
               ),
               const SizedBox(width: 6),
               Icon(
-                selectedWorkspace?.type == 'personal' ? Icons.person_outline_rounded : Icons.group_outlined, 
-                size: 12, 
-                color: GlassColors.onSurfaceVariant.withOpacity(0.3)
+                selectedWorkspace?.type == 'personal'
+                    ? Icons.person_outline_rounded
+                    : Icons.group_outlined,
+                size: 12,
+                color: GlassColors.onSurfaceVariant.withOpacity(0.3),
               ),
               const SizedBox(width: 4),
               Text(
-                selectedWorkspace?.name ?? 'Workspace', 
-                style: GlassText.bodyMD().copyWith(fontSize: 11, color: GlassColors.onSurfaceVariant.withOpacity(0.5))
+                selectedWorkspace?.name ?? 'Workspace',
+                style: GlassText.bodyMD().copyWith(
+                  fontSize: 11,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Title and Buttons Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,7 +225,7 @@ class _BoardsPageState extends State<BoardsPage> {
                   Text(
                     selectedWorkspace?.name ?? 'Projects',
                     style: GlassText.headlineLG().copyWith(
-                      fontSize: 28, 
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: GlassColors.onSurface,
                     ),
@@ -207,16 +233,32 @@ class _BoardsPageState extends State<BoardsPage> {
                   if (selectedWorkspace != null) ...[
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.edit_rounded, size: 16, color: GlassColors.onSurfaceVariant),
+                      icon: const Icon(
+                        Icons.edit_rounded,
+                        size: 16,
+                        color: GlassColors.onSurfaceVariant,
+                      ),
                       tooltip: 'Rename Workspace',
-                      onPressed: () => _showRenameWorkspaceDialog(context, selectedWorkspace),
+                      onPressed: () => _showRenameWorkspaceDialog(
+                        context,
+                        selectedWorkspace,
+                      ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.copy_rounded, size: 16, color: GlassColors.onSurfaceVariant),
+                      icon: const Icon(
+                        Icons.copy_rounded,
+                        size: 16,
+                        color: GlassColors.onSurfaceVariant,
+                      ),
                       tooltip: 'Copy Workspace ID',
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(text: selectedWorkspace.id));
-                        GlassNotifications.show(context, 'Workspace ID copied to clipboard');
+                        Clipboard.setData(
+                          ClipboardData(text: selectedWorkspace.id),
+                        );
+                        GlassNotifications.show(
+                          context,
+                          'Workspace ID copied to clipboard',
+                        );
                       },
                     ),
                   ],
@@ -227,35 +269,62 @@ class _BoardsPageState extends State<BoardsPage> {
                   // Join Workspace Button
                   TextButton.icon(
                     onPressed: () => _showJoinWorkspaceDialog(context),
-                    icon: const Icon(Icons.group_add_rounded, size: 14, color: GlassColors.gold),
+                    icon: const Icon(
+                      Icons.group_add_rounded,
+                      size: 14,
+                      color: GlassColors.gold,
+                    ),
                     label: Text(
-                      'JOIN WORKSPACE', 
-                      style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 11, fontWeight: FontWeight.bold)
+                      'JOIN WORKSPACE',
+                      style: GlassText.labelSM().copyWith(
+                        color: GlassColors.gold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  
+
                   ElevatedButton.icon(
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
                         backgroundColor: Colors.transparent,
                         isScrollControlled: true,
-                        builder: (context) => BoardEditModal(isDark: widget.isDark, workspace: selectedWorkspace),
+                        builder: (context) => BoardEditModal(
+                          isDark: widget.isDark,
+                          workspace: selectedWorkspace,
+                        ),
                       );
                     },
-                    icon: const Icon(Icons.add_rounded, size: 14, color: Colors.black87),
+                    icon: const Icon(
+                      Icons.add_rounded,
+                      size: 14,
+                      color: Colors.black87,
+                    ),
                     label: Text(
-                      'New project', 
-                      style: GlassText.labelSM().copyWith(color: Colors.black87, fontSize: 11, fontWeight: FontWeight.bold)
+                      'New project',
+                      style: GlassText.labelSM().copyWith(
+                        color: Colors.black87,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: GlassColors.gold,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
                   ),
                 ],
@@ -276,16 +345,30 @@ class _BoardsPageState extends State<BoardsPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          decoration: GlassDecorations.solidSurface(
+            radius: 24,
+            hasShadow: true,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('JOIN TEAM WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                Text(
+                  'JOIN TEAM WORKSPACE',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
-                Text('Enter the Workspace ID shared by your colleague.', style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant)),
+                Text(
+                  'Enter the Workspace ID shared by your colleague.',
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 ImeSafeTextField(
                   controller: controller,
@@ -293,10 +376,15 @@ class _BoardsPageState extends State<BoardsPage> {
                   style: GlassText.bodyLG(),
                   decoration: InputDecoration(
                     hintText: 'e.g., default_team_xxxx',
-                    hintStyle: GlassText.bodyLG().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                    hintStyle: GlassText.bodyLG().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                    ),
                     filled: true,
                     fillColor: GlassColors.primary.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
@@ -309,9 +397,18 @@ class _BoardsPageState extends State<BoardsPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -321,25 +418,45 @@ class _BoardsPageState extends State<BoardsPage> {
                           final id = controller.text.trim();
                           if (id.isEmpty) return;
                           try {
-                            await context.read<StateBoards>().joinWorkspaceById(id);
+                            await context.read<StateBoards>().joinWorkspaceById(
+                              id,
+                            );
                             if (context.mounted) {
                               Navigator.pop(context);
-                              GlassNotifications.show(context, 'Joined workspace successfully!');
+                              GlassNotifications.show(
+                                context,
+                                'Joined workspace successfully!',
+                              );
                             }
                           } catch (e) {
                             if (context.mounted) {
                               Navigator.pop(context);
-                              GlassNotifications.show(context, 'Failed to join workspace: $e', isError: true);
+                              GlassNotifications.show(
+                                context,
+                                'Failed to join workspace: $e',
+                                isError: true,
+                              );
                             }
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.gold,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.gold.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('JOIN WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'JOIN WORKSPACE',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -352,7 +469,10 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  void _showRenameWorkspaceDialog(BuildContext context, WorkspaceModel workspace) {
+  void _showRenameWorkspaceDialog(
+    BuildContext context,
+    WorkspaceModel workspace,
+  ) {
     final controller = TextEditingController(text: workspace.name);
     showDialog(
       context: context,
@@ -361,14 +481,23 @@ class _BoardsPageState extends State<BoardsPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          decoration: GlassDecorations.solidSurface(
+            radius: 24,
+            hasShadow: true,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RENAME WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                Text(
+                  'RENAME WORKSPACE',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 ImeSafeTextField(
                   controller: controller,
@@ -377,7 +506,10 @@ class _BoardsPageState extends State<BoardsPage> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: GlassColors.primary.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
@@ -390,9 +522,18 @@ class _BoardsPageState extends State<BoardsPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -400,25 +541,50 @@ class _BoardsPageState extends State<BoardsPage> {
                       child: OutlinedButton(
                         onPressed: () async {
                           final newName = controller.text.trim();
-                          if (newName.isEmpty || newName == workspace.name) return;
+                          if (newName.isEmpty || newName == workspace.name) {
+                            return;
+                          }
                           final boardsState = context.read<StateBoards>();
-                          final scaffoldMessenger = ScaffoldMessenger.of(context);
+                          final scaffoldMessenger = ScaffoldMessenger.of(
+                            context,
+                          );
                           final navigator = Navigator.of(dialogContext);
                           try {
-                            await boardsState.updateWorkspaceName(workspace, newName);
+                            await boardsState.updateWorkspaceName(
+                              workspace,
+                              newName,
+                            );
                             navigator.pop();
-                            GlassNotifications.show(context, 'Workspace renamed successfully!');
+                            GlassNotifications.show(
+                              context,
+                              'Workspace renamed successfully!',
+                            );
                           } catch (e) {
-                            GlassNotifications.show(context, 'Failed to rename workspace: $e', isError: true);
+                            GlassNotifications.show(
+                              context,
+                              'Failed to rename workspace: $e',
+                              isError: true,
+                            );
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.gold,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.gold.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('RENAME', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'RENAME',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -437,7 +603,10 @@ class _BoardsPageState extends State<BoardsPage> {
       decoration: BoxDecoration(
         color: GlassColors.surfaceBright.withOpacity(0.03),
         border: Border(
-          bottom: BorderSide(color: GlassColors.outlineVariant.withOpacity(0.15), width: 1),
+          bottom: BorderSide(
+            color: GlassColors.outlineVariant.withOpacity(0.15),
+            width: 1,
+          ),
         ),
       ),
       child: Row(
@@ -446,7 +615,11 @@ class _BoardsPageState extends State<BoardsPage> {
             flex: 4,
             child: Row(
               children: [
-                Icon(Icons.text_fields_rounded, size: 14, color: GlassColors.onSurfaceVariant.withOpacity(0.4)),
+                Icon(
+                  Icons.text_fields_rounded,
+                  size: 14,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'PROJECT',
@@ -463,7 +636,11 @@ class _BoardsPageState extends State<BoardsPage> {
             flex: 2,
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 14, color: GlassColors.onSurfaceVariant.withOpacity(0.4)),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'STAGE',
@@ -480,7 +657,11 @@ class _BoardsPageState extends State<BoardsPage> {
             flex: 2,
             child: Row(
               children: [
-                Icon(Icons.people_outline_rounded, size: 14, color: GlassColors.onSurfaceVariant.withOpacity(0.4)),
+                Icon(
+                  Icons.people_outline_rounded,
+                  size: 14,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'MEMBERS',
@@ -497,7 +678,11 @@ class _BoardsPageState extends State<BoardsPage> {
             flex: 4,
             child: Row(
               children: [
-                Icon(Icons.insert_drive_file_outlined, size: 14, color: GlassColors.onSurfaceVariant.withOpacity(0.4)),
+                Icon(
+                  Icons.insert_drive_file_outlined,
+                  size: 14,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'DOCS',
@@ -529,14 +714,21 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  Widget _buildBoardRow(BuildContext context, BoardModel board, StateBoards stateBoards) {
+  Widget _buildBoardRow(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) {
     final isTeam = board.type == 'team';
     final projectColor = Color(board.color == 0 ? 0xFF0D40A5 : board.color);
 
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: GlassColors.outlineVariant.withOpacity(0.15), width: 1),
+          bottom: BorderSide(
+            color: GlassColors.outlineVariant.withOpacity(0.15),
+            width: 1,
+          ),
         ),
       ),
       child: Padding(
@@ -579,7 +771,10 @@ class _BoardsPageState extends State<BoardsPage> {
                     onTap: () => stateBoards.setSelectedBoard(board),
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -603,25 +798,30 @@ class _BoardsPageState extends State<BoardsPage> {
                 ],
               ),
             ),
-            
+
             // Stage/Type
             Expanded(
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isTeam 
-                      ? GlassColors.primary.withOpacity(0.08) 
-                      : GlassColors.surfaceBright.withOpacity(0.15),
+                    color: isTeam
+                        ? GlassColors.primary.withOpacity(0.08)
+                        : GlassColors.surfaceBright.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     isTeam ? 'Team Project' : 'Personal',
                     style: GlassText.labelSM().copyWith(
                       fontSize: 10,
-                      color: isTeam ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.7),
+                      color: isTeam
+                          ? GlassColors.primary
+                          : GlassColors.onSurfaceVariant.withOpacity(0.7),
                       fontWeight: FontWeight.normal,
                     ),
                   ),
@@ -644,7 +844,16 @@ class _BoardsPageState extends State<BoardsPage> {
                     child: Wrap(
                       spacing: 4,
                       runSpacing: 4,
-                      children: board.documents.map((doc) => _buildDocumentChip(context, board, doc, stateBoards)).toList(),
+                      children: board.documents
+                          .map(
+                            (doc) => _buildDocumentChip(
+                              context,
+                              board,
+                              doc,
+                              stateBoards,
+                            ),
+                          )
+                          .toList(),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -662,7 +871,8 @@ class _BoardsPageState extends State<BoardsPage> {
                   IconButton(
                     icon: const Icon(Icons.edit_rounded, size: 14),
                     color: GlassColors.onSurfaceVariant.withOpacity(0.4),
-                    onPressed: () => _showEditBoardDialog(context, board, stateBoards),
+                    onPressed: () =>
+                        _showEditBoardDialog(context, board, stateBoards),
                     tooltip: 'Rename Board',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -671,7 +881,8 @@ class _BoardsPageState extends State<BoardsPage> {
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded, size: 14),
                     color: GlassColors.error.withOpacity(0.5),
-                    onPressed: () => _showDeleteBoardConfirm(context, board, stateBoards),
+                    onPressed: () =>
+                        _showDeleteBoardConfirm(context, board, stateBoards),
                     tooltip: 'Delete Board',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -692,14 +903,15 @@ class _BoardsPageState extends State<BoardsPage> {
           context: context,
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
-          builder: (context) => BoardEditModal(isDark: widget.isDark, workspace: selectedWorkspace),
+          builder: (context) => BoardEditModal(
+            isDark: widget.isDark,
+            workspace: selectedWorkspace,
+          ),
         );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-        ),
+        decoration: const BoxDecoration(color: Colors.transparent),
         child: Row(
           children: [
             const Icon(Icons.add_rounded, size: 16, color: GlassColors.gold),
@@ -758,7 +970,11 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  Widget _buildAvatarStack(BuildContext context, BoardModel board, StateBoards stateBoards) {
+  Widget _buildAvatarStack(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) {
     final displayMembers = board.members.take(3).toList();
     final remainingCount = board.members.length - displayMembers.length;
 
@@ -768,7 +984,10 @@ class _BoardsPageState extends State<BoardsPage> {
         if (board.members.isEmpty)
           Text(
             'No members',
-            style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.4), fontSize: 11),
+            style: GlassText.bodyMD().copyWith(
+              color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+              fontSize: 11,
+            ),
           )
         else
           SizedBox(
@@ -793,7 +1012,10 @@ class _BoardsPageState extends State<BoardsPage> {
             ),
             child: Text(
               '+$remainingCount',
-              style: GlassText.labelSM().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant),
+              style: GlassText.labelSM().copyWith(
+                fontSize: 8,
+                color: GlassColors.onSurfaceVariant,
+              ),
             ),
           ),
         ],
@@ -802,7 +1024,8 @@ class _BoardsPageState extends State<BoardsPage> {
           IconButton(
             icon: const Icon(Icons.add_circle_outline_rounded, size: 14),
             color: GlassColors.gold,
-            onPressed: () => _showManageMembersDialog(context, board, stateBoards),
+            onPressed: () =>
+                _showManageMembersDialog(context, board, stateBoards),
             tooltip: 'Manage Members',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -812,10 +1035,15 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  Widget _buildDocumentChip(BuildContext context, BoardModel board, Map<String, dynamic> doc, StateBoards stateBoards) {
+  Widget _buildDocumentChip(
+    BuildContext context,
+    BoardModel board,
+    Map<String, dynamic> doc,
+    StateBoards stateBoards,
+  ) {
     final name = doc['name'] as String? ?? 'Document';
     final url = doc['url'] as String? ?? '';
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -826,7 +1054,11 @@ class _BoardsPageState extends State<BoardsPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.insert_drive_file_outlined, size: 10, color: GlassColors.primary),
+          const Icon(
+            Icons.insert_drive_file_outlined,
+            size: 10,
+            color: GlassColors.primary,
+          ),
           const SizedBox(width: 4),
           Flexible(
             child: InkWell(
@@ -852,19 +1084,38 @@ class _BoardsPageState extends State<BoardsPage> {
           ),
           const SizedBox(width: 4),
           GestureDetector(
-            onTap: () => _showDeleteDocumentConfirm(context, board, doc, stateBoards),
-            child: const Icon(Icons.close_rounded, size: 10, color: GlassColors.error),
+            onTap: () =>
+                _showDeleteDocumentConfirm(context, board, doc, stateBoards),
+            child: const Icon(
+              Icons.close_rounded,
+              size: 10,
+              color: GlassColors.error,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUploadDocButton(BuildContext context, BoardModel board, StateBoards stateBoards) {
+  Widget _buildUploadDocButton(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) {
     return TextButton.icon(
       onPressed: () => _pickAndUploadDocument(context, board, stateBoards),
-      icon: const Icon(Icons.cloud_upload_outlined, size: 12, color: GlassColors.gold),
-      label: Text('UPLOAD', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontSize: 9)),
+      icon: const Icon(
+        Icons.cloud_upload_outlined,
+        size: 12,
+        color: GlassColors.gold,
+      ),
+      label: Text(
+        'UPLOAD',
+        style: GlassText.labelSM().copyWith(
+          color: GlassColors.gold,
+          fontSize: 9,
+        ),
+      ),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         minimumSize: Size.zero,
@@ -873,7 +1124,11 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  void _showEditBoardDialog(BuildContext context, BoardModel board, StateBoards stateBoards) {
+  void _showEditBoardDialog(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) {
     final controller = TextEditingController(text: board.name);
     showDialog(
       context: context,
@@ -882,14 +1137,23 @@ class _BoardsPageState extends State<BoardsPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          decoration: GlassDecorations.solidSurface(
+            radius: 24,
+            hasShadow: true,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RENAME BOARD', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                Text(
+                  'RENAME BOARD',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 ImeSafeTextField(
                   controller: controller,
@@ -897,10 +1161,15 @@ class _BoardsPageState extends State<BoardsPage> {
                   style: GlassText.bodyLG(),
                   decoration: InputDecoration(
                     hintText: 'Board Name',
-                    hintStyle: GlassText.bodyLG().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                    hintStyle: GlassText.bodyLG().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                    ),
                     filled: true,
                     fillColor: GlassColors.primary.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
@@ -913,9 +1182,18 @@ class _BoardsPageState extends State<BoardsPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -925,21 +1203,38 @@ class _BoardsPageState extends State<BoardsPage> {
                           final name = controller.text.trim();
                           if (name.isEmpty) return;
                           try {
-                            await stateBoards.updateBoard(board.copyWith(name: name));
+                            await stateBoards.updateBoard(
+                              board.copyWith(name: name),
+                            );
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             if (context.mounted) {
-                              GlassNotifications.show(context, 'Failed to update board: $e', isError: true);
+                              GlassNotifications.show(
+                                context,
+                                'Failed to update board: $e',
+                                isError: true,
+                              );
                             }
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.gold,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.gold.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('SAVE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'SAVE',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.gold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -952,7 +1247,11 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  void _showDeleteBoardConfirm(BuildContext context, BoardModel board, StateBoards stateBoards) {
+  void _showDeleteBoardConfirm(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) {
     showDialog(
       context: context,
       builder: (context) => Center(
@@ -960,18 +1259,29 @@ class _BoardsPageState extends State<BoardsPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          decoration: GlassDecorations.solidSurface(
+            radius: 24,
+            hasShadow: true,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DELETE BOARD', style: GlassText.labelSM().copyWith(color: GlassColors.error, letterSpacing: 2)),
+                Text(
+                  'DELETE BOARD',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.error,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Are you sure you want to delete "${board.name}"? This action is permanent and cannot be undone.',
-                  style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant),
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Row(
@@ -982,9 +1292,18 @@ class _BoardsPageState extends State<BoardsPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -996,17 +1315,32 @@ class _BoardsPageState extends State<BoardsPage> {
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             if (context.mounted) {
-                              GlassNotifications.show(context, 'Failed to delete board: $e', isError: true);
+                              GlassNotifications.show(
+                                context,
+                                'Failed to delete board: $e',
+                                isError: true,
+                              );
                             }
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.error,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.error.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'DELETE',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1019,7 +1353,11 @@ class _BoardsPageState extends State<BoardsPage> {
     );
   }
 
-  void _showManageMembersDialog(BuildContext context, BoardModel board, StateBoards stateBoards) {
+  void _showManageMembersDialog(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) {
     final uidController = TextEditingController();
     showDialog(
       context: context,
@@ -1030,17 +1368,31 @@ class _BoardsPageState extends State<BoardsPage> {
               width: 450,
               margin: const EdgeInsets.all(24),
               padding: const EdgeInsets.all(32),
-              decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+              decoration: GlassDecorations.solidSurface(
+                radius: 24,
+                hasShadow: true,
+              ),
               child: Material(
                 color: Colors.transparent,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('MANAGE BOARD MEMBERS', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                    Text(
+                      'MANAGE BOARD MEMBERS',
+                      style: GlassText.labelSM().copyWith(
+                        color: GlassColors.primary,
+                        letterSpacing: 2,
+                      ),
+                    ),
                     const SizedBox(height: 24),
-                    
-                    Text('CURRENT MEMBERS', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5))),
+
+                    Text(
+                      'CURRENT MEMBERS',
+                      style: GlassText.labelSM().copyWith(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Container(
                       constraints: const BoxConstraints(maxHeight: 180),
@@ -1049,7 +1401,9 @@ class _BoardsPageState extends State<BoardsPage> {
                         itemCount: board.members.length,
                         itemBuilder: (context, index) {
                           final memberUid = board.members[index];
-                          final profile = stateBoards.getMemberProfile(memberUid);
+                          final profile = stateBoards.getMemberProfile(
+                            memberUid,
+                          );
                           final name = profile?['name'] ?? memberUid;
                           final isOwner = board.ownerUid == memberUid;
 
@@ -1067,16 +1421,29 @@ class _BoardsPageState extends State<BoardsPage> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                if (!isOwner && memberUid != FirebaseAuth.instance.currentUser?.uid)
+                                if (!isOwner &&
+                                    memberUid !=
+                                        FirebaseAuth.instance.currentUser?.uid)
                                   IconButton(
-                                    icon: const Icon(Icons.remove_circle_outline_rounded, size: 18, color: GlassColors.error),
+                                    icon: const Icon(
+                                      Icons.remove_circle_outline_rounded,
+                                      size: 18,
+                                      color: GlassColors.error,
+                                    ),
                                     onPressed: () async {
                                       try {
-                                        await stateBoards.removeMember(board, memberUid);
+                                        await stateBoards.removeMember(
+                                          board,
+                                          memberUid,
+                                        );
                                         setState(() {});
                                       } catch (e) {
                                         if (context.mounted) {
-                                          GlassNotifications.show(context, 'Error: $e', isError: true);
+                                          GlassNotifications.show(
+                                            context,
+                                            'Error: $e',
+                                            isError: true,
+                                          );
                                         }
                                       }
                                     },
@@ -1090,8 +1457,13 @@ class _BoardsPageState extends State<BoardsPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
-                    Text('ADD MEMBER BY UID', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5))),
+
+                    Text(
+                      'ADD MEMBER BY UID',
+                      style: GlassText.labelSM().copyWith(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -1101,10 +1473,17 @@ class _BoardsPageState extends State<BoardsPage> {
                             style: GlassText.bodyMD(),
                             decoration: InputDecoration(
                               hintText: 'Enter Firebase User UID',
-                              hintStyle: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                              hintStyle: GlassText.bodyMD().copyWith(
+                                color: GlassColors.onSurfaceVariant.withOpacity(
+                                  0.3,
+                                ),
+                              ),
                               filled: true,
                               fillColor: GlassColors.primary.withOpacity(0.05),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
                               contentPadding: const EdgeInsets.all(12),
                             ),
                           ),
@@ -1115,12 +1494,18 @@ class _BoardsPageState extends State<BoardsPage> {
                             final newUid = uidController.text.trim();
                             if (newUid.isEmpty) return;
                             if (board.members.contains(newUid)) {
-                              GlassNotifications.show(context, 'User is already a member', isError: true);
+                              GlassNotifications.show(
+                                context,
+                                'User is already a member',
+                                isError: true,
+                              );
                               return;
                             }
                             try {
                               final updatedMembers = [...board.members, newUid];
-                              final updatedBoard = board.copyWith(members: updatedMembers);
+                              final updatedBoard = board.copyWith(
+                                members: updatedMembers,
+                              );
                               await stateBoards.updateBoard(updatedBoard);
                               uidController.clear();
                               setState(() {});
@@ -1128,17 +1513,35 @@ class _BoardsPageState extends State<BoardsPage> {
                               setState(() {});
                             } catch (e) {
                               if (context.mounted) {
-                                GlassNotifications.show(context, 'Failed to add member: $e', isError: true);
+                                GlassNotifications.show(
+                                  context,
+                                  'Failed to add member: $e',
+                                  isError: true,
+                                );
                               }
                             }
                           },
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            side: const BorderSide(
+                              color: GlassColors.gold,
+                              width: 1.5,
+                            ),
                             backgroundColor: GlassColors.gold.withOpacity(0.05),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          child: Text('ADD', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'ADD',
+                            style: GlassText.labelSM().copyWith(
+                              color: GlassColors.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1148,7 +1551,12 @@ class _BoardsPageState extends State<BoardsPage> {
                       children: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text('CLOSE', style: GlassText.labelSM().copyWith(color: GlassColors.primary)),
+                          child: Text(
+                            'CLOSE',
+                            style: GlassText.labelSM().copyWith(
+                              color: GlassColors.primary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1157,19 +1565,26 @@ class _BoardsPageState extends State<BoardsPage> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
 
-  Future<void> _pickAndUploadDocument(BuildContext context, BoardModel board, StateBoards stateBoards) async {
+  Future<void> _pickAndUploadDocument(
+    BuildContext context,
+    BoardModel board,
+    StateBoards stateBoards,
+  ) async {
     try {
       FilePickerResult? result = await FilePicker.pickFiles();
       if (result != null) {
         final filename = result.files.single.name;
-        final bytes = result.files.single.bytes ?? 
-            (kIsWeb ? null : await io.File(result.files.single.path!).readAsBytes());
-        
+        final bytes =
+            result.files.single.bytes ??
+            (kIsWeb
+                ? null
+                : await io.File(result.files.single.path!).readAsBytes());
+
         if (bytes != null) {
           if (context.mounted) {
             showDialog(
@@ -1181,20 +1596,28 @@ class _BoardsPageState extends State<BoardsPage> {
             );
           }
 
-          final uploadRes = await ApiCloudflare.uploadImage(bytes, filename, path: 'documents');
+          final uploadRes = await ApiCloudflare.uploadImage(
+            bytes,
+            filename,
+            path: 'documents',
+          );
           final fileUrl = uploadRes['url'] as String;
-          
+
           final newDoc = {
             'name': filename,
             'url': fileUrl,
             'uploadedAt': DateTime.now().millisecondsSinceEpoch,
           };
-          final updatedDocs = List<Map<String, dynamic>>.from(board.documents)..add(newDoc);
+          final updatedDocs = List<Map<String, dynamic>>.from(board.documents)
+            ..add(newDoc);
           await stateBoards.updateBoard(board.copyWith(documents: updatedDocs));
-          
+
           if (context.mounted) {
             Navigator.pop(context);
-            GlassNotifications.show(context, 'Uploaded "$filename" successfully!');
+            GlassNotifications.show(
+              context,
+              'Uploaded "$filename" successfully!',
+            );
           }
         }
       }
@@ -1206,7 +1629,12 @@ class _BoardsPageState extends State<BoardsPage> {
     }
   }
 
-  void _showDeleteDocumentConfirm(BuildContext context, BoardModel board, Map<String, dynamic> doc, StateBoards stateBoards) {
+  void _showDeleteDocumentConfirm(
+    BuildContext context,
+    BoardModel board,
+    Map<String, dynamic> doc,
+    StateBoards stateBoards,
+  ) {
     final name = doc['name'] as String? ?? 'this document';
     showDialog(
       context: context,
@@ -1215,18 +1643,29 @@ class _BoardsPageState extends State<BoardsPage> {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          decoration: GlassDecorations.solidSurface(
+            radius: 24,
+            hasShadow: true,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DELETE DOCUMENT', style: GlassText.labelSM().copyWith(color: GlassColors.error, letterSpacing: 2)),
+                Text(
+                  'DELETE DOCUMENT',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.error,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Are you sure you want to delete "$name" from attached documents?',
-                  style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant),
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Row(
@@ -1237,9 +1676,18 @@ class _BoardsPageState extends State<BoardsPage> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1247,23 +1695,45 @@ class _BoardsPageState extends State<BoardsPage> {
                       child: OutlinedButton(
                         onPressed: () async {
                           try {
-                            final updatedDocs = List<Map<String, dynamic>>.from(board.documents)
-                                ..removeWhere((d) => d['url'] == doc['url'] && d['name'] == doc['name']);
-                            await stateBoards.updateBoard(board.copyWith(documents: updatedDocs));
+                            final updatedDocs =
+                                List<Map<String, dynamic>>.from(board.documents)
+                                  ..removeWhere(
+                                    (d) =>
+                                        d['url'] == doc['url'] &&
+                                        d['name'] == doc['name'],
+                                  );
+                            await stateBoards.updateBoard(
+                              board.copyWith(documents: updatedDocs),
+                            );
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
                             if (context.mounted) {
-                              GlassNotifications.show(context, 'Failed to delete document: $e', isError: true);
+                              GlassNotifications.show(
+                                context,
+                                'Failed to delete document: $e',
+                                isError: true,
+                              );
                             }
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.error,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.error.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'DELETE',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],

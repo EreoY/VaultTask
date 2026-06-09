@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../state_managers/state_boards.dart';
+import '../../models/board_model.dart';
 import '../../models/workspace_model.dart';
 import '../boards/widgets/board_edit_modal.dart';
 import '../theme/glass_theme.dart';
@@ -23,8 +24,21 @@ class AetherSideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName ?? user?.email?.split('@').first ?? 'Commander';
-    final stateBoards = context.watch<StateBoards>();
+    final displayName =
+        user?.displayName ?? user?.email?.split('@').first ?? 'Commander';
+    final stateBoards = context.read<StateBoards>();
+    final workspaces = context.select<StateBoards, List<WorkspaceModel>>(
+      (state) => state.workspaces,
+    );
+    final boards = context.select<StateBoards, List<BoardModel>>(
+      (state) => state.boards,
+    );
+    final selectedWorkspaceId = context.select<StateBoards, String?>(
+      (state) => state.selectedWorkspace?.id,
+    );
+    final selectedBoardId = context.select<StateBoards, String?>(
+      (state) => state.selectedBoard?.id,
+    );
 
     return Container(
       width: 260,
@@ -61,9 +75,9 @@ class AetherSideNav extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Navigation & Workspaces Section
           Expanded(
             child: SingleChildScrollView(
@@ -103,7 +117,7 @@ class AetherSideNav extends StatelessWidget {
                   const SizedBox(height: 24),
                   Divider(color: GlassColors.ghostBorder, height: 1),
                   const SizedBox(height: 16),
-                  
+
                   // Workspaces Section Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -119,7 +133,8 @@ class AetherSideNav extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.add_rounded, size: 16),
-                        onPressed: () => _showAddWorkspaceDialog(context, stateBoards),
+                        onPressed: () =>
+                            _showAddWorkspaceDialog(context, stateBoards),
                         color: GlassColors.gold,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -128,10 +143,10 @@ class AetherSideNav extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Workspaces & Projects Hierarchy List
-                  ...stateBoards.workspaces.map((workspace) {
-                    final isSelected = stateBoards.selectedWorkspace?.id == workspace.id;
+                  ...workspaces.map((workspace) {
+                    final isSelected = selectedWorkspaceId == workspace.id;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,15 +158,25 @@ class AetherSideNav extends StatelessWidget {
                             stateBoards.setSelectedBoard(null);
                             onItemSelected(1); // Navigates to Boards Page
                           },
-                          borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+                          borderRadius: BorderRadius.circular(
+                            ExecutiveRadius.l,
+                          ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
                             child: Row(
                               children: [
                                 Icon(
-                                  workspace.type == 'personal' ? Icons.person_rounded : Icons.group_rounded,
+                                  workspace.type == 'personal'
+                                      ? Icons.person_rounded
+                                      : Icons.group_rounded,
                                   size: 16,
-                                  color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                                  color: isSelected
+                                      ? GlassColors.primary
+                                      : GlassColors.onSurfaceVariant
+                                            .withOpacity(0.5),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -159,8 +184,13 @@ class AetherSideNav extends StatelessWidget {
                                     workspace.name,
                                     style: GlassText.bodyMD().copyWith(
                                       fontSize: 13,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.8),
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? GlassColors.onSurface
+                                          : GlassColors.onSurfaceVariant
+                                                .withOpacity(0.8),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -168,13 +198,19 @@ class AetherSideNav extends StatelessWidget {
                                 ),
                                 // Action Button: Add Board
                                 IconButton(
-                                  icon: const Icon(Icons.add_circle_outline_rounded, size: 14),
+                                  icon: const Icon(
+                                    Icons.add_circle_outline_rounded,
+                                    size: 14,
+                                  ),
                                   onPressed: () {
                                     showModalBottomSheet(
                                       context: context,
                                       backgroundColor: Colors.transparent,
                                       isScrollControlled: true,
-                                      builder: (context) => BoardEditModal(isDark: isDark, workspace: workspace),
+                                      builder: (context) => BoardEditModal(
+                                        isDark: isDark,
+                                        workspace: workspace,
+                                      ),
                                     );
                                   },
                                   color: GlassColors.gold.withOpacity(0.6),
@@ -184,10 +220,19 @@ class AetherSideNav extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 // Delete Workspace Button (if not default)
-                                if (workspace.id != 'default_personal' && !workspace.id.startsWith('default_team_'))
+                                if (workspace.id != 'default_personal' &&
+                                    !workspace.id.startsWith('default_team_'))
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline_rounded, size: 14),
-                                    onPressed: () => _showDeleteWorkspaceConfirmDialog(context, stateBoards, workspace),
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 14,
+                                    ),
+                                    onPressed: () =>
+                                        _showDeleteWorkspaceConfirmDialog(
+                                          context,
+                                          stateBoards,
+                                          workspace,
+                                        ),
                                     color: GlassColors.error.withOpacity(0.6),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
@@ -201,49 +246,74 @@ class AetherSideNav extends StatelessWidget {
                         // Nested Boards List (Bullet points under selected workspace)
                         if (isSelected) ...[
                           const SizedBox(height: 4),
-                          ...stateBoards.boards.where((b) => b.workspaceId == workspace.id).map((board) {
-                            final isBoardSelected = stateBoards.selectedBoard?.id == board.id && selectedIndex == 1;
-                            
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 20, bottom: 2),
-                              child: InkWell(
-                                onTap: () {
-                                  stateBoards.setSelectedWorkspace(workspace);
-                                  stateBoards.setSelectedBoard(board);
-                                  onItemSelected(1);
-                                },
-                                borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Color(board.color == 0 ? 0xFF0D40A5 : board.color),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          board.name,
-                                          style: GlassText.bodyMD().copyWith(
-                                            fontSize: 12,
-                                            fontWeight: isBoardSelected ? FontWeight.w600 : FontWeight.w400,
-                                            color: isBoardSelected ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.7),
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
+                          ...boards
+                              .where((b) => b.workspaceId == workspace.id)
+                              .map((board) {
+                                final isBoardSelected =
+                                    selectedBoardId == board.id &&
+                                    selectedIndex == 1;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 20,
+                                    bottom: 2,
                                   ),
-                                ),
-                              ),
-                            );
-                          }),
+                                  child: InkWell(
+                                    onTap: () {
+                                      stateBoards.setSelectedWorkspace(
+                                        workspace,
+                                      );
+                                      stateBoards.setSelectedBoard(board);
+                                      onItemSelected(1);
+                                    },
+                                    borderRadius: BorderRadius.circular(
+                                      ExecutiveRadius.s,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Color(
+                                                board.color == 0
+                                                    ? 0xFF0D40A5
+                                                    : board.color,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              board.name,
+                                              style: GlassText.bodyMD()
+                                                  .copyWith(
+                                                    fontSize: 12,
+                                                    fontWeight: isBoardSelected
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w400,
+                                                    color: isBoardSelected
+                                                        ? GlassColors.onSurface
+                                                        : GlassColors
+                                                              .onSurfaceVariant
+                                                              .withOpacity(0.7),
+                                                  ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
                         ],
 
                         const SizedBox(height: 8),
@@ -254,26 +324,37 @@ class AetherSideNav extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Profile Avatar at Bottom
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.2), width: 1),
+              border: Border.all(
+                color: GlassColors.outlineVariant.withOpacity(0.2),
+                width: 1,
+              ),
               color: GlassColors.primary.withOpacity(0.05),
             ),
             child: ClipOval(
-              child: user?.photoURL != null 
-                ? Image.network(
-                    user!.photoURL!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.person_outline_rounded, size: 24, color: GlassColors.primary),
-                  )
-                : const Icon(Icons.person_outline_rounded, size: 24, color: GlassColors.primary),
+              child: user?.photoURL != null
+                  ? Image.network(
+                      user!.photoURL!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.person_outline_rounded,
+                        size: 24,
+                        color: GlassColors.primary,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.person_outline_rounded,
+                      size: 24,
+                      color: GlassColors.primary,
+                    ),
             ),
           ),
         ],
@@ -293,14 +374,23 @@ class AetherSideNav extends StatelessWidget {
             width: 400,
             margin: const EdgeInsets.all(24),
             padding: const EdgeInsets.all(32),
-            decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+            decoration: GlassDecorations.solidSurface(
+              radius: 24,
+              hasShadow: true,
+            ),
             child: Material(
               color: Colors.transparent,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('CREATE NEW WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.primary, letterSpacing: 2)),
+                  Text(
+                    'CREATE NEW WORKSPACE',
+                    style: GlassText.labelSM().copyWith(
+                      color: GlassColors.primary,
+                      letterSpacing: 2,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   ImeSafeTextField(
                     controller: nameController,
@@ -308,15 +398,25 @@ class AetherSideNav extends StatelessWidget {
                     style: GlassText.bodyLG(),
                     decoration: InputDecoration(
                       hintText: 'Workspace Name',
-                      hintStyle: GlassText.bodyLG().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.3)),
+                      hintStyle: GlassText.bodyLG().copyWith(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                      ),
                       filled: true,
                       fillColor: GlassColors.primary.withOpacity(0.05),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                       contentPadding: const EdgeInsets.all(16),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text('TYPE', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.5))),
+                  Text(
+                    'TYPE',
+                    style: GlassText.labelSM().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -326,13 +426,23 @@ class AetherSideNav extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: type == 'personal' ? GlassColors.primary.withOpacity(0.1) : Colors.transparent,
+                              color: type == 'personal'
+                                  ? GlassColors.primary.withOpacity(0.1)
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: type == 'personal' ? GlassColors.primary : GlassColors.ghostBorder),
+                              border: Border.all(
+                                color: type == 'personal'
+                                    ? GlassColors.primary
+                                    : GlassColors.ghostBorder,
+                              ),
                             ),
                             child: Column(
                               children: [
-                                const Icon(Icons.person_rounded, size: 20, color: GlassColors.onSurface),
+                                const Icon(
+                                  Icons.person_rounded,
+                                  size: 20,
+                                  color: GlassColors.onSurface,
+                                ),
                                 const SizedBox(height: 4),
                                 Text('Personal', style: GlassText.bodyMD()),
                               ],
@@ -347,13 +457,23 @@ class AetherSideNav extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: type == 'team' ? GlassColors.primary.withOpacity(0.1) : Colors.transparent,
+                              color: type == 'team'
+                                  ? GlassColors.primary.withOpacity(0.1)
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: type == 'team' ? GlassColors.primary : GlassColors.ghostBorder),
+                              border: Border.all(
+                                color: type == 'team'
+                                    ? GlassColors.primary
+                                    : GlassColors.ghostBorder,
+                              ),
                             ),
                             child: Column(
                               children: [
-                                const Icon(Icons.group_rounded, size: 20, color: GlassColors.onSurface),
+                                const Icon(
+                                  Icons.group_rounded,
+                                  size: 20,
+                                  color: GlassColors.onSurface,
+                                ),
                                 const SizedBox(height: 4),
                                 Text('Team', style: GlassText.bodyMD()),
                               ],
@@ -372,9 +492,16 @@ class AetherSideNav extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             side: BorderSide(color: GlassColors.ghostBorder),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant)),
+                          child: Text(
+                            'CANCEL',
+                            style: GlassText.labelSM().copyWith(
+                              color: GlassColors.onSurfaceVariant,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -390,17 +517,32 @@ class AetherSideNav extends StatelessWidget {
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                GlassNotifications.show(context, 'Failed to add workspace: $e', isError: true);
+                                GlassNotifications.show(
+                                  context,
+                                  'Failed to add workspace: $e',
+                                  isError: true,
+                                );
                               }
                             }
                           },
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: GlassColors.gold, width: 1.5),
+                            side: const BorderSide(
+                              color: GlassColors.gold,
+                              width: 1.5,
+                            ),
                             backgroundColor: GlassColors.gold.withOpacity(0.05),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          child: Text('CREATE', style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'CREATE',
+                            style: GlassText.labelSM().copyWith(
+                              color: GlassColors.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -414,7 +556,11 @@ class AetherSideNav extends StatelessWidget {
     );
   }
 
-  void _showDeleteWorkspaceConfirmDialog(BuildContext context, StateBoards stateBoards, WorkspaceModel workspace) {
+  void _showDeleteWorkspaceConfirmDialog(
+    BuildContext context,
+    StateBoards stateBoards,
+    WorkspaceModel workspace,
+  ) {
     showDialog(
       context: context,
       builder: (context) => Center(
@@ -422,18 +568,29 @@ class AetherSideNav extends StatelessWidget {
           width: 400,
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
-          decoration: GlassDecorations.solidSurface(radius: 24, hasShadow: true),
+          decoration: GlassDecorations.solidSurface(
+            radius: 24,
+            hasShadow: true,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DELETE WORKSPACE', style: GlassText.labelSM().copyWith(color: GlassColors.error, letterSpacing: 2)),
+                Text(
+                  'DELETE WORKSPACE',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.error,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Are you sure you want to delete workspace "${workspace.name}"? All projects within it will be deleted/dissociated.',
-                  style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant),
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Row(
@@ -444,9 +601,18 @@ class AetherSideNav extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: BorderSide(color: GlassColors.ghostBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('CANCEL', style: GlassText.labelSM().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6))),
+                        child: Text(
+                          'CANCEL',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -460,17 +626,32 @@ class AetherSideNav extends StatelessWidget {
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              GlassNotifications.show(context, 'Failed to delete workspace: $e', isError: true);
+                              GlassNotifications.show(
+                                context,
+                                'Failed to delete workspace: $e',
+                                isError: true,
+                              );
                             }
                           }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: GlassColors.error, width: 1.5),
+                          side: const BorderSide(
+                            color: GlassColors.error,
+                            width: 1.5,
+                          ),
                           backgroundColor: GlassColors.error.withOpacity(0.05),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('DELETE', style: GlassText.labelSM().copyWith(color: GlassColors.error, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'DELETE',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -517,7 +698,9 @@ class _NavItem extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isActive ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.6),
+                color: isActive
+                    ? GlassColors.onSurface
+                    : GlassColors.onSurfaceVariant.withOpacity(0.6),
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -526,7 +709,9 @@ class _NavItem extends StatelessWidget {
                 style: GlassText.bodyMD().copyWith(
                   fontSize: 14,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: isActive ? GlassColors.onSurface : GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  color: isActive
+                      ? GlassColors.onSurface
+                      : GlassColors.onSurfaceVariant.withOpacity(0.6),
                 ),
               ),
             ],

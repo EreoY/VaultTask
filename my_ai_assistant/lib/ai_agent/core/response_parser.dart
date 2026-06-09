@@ -31,8 +31,9 @@ class ResponseParser {
     final Map<String, dynamic> result = {};
     final thinkRegex = RegExp(r'<think>.*?(?:</think>|$)', dotAll: true);
     args.forEach((key, value) {
-      if (value is String) result[key] = value.replaceAll(thinkRegex, '').trim();
-      else if (value is Map<String, dynamic>) result[key] = recursiveStripThink(value);
+      if (value is String) {
+        result[key] = value.replaceAll(thinkRegex, '').trim();
+      } else if (value is Map<String, dynamic>) result[key] = recursiveStripThink(value);
       else if (value is List) result[key] = value.map((e) {
         if (e is Map<String, dynamic>) return recursiveStripThink(e);
         if (e is String) return e.replaceAll(thinkRegex, '').trim();

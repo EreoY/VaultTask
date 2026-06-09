@@ -477,8 +477,9 @@ class _KanbanPageState extends State<KanbanPage> {
             side: BorderSide(color: GlassColors.ghostBorder, width: 0.5),
           ),
           onSelected: (value) {
-            if (value == 'toggle_zoom') setState(() => _isOverviewMode = !_isOverviewMode);
-            else if (value == 'share') _showBoardInfoDialog(board);
+            if (value == 'toggle_zoom') {
+              setState(() => _isOverviewMode = !_isOverviewMode);
+            } else if (value == 'share') _showBoardInfoDialog(board);
             else if (value == 'rename') _showRenameBoardDialog(context, board);
             else if (value == 'members') _showRoleManager(board);
           },
@@ -601,7 +602,7 @@ class _KanbanPageState extends State<KanbanPage> {
                   Navigator.pop(context);
                 },
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
           ],
         ),
@@ -778,7 +779,7 @@ class _KanbanPageState extends State<KanbanPage> {
               ),
             ),
           );
-        }).toList(),
+        }),
         if (remainingCount > 0)
           Padding(
             padding: const EdgeInsets.only(right: 6),
@@ -823,7 +824,7 @@ class _KanbanPageState extends State<KanbanPage> {
               title: Text(col.toUpperCase(), style: GlassText.bodyMD()),
               leading: const Icon(Icons.subdirectory_arrow_right_rounded, color: GlassColors.primary, size: 20),
               onTap: () { Navigator.pop(context); _moveSelectedTasks(col); },
-            )).toList(),
+            )),
           ],
         ),
       ),
@@ -1134,7 +1135,7 @@ class _KanbanPageState extends State<KanbanPage> {
     final state = context.read<StateTasks>();
     final notifier = state.getTaskNotifier(task.id);
     
-    final cardContent = (TaskModel currentTask) => Container(
+    Container cardContent(TaskModel currentTask) => Container(
       margin: const EdgeInsets.only(bottom: 2),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
@@ -1298,7 +1299,7 @@ class _KanbanPageState extends State<KanbanPage> {
     final state = context.read<StateTasks>();
     final notifier = state.getTaskNotifier(task.id);
 
-    final cardContent = (TaskModel currentTask) => Container(
+    Container cardContent(TaskModel currentTask) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.04),

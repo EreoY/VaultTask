@@ -13,7 +13,6 @@ import '../../../databases/api_cloudflare.dart';
 import '../../../config/env_config.dart';
 import '../../../services/auth_service.dart';
 import '../../theme/glass_theme.dart';
-import '../../common/glass_widgets.dart';
 
 class TaskEditModal extends StatefulWidget {
   final BoardModel board;
@@ -331,8 +330,9 @@ class _TaskEditModalState extends State<TaskEditModal> {
   Future<void> _generateAndSaveDescriptionInBackground(String imageId, List<int> bytes, String fileName) async {
     String mimeType = 'image/jpeg';
     final ext = fileName.split('.').last.toLowerCase();
-    if (ext == 'png') mimeType = 'image/png';
-    else if (ext == 'gif') mimeType = 'image/gif';
+    if (ext == 'png') {
+      mimeType = 'image/png';
+    } else if (ext == 'gif') mimeType = 'image/gif';
     else if (ext == 'webp') mimeType = 'image/webp';
 
     try {
@@ -714,7 +714,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
   Widget _buildVerticalAssetList() {
     return Column(
       children: [
-        ..._images.map((img) => _buildAssetRow(img)).toList(),
+        ..._images.map((img) => _buildAssetRow(img)),
         const SizedBox(height: 16),
         _buildGhostButton('UPLOAD MEDIA ASSET', _pickAndUploadImage, icon: Icons.add_photo_alternate_outlined),
       ],
@@ -1030,14 +1030,17 @@ class _TaskEditModalState extends State<TaskEditModal> {
                     activeColor: Color(color),
                     onChanged: (v) async {
                       setModalState(() {
-                        if (v == true) _labelIds.add(id);
-                        else _labelIds.remove(id);
+                        if (v == true) {
+                          _labelIds.add(id);
+                        } else {
+                          _labelIds.remove(id);
+                        }
                       });
                       setState(() {});
                       await _autoSaveTask();
                     },
                   );
-                }).toList(),
+                }),
               ],
             ),
           );
@@ -1153,14 +1156,17 @@ class _TaskEditModalState extends State<TaskEditModal> {
                     activeColor: GlassColors.primary,
                     onChanged: (v) async {
                       setModalState(() {
-                        if (v == true) _members.add(entry.key);
-                        else _members.remove(entry.key);
+                        if (v == true) {
+                          _members.add(entry.key);
+                        } else {
+                          _members.remove(entry.key);
+                        }
                       });
                       setState(() {});
                       await _autoSaveTask();
                     },
                   );
-                }).toList(),
+                }),
               ],
             ),
           );

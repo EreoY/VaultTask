@@ -10,13 +10,14 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:async';
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html; 
+import 'dart:html' as html;
 
 import 'firebase_options.dart';
 import 'config/env_config.dart';
 import 'state_managers/state_boards.dart';
 import 'state_managers/state_tasks.dart';
 import 'state_managers/state_chat.dart';
+import 'models/board_model.dart';
 import 'ui/theme/glass_theme.dart';
 import 'ui/common/glass_widgets.dart';
 import 'ui/common/aether_side_nav.dart';
@@ -32,7 +33,7 @@ import 'ui/common/responsive_layout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -128,7 +129,8 @@ class _StartupGuardState extends State<StartupGuard> {
           return _buildErrorState(snapshot.error.toString());
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting || !_delayCompleted) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            !_delayCompleted) {
           return _buildLoadingState();
         }
 
@@ -147,10 +149,16 @@ class _StartupGuardState extends State<StartupGuard> {
           children: [
             const CircularProgressIndicator(color: GlassColors.primary),
             const SizedBox(height: 32),
-            Text('AETHER INITIALIZING', style: GlassText.labelSM().copyWith(letterSpacing: 2.0)),
+            Text(
+              'AETHER INITIALIZING',
+              style: GlassText.labelSM().copyWith(letterSpacing: 2.0),
+            ),
             if (_showRetry) ...[
               const SizedBox(height: 48),
-              Text('Connection taking longer than usual.', style: GlassText.bodyMD().copyWith(color: Colors.white30)),
+              Text(
+                'Connection taking longer than usual.',
+                style: GlassText.bodyMD().copyWith(color: Colors.white30),
+              ),
               const SizedBox(height: 16),
               OutlinedButton(
                 onPressed: () {
@@ -158,8 +166,13 @@ class _StartupGuardState extends State<StartupGuard> {
                     html.window.location.reload();
                   }
                 },
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: GlassColors.gold)),
-                child: Text('FORCE RELOAD', style: GlassText.labelSM().copyWith(color: GlassColors.gold)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: GlassColors.gold),
+                ),
+                child: Text(
+                  'FORCE RELOAD',
+                  style: GlassText.labelSM().copyWith(color: GlassColors.gold),
+                ),
               ),
             ],
           ],
@@ -176,18 +189,29 @@ class _StartupGuardState extends State<StartupGuard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.redAccent,
+                size: 48,
+              ),
               const SizedBox(height: 24),
-              Text('STARTUP FAILURE', style: GlassText.labelSM().copyWith(color: Colors.redAccent)),
+              Text(
+                'STARTUP FAILURE',
+                style: GlassText.labelSM().copyWith(color: Colors.redAccent),
+              ),
               const SizedBox(height: 16),
-              Text(error, textAlign: TextAlign.center, style: GlassText.bodyMD().copyWith(color: Colors.white60)),
+              Text(
+                error,
+                textAlign: TextAlign.center,
+                style: GlassText.bodyMD().copyWith(color: Colors.white60),
+              ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
                   if (kIsWeb) {
                     html.window.location.reload();
                   }
-                }, 
+                },
                 child: const Text('RETRY'),
               ),
             ],
@@ -201,10 +225,10 @@ class _StartupGuardState extends State<StartupGuard> {
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<ui.PointerDeviceKind> get dragDevices => {
-        ui.PointerDeviceKind.touch,
-        ui.PointerDeviceKind.mouse,
-        ui.PointerDeviceKind.trackpad,
-      };
+    ui.PointerDeviceKind.touch,
+    ui.PointerDeviceKind.mouse,
+    ui.PointerDeviceKind.trackpad,
+  };
 }
 
 class AppShell extends StatefulWidget {
@@ -213,34 +237,82 @@ class AppShell extends StatefulWidget {
   @override
   State<AppShell> createState() => _AppShellState();
 }
+
 class _AppShellState extends State<AppShell> {
   int _index = 0;
-  late final List<Widget> _screens;
+  final Set<int> _visitedTabs = {0};
+  StreamSubscription<html.Event>? _windowFocusSub;
 
   @override
   void initState() {
     super.initState();
-    _screens = [
-      DashboardPage(
-        isDark: false,
-        onNavigate: (i) => setState(() => _index = i),
-      ),
-      const BoardsPage(isDark: false),
-      CalendarPage(
-        isDark: false,
-        onNavigate: (i) => setState(() => _index = i),
-      ),
-      const ChatPage(isDark: false),
-      const ProfilePage(isDark: false),
-    ];
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StateBoards>().fetchAllBoards();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<StateBoards>().fetchAllBoards();
+    });
+    if (kIsWeb) {
+      _windowFocusSub = html.window.onFocus.listen((_) {
+        if (!mounted) return;
+        context.read<StateTasks>().refreshReadComments();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _windowFocusSub?.cancel();
+    super.dispose();
+  }
+
+  void _selectTab(int index, {bool clearBoard = true}) {
+    setState(() {
+      _index = index;
+      _visitedTabs.add(index);
+      if (clearBoard) {
+        context.read<StateBoards>().setSelectedBoard(null);
+      }
+    });
+    if (index == 0) {
+      context.read<StateTasks>().refreshReadComments();
+    }
+  }
+
+  Widget _buildScreen(int index) {
+    switch (index) {
+      case 0:
+        return DashboardPage(
+          isDark: false,
+          onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
+        );
+      case 1:
+        return const BoardsPage(isDark: false);
+      case 2:
+        return CalendarPage(
+          isDark: false,
+          onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
+        );
+      case 3:
+        return const ChatPage(isDark: false);
+      case 4:
+        return const ProfilePage(isDark: false);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  List<Widget> _buildVisitedScreens() {
+    return List<Widget>.generate(5, (index) {
+      if (_visitedTabs.contains(index)) {
+        return _buildScreen(index);
+      }
+      return const SizedBox.shrink();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedBoard = context.watch<StateBoards>().selectedBoard;
+    final selectedBoard = context.select<StateBoards, BoardModel?>(
+      (state) => state.selectedBoard,
+    );
     final isDesktop = Responsive.isDesktop(context);
 
     return Scaffold(
@@ -248,39 +320,41 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: !isDesktop && selectedBoard == null
           ? GlassBottomBar(
               selectedIndex: _index,
-              onItemSelected: (index) {
-                setState(() {
-                  _index = index;
-                  context.read<StateBoards>().setSelectedBoard(null);
-                });
-              },
+              onItemSelected: (index) => _selectTab(index),
               items: const [
-                GlassBottomBarItem(icon: Icons.dashboard_outlined, label: 'Dashboard'),
-                GlassBottomBarItem(icon: Icons.grid_view_rounded, label: 'Boards'),
-                GlassBottomBarItem(icon: Icons.calendar_today_outlined, label: 'Calendar'),
-                GlassBottomBarItem(icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
-                GlassBottomBarItem(icon: Icons.person_outline_rounded, label: 'Profile'),
+                GlassBottomBarItem(
+                  icon: Icons.dashboard_outlined,
+                  label: 'Dashboard',
+                ),
+                GlassBottomBarItem(
+                  icon: Icons.grid_view_rounded,
+                  label: 'Boards',
+                ),
+                GlassBottomBarItem(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Calendar',
+                ),
+                GlassBottomBarItem(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'Chat',
+                ),
+                GlassBottomBarItem(
+                  icon: Icons.person_outline_rounded,
+                  label: 'Profile',
+                ),
               ],
               isDark: false,
             )
           : null,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: GlassGradients.background(),
-        ),
+        decoration: BoxDecoration(gradient: GlassGradients.background()),
         child: Row(
           children: [
             if (isDesktop)
               AetherSideNav(
                 selectedIndex: _index,
-                onItemSelected: (index) {
-                  setState(() {
-                    _index = index;
-                    if (index != 1) {
-                      context.read<StateBoards>().setSelectedBoard(null);
-                    }
-                  });
-                },
+                onItemSelected: (index) =>
+                    _selectTab(index, clearBoard: index != 1),
                 isDark: false,
               ),
             Expanded(
@@ -305,22 +379,21 @@ class _AppShellState extends State<AppShell> {
                   SafeArea(
                     top: !isDesktop,
                     bottom: false,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 600),
-                      switchInCurve: Curves.easeOutQuart,
-                      switchOutCurve: Curves.easeInQuart,
-                      child: selectedBoard != null
-                          ? KanbanPage(
+                    child: selectedBoard != null
+                        ? AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            child: KanbanPage(
                               key: ValueKey('kanban_${selectedBoard.id}'),
                               board: selectedBoard,
                               isDark: false,
-                            )
-                          : IndexedStack(
-                              key: const ValueKey('screens_stack'),
-                              index: _index,
-                              children: _screens,
                             ),
-                    ),
+                          )
+                        : IndexedStack(
+                            index: _index,
+                            children: _buildVisitedScreens(),
+                          ),
                   ),
                   const FloatingAssistantShell(),
                 ],

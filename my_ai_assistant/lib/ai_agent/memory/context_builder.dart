@@ -65,7 +65,7 @@ class ContextBuilder {
               // Convert member UIDs to names for AI convenience in text, but keep ID for tool logic
               final tMemberNames = t.members.map((muid) => memberNames[muid]?['name'] ?? muid).join(', ');
               final imagesSummary = t.images.isNotEmpty
-                  ? ' | รูปภาพ: ' + t.images.map((img) => '"${img.r2Key}" (คำอธิบาย: ${img.aiDescription})').join(', ')
+                  ? ' | รูปภาพ: ${t.images.map((img) => '"${img.r2Key}" (คำอธิบาย: ${img.aiDescription})').join(', ')}'
                   : '';
               buf.writeln('      - [ID: ${t.id}] "${t.title}" | สถานะ: ${t.status} ($statusStr) | ผู้รับผิดชอบ: $tMemberNames$imagesSummary');
             }

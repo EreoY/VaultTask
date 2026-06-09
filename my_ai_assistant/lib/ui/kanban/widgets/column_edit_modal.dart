@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../models/board_model.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../theme/glass_theme.dart';
-import '../../common/glass_widgets.dart';
 
 class ColumnEditModal extends StatefulWidget {
   final BoardModel board;

@@ -8,7 +8,6 @@ import '../../../models/board_model.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../../state_managers/state_tasks.dart';
 import '../../theme/glass_theme.dart';
-import '../../common/glass_widgets.dart';
 import '../../common/responsive_layout.dart';
 
 class DailyTimelineView extends StatefulWidget {
@@ -33,8 +32,8 @@ class DailyTimelineView extends StatefulWidget {
 
 class _DailyTimelineViewState extends State<DailyTimelineView> {
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey _currentHourKey = GlobalKey(); // 🚀 Task 74.2: Precise Sentinel
-
+  final GlobalKey _currentHourKey =
+      GlobalKey(); // 🚀 Task 74.2: Precise Sentinel
 
   @override
   void initState() {
@@ -45,7 +44,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
 
   @override
   void dispose() {
-
     _scrollController.dispose();
     super.dispose();
   }
@@ -70,7 +68,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             final topPadding = isMobile ? 16.0 : 32.0;
             final hour = DateTime.now().hour;
             final offset = (hour * hourHeight) + topPadding;
-            
+
             _scrollController.animateTo(
               offset.clamp(0.0, _scrollController.position.maxScrollExtent),
               duration: const Duration(seconds: 1),
@@ -99,12 +97,14 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           child: ListView.builder(
             controller: _scrollController,
             padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 48, 
-              vertical: isMobile ? 16 : 32
+              horizontal: isMobile ? 16 : 48,
+              vertical: isMobile ? 16 : 32,
             ),
             itemCount: 24,
             itemBuilder: (context, hour) {
-              final hourTasks = upcomingTasks.where((t) => t.dueDate.hour == hour).toList();
+              final hourTasks = upcomingTasks
+                  .where((t) => t.dueDate.hour == hour)
+                  .toList();
               return _buildHourRow(hour, hourTasks);
             },
           ),
@@ -116,7 +116,12 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   Widget _buildTimelineHeader(List<TaskModel> activeTasks) {
     final isMobile = Responsive.isMobile(context);
     return Container(
-      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 48, 0, isMobile ? 16 : 48, 24),
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 48,
+        0,
+        isMobile ? 16 : 48,
+        24,
+      ),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: GlassColors.ghostBorder)),
       ),
@@ -129,7 +134,10 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             const Spacer(),
             Text(
               'INTENSITY: ${(activeTasks.length / 24 * 100).toStringAsFixed(0)}%',
-              style: GlassText.labelSM().copyWith(color: GlassColors.primary.withOpacity(0.5), letterSpacing: 1.5),
+              style: GlassText.labelSM().copyWith(
+                color: GlassColors.primary.withOpacity(0.5),
+                letterSpacing: 1.5,
+              ),
             ),
           ],
         ],
@@ -141,9 +149,22 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GlassText.labelSM().copyWith(fontSize: 8, color: GlassColors.onSurfaceVariant.withOpacity(0.4), letterSpacing: 1.0)),
+        Text(
+          label,
+          style: GlassText.labelSM().copyWith(
+            fontSize: 8,
+            color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+            letterSpacing: 1.0,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value, style: GlassText.headlineLG().copyWith(fontSize: 24, color: GlassColors.primary)),
+        Text(
+          value,
+          style: GlassText.headlineLG().copyWith(
+            fontSize: 24,
+            color: GlassColors.primary,
+          ),
+        ),
       ],
     );
   }
@@ -151,13 +172,16 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   Widget _buildHourRow(int hour, List<TaskModel> hourTasks) {
     final now = DateTime.now();
     final isMobile = Responsive.isMobile(context);
-    final isToday = widget.date.day == now.day && widget.date.month == now.month && widget.date.year == now.year;
+    final isToday =
+        widget.date.day == now.day &&
+        widget.date.month == now.month &&
+        widget.date.year == now.year;
     final isCurrentHour = isToday && now.hour == hour;
-    
+
     final hh = DateFormat('HH').format(DateTime(2024, 1, 1, hour));
 
     final hasTasks = hourTasks.isNotEmpty;
-    
+
     final timeColumnWidth = isMobile ? 60.0 : 80.0;
 
     return IntrinsicHeight(
@@ -176,22 +200,30 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                     Positioned.fill(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(12, (_) => Container(
-                          width: 1.5, height: 1.5, 
-                          decoration: BoxDecoration(
-                            color: GlassColors.onSurface.withOpacity(0.06), 
-                            shape: BoxShape.circle,
-                          )
-                        )),
+                        children: List.generate(
+                          12,
+                          (_) => Container(
+                            width: 1.5,
+                            height: 1.5,
+                            decoration: BoxDecoration(
+                              color: GlassColors.onSurface.withOpacity(0.06),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    
+
                     // Centered Marker
                     Center(
-                      key: isCurrentHour ? _currentHourKey : null, // 🚀 Task 74.2: Marker Key
+                      key: isCurrentHour
+                          ? _currentHourKey
+                          : null, // 🚀 Task 74.2: Marker Key
                       child: isCurrentHour
                           ? StreamBuilder(
-                              stream: Stream.periodic(const Duration(seconds: 1)),
+                              stream: Stream.periodic(
+                                const Duration(seconds: 1),
+                              ),
                               builder: (context, _) {
                                 final t = DateTime.now();
                                 final curMm = DateFormat('mm').format(t);
@@ -199,11 +231,39 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                                 return Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(hh, style: GlassText.headlineXL().copyWith(fontSize: isMobile ? 24 : 34, height: 0.9, color: GlassColors.gold, fontWeight: FontWeight.w900)),
-                                    Text(curMm, style: GlassText.headlineXL().copyWith(fontSize: isMobile ? 24 : 34, height: 0.9, color: GlassColors.gold.withOpacity(0.5), fontWeight: FontWeight.w900)),
+                                    Text(
+                                      hh,
+                                      style: GlassText.headlineXL().copyWith(
+                                        fontSize: isMobile ? 24 : 34,
+                                        height: 0.9,
+                                        color: GlassColors.gold,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    Text(
+                                      curMm,
+                                      style: GlassText.headlineXL().copyWith(
+                                        fontSize: isMobile ? 24 : 34,
+                                        height: 0.9,
+                                        color: GlassColors.gold.withOpacity(
+                                          0.5,
+                                        ),
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
                                     const SizedBox(height: 2),
                                     // 🚀 Task 74.3: Digital Pulse Restoration
-                                    Text(curSs, style: GlassText.labelSM().copyWith(fontSize: isMobile ? 9 : 10, color: GlassColors.gold.withOpacity(0.3), fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+                                    Text(
+                                      curSs,
+                                      style: GlassText.labelSM().copyWith(
+                                        fontSize: isMobile ? 9 : 10,
+                                        color: GlassColors.gold.withOpacity(
+                                          0.3,
+                                        ),
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
                                   ],
                                 );
                               },
@@ -212,8 +272,14 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                               '$hh:00',
                               style: GlassText.labelSM().copyWith(
                                 fontSize: isMobile ? 12 : (hasTasks ? 16 : 11),
-                                fontWeight: hasTasks ? FontWeight.bold : FontWeight.w400,
-                                color: hasTasks ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.2),
+                                fontWeight: hasTasks
+                                    ? FontWeight.bold
+                                    : FontWeight.w400,
+                                color: hasTasks
+                                    ? GlassColors.primary
+                                    : GlassColors.onSurfaceVariant.withOpacity(
+                                        0.2,
+                                      ),
                               ),
                             ),
                     ),
@@ -226,7 +292,12 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                   constraints: BoxConstraints(minHeight: isMobile ? 100 : 120),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: GlassColors.ghostBorder, width: 0.5)),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: GlassColors.ghostBorder,
+                        width: 0.5,
+                      ),
+                    ),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -234,14 +305,14 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                       if (hourTasks.isEmpty)
                         _buildGap()
                       else
-                        ...hourTasks.map((t) => _buildTaskBlock(t)).toList(),
+                        ...hourTasks.map((t) => _buildTaskBlock(t)),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-          
+
           if (isCurrentHour)
             Positioned.fill(
               child: StreamBuilder(
@@ -256,14 +327,19 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                       ),
                       child: Row(
                         children: [
-                          SizedBox(width: timeColumnWidth - 3), 
+                          SizedBox(width: timeColumnWidth - 3),
                           Container(
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
                               color: GlassColors.gold,
                               shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.8), blurRadius: 8)],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.withOpacity(0.8),
+                                  blurRadius: 8,
+                                ),
+                              ],
                             ),
                           ),
                           Expanded(
@@ -271,7 +347,10 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                               height: 1.5,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.red.withOpacity(0.8), Colors.red.withOpacity(0.0)],
+                                  colors: [
+                                    Colors.red.withOpacity(0.8),
+                                    Colors.red.withOpacity(0.0),
+                                  ],
                                 ),
                               ),
                             ),
@@ -295,7 +374,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
       alignment: Alignment.centerLeft,
       child: Text(
         'NO STRATEGIC TASKS',
-        style: GlassText.labelSM().copyWith(fontSize: 9, color: GlassColors.onSurfaceVariant.withOpacity(0.15), letterSpacing: 2.5),
+        style: GlassText.labelSM().copyWith(
+          fontSize: 9,
+          color: GlassColors.onSurfaceVariant.withOpacity(0.15),
+          letterSpacing: 2.5,
+        ),
       ),
     );
   }
@@ -310,7 +393,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
       colorValue = board.color;
       boardName = board.name;
     } catch (_) {}
-    
+
     final color = Color(colorValue);
 
     return InkWell(
@@ -319,8 +402,8 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 12 : 20, 
-          vertical: isMobile ? 10 : 14
+          horizontal: isMobile ? 12 : 20,
+          vertical: isMobile ? 10 : 14,
         ),
         decoration: BoxDecoration(
           color: color.withOpacity(0.12),
@@ -332,7 +415,10 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             Container(
               width: 3,
               height: 24,
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             SizedBox(width: isMobile ? 12 : 20),
             Expanded(
@@ -345,18 +431,18 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GlassText.bodyMD().copyWith(
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 0.5, 
-                      fontSize: isMobile ? 13 : 15
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      fontSize: isMobile ? 13 : 15,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     boardName.toUpperCase(),
                     style: GlassText.labelSM().copyWith(
-                      fontSize: 8, 
-                      color: color.withOpacity(0.7), 
-                      letterSpacing: 1.0
+                      fontSize: 8,
+                      color: color.withOpacity(0.7),
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ],
@@ -366,7 +452,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
               const SizedBox(width: 16),
               Text(
                 DateFormat('HH:mm').format(task.dueDate),
-                style: GlassText.labelSM().copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: GlassColors.primary),
+                style: GlassText.labelSM().copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: GlassColors.primary,
+                ),
               ),
               const SizedBox(width: 20),
               _buildAvatarStack(task.members),
@@ -377,10 +467,17 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     );
   }
 
+  BoardModel? _findBoard(String boardId, [List<BoardModel>? boards]) {
+    for (final board in boards ?? widget.boards) {
+      if (board.id == boardId) return board;
+    }
+    return null;
+  }
+
   void _showStrategicPreview(BuildContext context, TaskModel initialTask) {
     final isMobile = Responsive.isMobile(context);
-    final board = widget.boards.firstWhere((b) => b.id == initialTask.boardId, orElse: () => widget.boards.first);
-    
+    final board = _findBoard(initialTask.boardId);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -393,18 +490,27 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         builder: (context, scrollController) => Consumer<StateTasks>(
           builder: (context, taskState, _) {
             final tasks = taskState.tasksForBoard(initialTask.boardId);
-            final task = tasks.firstWhere((t) => t.id == initialTask.id, orElse: () => initialTask);
+            final task = tasks.firstWhere(
+              (t) => t.id == initialTask.id,
+              orElse: () => initialTask,
+            );
             final boardState = context.read<StateBoards>();
-            
-            final currentBoard = boardState.boards.firstWhere((b) => b.id == board.id, orElse: () => board);
+            final currentBoard =
+                _findBoard(task.boardId, boardState.boards) ?? board;
 
-            final coverImage = task.images.isEmpty 
-                ? null 
-                : task.images.firstWhere((img) => img.isCover, orElse: () => task.images.first);
+            final coverImage = task.images.isEmpty
+                ? null
+                : task.images.firstWhere(
+                    (img) => img.isCover,
+                    orElse: () => task.images.first,
+                  );
             final hasCover = coverImage != null && coverImage.url.isNotEmpty;
 
             return Container(
-              decoration: GlassDecorations.solidSurface(radius: 32, hasShadow: true),
+              decoration: GlassDecorations.solidSurface(
+                radius: 32,
+                hasShadow: true,
+              ),
               child: ListView(
                 controller: scrollController,
                 padding: EdgeInsets.zero,
@@ -414,33 +520,49 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                       height: 200,
                       width: double.infinity,
                       decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
                       ),
                       child: Stack(
                         children: [
                           Positioned.fill(
                             child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(32),
+                              ),
                               child: Image.network(
                                 EnvConfig.sanitizeUrl(coverImage.url),
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: GlassColors.surfaceHighest.withOpacity(0.1),
-                                  child: Center(
-                                    child: Icon(Icons.broken_image_outlined, size: 32, color: GlassColors.primary.withOpacity(0.3)),
-                                  ),
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: GlassColors.surfaceHighest
+                                          .withOpacity(0.1),
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.broken_image_outlined,
+                                          size: 32,
+                                          color: GlassColors.primary
+                                              .withOpacity(0.3),
+                                        ),
+                                      ),
+                                    ),
                               ),
                             ),
                           ),
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(32),
+                                ),
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
-                                  colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                                  colors: [
+                                    Colors.black.withOpacity(0.4),
+                                    Colors.transparent,
+                                  ],
                                 ),
                               ),
                             ),
@@ -456,24 +578,53 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('STRATEGIC PREVIEW', style: GlassText.labelSM().copyWith(color: GlassColors.gold, letterSpacing: 2.0)),
-                            IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                            Text(
+                              'STRATEGIC PREVIEW',
+                              style: GlassText.labelSM().copyWith(
+                                color: GlassColors.gold,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 32),
-                        Text(task.title.toUpperCase(), style: GlassText.headlineLG().copyWith(fontSize: isMobile ? 28 : 38)),
+                        Text(
+                          task.title.toUpperCase(),
+                          style: GlassText.headlineLG().copyWith(
+                            fontSize: isMobile ? 28 : 38,
+                          ),
+                        ),
                         const SizedBox(height: 16),
-                        
-                        _buildPreviewMetadataStrip(currentBoard, task, boardState),
-                        
+
+                        if (currentBoard != null)
+                          _buildPreviewMetadataStrip(
+                            currentBoard,
+                            task,
+                            boardState,
+                          ),
+
                         const SizedBox(height: 32),
-                        Text(task.description.isEmpty ? 'No strategic brief provided.' : task.description, style: GlassText.bodyLG().copyWith(fontSize: isMobile ? 16 : 18, color: GlassColors.onSurface.withOpacity(0.7))),
-                        
+                        Text(
+                          task.description.isEmpty
+                              ? 'No strategic brief provided.'
+                              : task.description,
+                          style: GlassText.bodyLG().copyWith(
+                            fontSize: isMobile ? 16 : 18,
+                            color: GlassColors.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+
                         if (task.images.isNotEmpty) ...[
                           const SizedBox(height: 48),
                           _buildSectionTitle('OPERATIONAL ASSETS'),
                           const SizedBox(height: 24),
-                          ...task.images.map((img) => _buildPreviewAssetRow(img)).toList(),
+                          ...task.images.map(
+                            (img) => _buildPreviewAssetRow(img),
+                          ),
                         ],
 
                         const SizedBox(height: 80),
@@ -481,23 +632,50 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                           children: [
                             Expanded(
                               child: InkWell(
-                                onTap: () {
-                                  context.read<StateBoards>().setSelectedBoard(currentBoard);
-                                  widget.onNavigate?.call(1);
-                                  Navigator.pop(context);
-                                },
-                                borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+                                onTap: currentBoard == null
+                                    ? null
+                                    : () {
+                                        context
+                                            .read<StateBoards>()
+                                            .setSelectedBoard(currentBoard);
+                                        widget.onNavigate?.call(1);
+                                        Navigator.pop(context);
+                                      },
+                                borderRadius: BorderRadius.circular(
+                                  ExecutiveRadius.circular,
+                                ),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: GlassColors.gold.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-                                    border: Border.all(color: GlassColors.gold.withOpacity(0.3)),
+                                    color: currentBoard == null
+                                        ? GlassColors.onSurface.withOpacity(
+                                            0.04,
+                                          )
+                                        : GlassColors.gold.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(
+                                      ExecutiveRadius.circular,
+                                    ),
+                                    border: Border.all(
+                                      color: currentBoard == null
+                                          ? GlassColors.ghostBorder
+                                          : GlassColors.gold.withOpacity(0.3),
+                                    ),
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'NAVIGATE TO EXECUTION BOARD',
-                                      style: GlassText.labelSM().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                                      currentBoard == null
+                                          ? 'BOARD NOT AVAILABLE'
+                                          : 'NAVIGATE TO EXECUTION BOARD',
+                                      style: GlassText.labelSM().copyWith(
+                                        color: currentBoard == null
+                                            ? GlassColors.onSurfaceVariant
+                                                  .withOpacity(0.55)
+                                            : GlassColors.gold,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -518,9 +696,16 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     );
   }
 
-  Widget _buildPreviewMetadataStrip(BoardModel board, TaskModel task, StateBoards boardState) {
-    final activeLabels = board.labels.where((l) => task.labelIds.contains(l['id'])).toList();
+  Widget _buildPreviewMetadataStrip(
+    BoardModel board,
+    TaskModel task,
+    StateBoards boardState,
+  ) {
+    final activeLabels = board.labels
+        .where((l) => task.labelIds.contains(l['id']))
+        .toList();
     final isMobile = Responsive.isMobile(context);
+    final workspaceName = _workspaceName(board, boardState);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -536,15 +721,30 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: activeLabels.map((l) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Color(l['color'] as int).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                  border: Border.all(color: Color(l['color'] as int).withOpacity(0.3)),
-                ),
-                child: Text((l['name'] as String).toUpperCase(), style: GlassText.labelSM().copyWith(fontSize: 8, color: Color(l['color'] as int))),
-              )).toList(),
+              children: activeLabels
+                  .map(
+                    (l) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Color(l['color'] as int).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                        border: Border.all(
+                          color: Color(l['color'] as int).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        (l['name'] as String).toUpperCase(),
+                        style: GlassText.labelSM().copyWith(
+                          fontSize: 8,
+                          color: Color(l['color'] as int),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
             const SizedBox(height: 16),
             Divider(color: GlassColors.ghostBorder, height: 1),
@@ -552,15 +752,49 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           ],
           Row(
             children: [
-              _buildPreviewMetadataItem(Icons.layers_outlined, task.status.toUpperCase()),
+              Expanded(
+                child: _buildPreviewMetadataItem(
+                  Icons.workspaces_outline,
+                  workspaceName.toUpperCase(),
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: _buildPreviewMetadataItem(Icons.calendar_today_rounded, DateFormat('MMM d, HH:mm').format(task.dueDate).toUpperCase())),
+              Expanded(
+                child: _buildPreviewMetadataItem(
+                  Icons.dashboard_outlined,
+                  board.name.toUpperCase(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildPreviewMetadataItem(
+                Icons.layers_outlined,
+                task.status.toUpperCase(),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildPreviewMetadataItem(
+                  Icons.calendar_today_rounded,
+                  DateFormat('MMM d, HH:mm').format(task.dueDate).toUpperCase(),
+                ),
+              ),
               _buildAvatarStack(task.members),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String _workspaceName(BoardModel board, StateBoards boardState) {
+    if (board.workspaceId.isEmpty) return 'Unknown workspace';
+    for (final workspace in boardState.workspaces) {
+      if (workspace.id == board.workspaceId) return workspace.name;
+    }
+    return 'Unknown workspace';
   }
 
   Widget _buildPreviewMetadataItem(IconData icon, String label) {
@@ -571,7 +805,10 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         const SizedBox(width: 8),
         Text(
           label,
-          style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.primary),
+          style: GlassText.labelSM().copyWith(
+            fontSize: 10,
+            color: GlassColors.primary,
+          ),
           overflow: TextOverflow.ellipsis,
         ),
       ],
@@ -584,8 +821,14 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-        border: Border.all(color: img.isCover ? GlassColors.gold.withOpacity(0.3) : GlassColors.ghostBorder),
-        color: img.isCover ? GlassColors.gold.withOpacity(0.05) : Colors.transparent,
+        border: Border.all(
+          color: img.isCover
+              ? GlassColors.gold.withOpacity(0.3)
+              : GlassColors.ghostBorder,
+        ),
+        color: img.isCover
+            ? GlassColors.gold.withOpacity(0.05)
+            : Colors.transparent,
       ),
       child: Row(
         children: [
@@ -602,7 +845,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                 EnvConfig.sanitizeUrl(img.url),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Center(
-                  child: Icon(Icons.broken_image_outlined, size: 16, color: GlassColors.primary.withOpacity(0.3)),
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    size: 16,
+                    color: GlassColors.primary.withOpacity(0.3),
+                  ),
                 ),
               ),
             ),
@@ -610,13 +857,20 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              img.aiDescription.isEmpty ? 'ASSET_${img.id.substring(img.id.length - 4)}' : img.aiDescription,
+              img.aiDescription.isEmpty
+                  ? 'ASSET_${img.id.substring(img.id.length - 4)}'
+                  : img.aiDescription,
               style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          if (img.isCover) const Icon(Icons.star_rounded, color: GlassColors.gold, size: 16),
+          if (img.isCover)
+            const Icon(Icons.star_rounded, color: GlassColors.gold, size: 16),
           const SizedBox(width: 12),
-          Icon(Icons.download_rounded, color: GlassColors.primary.withOpacity(0.5), size: 18),
+          Icon(
+            Icons.download_rounded,
+            color: GlassColors.primary.withOpacity(0.5),
+            size: 18,
+          ),
         ],
       ),
     );
@@ -625,7 +879,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.onSurfaceVariant.withOpacity(0.4), letterSpacing: 1.5),
+      style: GlassText.labelSM().copyWith(
+        fontSize: 10,
+        color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+        letterSpacing: 1.5,
+      ),
     );
   }
 
@@ -651,7 +909,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           final fallback = Center(
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 9,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           );
 

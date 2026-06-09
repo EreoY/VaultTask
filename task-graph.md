@@ -1,3 +1,198 @@
+## Phase 117: Calendar Reference Visual Alignment
+
+> **Architecture Mandate:** ปรับ Calendar ให้เข้าใกล้ reference screenshot มากขึ้น โดยลด visual treatment ที่เกินจากภาพต้นฉบับ, ทำ toolbar/tab underline เป็นเส้นเต็มแถว, ไม่ย้อมสีทั้งคอลัมน์ weekend, และทำ task row เป็นรายการบางพร้อมแถบสีบอร์ด
+
+### Task 117.1: Register Reference Alignment Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 117 เพื่อแก้ visual mismatch จาก reference ล่าสุด
+
+### Task 117.2: Match Toolbar and Weekend Visuals to Reference
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ทำ toolbar เป็นเส้นเต็มแถว, active underline ใต้ tab, และจำกัด weekend color ไว้ที่ header/date text ไม่ใช่พื้นทั้งช่อง
+
+### Task 117.3: Flatten Calendar Task Rows
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ปรับ task card ให้เป็น row เทาเข้มบาง ๆ พร้อมแถบสีบอร์ดและ workspace label แบบไม่หนาเกินภาพต้นฉบับ
+
+### Task 117.4: Verify Analyzer and Visual Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า task click ยังเปิด preview ก่อน ส่วน visual state ตรง requirement ล่าสุด
+
+---
+
+## Phase 116: Calendar Preview and Workspace Detail Correction
+
+> **Architecture Mandate:** ปรับ Calendar ตาม feedback หลังตรวจ UI จริง โดยแก้เส้นใต้ Month/Day ให้เหมือน tab bar, ทำ weekend styling ให้ตรงคอลัมน์ใน grid, เปลี่ยนการกด task ใน month view ให้เปิดรายละเอียดก่อนแทนการเด้งบอร์ดทันที, และแสดง workspace source บน card/preview
+
+### Task 116.1: Register Preview Correction Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 116 เพื่อควบคุม correction รอบใหม่ของ Calendar
+
+### Task 116.2: Fix Calendar Tab Underline and Weekend Mapping
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ปรับ Month/Day underline ให้เป็นเส้นใต้ tab จริง และผูก weekend สีตามคอลัมน์ SAT/SUN
+
+### Task 116.3: Restore Task Preview Before Board Navigation
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** กด task ใน month view แล้วเปิดรายละเอียดก่อน พร้อมปุ่ม navigate ไปบอร์ดใน modal
+
+### Task 116.4: Surface Workspace Source in Calendar Cards and Preview
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** แสดงชื่อ workspace ของ board ต้นทางใน task card และ preview metadata
+
+### Task 116.5: Verify Analyzer and Calendar Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit path ว่า task click เปิด preview ก่อน, workspace label แสดงได้, และ navigation ไปบอร์ดเกิดจากปุ่มใน preview
+
+---
+
+## Phase 115: Calendar Usability & Navigation Regression Fix
+
+> **Architecture Mandate:** แก้ regression หลัง Calendar redesign ได้แก่ month view เลื่อนดูสัปดาห์ล่างไม่ได้, weekend ไม่แยกสี, task card ต้องใช้สีบอร์ดชัดเจน, Month/Day toggle ต้องมี underline แบบ tab, การกด task ไปบอร์ดต้องไม่ล้าง selected board, และต้องลดการเด้งกลับ Dashboard จาก selected board ถูก clear ระหว่าง refresh board state
+
+### Task 115.1: Register Calendar Regression Fix Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 115 เพื่อควบคุม bugfix หลัง redesign
+
+### Task 115.2: Restore Month Scrolling, Weekend Styling, and Board-Colored Tasks
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เปิด scroll month grid, ทำ Saturday/Sunday เป็นสีแยก, และปรับ task row ให้ใช้สีของบอร์ดเป็น chip/background ชัดขึ้น
+
+### Task 115.3: Fix Board Navigation from Calendar Tasks
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** ป้องกัน `onNavigate(1)` ล้าง selected board และแก้ lookup board จาก task ให้ไม่ fallback ไปบอร์ดแรกผิด ๆ
+
+### Task 115.4: Stabilize Selected Board During Refresh
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:** ไม่ clear selected board เมื่อ refresh boards ล้มเหลวหรือได้ list ว่างชั่วคราว เพื่อลดอาการเด้งกลับ Dashboard/Kanban หลุด
+
+### Task 115.5: Verify Analyzer and Audit Regression Paths
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit keyword/flow สำหรับ Calendar scroll, board navigation, selected board refresh
+
+---
+
+## Phase 114: Read-Only Clean Calendar Redesign
+
+> **Architecture Mandate:** ปรับหน้า Calendar ให้เป็น read-only temporal view ที่สะอาดขึ้นตาม reference โดยเหลือเฉพาะ 2 โหมดคือ Month และ Day, ลบ path การเพิ่ม task จาก Calendar, และคง data rule เดิมที่แสดงเฉพาะงานของผู้ใช้ปัจจุบันที่ยังไม่เสร็จ
+
+### Task 114.1: Register Calendar Redesign Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 114 เพื่อควบคุมงาน redesign Calendar แบบ read-only
+
+### Task 114.2: Remove Calendar Task Creation Entry
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ลบปุ่ม/handler/import ที่เปิด `TaskEditModal` จากหน้า Calendar เพื่อให้หน้านี้ใช้ดูข้อมูลเท่านั้น
+
+### Task 114.3: Rebuild Clean Month and Day Chrome
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ปรับ header, toolbar, month grid และ view switcher ให้ clean แบบ reference โดยเหลือ Month/Day เท่านั้น
+
+### Task 114.4: Verify Calendar Read-Only Flow
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า Calendar ไม่มี add-task entry เหลืออยู่
+
+---
+
+## Phase 113: Cross-Tab Comment Read Refresh
+
+> **Architecture Mandate:** แก้ปัญหา Dashboard แสดงคอมเมนต์ยังไม่อ่านหลังผู้ใช้กดอ่านจาก browser tab อื่น โดยบังคับ refresh read-comment state จาก D1 เมื่อกลับเข้า Dashboard หรือเมื่อ browser window ได้ focus กลับมา โดยไม่ต้อง refresh ทั้งหน้า
+
+### Task 113.1: Add Force Refresh for Read Comment IDs
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** เพิ่ม public method สำหรับ force refresh `readCommentIds` จาก D1 และ notify UI เฉพาะเมื่อค่ามีการเปลี่ยนแปลง
+
+### Task 113.2: Refresh Reads on Dashboard Entry and Window Focus
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** เรียก refresh read-comments เมื่อเลือก Dashboard และเมื่อ Web browser tab/window ได้ focus กลับมา
+
+### Task 113.3: Verify Analyzer and Audit Flow
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` และ audit path ว่า Dashboard จะได้รับ read state ใหม่โดยไม่ต้อง reload
+
+---
+
+## Phase 112: Analyzer Gate, Comment Read Audit & Lazy Page Feed
+
+> **Architecture Mandate:** ทำให้ `flutter analyze` ผ่านเป็น quality gate, ตรวจยืนยันระบบอ่านคอมเมนต์ว่าผูกสถานะอ่านกับผู้ใช้รายคนแบบประหยัดพื้นที่, และปรับข้อมูลหน้า Dashboard/Calendar/Kanban ให้โหลดตามหน้าที่ผู้ใช้เข้าใช้งานจริงแทนการโหลด task ทุกบอร์ดตั้งแต่เริ่มแอป
+
+### Task 112.1: Register Analyzer & Lazy Feed Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 112 เพื่อควบคุมงานแก้ analyzer, audit comment read, และ lazy feed ต่อหน้า
+
+### Task 112.2: Make Flutter Analyze Pass
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/analysis_options.yaml`, `my_ai_assistant/lib/**`, `my_ai_assistant/test/**`
+- **Action:** แก้หรือจัดการ analyzer warnings/lints ที่ทำให้ `flutter analyze` exit 1 โดยไม่เปลี่ยน behavior ธุรกิจ
+
+### Task 112.3: Audit Comment Read Persistence
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/d1_schema.sql`, `cloudflare_backend/cloudflare_worker.js`, `my_ai_assistant/lib/state_managers/state_tasks.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ยืนยันว่า read state ของคอมเมนต์เก็บต่อ user และ Dashboard ใช้ข้อมูลนี้ตัดสิน unread/read
+
+### Task 112.4: Implement Lazy Page Feed
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`, `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** เปลี่ยนจากโหลด task ทุกบอร์ดตอนเริ่มแอปเป็นโหลดข้อมูลตามหน้าที่ถูกเปิด และ cache เพื่อไม่โหลดซ้ำโดยไม่จำเป็น
+
+### Task 112.5: Verify Analyzer & Data Flow
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze`, audit จุด comment read และ lazy fetch เพื่อยืนยันว่า behavior ตรงตาม requirement
+
+---
+
+## Phase 111: Navigation Load Stabilization & Flicker Reduction
+
+> **Architecture Mandate:** ลดอาการหน้าจอกระพริบและโหลดไม่ทันเมื่อสลับหน้าเร็วๆ โดยรวมศูนย์การโหลดข้อมูลเริ่มต้นให้อยู่ที่ AppShell, ยกเลิก duplicated fetch จากหน้าใน IndexedStack, ทำ silent task fetch ให้ไม่ยิง global rebuild ระหว่าง batch, และบีบขอบเขต Provider watch ให้สอดคล้องกับ Delta Performance Mandate
+
+### Task 111.1: Register Navigation Fetch Ownership Plan
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 111 พร้อม micro-tasks และ testing phase ก่อนเริ่มแก้โค้ดจริง
+
+### Task 111.2: Centralize Initial Fetch in AppShell
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`, `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** รวมการโหลดข้อมูลหลักไว้ที่ `AppShell` และลบ duplicated startup fetch จากหน้าที่ถูกสร้างใน `IndexedStack`
+
+### Task 111.3: Make Silent Task Fetch Truly Silent
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** ปรับ `fetchTasksForBoard(silent: true)` ไม่ให้ `notifyListeners()` ท้ายทุกบอร์ดระหว่าง batch fetch เพื่อลด rebuild storm
+
+### Task 111.4: Scope Heavy Provider Watchers
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ใช้ `context.select`/`Selector` เฉพาะค่าที่จำเป็น ลดการ rebuild ของ shell/navigation/calendar ทั้งหน้าเมื่อ state อื่นเปลี่ยน
+
+### Task 111.5: Tune Navigation Transition Boundary
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** จำกัด `AnimatedSwitcher` ให้ทำงานเฉพาะการเข้า/ออก Kanban board และไม่ cross-fade `IndexedStack` ระหว่างสลับ tab ปกติ
+
+### Task 111.6: Verify Navigation Stability
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze` และ forensic audit จุด fetch/rebuild เพื่อยืนยันว่าไม่มี duplicated startup fetch และไม่มี syntax regression
+
+---
+
 ## Phase 110: AI Chat UI Sync Optimization & Reactivity Hardening
 
 > **Architecture Mandate:** ปรับปรุงการซิงค์ข้อมูลรูปภาพและคำบรรยาย AI ในหน้าแชทหลักให้สะท้อนบน UI ทันทีโดยไม่มีดีเลย์ (Reactivity Hardening) ผ่านการแปลง Message List Selector ให้ดึงค่า Signature ที่ครบถ้วน, ตรวจสุขภาพการทำ message sanitization ป้องกันข้อมูลสำคัญสูญหาย, และอัปเกรด CollapsibleDescription ให้ตอบสนองทันทีแบบ Auto-expand

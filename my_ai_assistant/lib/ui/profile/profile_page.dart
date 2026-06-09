@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/glass_theme.dart';
-import '../common/glass_widgets.dart';
 
 class ProfilePage extends StatelessWidget {
   final bool isDark;
@@ -51,7 +50,7 @@ class ProfilePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              user?.displayName ?? user?.email?.split('@').first?.toUpperCase() ?? 'COMMANDER',
+              user?.displayName ?? user?.email?.split('@').first.toUpperCase() ?? 'COMMANDER',
               style: GlassText.headlineXL().copyWith(fontSize: 48),
             ),
             const SizedBox(height: 8),

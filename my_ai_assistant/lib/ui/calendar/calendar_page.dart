@@ -4,13 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/board_model.dart';
+import '../../models/workspace_model.dart';
 import '../../state_managers/state_tasks.dart';
 import '../../state_managers/state_boards.dart';
 import '../../models/task_model.dart';
 import '../theme/glass_theme.dart';
-import '../common/glass_widgets.dart';
 import '../common/responsive_layout.dart';
-import '../kanban/widgets/task_edit_modal.dart';
 import 'widgets/daily_timeline_view.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -33,13 +32,10 @@ class _CalendarPageState extends State<CalendarPage> {
     super.initState();
     _loadCalendarSettings();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final boardsState = context.read<StateBoards>();
+      await boardsState.fetchAllBoards();
       if (!mounted) return;
-      final boardState = context.read<StateBoards>();
-      await boardState.fetchAllBoards();
-      if (!mounted) return;
-      // 🔄 Refresh task data when navigating to calendar
-      final taskState = context.read<StateTasks>();
-      await taskState.fetchAllTasks(boardState.boards);
+      await context.read<StateTasks>().fetchAllTasks(boardsState.boards);
     });
   }
 
@@ -67,7 +63,10 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _saveCalendarSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('calendar_is_day_view', _isDayView);
-    await prefs.setString('calendar_selected_date', _selectedDate.toIso8601String());
+    await prefs.setString(
+      'calendar_selected_date',
+      _selectedDate.toIso8601String(),
+    );
   }
 
   @override
@@ -75,7 +74,7 @@ class _CalendarPageState extends State<CalendarPage> {
     return Column(
       children: [
         _buildCalendarHeader(),
-        if (_isDayView) _buildWeekDayStrip(), 
+        if (_isDayView) _buildWeekDayStrip(),
         Expanded(
           child: _isDayView ? _buildDailyTimeline() : _buildMonthlyGrid(),
         ),
@@ -86,138 +85,223 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildCalendarHeader() {
     final isMobile = Responsive.isMobile(context);
     final isTablet = Responsive.isTablet(context);
+    final titleDate = _isDayView ? _selectedDate : _currentMonth;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 48, 
-        isMobile ? 16 : 48, 
-        isMobile ? 16 : 48, 
-        24
+        isMobile ? 16 : 36,
+        isMobile ? 16 : 28,
+        isMobile ? 16 : 36,
+        12,
       ),
-      child: isMobile
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    DateFormat('MMMM yyyy').format(_currentMonth).toUpperCase(),
-                    style: GlassText.headlineLG().copyWith(fontSize: 28),
-                  ),
-                  Row(
-                    children: [
-                      _buildNavButton(Icons.add_rounded, () => _showAddTask(context), size: 36),
-                      const SizedBox(width: 8),
-                      _buildNavButton(Icons.chevron_left_rounded, () {
-                        setState(() {
-                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-                        });
-                      }, size: 36),
-                      const SizedBox(width: 8),
-                      _buildNavButton(Icons.chevron_right_rounded, () {
-                        setState(() {
-                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-                        });
-                      }, size: 36),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildViewToggle(),
-            ],
-          )
-        : Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _isDayView ? 'DAILY STRATEGIC TIMELINE' : 'STRATEGIC TEMPORAL MAP',
-                    style: GlassText.labelSM().copyWith(letterSpacing: 2.0, color: GlassColors.primary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isDayView ? DateFormat('MMMM d').format(_selectedDate).toUpperCase() : DateFormat('MMMM yyyy').format(_currentMonth).toUpperCase(),
-                    style: GlassText.headlineXL().copyWith(fontSize: isTablet ? 32 : 48),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  _buildViewToggle(),
-                  const SizedBox(width: 16),
-                  _buildNavButton(Icons.add_rounded, () => _showAddTask(context)),
-                  const SizedBox(width: 12),
-                  _buildNavButton(Icons.chevron_left_rounded, () {
-                    setState(() {
-                      if (_isDayView) {
-                        _selectedDate = _selectedDate.subtract(const Duration(days: 1));
-                      } else {
-                        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-                      }
-                    });
-                    _saveCalendarSettings();
-                  }),
-                  const SizedBox(width: 12),
-                  _buildNavButton(Icons.chevron_right_rounded, () {
-                    setState(() {
-                      if (_isDayView) {
-                        _selectedDate = _selectedDate.add(const Duration(days: 1));
-                      } else {
-                        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-                      }
-                    });
-                    _saveCalendarSettings();
-                  }),
-                ],
-              ),
-            ],
-          ),
-    );
-  }
-
-  Widget _buildViewToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: GlassColors.onSurface.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-        border: Border.all(color: GlassColors.ghostBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildToggleItem('MONTH', !_isDayView, () {
-            setState(() => _isDayView = false);
-            _saveCalendarSettings();
-          }),
-          _buildToggleItem('DAY', _isDayView, () {
-            setState(() => _isDayView = true);
-            _saveCalendarSettings();
-          }),
+          Text(
+            'Strategic Temporal Map: ${DateFormat('MMMM yyyy').format(_currentMonth).toUpperCase()}',
+            style: GlassText.labelSM().copyWith(
+              color: GlassColors.onSurfaceVariant.withOpacity(0.7),
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _isDayView
+                ? DateFormat('EEEE, MMMM d').format(_selectedDate)
+                : 'Strategic Temporal Map: ${DateFormat('MMMM yyyy').format(titleDate).toUpperCase()}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GlassText.headlineXL().copyWith(
+              fontSize: isMobile ? 28 : (isTablet ? 34 : 42),
+              height: 1.04,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 14 : 18,
+              vertical: isMobile ? 12 : 14,
+            ),
+            decoration: BoxDecoration(
+              color: GlassColors.onSurface.withOpacity(0.045),
+              border: Border.all(color: GlassColors.ghostBorder),
+              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.lightbulb_outline_rounded,
+                  size: 16,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.7),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Overview of your strategic timeline.',
+                    style: GlassText.bodyMD().copyWith(
+                      fontSize: 13,
+                      color: GlassColors.onSurface.withOpacity(0.78),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildToolbar(isMobile, titleDate),
         ],
       ),
     );
   }
 
-  Widget _buildToggleItem(String label, bool active, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? GlassColors.primary.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+  void _goToPrevious() {
+    setState(() {
+      if (_isDayView) {
+        _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+        _currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
+      } else {
+        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+      }
+    });
+    _saveCalendarSettings();
+  }
+
+  void _goToNext() {
+    setState(() {
+      if (_isDayView) {
+        _selectedDate = _selectedDate.add(const Duration(days: 1));
+        _currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
+      } else {
+        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+      }
+    });
+    _saveCalendarSettings();
+  }
+
+  Widget _buildToolbar(bool isMobile, DateTime titleDate) {
+    return Container(
+      height: 34,
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: GlassColors.ghostBorder.withOpacity(0.75)),
         ),
-        child: Text(
-          label,
-          style: GlassText.labelSM().copyWith(
-            fontSize: 10,
-            color: active ? GlassColors.primary : GlassColors.onSurfaceVariant.withOpacity(0.5),
-          ),
+      ),
+      child: Row(
+        children: [
+          _buildViewToggle(),
+          const Spacer(),
+          if (!isMobile)
+            Text(
+              DateFormat(
+                _isDayView ? 'MMM d, yyyy' : 'MMMM yyyy',
+              ).format(titleDate),
+              style: GlassText.labelSM().copyWith(
+                color: GlassColors.onSurfaceVariant.withOpacity(0.56),
+              ),
+            ),
+          if (!isMobile) const SizedBox(width: 12),
+          _buildNavButton(Icons.chevron_left_rounded, _goToPrevious),
+          const SizedBox(width: 6),
+          _buildNavButton(Icons.chevron_right_rounded, _goToNext),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildViewToggle() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildToggleItem(
+          Icons.calendar_month_outlined,
+          'Month',
+          !_isDayView,
+          () {
+            setState(() => _isDayView = false);
+            _saveCalendarSettings();
+          },
+        ),
+        const SizedBox(width: 16),
+        _buildToggleItem(Icons.view_day_outlined, 'Day', _isDayView, () {
+          setState(() => _isDayView = true);
+          _currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
+          _saveCalendarSettings();
+        }),
+      ],
+    );
+  }
+
+  Widget _buildToggleItem(
+    IconData icon,
+    String label,
+    bool active,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+      child: SizedBox(
+        height: 34,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 13,
+                    color: active
+                        ? GlassColors.onSurface
+                        : GlassColors.onSurfaceVariant.withOpacity(0.55),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    label,
+                    style: GlassText.labelSM().copyWith(
+                      fontSize: 11,
+                      color: active
+                          ? GlassColors.onSurface
+                          : GlassColors.onSurfaceVariant.withOpacity(0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: active ? 38 : 38,
+              height: 2,
+              decoration: BoxDecoration(
+                color: active ? GlassColors.onSurface : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavButton(
+    IconData icon,
+    VoidCallback onTap, {
+    double size = 32,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Icon(
+          icon,
+          size: size * 0.55,
+          color: GlassColors.onSurfaceVariant.withOpacity(0.75),
         ),
       ),
     );
@@ -226,18 +310,29 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildWeekDayStrip() {
     final isMobile = Responsive.isMobile(context);
     final now = DateTime.now();
-    final firstDayOfWeek = _selectedDate.subtract(Duration(days: _selectedDate.weekday - 1));
-    
+    final firstDayOfWeek = _selectedDate.subtract(
+      Duration(days: _selectedDate.weekday - 1),
+    );
+
     return Container(
       height: isMobile ? 100 : 120,
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 48, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 48,
+        vertical: 16,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(7, (index) {
           final date = firstDayOfWeek.add(Duration(days: index));
-          final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
-          final isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month && date.year == _selectedDate.year;
-          
+          final isToday =
+              date.day == now.day &&
+              date.month == now.month &&
+              date.year == now.year;
+          final isSelected =
+              date.day == _selectedDate.day &&
+              date.month == _selectedDate.month &&
+              date.year == _selectedDate.year;
+
           return Expanded(
             child: GestureDetector(
               onTap: () => setState(() {
@@ -245,17 +340,21 @@ class _CalendarPageState extends State<CalendarPage> {
                 _isDayView = true;
                 _saveCalendarSettings();
               }),
-              child: Consumer<StateTasks>(
-                builder: (context, taskState, _) {
+              child: Selector<StateTasks, int>(
+                selector: (_, taskState) {
                   final currentUser = FirebaseAuth.instance.currentUser;
-                  final dailyTaskCount = taskState.allTasksWithDueDate.where((t) => 
-                    t.members.contains(currentUser?.uid) &&
-                    !t.isCompleted &&
-                    t.dueDate.year == date.year && 
-                    t.dueDate.month == date.month && 
-                    t.dueDate.day == date.day
-                  ).length;
-
+                  return taskState.allTasksWithDueDate
+                      .where(
+                        (t) =>
+                            t.members.contains(currentUser?.uid) &&
+                            !t.isCompleted &&
+                            t.dueDate.year == date.year &&
+                            t.dueDate.month == date.month &&
+                            t.dueDate.day == date.day,
+                      )
+                      .length;
+                },
+                builder: (context, dailyTaskCount, _) {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -263,10 +362,18 @@ class _CalendarPageState extends State<CalendarPage> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(ExecutiveRadius.m),
                       border: Border.all(
-                        color: isSelected ? GlassColors.gold : (isToday ? GlassColors.primary.withOpacity(0.3) : GlassColors.ghostBorder),
+                        color: isSelected
+                            ? GlassColors.gold
+                            : (isToday
+                                  ? GlassColors.primary.withOpacity(0.3)
+                                  : GlassColors.ghostBorder),
                         width: isSelected ? 1.5 : 1.0,
                       ),
-                      color: isSelected ? GlassColors.gold.withOpacity(0.08) : (isToday ? GlassColors.primary.withOpacity(0.02) : Colors.transparent),
+                      color: isSelected
+                          ? GlassColors.gold.withOpacity(0.08)
+                          : (isToday
+                                ? GlassColors.primary.withOpacity(0.02)
+                                : Colors.transparent),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -274,24 +381,30 @@ class _CalendarPageState extends State<CalendarPage> {
                         Text(
                           DateFormat('EEE').format(date).toUpperCase()[0],
                           style: GlassText.labelSM().copyWith(
-                            fontSize: 10, 
-                            color: isSelected ? GlassColors.gold : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                            fontSize: 10,
+                            color: isSelected
+                                ? GlassColors.gold
+                                : GlassColors.onSurfaceVariant.withOpacity(0.5),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           '${date.day}',
                           style: GlassText.headlineLG().copyWith(
-                            fontSize: 18, 
-                            fontWeight: FontWeight.bold, 
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             color: isSelected ? GlassColors.gold : null,
                           ),
                         ),
                         if (dailyTaskCount > 0) ...[
                           const SizedBox(height: 4),
                           Container(
-                            width: 4, height: 4,
-                            decoration: const BoxDecoration(color: GlassColors.primary, shape: BoxShape.circle),
+                            width: 4,
+                            height: 4,
+                            decoration: const BoxDecoration(
+                              color: GlassColors.primary,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ],
                       ],
@@ -308,17 +421,21 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildDailyTimeline() {
     final currentUser = FirebaseAuth.instance.currentUser;
-    final allTasks = context.watch<StateTasks>().allTasksWithDueDate;
-    
+    final allTasks = context.select<StateTasks, List<TaskModel>>(
+      (state) => state.allTasksWithDueDate,
+    );
+
     final myTasks = allTasks.where((t) {
       return t.members.contains(currentUser?.uid) &&
-             !t.isCompleted &&
-             t.dueDate.year == _selectedDate.year &&
-             t.dueDate.month == _selectedDate.month &&
-             t.dueDate.day == _selectedDate.day;
+          !t.isCompleted &&
+          t.dueDate.year == _selectedDate.year &&
+          t.dueDate.month == _selectedDate.month &&
+          t.dueDate.day == _selectedDate.day;
     }).toList();
 
-    final boards = context.watch<StateBoards>().boards;
+    final boards = context.select<StateBoards, List<BoardModel>>(
+      (state) => state.boards,
+    );
 
     return DailyTimelineView(
       date: _selectedDate,
@@ -329,55 +446,52 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildNavButton(IconData icon, VoidCallback onTap, {double size = 44}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-          border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.3)),
-        ),
-        child: Icon(icon, size: size * 0.45, color: GlassColors.onSurface),
-      ),
-    );
-  }
-
   Widget _buildMonthlyGrid() {
     final isMobile = Responsive.isMobile(context);
+    final allTasks = context.select<StateTasks, List<TaskModel>>(
+      (state) => state.allTasksWithDueDate,
+    );
+    final boards = context.select<StateBoards, List<BoardModel>>(
+      (state) => state.boards,
+    );
+    final workspaces = context.select<StateBoards, List<WorkspaceModel>>(
+      (state) => state.workspaces,
+    );
+    final dates = _visibleMonthDates(_currentMonth);
+
     return Column(
       children: [
         _buildWeekdayHeader(),
         Expanded(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              isMobile ? 16 : 48, 
-              0, 
-              isMobile ? 16 : 48, 
-              isMobile ? 16 : 48
+              isMobile ? 16 : 48,
+              0,
+              isMobile ? 16 : 48,
+              isMobile ? 16 : 48,
             ),
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: isMobile ? 8 : 16,
-                crossAxisSpacing: isMobile ? 8 : 16,
-                childAspectRatio: isMobile ? 0.6 : 0.8,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+              child: GridView.builder(
+                padding: EdgeInsets.zero,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  childAspectRatio: 1.02,
+                ),
+                itemCount: dates.length,
+                itemBuilder: (context, index) {
+                  final date = dates[index];
+                  final isCurrentMonth = date.month == _currentMonth.month;
+                  return _buildDayCell(
+                    date,
+                    isCurrentMonth,
+                    index % 7 >= 5,
+                    allTasks,
+                    boards,
+                    workspaces,
+                  );
+                },
               ),
-              itemCount: _getDaysInMonth(_currentMonth),
-              itemBuilder: (context, index) {
-                final day = index + 1;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedDate = DateTime(_currentMonth.year, _currentMonth.month, day);
-                      _isDayView = true;
-                    });
-                    _saveCalendarSettings();
-                  },
-                  child: _buildDayCell(day, true),
-                );
-              },
             ),
           ),
         ),
@@ -390,147 +504,437 @@ class _CalendarPageState extends State<CalendarPage> {
     final days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 24 : 64, 
-        vertical: 16
+        horizontal: isMobile ? 16 : 48,
+        vertical: 10,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: days.map((day) => Expanded(
-          child: Center(
-            child: Text(
-              isMobile ? day[0] : day,
-              style: GlassText.labelSM().copyWith(
-                fontSize: 10, 
-                color: GlassColors.onSurfaceVariant.withOpacity(0.4), 
-                letterSpacing: 2.0
+        children: days
+            .asMap()
+            .entries
+            .map(
+              (entry) => Expanded(
+                child: Center(
+                  child: Text(
+                    isMobile ? entry.value[0] : entry.value,
+                    style: GlassText.labelSM().copyWith(
+                      fontSize: 10,
+                      color: entry.key >= 5
+                          ? GlassColors.gold.withOpacity(0.72)
+                          : GlassColors.onSurfaceVariant.withOpacity(0.48),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        )).toList(),
+            )
+            .toList(),
       ),
     );
   }
 
-  Widget _buildDayCell(int day, bool isCurrentMonth) {
+  Widget _buildDayCell(
+    DateTime date,
+    bool isCurrentMonth,
+    bool isWeekendColumn,
+    List<TaskModel> allTasks,
+    List<BoardModel> boards,
+    List<WorkspaceModel> workspaces,
+  ) {
     final isMobile = Responsive.isMobile(context);
-    final isToday = isCurrentMonth && day == DateTime.now().day && _currentMonth.month == DateTime.now().month;
-    final date = DateTime(_currentMonth.year, _currentMonth.month, day);
     final currentUser = FirebaseAuth.instance.currentUser;
-    
-    final allTasks = context.watch<StateTasks>().allTasksWithDueDate;
-    final myTasks = allTasks.where((t) => 
-      t.members.contains(currentUser?.uid) &&
-      !t.isCompleted &&
-      isCurrentMonth &&
-      t.dueDate.year == date.year &&
-      t.dueDate.month == date.month &&
-      t.dueDate.day == date.day
-    ).toList();
+    final isToday = _isSameDay(date, DateTime.now());
+    final isSelected = _isSameDay(date, _selectedDate);
 
-    // 🚀 Task 72.2: Group by Board for Row/Column Logic
-    final Map<String, List<TaskModel>> groupedTasks = {};
-    for (var t in myTasks) {
-      groupedTasks.putIfAbsent(t.boardId, () => []).add(t);
-    }
+    final myTasks = allTasks
+        .where(
+          (t) =>
+              t.members.contains(currentUser?.uid) &&
+              !t.isCompleted &&
+              isCurrentMonth &&
+              t.dueDate.year == date.year &&
+              t.dueDate.month == date.month &&
+              t.dueDate.day == date.day,
+        )
+        .toList();
 
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 4 : 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isMobile ? ExecutiveRadius.m : ExecutiveRadius.xl),
-        border: Border.all(
-          color: isToday ? GlassColors.primary : GlassColors.ghostBorder,
-          width: isToday ? 1.5 : 1.0,
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedDate = date;
+          _currentMonth = DateTime(date.year, date.month);
+          _isDayView = true;
+        });
+        _saveCalendarSettings();
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: isToday
+              ? GlassColors.primary.withOpacity(0.055)
+              : GlassColors.surface.withOpacity(0.08),
+          border: Border.all(
+            color: isSelected
+                ? GlassColors.primary.withOpacity(0.9)
+                : GlassColors.ghostBorder.withOpacity(0.8),
+            width: isSelected ? 1.2 : 0.55,
+          ),
         ),
-        color: isToday ? GlassColors.primary.withOpacity(0.05) : Colors.transparent,
-      ),
-      child: Opacity(
-        opacity: isCurrentMonth ? 1.0 : 0.2,
         child: Column(
-          crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '$day',
-              style: GlassText.bodyMD().copyWith(
-                fontSize: isMobile ? 12 : 14,
-                fontWeight: isToday ? FontWeight.bold : FontWeight.w400,
-                color: isToday ? GlassColors.primary : null,
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 6 : 10,
+                isMobile ? 5 : 8,
+                isMobile ? 6 : 10,
+                2,
+              ),
+              child: Text(
+                '${date.day}',
+                style: GlassText.bodyMD().copyWith(
+                  fontSize: isMobile ? 11 : 14,
+                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
+                  color: !isCurrentMonth
+                      ? GlassColors.onSurfaceVariant.withOpacity(0.22)
+                      : (isToday
+                            ? GlassColors.primary
+                            : (isWeekendColumn
+                                  ? GlassColors.gold.withOpacity(0.9)
+                                  : GlassColors.onSurface.withOpacity(0.92))),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            if (isMobile)
-              // 🚀 Task 72.2: Multi-Column Strategic Dots (Grouped by board)
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: Wrap(
-                    spacing: 2,
-                    runSpacing: 2,
-                    children: groupedTasks.values.expand((tasks) {
-                      final board = context.read<StateBoards>().boards.firstWhere((b) => b.id == tasks.first.boardId, orElse: () => context.read<StateBoards>().boards.first);
-                      final color = Color(board.color);
-                      return tasks.map((t) => Container(
-                        width: 4, height: 4,
-                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                      ));
-                    }).toList(),
-                  ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 5 : 8,
+                  2,
+                  isMobile ? 5 : 8,
+                  isMobile ? 5 : 8,
                 ),
-              )
-            else
-              Expanded(
-                child: ListView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: myTasks.take(4).map((task) {
-                    final boards = context.read<StateBoards>().boards;
-                    BoardModel? board;
-                    try { board = boards.firstWhere((b) => b.id == task.boardId); } catch (_) {}
-                    final boardColor = board != null ? Color(board.color) : GlassColors.primary;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: boardColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: boardColor.withOpacity(0.3), width: 0.8),
+                child: isMobile
+                    ? _buildMobileTaskDots(myTasks, boards)
+                    : _buildMonthTaskList(
+                        myTasks,
+                        boards,
+                        workspaces,
+                        isCurrentMonth,
                       ),
-                      child: Text(
-                        task.title.toUpperCase(),
-                        maxLines: 1,
-                        style: GlassText.labelSM().copyWith(
-                          fontSize: 8, 
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
               ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _showAddTask(BuildContext context) {
-    final boardState = context.read<StateBoards>();
-    final boards = boardState.boards.where((b) => b.type == 'team').toList();
-    if (boards.isEmpty) {
-      GlassNotifications.show(context, 'No team boards available. Create a board first.', isError: true);
-      return;
-    }
-    final board = boardState.selectedBoard ?? boards.first;
-    TaskEditModal.show(
-      context: context,
-      board: board,
-      initialDate: _selectedDate,
-      isDark: widget.isDark,
+  Widget _buildMobileTaskDots(List<TaskModel> tasks, List<BoardModel> boards) {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Wrap(
+        spacing: 3,
+        runSpacing: 3,
+        children: tasks.take(12).map((task) {
+          return Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: _boardColor(task, boards),
+              shape: BoxShape.circle,
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
-  int _getDaysInMonth(DateTime date) {
-    return DateTime(date.year, date.month + 1, 0).day;
+  Widget _buildMonthTaskList(
+    List<TaskModel> tasks,
+    List<BoardModel> boards,
+    List<WorkspaceModel> workspaces,
+    bool isCurrentMonth,
+  ) {
+    if (!isCurrentMonth) return const SizedBox.shrink();
+
+    final visibleTasks = tasks.take(3).toList();
+    final overflow = tasks.length - visibleTasks.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...visibleTasks.map((task) {
+          final board = _findBoard(task, boards);
+          final boardColor = board != null
+              ? Color(board.color)
+              : GlassColors.primary;
+          final workspaceName = _workspaceName(board, workspaces);
+          return InkWell(
+            onTap: () => _showTaskPreview(task, board, workspaceName),
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: GlassColors.onSurface.withOpacity(0.055),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.26),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: boardColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          task.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GlassText.bodyMD().copyWith(
+                            fontSize: 10.5,
+                            height: 1.05,
+                            color: GlassColors.onSurface.withOpacity(0.82),
+                          ),
+                        ),
+                        Text(
+                          workspaceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GlassText.labelSM().copyWith(
+                            fontSize: 7.5,
+                            height: 1.0,
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        if (overflow > 0)
+          Text(
+            '+$overflow more',
+            style: GlassText.labelSM().copyWith(
+              fontSize: 10,
+              color: GlassColors.onSurfaceVariant.withOpacity(0.52),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showTaskPreview(
+    TaskModel task,
+    BoardModel? board,
+    String workspaceName,
+  ) {
+    final boardColor = board != null ? Color(board.color) : GlassColors.primary;
+    final isMobile = Responsive.isMobile(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: isMobile ? 0.72 : 0.62,
+          minChildSize: 0.42,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: GlassDecorations.solidSurface(
+                radius: 28,
+                hasShadow: true,
+              ),
+              child: ListView(
+                controller: scrollController,
+                padding: EdgeInsets.all(isMobile ? 24 : 36),
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: boardColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'TASK PREVIEW',
+                          style: GlassText.labelSM().copyWith(
+                            color: boardColor,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  Text(
+                    task.title,
+                    style: GlassText.headlineLG().copyWith(
+                      fontSize: isMobile ? 28 : 34,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _buildPreviewChip(
+                        Icons.workspaces_outline,
+                        workspaceName,
+                      ),
+                      _buildPreviewChip(
+                        Icons.dashboard_outlined,
+                        board?.name ?? 'Unknown board',
+                      ),
+                      _buildPreviewChip(
+                        Icons.calendar_today_rounded,
+                        DateFormat('MMM d, HH:mm').format(task.dueDate),
+                      ),
+                      _buildPreviewChip(Icons.layers_outlined, task.status),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    task.description.isEmpty
+                        ? 'No strategic brief provided.'
+                        : task.description,
+                    style: GlassText.bodyLG().copyWith(
+                      color: GlassColors.onSurface.withOpacity(0.72),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  InkWell(
+                    onTap: board == null
+                        ? null
+                        : () {
+                            context.read<StateBoards>().setSelectedBoard(board);
+                            widget.onNavigate?.call(1);
+                            Navigator.pop(context);
+                          },
+                    borderRadius: BorderRadius.circular(
+                      ExecutiveRadius.circular,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        color: board == null
+                            ? GlassColors.onSurface.withOpacity(0.04)
+                            : boardColor.withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(
+                          ExecutiveRadius.circular,
+                        ),
+                        border: Border.all(
+                          color: board == null
+                              ? GlassColors.ghostBorder
+                              : boardColor.withOpacity(0.38),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          board == null ? 'BOARD NOT AVAILABLE' : 'OPEN BOARD',
+                          style: GlassText.labelSM().copyWith(
+                            color: board == null
+                                ? GlassColors.onSurfaceVariant.withOpacity(0.55)
+                                : boardColor,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPreviewChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: GlassColors.onSurface.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+        border: Border.all(color: GlassColors.ghostBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: GlassColors.onSurfaceVariant),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            style: GlassText.labelSM().copyWith(
+              fontSize: 10,
+              color: GlassColors.onSurface.withOpacity(0.78),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  BoardModel? _findBoard(TaskModel task, List<BoardModel> boards) {
+    for (final board in boards) {
+      if (board.id == task.boardId) return board;
+    }
+    return null;
+  }
+
+  String _workspaceName(BoardModel? board, List<WorkspaceModel> workspaces) {
+    if (board == null || board.workspaceId.isEmpty) return 'Unknown workspace';
+    for (final workspace in workspaces) {
+      if (workspace.id == board.workspaceId) return workspace.name;
+    }
+    return 'Unknown workspace';
+  }
+
+  Color _boardColor(TaskModel task, List<BoardModel> boards) {
+    for (final board in boards) {
+      if (board.id == task.boardId) return Color(board.color);
+    }
+    return GlassColors.primary;
+  }
+
+  List<DateTime> _visibleMonthDates(DateTime month) {
+    final first = DateTime(month.year, month.month);
+    final firstVisible = first.subtract(Duration(days: first.weekday - 1));
+    return List.generate(
+      42,
+      (index) => firstVisible.add(Duration(days: index)),
+    );
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }

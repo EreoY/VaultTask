@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/chat_model.dart';
 import '../../theme/glass_theme.dart';
-import '../../common/glass_widgets.dart';
 
 import 'dart:convert';
 class StructuredUIBubble extends StatelessWidget {
@@ -32,7 +30,7 @@ class StructuredUIBubble extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (type == 'table' && activeData is List) _buildTable(activeData)
-          else if (type == 'status_summary' && activeData is Map) _buildSummary(Map<String, dynamic>.from(activeData as Map))
+          else if (type == 'status_summary' && activeData is Map) _buildSummary(Map<String, dynamic>.from(activeData))
           else if (type == 'plan_review' && activeData is List) _buildPlanReview(activeData)
           else if (type == 'empty_state') _buildEmptyState(activeData)
           else Text(data.toString()),

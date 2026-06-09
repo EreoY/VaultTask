@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/chat_model.dart';
@@ -37,9 +36,7 @@ class _ChatPageState extends State<ChatPage> {
               child: Row(
                 children: [
                   if (_showSidebar) _buildSidebar(chatState),
-                  Expanded(
-                    child: AetherChatView(isDark: widget.isDark),
-                  ),
+                  Expanded(child: AetherChatView(isDark: widget.isDark)),
                 ],
               ),
             ),
@@ -74,7 +71,9 @@ class _ChatPageState extends State<ChatPage> {
                   const SizedBox(width: 16),
                   IconButton(
                     icon: Icon(
-                      _showSidebar ? Icons.menu_open_rounded : Icons.menu_rounded,
+                      _showSidebar
+                          ? Icons.menu_open_rounded
+                          : Icons.menu_rounded,
                       color: GlassColors.primary.withOpacity(0.7),
                       size: 24,
                     ),
@@ -92,12 +91,17 @@ class _ChatPageState extends State<ChatPage> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(color: GlassColors.success, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: GlassColors.success,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'Ready to collaborate with your strategic workflow.',
-                    style: GlassText.bodyMD().copyWith(color: GlassColors.onSurfaceVariant.withOpacity(0.6)),
+                    style: GlassText.bodyMD().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
@@ -114,22 +118,38 @@ class _ChatPageState extends State<ChatPage> {
                   },
                   borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-                      border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.1)),
+                      borderRadius: BorderRadius.circular(
+                        ExecutiveRadius.circular,
+                      ),
+                      border: Border.all(
+                        color: GlassColors.outlineVariant.withOpacity(0.1),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.delete_sweep_rounded, size: 20, color: GlassColors.onSurfaceVariant.withOpacity(0.6)),
-                        const SizedBox(width: 12),
-                        Text('RESET SESSION', style: GlassText.labelSM().copyWith(
-                          fontSize: 10,
-                          letterSpacing: 2.0,
-                          fontWeight: FontWeight.bold,
+                        Icon(
+                          Icons.delete_sweep_rounded,
+                          size: 20,
                           color: GlassColors.onSurfaceVariant.withOpacity(0.6),
-                        )),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'RESET SESSION',
+                          style: GlassText.labelSM().copyWith(
+                            fontSize: 10,
+                            letterSpacing: 2.0,
+                            fontWeight: FontWeight.bold,
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -147,9 +167,7 @@ class _ChatPageState extends State<ChatPage> {
       width: 250,
       decoration: BoxDecoration(
         color: GlassColors.onSurface.withOpacity(0.01),
-        border: Border(
-          right: BorderSide(color: GlassColors.ghostBorder),
-        ),
+        border: Border(right: BorderSide(color: GlassColors.ghostBorder)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,12 +189,17 @@ class _ChatPageState extends State<ChatPage> {
                   borderRadius: BorderRadius.circular(ExecutiveRadius.m),
                   side: BorderSide(color: GlassColors.primary.withOpacity(0.2)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.add, size: 16),
               label: Text(
                 'New Session',
-                style: GlassText.labelSM().copyWith(fontWeight: FontWeight.bold),
+                style: GlassText.labelSM().copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -185,7 +208,8 @@ class _ChatPageState extends State<ChatPage> {
               itemCount: stateChat.globalSessions.length,
               itemBuilder: (context, index) {
                 final session = stateChat.globalSessions[index];
-                final isSelected = stateChat.currentGlobalSession?.id == session.id;
+                final isSelected =
+                    stateChat.currentGlobalSession?.id == session.id;
 
                 return _buildSidebarSessionItem(session, isSelected, stateChat);
               },
@@ -196,7 +220,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildSidebarSessionItem(ChatSession session, bool isSelected, StateChat stateChat) {
+  Widget _buildSidebarSessionItem(
+    ChatSession session,
+    bool isSelected,
+    StateChat stateChat,
+  ) {
     final nameController = TextEditingController(text: session.name);
     bool isEditing = false;
 
@@ -205,10 +233,14 @@ class _ChatPageState extends State<ChatPage> {
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: isSelected ? GlassColors.primary.withOpacity(0.08) : Colors.transparent,
+            color: isSelected
+                ? GlassColors.primary.withOpacity(0.08)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(ExecutiveRadius.m),
             border: Border.all(
-              color: isSelected ? GlassColors.primary.withOpacity(0.2) : Colors.transparent,
+              color: isSelected
+                  ? GlassColors.primary.withOpacity(0.2)
+                  : Colors.transparent,
             ),
           ),
           child: ListTile(
@@ -234,15 +266,17 @@ class _ChatPageState extends State<ChatPage> {
                 : Text(
                     session.name,
                     style: GlassText.bodyMD().copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? GlassColors.primary : GlassColors.onSurface,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? GlassColors.primary
+                          : GlassColors.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-            onTap: isEditing
-                ? null
-                : () => _selectSession(session, stateChat),
+            onTap: isEditing ? null : () => _selectSession(session, stateChat),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -261,7 +295,9 @@ class _ChatPageState extends State<ChatPage> {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('Delete Session'),
-                          content: const Text('Are you sure you want to delete this session?'),
+                          content: const Text(
+                            'Are you sure you want to delete this session?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
@@ -269,7 +305,10 @@ class _ChatPageState extends State<ChatPage> {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                           ],
                         ),
@@ -301,7 +340,7 @@ class _AmbientGlow extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _AmbientGlow({required this.color, this.size = 800});
+  const _AmbientGlow({required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -310,9 +349,7 @@ class _AmbientGlow extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, Colors.transparent],
-        ),
+        gradient: RadialGradient(colors: [color, Colors.transparent]),
       ),
     );
   }

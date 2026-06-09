@@ -155,7 +155,7 @@ void main() {
       expect(receivedEvent['description'], 'Regenerated detail description showing UI mockups.');
       expect(receivedEvent['name'], 'screenshot_1.png');
       
-      print('✅ Verified stream successfully broadcasted event: ${receivedEvent}');
+      print('✅ Verified stream successfully broadcasted event: $receivedEvent');
       
       await sub.cancel();
     });
