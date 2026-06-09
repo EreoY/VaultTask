@@ -5,15 +5,18 @@ import 'package:intl/intl.dart';
 import '../../../config/env_config.dart';
 import '../../../models/task_model.dart';
 import '../../../models/board_model.dart';
+import '../../../models/workspace_model.dart';
 import '../../../state_managers/state_boards.dart';
-import '../../../state_managers/state_tasks.dart';
+import '../../kanban/widgets/task_edit_modal.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/responsive_layout.dart';
+import 'task_type_icon.dart';
 
 class DailyTimelineView extends StatefulWidget {
   final DateTime date;
   final List<TaskModel> tasks;
   final List<BoardModel> boards;
+  final List<WorkspaceModel> workspaces;
   final bool isDark;
   final Function(int)? onNavigate;
 
@@ -22,6 +25,7 @@ class DailyTimelineView extends StatefulWidget {
     required this.date,
     required this.tasks,
     required this.boards,
+    required this.workspaces,
     required this.isDark,
     this.onNavigate,
   });
@@ -87,7 +91,13 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
 
   @override
   Widget build(BuildContext context) {
-    final upcomingTasks = widget.tasks.where((t) => !t.isCompleted).toList();
+    final upcomingTasks = List<TaskModel>.from(widget.tasks)
+      ..sort((a, b) {
+        if (a.isCompleted != b.isCompleted) {
+          return a.isCompleted ? 1 : -1;
+        }
+        return a.dueDate.compareTo(b.dueDate);
+      });
     final isMobile = Responsive.isMobile(context);
 
     return Column(
@@ -387,14 +397,24 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     final isMobile = Responsive.isMobile(context);
     int colorValue = GlassColors.primary.value;
     String boardName = 'Unknown Board';
+    String workspaceName = 'Unknown Workspace';
     BoardModel? board;
     try {
       board = widget.boards.firstWhere((b) => b.id == task.boardId);
       colorValue = board.color;
       boardName = board.name;
+      if (board.workspaceId.isNotEmpty) {
+        for (final workspace in widget.workspaces) {
+          if (workspace.id == board.workspaceId) {
+            workspaceName = workspace.name;
+            break;
+          }
+        }
+      }
     } catch (_) {}
 
     final color = Color(colorValue);
+    final isCompleted = task.isCompleted;
 
     return InkWell(
       onTap: () => _showStrategicPreview(context, task),
@@ -406,42 +426,78 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           vertical: isMobile ? 10 : 14,
         ),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: isCompleted
+              ? color.withOpacity(0.16)
+              : color.withOpacity(0.24),
           borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(
+            color: color.withOpacity(isCompleted ? 0.24 : 0.38),
+          ),
         ),
         child: Row(
           children: [
-            Container(
-              width: 3,
-              height: 24,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(width: isMobile ? 12 : 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    task.title.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GlassText.bodyMD().copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      fontSize: isMobile ? 13 : 15,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        calendarTaskTypeIcon(task.type),
+                        size: isMobile ? 14 : 15,
+                        color: calendarTaskTypeColor(
+                          task.type,
+                          active: !isCompleted,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          task.title.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GlassText.bodyMD().copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                            fontSize: isMobile ? 13 : 15,
+                            decoration: isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: GlassColors.onSurface.withOpacity(
+                              isCompleted ? 0.46 : 0.92,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  if (task.description.trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      task.description.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GlassText.bodyMD().copyWith(
+                        fontSize: isMobile ? 10 : 11,
+                        height: 1.15,
+                        color: GlassColors.onSurface.withOpacity(
+                          isCompleted ? 0.32 : 0.62,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 2),
                   Text(
-                    boardName.toUpperCase(),
+                    '$workspaceName / $boardName'.toUpperCase(),
                     style: GlassText.labelSM().copyWith(
-                      fontSize: 8,
-                      color: color.withOpacity(0.7),
+                      fontSize: 8.4,
+                      decoration: isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: GlassColors.onSurface.withOpacity(
+                        isCompleted ? 0.28 : 0.56,
+                      ),
                       letterSpacing: 1.0,
                     ),
                   ),
@@ -475,415 +531,18 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   }
 
   void _showStrategicPreview(BuildContext context, TaskModel initialTask) {
-    final isMobile = Responsive.isMobile(context);
     final board = _findBoard(initialTask.boardId);
-
-    showModalBottomSheet(
+    if (board == null) return;
+    TaskEditModal.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: isMobile ? 0.9 : 0.85,
-        maxChildSize: 0.95,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (context, scrollController) => Consumer<StateTasks>(
-          builder: (context, taskState, _) {
-            final tasks = taskState.tasksForBoard(initialTask.boardId);
-            final task = tasks.firstWhere(
-              (t) => t.id == initialTask.id,
-              orElse: () => initialTask,
-            );
-            final boardState = context.read<StateBoards>();
-            final currentBoard =
-                _findBoard(task.boardId, boardState.boards) ?? board;
-
-            final coverImage = task.images.isEmpty
-                ? null
-                : task.images.firstWhere(
-                    (img) => img.isCover,
-                    orElse: () => task.images.first,
-                  );
-            final hasCover = coverImage != null && coverImage.url.isNotEmpty;
-
-            return Container(
-              decoration: GlassDecorations.solidSurface(
-                radius: 32,
-                hasShadow: true,
-              ),
-              child: ListView(
-                controller: scrollController,
-                padding: EdgeInsets.zero,
-                children: [
-                  if (hasCover)
-                    Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(32),
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(32),
-                              ),
-                              child: Image.network(
-                                EnvConfig.sanitizeUrl(coverImage.url),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                      color: GlassColors.surfaceHighest
-                                          .withOpacity(0.1),
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.broken_image_outlined,
-                                          size: 32,
-                                          color: GlassColors.primary
-                                              .withOpacity(0.3),
-                                        ),
-                                      ),
-                                    ),
-                              ),
-                            ),
-                          ),
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(32),
-                                ),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withOpacity(0.4),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  Padding(
-                    padding: EdgeInsets.all(isMobile ? 24 : 48),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'STRATEGIC PREVIEW',
-                              style: GlassText.labelSM().copyWith(
-                                color: GlassColors.gold,
-                                letterSpacing: 2.0,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          task.title.toUpperCase(),
-                          style: GlassText.headlineLG().copyWith(
-                            fontSize: isMobile ? 28 : 38,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        if (currentBoard != null)
-                          _buildPreviewMetadataStrip(
-                            currentBoard,
-                            task,
-                            boardState,
-                          ),
-
-                        const SizedBox(height: 32),
-                        Text(
-                          task.description.isEmpty
-                              ? 'No strategic brief provided.'
-                              : task.description,
-                          style: GlassText.bodyLG().copyWith(
-                            fontSize: isMobile ? 16 : 18,
-                            color: GlassColors.onSurface.withOpacity(0.7),
-                          ),
-                        ),
-
-                        if (task.images.isNotEmpty) ...[
-                          const SizedBox(height: 48),
-                          _buildSectionTitle('OPERATIONAL ASSETS'),
-                          const SizedBox(height: 24),
-                          ...task.images.map(
-                            (img) => _buildPreviewAssetRow(img),
-                          ),
-                        ],
-
-                        const SizedBox(height: 80),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: currentBoard == null
-                                    ? null
-                                    : () {
-                                        context
-                                            .read<StateBoards>()
-                                            .setSelectedBoard(currentBoard);
-                                        widget.onNavigate?.call(1);
-                                        Navigator.pop(context);
-                                      },
-                                borderRadius: BorderRadius.circular(
-                                  ExecutiveRadius.circular,
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 20,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: currentBoard == null
-                                        ? GlassColors.onSurface.withOpacity(
-                                            0.04,
-                                          )
-                                        : GlassColors.gold.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(
-                                      ExecutiveRadius.circular,
-                                    ),
-                                    border: Border.all(
-                                      color: currentBoard == null
-                                          ? GlassColors.ghostBorder
-                                          : GlassColors.gold.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      currentBoard == null
-                                          ? 'BOARD NOT AVAILABLE'
-                                          : 'NAVIGATE TO EXECUTION BOARD',
-                                      style: GlassText.labelSM().copyWith(
-                                        color: currentBoard == null
-                                            ? GlassColors.onSurfaceVariant
-                                                  .withOpacity(0.55)
-                                            : GlassColors.gold,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 64),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewMetadataStrip(
-    BoardModel board,
-    TaskModel task,
-    StateBoards boardState,
-  ) {
-    final activeLabels = board.labels
-        .where((l) => task.labelIds.contains(l['id']))
-        .toList();
-    final isMobile = Responsive.isMobile(context);
-    final workspaceName = _workspaceName(board, boardState);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: GlassColors.onSurface.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-        border: Border.all(color: GlassColors.ghostBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (activeLabels.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: activeLabels
-                  .map(
-                    (l) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color(l['color'] as int).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                        border: Border.all(
-                          color: Color(l['color'] as int).withOpacity(0.3),
-                        ),
-                      ),
-                      child: Text(
-                        (l['name'] as String).toUpperCase(),
-                        style: GlassText.labelSM().copyWith(
-                          fontSize: 8,
-                          color: Color(l['color'] as int),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            Divider(color: GlassColors.ghostBorder, height: 1),
-            const SizedBox(height: 16),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: _buildPreviewMetadataItem(
-                  Icons.workspaces_outline,
-                  workspaceName.toUpperCase(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPreviewMetadataItem(
-                  Icons.dashboard_outlined,
-                  board.name.toUpperCase(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildPreviewMetadataItem(
-                Icons.layers_outlined,
-                task.status.toUpperCase(),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPreviewMetadataItem(
-                  Icons.calendar_today_rounded,
-                  DateFormat('MMM d, HH:mm').format(task.dueDate).toUpperCase(),
-                ),
-              ),
-              _buildAvatarStack(task.members),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _workspaceName(BoardModel board, StateBoards boardState) {
-    if (board.workspaceId.isEmpty) return 'Unknown workspace';
-    for (final workspace in boardState.workspaces) {
-      if (workspace.id == board.workspaceId) return workspace.name;
-    }
-    return 'Unknown workspace';
-  }
-
-  Widget _buildPreviewMetadataItem(IconData icon, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: GlassColors.primary.withOpacity(0.5)),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: GlassText.labelSM().copyWith(
-            fontSize: 10,
-            color: GlassColors.primary,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreviewAssetRow(TaskImage img) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-        border: Border.all(
-          color: img.isCover
-              ? GlassColors.gold.withOpacity(0.3)
-              : GlassColors.ghostBorder,
-        ),
-        color: img.isCover
-            ? GlassColors.gold.withOpacity(0.05)
-            : Colors.transparent,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-              color: GlassColors.surfaceHighest.withOpacity(0.1),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-              child: Image.network(
-                EnvConfig.sanitizeUrl(img.url),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Center(
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    size: 16,
-                    color: GlassColors.primary.withOpacity(0.3),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              img.aiDescription.isEmpty
-                  ? 'ASSET_${img.id.substring(img.id.length - 4)}'
-                  : img.aiDescription,
-              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-          if (img.isCover)
-            const Icon(Icons.star_rounded, color: GlassColors.gold, size: 16),
-          const SizedBox(width: 12),
-          Icon(
-            Icons.download_rounded,
-            color: GlassColors.primary.withOpacity(0.5),
-            size: 18,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: GlassText.labelSM().copyWith(
-        fontSize: 10,
-        color: GlassColors.onSurfaceVariant.withOpacity(0.4),
-        letterSpacing: 1.5,
-      ),
+      board: board,
+      existingTask: initialTask,
+      isDark: widget.isDark,
+      onOpenBoard: () {
+        Navigator.of(context).pop();
+        context.read<StateBoards>().setSelectedBoard(board);
+        widget.onNavigate?.call(1);
+      },
     );
   }
 

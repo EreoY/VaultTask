@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task_model.dart';
@@ -874,10 +874,20 @@ class StateTasks extends ChangeNotifier {
           existing.orderIndex != updatedTask.orderIndex ||
           existing.dueDate.millisecondsSinceEpoch !=
               updatedTask.dueDate.millisecondsSinceEpoch;
+      bool contentChange =
+          existing.title != updatedTask.title ||
+          existing.description != updatedTask.description ||
+          existing.isCompleted != updatedTask.isCompleted ||
+          existing.type != updatedTask.type ||
+          existing.updatedAt != updatedTask.updatedAt ||
+          existing.images.length != updatedTask.images.length ||
+          existing.comments.length != updatedTask.comments.length ||
+          !listEquals(existing.members, updatedTask.members) ||
+          !listEquals(existing.labelIds, updatedTask.labelIds);
       if (existing.updatedAt < updatedTask.updatedAt || structuralChange) {
         tasks[idx] = updatedTask;
         _tasksByBoard[boardId] = List.from(tasks);
-        if (structuralChange) notifyListeners();
+        if (structuralChange || contentChange) notifyListeners();
       }
     } else {
       tasks.add(updatedTask);

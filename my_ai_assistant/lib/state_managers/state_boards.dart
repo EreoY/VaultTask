@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:flutter/foundation.dart'
     show ChangeNotifier, kIsWeb, debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/board_model.dart';
 import '../models/workspace_model.dart';
 import '../databases/db_personal_sqlite.dart';
 import '../databases/api_cloudflare.dart';
 
 class StateBoards extends ChangeNotifier {
+  static const _selectedBoardPrefKey = 'app_selected_board_id';
   // 🔄 Broadcast stream for board structure changes (columns, labels, etc.)
   static final _boardChangeController = StreamController<String>.broadcast();
   static Stream<String> get onBoardChange => _boardChangeController.stream;
@@ -33,7 +35,27 @@ class StateBoards extends ChangeNotifier {
 
   void setSelectedBoard(BoardModel? board) {
     _selectedBoard = board;
+    _persistSelectedBoardId(board?.id);
     notifyListeners();
+  }
+
+  Future<void> _persistSelectedBoardId(String? boardId) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (boardId == null || boardId.isEmpty) {
+      await prefs.remove(_selectedBoardPrefKey);
+      return;
+    }
+    await prefs.setString(_selectedBoardPrefKey, boardId);
+  }
+
+  Future<void> restorePersistedSelectedBoard() async {
+    final prefs = await SharedPreferences.getInstance();
+    final boardId = prefs.getString(_selectedBoardPrefKey);
+    if (boardId == null || boardId.isEmpty) return;
+    try {
+      _selectedBoard = _boards.firstWhere((b) => b.id == boardId);
+      notifyListeners();
+    } catch (_) {}
   }
 
   final Map<String, Map<String, String>> _userProfiles =

@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'dart:io';
@@ -95,12 +96,16 @@ class StartupGuard extends StatefulWidget {
 class _StartupGuardState extends State<StartupGuard> {
   bool _showRetry = false;
   bool _delayCompleted = false;
+  bool _authResolved = false;
+  User? _currentUser;
   Timer? _timeoutTimer;
   Timer? _delayTimer;
+  StreamSubscription<User?>? _authSub;
 
   @override
   void initState() {
     super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
     _timeoutTimer = Timer(const Duration(seconds: 12), () {
       if (mounted) setState(() => _showRetry = true);
     });
@@ -111,33 +116,37 @@ class _StartupGuardState extends State<StartupGuard> {
         });
       }
     });
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (!mounted) return;
+      setState(() {
+        _currentUser = user;
+        _authResolved = true;
+      });
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _authResolved = true;
+      });
+    });
   }
 
   @override
   void dispose() {
     _timeoutTimer?.cancel();
     _delayTimer?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _buildErrorState(snapshot.error.toString());
-        }
+    if (!_delayCompleted || !_authResolved) {
+      return _buildLoadingState();
+    }
 
-        if (snapshot.connectionState == ConnectionState.waiting ||
-            !_delayCompleted) {
-          return _buildLoadingState();
-        }
-
-        if (snapshot.hasData) return const AppShell();
-        return const LoginPage();
-      },
-    );
+    if (_currentUser != null) return const AppShell();
+    return const LoginPage();
   }
 
   Widget _buildLoadingState() {
@@ -239,15 +248,17 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
+  static const _selectedTabPrefKey = 'app_selected_tab_index';
   int _index = 0;
   final Set<int> _visitedTabs = {0};
   StreamSubscription<html.Event>? _windowFocusSub;
+  bool _isRestoringShellState = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<StateBoards>().fetchAllBoards();
+      await _restoreShellState();
     });
     if (kIsWeb) {
       _windowFocusSub = html.window.onFocus.listen((_) {
@@ -274,6 +285,30 @@ class _AppShellState extends State<AppShell> {
     if (index == 0) {
       context.read<StateTasks>().refreshReadComments();
     }
+    _persistShellState();
+  }
+
+  Future<void> _restoreShellState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedIndex = prefs.getInt(_selectedTabPrefKey) ?? 0;
+    if (!mounted) return;
+    setState(() {
+      _index = savedIndex.clamp(0, 4);
+      _visitedTabs.add(_index);
+    });
+
+    final boardsState = context.read<StateBoards>();
+    await boardsState.fetchAllBoards();
+    await boardsState.restorePersistedSelectedBoard();
+    if (!mounted) return;
+    setState(() {
+      _isRestoringShellState = false;
+    });
+  }
+
+  Future<void> _persistShellState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_selectedTabPrefKey, _index);
   }
 
   Widget _buildScreen(int index) {
@@ -313,7 +348,15 @@ class _AppShellState extends State<AppShell> {
     final selectedBoard = context.select<StateBoards, BoardModel?>(
       (state) => state.selectedBoard,
     );
+    final boardsLoading = context.select<StateBoards, bool>(
+      (state) => state.isLoading,
+    );
+    final tasksLoading = context.select<StateTasks, bool>(
+      (state) => state.isLoading,
+    );
     final isDesktop = Responsive.isDesktop(context);
+    final showLoadingOverlay =
+        _isRestoringShellState || boardsLoading || tasksLoading;
 
     return Scaffold(
       backgroundColor: GlassColors.background,
@@ -395,6 +438,54 @@ class _AppShellState extends State<AppShell> {
                             children: _buildVisitedScreens(),
                           ),
                   ),
+                  if (showLoadingOverlay)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        ignoring: false,
+                        child: Container(
+                          color: Colors.black.withOpacity(0.26),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: GlassColors.surface.withOpacity(0.92),
+                                borderRadius: BorderRadius.circular(
+                                  ExecutiveRadius.m,
+                                ),
+                                border: Border.all(
+                                  color: GlassColors.ghostBorder,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.1,
+                                      color: GlassColors.gold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Refreshing your workspace...',
+                                    style: GlassText.bodyMD().copyWith(
+                                      color: GlassColors.onSurface.withOpacity(
+                                        0.82,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   const FloatingAssistantShell(),
                 ],
               ),

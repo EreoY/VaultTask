@@ -1,3 +1,264 @@
+## Phase 129: Calendar Live Update Reactivity
+
+> **Architecture Mandate:** ทำให้หน้า Calendar rebuild ทันทีเมื่อ task ถูกแก้ไขโดยไม่ต้องสลับหน้า โดยอุดช่องว่างใน task-state injection path ที่เดิม notify เฉพาะ structural changes แต่ไม่ notify กับ content/status updates ที่หน้า Calendar แสดงอยู่
+
+### Task 129.1: Register Calendar Reactivity Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 129 สำหรับแก้ Calendar live update reactivity
+
+### Task 129.2: Notify Calendar Consumers on Visible Task Content Changes
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_tasks.dart`
+- **Action:** ขยาย `_injectSingleTask` ให้ notify listeners เมื่อ field ที่ Calendar ใช้แสดงเปลี่ยน เช่น title/description/isCompleted/images/comments/members/labels
+
+### Task 129.3: Verify Analyzer and Calendar Refresh Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่าแก้ task แล้ว Calendar rebuild ทันทีโดยไม่ต้องสลับหน้า
+
+## Phase 128: Global Cover Preference
+
+> **Architecture Mandate:** เปลี่ยน cover visibility preference จากการจำแยกต่อ task ไปเป็น preference กลางของผู้ใช้ทั้งแอพ เพื่อให้คนที่ไม่ต้องการเห็นปกปิดครั้งเดียวแล้วทุก task ใช้พฤติกรรมเดียวกัน
+
+### Task 128.1: Register Global Cover Preference Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 128 สำหรับย้าย cover preference เป็น global setting
+
+### Task 128.2: Replace Per-Task Cover Persistence with Global Preference
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ใช้ SharedPreferences key กลางตัวเดียวสำหรับ cover expanded state ทุก task
+
+### Task 128.3: Verify Analyzer and Preference Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่าการ hide/show ปกทำงานเป็นค่าเดียวกันทุก task
+
+## Phase 127: Task Modal Cover Controls and Rich Image Detail View
+
+> **Architecture Mandate:** ลดการกินพื้นที่ของ cover image ใน task modal โดยให้ผู้ใช้ย่อ/ขยายปกได้พร้อมจำสถานะต่อ task, เปิดดูรูปเต็มจากปกได้, และยกระดับ image detail dialog ให้แสดงคำอธิบายของรูปแบบ side-by-side บน desktop
+
+### Task 127.1: Register Cover Control and Image Detail Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 127 สำหรับ cover toggle persistence และ rich image detail view
+
+### Task 127.2: Add Persistent Cover Show/Hide Controls to Task Modal
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เพิ่มปุ่มซ่อน/แสดง cover image, เปิดดูปกเต็ม, และจำสถานะเปิด/ปิดต่อ task
+
+### Task 127.3: Upgrade Asset Image Viewer with Side Description Panel
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เปลี่ยน full-image dialog ให้แสดงคำอธิบายรูปด้านขวาบน desktop และด้านล่างบน mobile
+
+### Task 127.4: Verify Analyzer and Modal Image Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า cover controls, persistence, และ rich image dialog compile ผ่าน
+
+## Phase 126: Calendar Toggle Visual Parity with Kanban
+
+> **Architecture Mandate:** ยก visual language ของ segmented toggle จากหน้า Kanban มาใช้กับ Calendar แบบตรง ๆ เพื่อให้ Month/Day switch ดูเป็นระบบเดียวกับ BOARD/CALENDAR switch จริง ไม่ใช่เวอร์ชันตีความใหม่
+
+### Task 126.1: Register Kanban-Parity Toggle Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 126 สำหรับทำ Calendar toggle ให้เหมือน Kanban switch แบบ visual parity
+
+### Task 126.2: Match Calendar Toggle Styling to Kanban Segment Button
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ย้าย shell/segment padding, colors, radius, และ typography จาก Kanban switch มาใช้กับ Month/Day โดยตรง
+
+### Task 126.3: Verify Analyzer and Toggle Parity Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า Calendar toggle compile ผ่านและ visual spec ตรงกับ Kanban switch
+
+## Phase 125: Calendar Segmented Toggle and Task-Type Icon Language
+
+> **Architecture Mandate:** ทำให้ Month/Day switch บน Calendar อ่านเป็น segmented control ก้อนเดียวแบบ reference แทนปุ่มแยก, และเติม type icon หน้า task title ใน calendar cards เพื่อปูทางให้รองรับ meeting/task visual distinction ในอนาคต
+
+### Task 125.1: Register Segmented Toggle and Type-Icon Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 125 สำหรับ segmented toggle style และ task-type icons ใน calendar
+
+### Task 125.2: Restyle Calendar Mode Toggle as Segmented Control
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เปลี่ยน Month/Day switch ให้เป็น segmented control ก้อนเดียวด้วย inactive shell และ active gold segment แบบ reference
+
+### Task 125.3: Add Task-Type Icons to Calendar Cards
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`, `my_ai_assistant/lib/ui/calendar/widgets/unscheduled_task_bucket.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** แสดงไอคอนประเภทหน้าชื่อ task ใน month/day/unscheduled cards และ map meeting/task ไว้ล่วงหน้า
+
+### Task 125.4: Verify Analyzer and Calendar Icon Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า segmented toggle และ type icons compile ผ่านทุก calendar surface
+
+## Phase 124: Calendar Gold Toggle Accent
+
+> **Architecture Mandate:** รักษา header toggle แบบ simplified ไว้ แต่เปลี่ยน active state ให้สื่อธีม Calenda ชัดขึ้นด้วยโทนทองแทนโทนขาวเทา
+
+### Task 124.1: Register Gold Toggle Accent Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 124 สำหรับปรับ Month/Day toggle ให้ active เป็นสีทอง
+
+### Task 124.2: Apply Gold Active Styling to Calendar Mode Toggle
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ปรับ active background, border, icon, และ text ของ Month/Day toggle ให้เป็นทองตามธีม
+
+### Task 124.3: Verify Analyzer and Toggle Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า toggle ทอง compile ผ่านและยังสลับโหมดได้ตามเดิม
+
+## Phase 123: Calendar Header Toggle Simplification
+
+> **Architecture Mandate:** ลดความซ้ำของ header toolbar บนหน้า Calendar โดยให้ด้านบนเหลือเฉพาะตัวสลับ Month/Day แบบ compact, ตัดเส้นคั่นและ underline ที่เกะกะ, และย้ายภาระการแสดงเดือน/เลื่อนเดือนให้เหลืออยู่ใน month panel หลักด้านล่างเท่านั้น
+
+### Task 123.1: Register Header Simplification Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 123 สำหรับตัดเส้น/underline/เดือนซ้ำใน header calendar
+
+### Task 123.2: Remove Top Toolbar Divider, Underlines, and Duplicate Month Navigation
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ให้ toolbar ด้านบนเหลือแค่ Month/Day toggle, ตัด divider/underline, และตัดชื่อเดือน+ลูกศรด้านบนที่ซ้ำกับ month panel ด้านล่าง
+
+### Task 123.3: Verify Analyzer and Header Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า header เหลือ toggle อย่างเดียวโดยไม่มี divider/underline/month-nav ซ้ำ และ month/day switching ยัง compile ผ่าน
+
+## Phase 122: Calendar Unscheduled Bucket and Kanban Theme Convergence
+
+> **Architecture Mandate:** ย้ายแนวคิด unscheduled task bucket จาก calendar mode ใน Kanban มาไว้ในหน้า Calendar หลักด้วย, และทำ month view ให้ใช้ card chrome / spacing / button language ใกล้กับ Kanban calendar เพื่อให้ประสบการณ์ทั้งสองหน้ากลมเป็นธีมเดียวกัน
+
+### Task 122.1: Register Unscheduled Calendar Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 122 สำหรับ unscheduled bucket และ visual convergence กับ Kanban calendar
+
+### Task 122.2: Add Unscheduled Task Bucket to Calendar Page
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** แสดง task ของผู้ใช้ที่ยังไม่มีกำหนดเวลาใน panel ด้านขวาแบบเดียวกับ Kanban calendar พร้อม checkbox, workspace/board source, และ preview tap path
+
+### Task 122.3: Align Calendar Card/Button Styling with Kanban Calendar
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** แยก month panel / unscheduled bucket ออกเป็น widget ตามธีม Kanban calendar และใช้ card chrome / spacing / action language ให้สอดคล้องกัน
+
+### Task 122.4: Verify Analyzer and Calendar Layout Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า unscheduled bucket compile ผ่านและไฟล์ Calendar ถูกแยกจนกลับมาอยู่ในกรอบขนาด
+
+## Phase 121: Calendar Completion Persistence, Kanban-Like Cards, and Auth Gate Stabilization
+
+> **Architecture Mandate:** ทำให้งานที่ติ๊กเสร็จยังคงอยู่ใน Calendar พร้อม strike-through/fade แทนการหาย, ปรับ month/day presentation ให้ใกล้โหมด calendar ใน Kanban มากขึ้นด้วย full-color task cards และ source labels ที่ครบ, และแก้ white-flash/restart symptom โดย stabilize auth gate ไม่ให้รีเมานต์แอพทั้งก้อนจาก transient auth event
+
+### Task 121.1: Register Completion and Stabilization Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 121 สำหรับ completed-task visibility, calendar card redesign, และ auth gate stabilization
+
+### Task 121.2: Keep Completed Tasks Visible in Month and Day Views
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** เอา filter completed ออกจาก Calendar และแสดงงานที่เสร็จแล้วแบบขีดฆ่า+จาง
+
+### Task 121.3: Redesign Calendar Cards Toward Kanban Calendar Mode
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** ทำ month grid เป็น framed calendar card, task cards ใช้สีทั้งใบ, เพิ่ม description line และ source label workspace/board
+
+### Task 121.4: Stabilize Startup Auth Gate Against White Flash
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** เลิกพึ่ง StreamBuilder ตรง ๆ สำหรับ auth gate แล้ว cache auth state ใน Stateful flow เพื่อลด full remount/white flash
+
+### Task 121.5: Verify Analyzer and Calendar/Auth Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า completed tasks อยู่ต่อ, card layout ใหม่ compile ผ่าน, และ auth gate ไม่รีเซ็ต shell จาก transient auth event
+
+## Phase 120: Calendar Brand Restoration, Interactive Preview, and Session-Stable Loading
+
+> **Architecture Mandate:** เติม brand header ขนาดเล็กให้ Calendar ไม่โล่งเกินไป, คืนความสามารถของ task preview ให้ interactive ได้ทั้ง chat/comment/check/open-board พร้อม cover image, และแก้อาการแอพกระพริบเด้งหน้าแรกโดย persist หน้าเดิมและแสดง loading overlay ระหว่าง refresh แทนการ reset navigation
+
+### Task 120.1: Register Interactive Preview and Stability Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 120 สำหรับ mini brand, interactive preview, และ session-stable loading
+
+### Task 120.2: Restore Small Calendar Brand Header
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เพิ่ม icon+Calenda ขนาดเล็กบน header เพื่อไม่ให้หน้าโล่ง
+
+### Task 120.3: Make Calendar Task Preview Fully Interactive Again
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เปิด chat/comment/check ใน preview, เพิ่มปุ่ม open board, และทำ cover image แสดงใน desktop preview
+
+### Task 120.4: Preserve Current Screen During Reload-Like Refresh
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:** persist tab/selected board และแสดง loading overlay ระหว่าง fetch เพื่อไม่เด้งกลับหน้าแรก
+
+### Task 120.5: Verify Analyzer and Stability Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า preview interactive, open-board ทำงาน, และ loading overlay ไม่รีเซ็ตหน้าเดิม
+
+## Phase 119: Calendar Header Cleanup and Stronger Weekend Contrast
+
+> **Architecture Mandate:** ตัด header chrome ที่เกะกะในหน้า Calendar ออก, คง weekend emphasis เฉพาะ weekday label, คืนเลขวันที่ weekend เป็นสีปกติ, และเพิ่มความเข้มของพื้นหลัง Saturday/Sunday ให้แยกจาก weekday ชัดขึ้น
+
+### Task 119.1: Register Header Cleanup Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 119 สำหรับตัด header elements และจูน weekend contrast
+
+### Task 119.2: Remove Extra Calendar Header Elements
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ลบ eyebrow title และ overview banner ที่ผู้ใช้ระบุว่าเกะกะ
+
+### Task 119.3: Refine Weekend Label and Cell Contrast
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ให้มีแค่ชื่อวัน weekend เป็นทอง, เลขวันที่เป็นสีปกติ, และเพิ่มความเข้มพื้นหลัง weekend
+
+### Task 119.4: Verify Analyzer and Calendar Audit
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า header ถูกตัดออกและ weekend contrast ตรง requirement ล่าสุด
+
+## Phase 118: Calendar Real-Week Alignment and Read-Only Full Preview
+
+> **Architecture Mandate:** ปรับ Calendar ให้เรียงสัปดาห์แบบปฏิทินจริงโดยเริ่ม Sunday เป็นคอลัมน์แรก, ทำพื้นหลัง weekend เข้มกว่าวันธรรมดาอย่างชัดเจน, และใช้ task preview แบบเดียวกับ Kanban detail แต่เป็น read-only เพื่อให้รูป/คอมเมนต์/metadata ขึ้นครบโดยห้ามแก้ไขจาก Calendar
+
+### Task 118.1: Register Calendar Week Alignment Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 118 สำหรับแก้ week layout, weekend contrast, และ full read-only preview
+
+### Task 118.2: Align Calendar Grid and Day Strip to Sunday-First
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ทำ month grid/day strip เริ่ม Sunday ก่อน Monday และผูก weekend visuals ให้ตรงคอลัมน์จริง
+
+### Task 118.3: Reuse Full Task Detail Modal as Read-Only Calendar Preview
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ให้ Calendar และ Day view เปิด task detail modal แบบเดียวกับบอร์ด พร้อมข้อมูล/รูป/คอมเมนต์ครบ แต่ disable การแก้ไขทั้งหมด
+
+### Task 118.4: Verify Analyzer and Preview/Image Flow
+- **Status:** [x] Done
+- **Action:** รัน format/analyze และ audit ว่า Sunday-first, weekend background, และ asset preview ทำงานครบ
+
 ## Phase 117: Calendar Reference Visual Alignment
 
 > **Architecture Mandate:** ปรับ Calendar ให้เข้าใกล้ reference screenshot มากขึ้น โดยลด visual treatment ที่เกินจากภาพต้นฉบับ, ทำ toolbar/tab underline เป็นเส้นเต็มแถว, ไม่ย้อมสีทั้งคอลัมน์ weekend, และทำ task row เป็นรายการบางพร้อมแถบสีบอร์ด
