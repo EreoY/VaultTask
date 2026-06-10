@@ -89,7 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(workspaces.length, tasksState.unreadCommentsCount),
-          SizedBox(height: ExecutiveSpacing.sectionGap(context)),
+          SizedBox(height: isDesktop ? 24 : 20),
 
           isDesktop
               ? Row(
@@ -137,19 +137,11 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text(
-              'STRATEGIC HUB',
-              style: GlassText.headlineXL().copyWith(
-                fontSize: isSmall ? 28 : 44,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.0,
-                color: GlassColors.onSurface,
-              ),
-            ),
-            const SizedBox(width: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -168,7 +160,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -208,12 +199,23 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        Text(
+          'STRATEGIC HUB',
+          style: GlassText.headlineXL().copyWith(
+            fontSize: isSmall ? 30 : 46,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+            height: 1.0,
+            color: GlassColors.onSurface,
+          ),
+        ),
         const SizedBox(height: 6),
         Text(
-          DateFormat('MMMM d').format(now),
+          'Today is ${DateFormat('EEEE, MMMM d').format(now)}',
           style: GlassText.bodyLG().copyWith(
             color: GlassColors.onSurfaceVariant.withOpacity(0.6),
-            fontWeight: FontWeight.normal,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

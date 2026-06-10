@@ -17,6 +17,7 @@ class MonthCalendarPanel extends StatelessWidget {
   final List<WorkspaceModel> workspaces;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final ValueChanged<DateTime> onMonthSelected;
   final ValueChanged<DateTime> onDateSelected;
   final void Function(TaskModel task, BoardModel? board) onTaskTap;
 
@@ -29,6 +30,7 @@ class MonthCalendarPanel extends StatelessWidget {
     required this.workspaces,
     required this.onPrevious,
     required this.onNext,
+    required this.onMonthSelected,
     required this.onDateSelected,
     required this.onTaskTap,
   });
@@ -50,13 +52,36 @@ class MonthCalendarPanel extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildNavButton(Icons.chevron_left_rounded, onPrevious),
-              Text(
-                DateFormat('MMMM yyyy').format(currentMonth).toUpperCase(),
-                style: GlassText.headlineLG().copyWith(
-                  color: GlassColors.gold,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
+              InkWell(
+                onTap: () => _showMonthPickerDialog(context),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DateFormat(
+                          'MMMM yyyy',
+                        ).format(currentMonth).toUpperCase(),
+                        style: GlassText.headlineLG().copyWith(
+                          color: GlassColors.gold,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: GlassColors.gold.withOpacity(0.9),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               _buildNavButton(Icons.chevron_right_rounded, onNext),
@@ -106,6 +131,16 @@ class MonthCalendarPanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showMonthPickerDialog(BuildContext context) async {
+    final picked = await showDialog<DateTime>(
+      context: context,
+      builder: (_) => _MonthYearPickerDialog(initialMonth: currentMonth),
+    );
+    if (picked != null) {
+      onMonthSelected(DateTime(picked.year, picked.month));
+    }
   }
 
   Widget _buildWeekdayHeader(BuildContext context) {
@@ -395,5 +430,174 @@ class MonthCalendarPanel extends StatelessWidget {
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+}
+
+class _MonthYearPickerDialog extends StatefulWidget {
+  final DateTime initialMonth;
+
+  const _MonthYearPickerDialog({required this.initialMonth});
+
+  @override
+  State<_MonthYearPickerDialog> createState() => _MonthYearPickerDialogState();
+}
+
+class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
+  late int _year;
+
+  @override
+  void initState() {
+    super.initState();
+    _year = widget.initialMonth.year;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final monthLabels = List.generate(
+      12,
+      (index) =>
+          DateFormat('MMM').format(DateTime(_year, index + 1)).toUpperCase(),
+    );
+
+    return Dialog(
+      backgroundColor: const Color(0xFF11161B),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+        side: BorderSide(color: GlassColors.ghostBorder),
+      ),
+      child: SizedBox(
+        width: 380,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Select month',
+                    style: GlassText.headlineLG().copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildYearButton(Icons.chevron_left_rounded, -1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      '$_year',
+                      style: GlassText.headlineLG().copyWith(
+                        color: GlassColors.gold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  _buildYearButton(Icons.chevron_right_rounded, 1),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Jump directly to any month and year.',
+                style: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 18),
+              GridView.builder(
+                shrinkWrap: true,
+                itemCount: 12,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.9,
+                ),
+                itemBuilder: (context, index) {
+                  final monthDate = DateTime(_year, index + 1);
+                  final isActive =
+                      widget.initialMonth.year == monthDate.year &&
+                      widget.initialMonth.month == monthDate.month;
+                  return InkWell(
+                    onTap: () => Navigator.of(context).pop(monthDate),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? GlassColors.gold.withOpacity(0.14)
+                            : Colors.white.withOpacity(0.03),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isActive
+                              ? GlassColors.gold.withOpacity(0.45)
+                              : GlassColors.ghostBorder,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          monthLabels[index],
+                          style: GlassText.labelSM().copyWith(
+                            color: isActive
+                                ? GlassColors.gold
+                                : GlassColors.onSurface.withOpacity(0.8),
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'Close',
+                      style: GlassText.bodyMD().copyWith(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.72),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(DateTime.now()),
+                    child: Text(
+                      'Today',
+                      style: GlassText.bodyMD().copyWith(
+                        color: GlassColors.gold,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildYearButton(IconData icon, int yearDelta) {
+    return InkWell(
+      onTap: () => setState(() => _year += yearDelta),
+      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: Icon(
+          icon,
+          size: 18,
+          color: GlassColors.onSurfaceVariant.withOpacity(0.8),
+        ),
+      ),
+    );
   }
 }

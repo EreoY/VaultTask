@@ -88,13 +88,21 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildCalendarHeader() {
     final isMobile = Responsive.isMobile(context);
     final isTablet = Responsive.isTablet(context);
+    final todayLabel = DateFormat('EEEE, MMMM d').format(DateTime.now());
+    final heroTitle = _isDayView
+        ? DateFormat('EEEE, MMMM d').format(_selectedDate)
+        : DateFormat('MMMM yyyy').format(_currentMonth).toUpperCase();
+    final supportLabel = _isDayView
+        ? 'Calenda Daily Focus'
+        : 'Strategic Temporal Map';
+    const contextLabel = 'Calenda Timeline';
 
     return Container(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 16 : 36,
         isMobile ? 16 : 28,
         isMobile ? 16 : 36,
-        12,
+        8,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,28 +117,68 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               const SizedBox(width: 6),
               Text(
-                'Calenda',
+                contextLabel,
                 style: GlassText.labelSM().copyWith(
-                  color: GlassColors.onSurfaceVariant.withOpacity(0.72),
-                  letterSpacing: 0.4,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.78),
+                  letterSpacing: 0.35,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            _isDayView
-                ? DateFormat('EEEE, MMMM d').format(_selectedDate)
-                : 'Strategic Temporal Map: ${DateFormat('MMMM yyyy').format(_currentMonth).toUpperCase()}',
+            heroTitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GlassText.headlineXL().copyWith(
-              fontSize: isMobile ? 28 : (isTablet ? 34 : 42),
-              height: 1.04,
+              fontSize: isMobile ? 28 : (isTablet ? 36 : 46),
+              height: 1.02,
               fontWeight: FontWeight.w900,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_month_rounded,
+                    size: 13,
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    supportLabel,
+                    style: GlassText.labelSM().copyWith(
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.78),
+                      letterSpacing: 0.35,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '•',
+                style: GlassText.labelSM().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.35),
+                ),
+              ),
+              Text(
+                'Today is $todayLabel',
+                style: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.62),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           _buildToolbar(),
         ],
       ),
@@ -157,6 +205,18 @@ class _CalendarPageState extends State<CalendarPage> {
       } else {
         _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
       }
+    });
+    _saveCalendarSettings();
+  }
+
+  void _handleMonthSelected(DateTime month) {
+    final clampedDay = _selectedDate.day.clamp(
+      1,
+      DateUtils.getDaysInMonth(month.year, month.month),
+    );
+    setState(() {
+      _currentMonth = DateTime(month.year, month.month);
+      _selectedDate = DateTime(month.year, month.month, clampedDay);
     });
     _saveCalendarSettings();
   }
@@ -411,6 +471,7 @@ class _CalendarPageState extends State<CalendarPage> {
       workspaces: workspaces,
       onPrevious: _goToPrevious,
       onNext: _goToNext,
+      onMonthSelected: _handleMonthSelected,
       onDateSelected: (date) {
         setState(() {
           _selectedDate = date;

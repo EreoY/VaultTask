@@ -1,3 +1,72 @@
+## Phase 132: Calendar Context Label Simplification and Dashboard Header Completion
+
+> **Architecture Mandate:** เก็บ workspace count กับ bell ไว้เฉพาะหน้า Dashboard ตามหน้าที่ของ overview screen, และลดความแน่นของ header หน้า Calendar โดยเปลี่ยนบรรทัดบนให้เป็น label สั้น 2-3 คำที่สื่อบริบทของหน้าแทน จากนั้นปิดงาน Dashboard header ที่ค้างอยู่ให้ครบ
+
+### Task 132.1: Register Calendar/Dashboard Header Correction Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 132 สำหรับย้าย workspace/bell ให้เหลือเฉพาะ Dashboard และแทน top-line ของ Calendar ด้วย context label สั้น
+
+### Task 132.2: Finish Dashboard Three-Line Header and Spacing Cleanup
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ทำ Dashboard ให้เป็น 3-line header จริงและลดช่องว่างใต้ hero ให้ content ขึ้นมาใกล้ขึ้น
+
+### Task 132.3: Replace Calendar Top Meta Row with Short Context Label
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เอา workspace pill + bell ออกจาก Calendar แล้วใช้ label สั้น 2-3 คำที่สื่อว่าเป็นหน้า calendar/temporal planning แทน
+
+### Task 132.4: Verify Analyzer and Header Consistency Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า Dashboard/Calendar headers ตรง requirement ล่าสุด
+
+## Phase 131: Dashboard Three-Line Header and Tighter Hero Spacing
+
+> **Architecture Mandate:** ปรับหน้า Dashboard ให้ header อ่านเป็น 3 บรรทัดแบบเดียวกับ hierarchy ใหม่ที่ผู้ใช้ต้องการ โดยย้าย workspace count กับ bell ขึ้นบรรทัดบน, ดันชื่อหน้าไว้บรรทัดกลางให้เด่นสุด, ใส่วันปัจจุบันในบรรทัดล่าง, และลดช่องว่างระหว่าง hero กับเนื้อหาหลักเพื่อไม่ให้เลย์เอาต์ดูหลวม
+
+### Task 131.1: Register Dashboard Header Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 131 สำหรับ 3-line dashboard header และปรับ section gap ใต้ hero
+
+### Task 131.2: Restructure Dashboard Header into Three Lines
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** จัด dashboard hero เป็น 3 บรรทัดโดยบรรทัดแรกเป็น workspace pill + bell, บรรทัดสองเป็นชื่อหน้าใหญ่, บรรทัดสามเป็นวันที่พร้อมวันในสัปดาห์
+
+### Task 131.3: Tighten Dashboard Hero-to-Content Spacing
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ลดระยะห่างหลัง header และระยะในตัว header เพื่อให้รายการด้านล่างเริ่มใกล้ขึ้นและดูสมดุล
+
+### Task 131.4: Verify Analyzer and Dashboard Layout Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า dashboard header ใหม่ compile ผ่านและ spacing ไม่หลวม
+
+## Phase 130: Calendar Three-Line Header and Direct Month Picker
+
+> **Architecture Mandate:** ปรับ hierarchy ของหน้า Calendar ให้ header อ่านง่ายแบบ 3 บรรทัดโดยดึง workspace/bell context ขึ้นบรรทัดบน, ให้ title กลางเด่นตามโหมด Month/Day, ลดช่องว่างระหว่าง title กับ content, และเปิดทางให้กดชื่อเดือนใน panel เพื่อเลือกเดือน/ปีได้ตรง ๆ โดยไม่ต้องไล่กดลูกศร
+
+### Task 130.1: Register Calendar Header and Picker Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 130 สำหรับ 3-line header, tighter spacing, และ direct month/year picker บน calendar panel
+
+### Task 130.2: Restructure Calendar Header into Three Lines
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** ทำ header 3 บรรทัดโดยบรรทัดแรกเป็น workspace pill + bell, บรรทัดสองเป็น title เด่นตามโหมด, บรรทัดสามเป็น supporting line ที่บอกวันวันนี้ และลด spacing ให้แน่นขึ้น
+
+### Task 130.3: Add Direct Month/Year Picker from Calendar Title
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`
+- **Action:** ทำให้กดชื่อเดือนบน month panel แล้วเปิด picker เพื่อเลือกเดือน/ปีได้ทันที พร้อม sync state กลับมาที่ calendar page
+
+### Task 130.4: Verify Analyzer and Calendar Header/Picker Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า header 3 บรรทัด, spacing, และ month picker compile ผ่าน
+
 ## Phase 129: Calendar Live Update Reactivity
 
 > **Architecture Mandate:** ทำให้หน้า Calendar rebuild ทันทีเมื่อ task ถูกแก้ไขโดยไม่ต้องสลับหน้า โดยอุดช่องว่างใน task-state injection path ที่เดิม notify เฉพาะ structural changes แต่ไม่ notify กับ content/status updates ที่หน้า Calendar แสดงอยู่
