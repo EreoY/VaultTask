@@ -1,3 +1,228 @@
+## Phase 142: Calendar-Style Collaboration Preview for Chat Task Rows
+
+> **Architecture Mandate:** ทำให้ task modal ที่เปิดจากตารางในแชตมีพฤติกรรมใกล้กับการ preview จาก calendar มากกว่าการเปิด editor เต็ม โดยเปิดให้ดูรูป, เปิดบอร์ด, ติ๊กสถานะ, ใช้ task chat และ comment ได้ แต่ล็อกการแก้ field เชิงโครงสร้าง
+
+### Task 142.1: Register Collaboration Preview Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 142 สำหรับโหมด preview-interaction ของ task modal จากแชต
+
+### Task 142.2: Add Preview Interaction Mode to Task Modal
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เพิ่มโหมดที่ล็อก title/description/metadata/assets/delete แต่ยังเปิด checkbox, task chat, comments, cover viewing, และ open board
+
+### Task 142.3: Wire Chat Flow to Use Preview Mode and Open Board Navigation
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`, `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`, `my_ai_assistant/lib/ui/chat/chat_page.dart`, `my_ai_assistant/lib/main.dart`
+- **Action:** ให้แชตเปิด modal โหมด preview และส่ง callback ไปหน้า Boards/Kanban เมื่อกด OPEN BOARD
+
+### Task 142.4: Verify Analyzer and Collaboration-Preview Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 141: Click-to-Edit Task Rows in Chat Table
+
+> **Architecture Mandate:** ทำให้ task rows ใน `show_tasks_from_ids` ใช้งานได้เท่ากับ task cards ในหน้า Calendar โดยกดเปิด `TaskEditModal` เดิมได้ตรงจากแชต เพื่อดูรายละเอียดและแก้ไขงานจริงจากตารางผลลัพธ์
+
+### Task 141.1: Register Chat Task Editing Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 141 สำหรับ click-to-edit บน ID-based task table
+
+### Task 141.2: Wire Chat Table Rows to TaskEditModal
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** ทำให้แต่ละแถวใน task table กดได้ เปิด editor เดิมพร้อมข้อมูลบอร์ด/งานเหมือนหน้า Calendar
+
+### Task 141.3: Verify Analyzer and Chat-Edit Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 140: Natural Reply Cleanup and Table Overflow Fix
+
+> **Architecture Mandate:** ถอด fallback prose ที่ทำให้ UI ดูไม่เป็นธรรมชาติเมื่อผลลัพธ์หลักเป็น structured UI, ซ่อน text bubble เมื่อข้อความว่างจริง, และอุด overflow ทางขวาของ task table โดยคำนวณคอลัมน์จากพื้นที่สุทธิหลังหัก gutter
+
+### Task 140.1: Register Reply/Overflow Cleanup Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 140 สำหรับลบ fallback text แข็ง ๆ และแก้ overflow ของ task table
+
+### Task 140.2: Remove Generic Jonny Fallback and Hide Empty Assistant Bubble
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** เอา fallback ข้อความ generic ออก และ render text bubble เฉพาะเมื่อมีข้อความจริงจาก assistant
+
+### Task 140.3: Fix Task Table Right-Side Overflow Budget
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`
+- **Action:** หัก gutter ออกจาก width budget ก่อนคำนวณแต่ละคอลัมน์ เพื่อไม่ให้ deadline cell ล้นออกขวา
+
+### Task 140.4: Verify Analyzer and Natural-Reply/Overflow Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 139: Task Table Render Stability Repair
+
+> **Architecture Mandate:** แก้ renderer ของ task result table ที่ compile ผ่านแต่ render เพี้ยนจริงบนหน้าแชท โดยเลิกพึ่ง flex layout ใน horizontal scroll และกำหนด column width แบบ explicit เพื่อให้ header/body โผล่ครบและไม่ชนกัน
+
+### Task 139.1: Register Task Table Render Repair Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 139 สำหรับแก้ render stability ของ task result table จากภาพใช้งานจริง
+
+### Task 139.2: Replace Flex-Based Scroll Table with Explicit-Width Rows
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`
+- **Action:** เปลี่ยน table header/body จาก Expanded-in-scroll ไปเป็น explicit width cells เพื่อให้แสดงผลครบและคุม layout ได้จริง
+
+### Task 139.3: Verify Analyzer and Render-Stability Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` หลังซ่อม renderer
+
+## Phase 138: Task Result Table Visual Refinement
+
+> **Architecture Mandate:** ปรับ ID-based task renderer ให้ดูเป็น table ที่ตั้งใจออกแบบ ไม่ใช่ DataTable ดิบ โดยใช้ column sizing ที่เต็มพื้นที่, row chrome ที่อ่านง่าย, และเปลี่ยนภาษาจาก Status เป็น Phase ให้สอดคล้องกับ Kanban
+
+### Task 138.1: Register Task Table Visual Refinement Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 138 สำหรับปรับ visual layout ของ ID-based task result table
+
+### Task 138.2: Replace Raw DataTable with Custom Responsive Task Table
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`
+- **Action:** เปลี่ยน task ID renderer ให้ใช้ custom row/header layout ที่เต็ม container และจัด column weight ให้เหมาะกับ task table
+
+### Task 138.3: Rename Status Column to Phase and Restyle Phase Pill
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`
+- **Action:** เปลี่ยน header เป็น Phase และปรับ phase pill ให้ดูเข้ากับ Kanban มากขึ้น
+
+### Task 138.4: Verify Analyzer and Table Layout Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า table renderer compile ผ่าน
+
+## Phase 137: ID-Based Task Rendering Contract
+
+> **Architecture Mandate:** แยกการแสดงผล task จริงออกจาก arbitrary table ของโมเดล โดยให้ agent ส่งเฉพาะ task IDs แล้วให้ UI renderer lookup task/board/workspace/member metadata จาก state เอง เพื่อให้ตารางครบ ชัด และไม่ขึ้นกับการแต่งข้อมูลของโมเดล
+
+### Task 137.1: Register ID-Based Task Rendering Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 137 สำหรับ contract ใหม่ `show_tasks_from_ids` และ renderer ที่ lookup ข้อมูลจริงจาก state
+
+### Task 137.2: Add show_tasks_from_ids Tool Contract
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/tools/definitions/ui_defs.dart`, `my_ai_assistant/lib/ai_agent/tools/registry.dart`, `my_ai_assistant/lib/ai_agent/tools/handlers/ui_handlers.dart`, `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** เพิ่ม tool สำหรับรับ task IDs และส่งต่อเป็น UI tool call โดยไม่ให้โมเดล compose table เอง
+
+### Task 137.3: Render Task IDs with Workspace/Board/Assignee/Deadline Metadata
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`, `my_ai_assistant/lib/ui/chat/widgets/structured_ui_bubbles.dart`
+- **Action:** เพิ่ม renderer สำหรับ task IDs ให้ lookup task, board, workspace, assignee names, status, deadline และแสดง workspace/board เป็นคอลัมน์เดียวสองบรรทัด
+
+### Task 137.4: Verify Analyzer and ID-Render Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า ID-based renderer compile ผ่านและไม่กระทบ plan_review/show_ui_content เดิม
+
+## Phase 136: Second-Pass UI Tool Rendering and Chat Header Cleanup
+
+> **Architecture Mandate:** ถ้า agent รอบสรุปส่ง `show_ui_content` หรือ tool UI อื่นกลับมาใน second pass ระบบต้องไม่ทำหาย แต่ต้องส่งต่อให้หน้าแชทเรนเดอร์ได้จริง พร้อมเก็บงาน presentation โดยเปลี่ยนชื่อหน้าแชทให้ตรงบทบาทและถอด avatar หุ่นยนต์ออกจาก thinking state
+
+### Task 136.1: Register Second-Pass UI Render Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 136 สำหรับแก้ second-pass UI tool rendering, chat header rename, และ thinking avatar cleanup
+
+### Task 136.2: Capture and Surface Second-Pass UI Tool Calls
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** parse tool calls จาก second pass แล้ว append เข้า tool logs/response เพื่อให้ `show_ui_content` ไม่หาย
+
+### Task 136.3: Rename Chat Header and Remove Thinking Avatar
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/chat_page.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_widgets.dart`
+- **Action:** เปลี่ยนหัวหน้า chat เป็น Global Chat และเอา avatar หุ่นยนต์ออกจาก thinking row ให้เหลือเฟืองอย่างเดียว
+
+### Task 136.4: Extend Response Cleaning for Leaked Channel Markup
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/response_parser.dart`
+- **Action:** strip token พวก `<|channel|>thought` และ markup ลักษณะเดียวกันออกจากข้อความ assistant
+
+### Task 136.5: Verify Analyzer and Second-Pass UI Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า second-pass UI แสดงได้และ header/thinking state compile ผ่าน
+
+## Phase 135: Empty Reply Recovery Round
+
+> **Architecture Mandate:** ถ้าเอเจนจบรอบ tool execution แล้วตอบว่าง ห้าม fallback เป็นข้อความนิ่งทันที แต่ให้มี recovery round อีก 1 ครั้งโดยย้ำว่ามันเพิ่งทำอะไรไปและคำตอบก่อนหน้าหาย เพื่อเพิ่มโอกาสให้สรุปผลกลับมาเองอย่างถูกบริบท
+
+### Task 135.1: Register Empty-Reply Recovery Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 135 สำหรับ recovery retry เมื่อ assistant summary หลัง tool call กลับมาว่าง
+
+### Task 135.2: Add Recovery Retry for Empty Assistant Summary
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** ถ้ารอบ summary หลัง tool call ว่าง ให้ inject reminder context แล้วเรียกสรุปอีก 1 รอบก่อน fallback เป็นข้อความคงที่
+
+### Task 135.3: Verify Analyzer and Empty-Reply Recovery Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า recovery flow compile ผ่าน
+
+## Phase 134: Chat Thinking-State Stability and Empty Reply Guard
+
+> **Architecture Mandate:** ทำให้ chat ของเอเจนไม่พังระหว่างสถานะกำลังคิด และห้ามปล่อยให้รอบสรุปหลัง tool call จบด้วย assistant bubble ว่างแม้ backend จะทำงานครบแล้ว
+
+### Task 134.1: Register Chat Stability Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 134 สำหรับแก้ thinking indicator crash risk และกัน empty assistant reply หลัง tool round-trip
+
+### Task 134.2: Simplify and Constrain Thinking Indicator Layout
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_widgets.dart`
+- **Action:** ลดความซับซ้อนของ gear animation และใส่ width constraints/flexible ให้ thinking bubble ไม่พังระหว่าง render
+
+### Task 134.3: Add Fallback Text for Empty Second-Pass Agent Summary
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ai_agent/core/misty_agent.dart`
+- **Action:** ถ้ารอบสรุปหลัง tool call กลับมาว่าง ให้ fallback ไปใช้ข้อความรอบแรกหรือข้อความ generic แทนการปล่อย bubble ว่าง
+
+### Task 134.4: Verify Analyzer and Chat Stability Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า thinking indicator และ fallback reply compile ผ่าน
+
+## Phase 133: VaultTask Rebrand and Jonny Work Animation
+
+> **Architecture Mandate:** เปลี่ยน brand surface ที่ผู้ใช้เห็นจากชื่อเดิมไปเป็น VaultTask และเปลี่ยน persona ของ assistant เป็น Jonny แบบสม่ำเสมอ พร้อมยกระดับ thinking state จากจุดกระพริบธรรมดาไปเป็นเฟืองหมุนที่สื่อว่าตัวเอเจนกำลังลงมือทำงาน
+
+### Task 133.1: Register Rebrand and Agent-Animation Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 133 สำหรับ app rename, assistant rename, และ animated gear thinking indicator
+
+### Task 133.2: Rebrand Visible App Surfaces to VaultTask
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/web/index.html`, `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** เปลี่ยนชื่อแอพที่ผู้ใช้เห็นเป็น VaultTask ใน title, web metadata, และ side navigation brand
+
+### Task 133.3: Rename Assistant Persona to Jonny
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_assistant_shell.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`, `my_ai_assistant/lib/ui/profile/profile_page.dart`
+- **Action:** เปลี่ยนชื่อเอเจนที่ผู้ใช้เห็นเป็น Jonny ใน shell header, input hint, และ profile model label
+
+### Task 133.4: Replace Thinking Dots with Animated Gear Work Indicator
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_widgets.dart`
+- **Action:** เปลี่ยน thinking bubble ให้ใช้ไอคอนเฟืองหมุนพร้อมข้อความสื่อว่า Jonny กำลังทำงาน
+
+### Task 133.5: Verify Analyzer and Rebrand/Animation Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check` พร้อม audit ว่า rebrand และ animated thinking state compile ผ่าน
+
 ## Phase 132: Calendar Context Label Simplification and Dashboard Header Completion
 
 > **Architecture Mandate:** เก็บ workspace count กับ bell ไว้เฉพาะหน้า Dashboard ตามหน้าที่ของ overview screen, และลดความแน่นของ header หน้า Calendar โดยเปลี่ยนบรรทัดบนให้เป็น label สั้น 2-3 คำที่สื่อบริบทของหน้าแทน จากนั้นปิดงาน Dashboard header ที่ค้างอยู่ให้ครบ

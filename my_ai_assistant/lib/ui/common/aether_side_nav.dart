@@ -58,7 +58,7 @@ class AetherSideNav extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Aether AI',
+                'VaultTask',
                 style: GlassText.headlineMD().copyWith(
                   color: GlassColors.onSurface,
                   fontWeight: FontWeight.w700,

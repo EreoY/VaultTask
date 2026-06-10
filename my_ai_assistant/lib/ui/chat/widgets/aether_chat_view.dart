@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +11,13 @@ import '../../common/glass_widgets.dart';
 class AetherChatView extends StatefulWidget {
   final bool isDark;
   final bool isFloating;
-  const AetherChatView({super.key, required this.isDark, this.isFloating = false});
+  final ValueChanged<int>? onNavigate;
+  const AetherChatView({
+    super.key,
+    required this.isDark,
+    this.isFloating = false,
+    this.onNavigate,
+  });
 
   @override
   State<AetherChatView> createState() => _AetherChatViewState();
@@ -56,7 +61,7 @@ class _AetherChatViewState extends State<AetherChatView> {
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        0.0, 
+        0.0,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutQuart,
       );
@@ -92,36 +97,40 @@ class _AetherChatViewState extends State<AetherChatView> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [GlassColors.primary.withOpacity(0.02), Colors.transparent],
+                  colors: [
+                    GlassColors.primary.withOpacity(0.02),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
           ),
         ),
-        
+
         Positioned.fill(
           child: Column(
-          children: [
-            Expanded(
-              child: _MessageList(
-                scrollController: _scrollController,
+            children: [
+              Expanded(
+                child: _MessageList(
+                  scrollController: _scrollController,
+                  isDark: widget.isDark,
+                  isFloating: widget.isFloating,
+                  onNavigate: widget.onNavigate,
+                ),
+              ),
+
+              // Input Area — isolated from StateChat rebuilds
+              _ChatInputArea(
+                controller: _controller,
+                focusNode: _focusNode,
+                onSend: _handleSend,
                 isDark: widget.isDark,
                 isFloating: widget.isFloating,
               ),
-            ),
-            
-            // Input Area — isolated from StateChat rebuilds
-            _ChatInputArea(
-              controller: _controller,
-              focusNode: _focusNode,
-              onSend: _handleSend,
-              isDark: widget.isDark,
-              isFloating: widget.isFloating,
-            ),
-          ],
+            ],
+          ),
         ),
-        ),
-      
+
         // 🗑️ Task 36.1: Reset Session Button (ONLY SHOW IN FLOATING MODE)
         if (widget.isFloating)
           Positioned(
@@ -136,13 +145,24 @@ class _AetherChatViewState extends State<AetherChatView> {
                 },
                 borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-                    border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.1)),
+                    borderRadius: BorderRadius.circular(
+                      ExecutiveRadius.circular,
+                    ),
+                    border: Border.all(
+                      color: GlassColors.outlineVariant.withOpacity(0.1),
+                    ),
                   ),
-                  child: Icon(Icons.delete_sweep_rounded, size: 16, color: GlassColors.onSurfaceVariant.withOpacity(0.6)),
+                  child: Icon(
+                    Icons.delete_sweep_rounded,
+                    size: 16,
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  ),
                 ),
               ),
             ),
@@ -160,16 +180,20 @@ class _MessageList extends StatelessWidget {
   final ScrollController scrollController;
   final bool isDark;
   final bool isFloating;
+  final ValueChanged<int>? onNavigate;
 
   const _MessageList({
     required this.scrollController,
     required this.isDark,
     required this.isFloating,
+    this.onNavigate,
   });
 
   @override
   Widget build(BuildContext context) {
-    final horizontalPadding = isFloating ? 16.0 : ExecutiveSpacing.containerPadding(context);
+    final horizontalPadding = isFloating
+        ? 16.0
+        : ExecutiveSpacing.containerPadding(context);
 
     // Selector uses a signature string of the chat state (length, isTyping, message content, attachments description, draft confirmation)
     // so it rebuilds reactively on any state updates.
@@ -181,7 +205,9 @@ class _MessageList extends StatelessWidget {
         for (final msg in chat.messages) {
           buffer.write('${msg.id}_${msg.text.hashCode}_');
           for (final att in msg.attachments) {
-            buffer.write('${att['name']}_${att['url']}_${att['description'] ?? ''}_');
+            buffer.write(
+              '${att['name']}_${att['url']}_${att['description'] ?? ''}_',
+            );
           }
           if (msg.draft != null) {
             buffer.write('${msg.draft!.isConfirmed}_');
@@ -210,12 +236,10 @@ class _MessageList extends StatelessWidget {
                 return AssistantMessageBubble(
                   message: msg,
                   isDark: isDark,
+                  onNavigate: onNavigate,
                 );
               } else {
-                return UserMessageBubble(
-                  message: msg,
-                  isDark: isDark,
-                );
+                return UserMessageBubble(message: msg, isDark: isDark);
               }
             },
           ),
@@ -246,7 +270,9 @@ class _ChatInputArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final horizontalPadding = isFloating ? 16.0 : ExecutiveSpacing.containerPadding(context);
+    final horizontalPadding = isFloating
+        ? 16.0
+        : ExecutiveSpacing.containerPadding(context);
     final bottomPadding = isFloating ? 16.0 : 32.0;
 
     return Selector<StateChat, int>(
@@ -273,4 +299,3 @@ class _ChatInputArea extends StatelessWidget {
     );
   }
 }
-

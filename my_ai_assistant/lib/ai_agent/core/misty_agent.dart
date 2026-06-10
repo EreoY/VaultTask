@@ -22,14 +22,13 @@ import '../../config/env_config.dart';
 class MistyAgent {
   static const String cfModelId = 'google/gemma-4-26b-a4b-it';
   final List<Map<String, dynamic>> _history = [];
-  
-  final Future<Map<String, String>?> Function(String name, String? url)? onGetImageB64;
-  final Future<void> Function(String name, String? url, String newDesc)? onUpdateImageDescription;
 
-  MistyAgent({
-    this.onGetImageB64,
-    this.onUpdateImageDescription,
-  });
+  final Future<Map<String, String>?> Function(String name, String? url)?
+  onGetImageB64;
+  final Future<void> Function(String name, String? url, String newDesc)?
+  onUpdateImageDescription;
+
+  MistyAgent({this.onGetImageB64, this.onUpdateImageDescription});
 
   void resetSession() => _history.clear();
 
@@ -41,10 +40,11 @@ class MistyAgent {
   Map<String, String> _buildSystemMessage(String context) {
     return {
       'role': 'system',
-      'content': '${Persona.coreMandates}\n\n'
-                 '${SkillTaskManager.rules}\n\n'
-                 '${SkillVision.rules}\n\n'
-                 '$context'
+      'content':
+          '${Persona.coreMandates}\n\n'
+          '${SkillTaskManager.rules}\n\n'
+          '${SkillVision.rules}\n\n'
+          '$context',
     };
   }
 
@@ -52,8 +52,12 @@ class MistyAgent {
     if (s == null) return {'type': 'object', 'properties': {}};
     final Map<String, dynamic> json = {'type': s.type.name.toLowerCase()};
     if (s.description != null) json['description'] = s.description;
-    if (s.properties != null) json['properties'] = s.properties!.map((k, v) => MapEntry(k, _convertSchema(v)));
-    if (s.requiredProperties != null && s.requiredProperties!.isNotEmpty) json['required'] = s.requiredProperties;
+    if (s.properties != null)
+      json['properties'] = s.properties!.map(
+        (k, v) => MapEntry(k, _convertSchema(v)),
+      );
+    if (s.requiredProperties != null && s.requiredProperties!.isNotEmpty)
+      json['required'] = s.requiredProperties;
     if (s.items != null) json['items'] = _convertSchema(s.items);
     if (s.enumValues != null) json['enum'] = s.enumValues;
     return json;
@@ -62,11 +66,94 @@ class MistyAgent {
   Map<String, dynamic> _convertTool(FunctionDeclaration fd) => {
     'type': 'function',
     'function': {
-      'name': fd.name, 
-      'description': fd.description, 
-      'parameters': _convertSchema(fd.parameters)
+      'name': fd.name,
+      'description': fd.description,
+      'parameters': _convertSchema(fd.parameters),
     },
   };
+
+  String _extractResponseText(Map<String, dynamic>? result) {
+    if (result == null) return '';
+    if (result['choices'] != null && (result['choices'] as List).isNotEmpty) {
+      final messageObj = result['choices'][0]['message'];
+      final parts = messageObj['content'] is List
+          ? messageObj['content'] as List
+          : null;
+      if (parts != null) {
+        return ResponseParser.cleanText(
+          ResponseParser.extractTextFromParts(parts),
+        );
+      }
+      return ResponseParser.cleanText(messageObj['content']?.toString() ?? '');
+    }
+    return ResponseParser.cleanText(
+      result['response']?.toString() ?? result['text']?.toString() ?? '',
+    );
+  }
+
+  List<ToolCallInfo> _extractToolCalls(Map<String, dynamic>? result) {
+    if (result == null) return const [];
+    dynamic rawToolCalls;
+    if (result['choices'] != null && (result['choices'] as List).isNotEmpty) {
+      rawToolCalls = result['choices'][0]['message']?['tool_calls'];
+    } else {
+      rawToolCalls = result['tool_calls'];
+    }
+    if (rawToolCalls is! List || rawToolCalls.isEmpty) return const [];
+
+    final extracted = <ToolCallInfo>[];
+    for (final toolCall in rawToolCalls) {
+      if (toolCall is! Map) continue;
+      final function = toolCall['function'];
+      if (function is! Map) continue;
+      final functionName = function['name']?.toString();
+      if (functionName == null || functionName.isEmpty) continue;
+      dynamic args = function['arguments'];
+      if (args is String && args.isNotEmpty) {
+        try {
+          args = jsonDecode(args);
+        } catch (_) {
+          args = {'raw': args};
+        }
+      }
+      final mappedArgs = args is Map<String, dynamic>
+          ? ResponseParser.recursiveStripThink(Map<String, dynamic>.from(args))
+          : <String, dynamic>{};
+      extracted.add(ToolCallInfo(name: functionName, arguments: mappedArgs));
+    }
+    return extracted;
+  }
+
+  String _buildEmptyReplyRecoveryPrompt({
+    required List<ToolCallInfo> toolCalls,
+    required List<Map<String, dynamic>> turnToolHistory,
+  }) {
+    final toolNames = toolCalls
+        .map((tool) => tool.name)
+        .where((name) => name != 'system_sync_live_context')
+        .toList();
+    final toolSummary = toolNames.isEmpty
+        ? 'No named tools were recorded.'
+        : toolNames.join(', ');
+    final toolOutputs = turnToolHistory
+        .map((entry) => '- ${entry['content']?.toString() ?? 'OK'}')
+        .join('\n');
+
+    return '''
+Your previous assistant follow-up was empty after completing tool work.
+
+Tools/actions completed in the last turn:
+$toolSummary
+
+Tool outputs:
+$toolOutputs
+
+You likely forgot to send the final natural-language answer back to the user.
+Respond now with a concise, direct user-facing summary of what you found or completed.
+Do not repeat raw tool output verbatim unless needed.
+Do not call more tools unless absolutely necessary.
+''';
+  }
 
   Future<Map<String, dynamic>> _callCfApi(
     Map<String, String> systemMsg, {
@@ -75,7 +162,7 @@ class MistyAgent {
     String? assistantMessageId,
   }) async {
     final body = {
-      'uid': AuthService().currentUser?.uid ?? '', 
+      'uid': AuthService().currentUser?.uid ?? '',
       'model': cfModelId,
       'messages': [systemMsg, ..._history],
       'tools': allAiTools.map((fd) => _convertTool(fd)).toList(),
@@ -84,8 +171,11 @@ class MistyAgent {
       'session_id': ?sessionId,
       'assistant_message_id': ?assistantMessageId,
     };
-    final resp = await http.post(Uri.parse('${EnvConfig.backendUrl}/api/ai/chat'), 
-        headers: {'Content-Type': 'application/json'}, body: jsonEncode(body));
+    final resp = await http.post(
+      Uri.parse('${EnvConfig.backendUrl}/api/ai/chat'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
     if (resp.statusCode != 200) throw Exception('Server error: ${resp.body}');
     return jsonDecode(resp.body);
   }
@@ -114,7 +204,9 @@ class MistyAgent {
     String? assistantMessageId,
   }) async {
     final List<ToolCallInfo> allToolNames = []; // PERSISTENT TOOL LOGS
-    final liveContext = await ContextBuilder.buildLiveContext(activeTask: activeTask);
+    final liveContext = await ContextBuilder.buildLiveContext(
+      activeTask: activeTask,
+    );
     final systemMessage = _buildSystemMessage(liveContext);
 
     final hasAttachments = attachments != null && attachments.isNotEmpty;
@@ -125,15 +217,20 @@ class MistyAgent {
         final url = att['url'] ?? '';
         enrichedText += '\n[Attached Image Name: "$name", URL: "$url"]';
       }
-      final content = <Map<String, dynamic>>[{'type': 'text', 'text': enrichedText}];
-      
+      final content = <Map<String, dynamic>>[
+        {'type': 'text', 'text': enrichedText},
+      ];
+
       // Send ALL file types (image, audio, video, pdf) as inline data URIs
       // Gemini's OpenAI-compatible endpoint supports multimodal input via image_url with data URI
       for (final att in attachments) {
         final mime = att['mime'] ?? 'application/octet-stream';
         final b64 = att['b64'] ?? '';
         if (b64.isNotEmpty) {
-          content.add({'type': 'image_url', 'image_url': {'url': 'data:$mime;base64,$b64'}});
+          content.add({
+            'type': 'image_url',
+            'image_url': {'url': 'data:$mime;base64,$b64'},
+          });
         }
       }
       _history.add({'role': 'user', 'content': content});
@@ -148,16 +245,29 @@ class MistyAgent {
         assistantMessageId: assistantMessageId,
       );
       final result = response['result'];
-      if (result == null) return AiReply(text: 'The AI service is not responding. Please try again.');
-      
+      if (result == null)
+        return AiReply(
+          text: 'The AI service is not responding. Please try again.',
+        );
+
       String responseText = '';
       dynamic rawToolCalls;
-      
-      allToolNames.add(ToolCallInfo(name: 'system_sync_live_context', arguments: {'status': 'success', 'time': DateTime.now().toIso8601String()}));
+
+      allToolNames.add(
+        ToolCallInfo(
+          name: 'system_sync_live_context',
+          arguments: {
+            'status': 'success',
+            'time': DateTime.now().toIso8601String(),
+          },
+        ),
+      );
 
       if (result['choices'] != null && (result['choices'] as List).isNotEmpty) {
         final messageObj = result['choices'][0]['message'];
-        final parts = messageObj['content'] is List ? messageObj['content'] as List : null;
+        final parts = messageObj['content'] is List
+            ? messageObj['content'] as List
+            : null;
         if (parts != null) {
           responseText = ResponseParser.extractTextFromParts(parts);
         } else {
@@ -171,17 +281,21 @@ class MistyAgent {
 
       responseText = ResponseParser.cleanText(responseText);
 
-       final assistantEntry = <String, dynamic>{
-         'role': 'assistant',
-         'content': responseText.isNotEmpty ? responseText : null,
-       };
-       if (rawToolCalls != null && (rawToolCalls as List).isNotEmpty) {
-         assistantEntry['tool_calls'] = rawToolCalls;
-       }
-       _history.add(assistantEntry);
+      final assistantEntry = <String, dynamic>{
+        'role': 'assistant',
+        'content': responseText.isNotEmpty ? responseText : null,
+      };
+      if (rawToolCalls != null && (rawToolCalls as List).isNotEmpty) {
+        assistantEntry['tool_calls'] = rawToolCalls;
+      }
+      _history.add(assistantEntry);
 
       if (rawToolCalls == null || (rawToolCalls as List).isEmpty) {
-        return AiReply(text: responseText, reasoning: null, toolCalls: allToolNames);
+        return AiReply(
+          text: responseText,
+          reasoning: null,
+          toolCalls: allToolNames,
+        );
       }
 
       final List<FunctionCall> actionCalls = [];
@@ -194,28 +308,46 @@ class MistyAgent {
         final functionName = function['name'];
         var args = function['arguments'];
         if (args is String) args = jsonDecode(args);
-        final cleanArgs = ResponseParser.recursiveStripThink(Map<String, dynamic>.from(args as Map));
-        
-        allToolNames.add(ToolCallInfo(name: functionName, arguments: cleanArgs));
+        final cleanArgs = ResponseParser.recursiveStripThink(
+          Map<String, dynamic>.from(args as Map),
+        );
+
+        allToolNames.add(
+          ToolCallInfo(name: functionName, arguments: cleanArgs),
+        );
         final fCall = FunctionCall(functionName, cleanArgs);
 
-        if (functionName.startsWith('query_') || functionName.startsWith('list_') || 
-            functionName.startsWith('check_') || functionName == 'analyze_uploaded_image' ||
-            functionName == 'show_ui_content' || functionName == 'get_actual_image' ||
+        if (functionName.startsWith('query_') ||
+            functionName.startsWith('list_') ||
+            functionName.startsWith('check_') ||
+            functionName == 'analyze_uploaded_image' ||
+            functionName == 'show_ui_content' ||
+            functionName == 'show_tasks_from_ids' ||
+            functionName == 'get_actual_image' ||
             functionName == 'update_image_description') {
-          
           String toolOutput = '';
           if (functionName == 'list_team_boards') {
             toolOutput = await QueryHandlers.handleListBoards(cleanArgs);
-          } else if (functionName == 'query_team_tasks') toolOutput = await QueryHandlers.handleQueryTeamTasks(cleanArgs);
-          else if (functionName == 'query_board_members') toolOutput = await QueryHandlers.handleQueryBoardMembers(cleanArgs);
-          else if (functionName == 'check_board_updates') toolOutput = await QueryHandlers.handleCheckUpdates(cleanArgs);
-          else if (functionName == 'check_member_roles') toolOutput = await QueryHandlers.handleCheckRoles(cleanArgs);
-          else if (functionName == 'check_conflict') toolOutput = 'OK';
-          else if (functionName == 'analyze_uploaded_image') toolOutput = await VisionHandlers.handleAnalyzeImage(cleanArgs);
-          else if (functionName == 'list_personal_tasks') toolOutput = await PersonalHandlers.handleList(cleanArgs);
-          else if (functionName == 'show_ui_content') toolOutput = await UIHandlers.handleShowUI(cleanArgs);
-          else if (functionName == 'join_team_board') toolOutput = await TeamHandlers.handleJoin(cleanArgs);
+          } else if (functionName == 'query_team_tasks')
+            toolOutput = await QueryHandlers.handleQueryTeamTasks(cleanArgs);
+          else if (functionName == 'query_board_members')
+            toolOutput = await QueryHandlers.handleQueryBoardMembers(cleanArgs);
+          else if (functionName == 'check_board_updates')
+            toolOutput = await QueryHandlers.handleCheckUpdates(cleanArgs);
+          else if (functionName == 'check_member_roles')
+            toolOutput = await QueryHandlers.handleCheckRoles(cleanArgs);
+          else if (functionName == 'check_conflict')
+            toolOutput = 'OK';
+          else if (functionName == 'analyze_uploaded_image')
+            toolOutput = await VisionHandlers.handleAnalyzeImage(cleanArgs);
+          else if (functionName == 'list_personal_tasks')
+            toolOutput = await PersonalHandlers.handleList(cleanArgs);
+          else if (functionName == 'show_ui_content')
+            toolOutput = await UIHandlers.handleShowUI(cleanArgs);
+          else if (functionName == 'show_tasks_from_ids')
+            toolOutput = await UIHandlers.handleShowTasksFromIds(cleanArgs);
+          else if (functionName == 'join_team_board')
+            toolOutput = await TeamHandlers.handleJoin(cleanArgs);
           else if (functionName == 'get_actual_image') {
             final name = cleanArgs['name']?.toString() ?? '';
             final url = cleanArgs['url']?.toString();
@@ -224,16 +356,25 @@ class MistyAgent {
               if (res != null) {
                 final b64 = res['b64'] ?? '';
                 final mime = res['mime'] ?? 'image/jpeg';
-                toolOutput = 'SUCCESS: Loaded visual content for "$name". The image has been injected as a user message immediately following this tool response.';
+                toolOutput =
+                    'SUCCESS: Loaded visual content for "$name". The image has been injected as a user message immediately following this tool response.';
                 extraUserMessagesToInject.add({
                   'role': 'user',
                   'content': [
-                    {'type': 'text', 'text': 'This is the actual visual content of image "$name" for you to analyze:'},
-                    {'type': 'image_url', 'image_url': {'url': 'data:$mime;base64,$b64'}}
-                  ]
+                    {
+                      'type': 'text',
+                      'text':
+                          'This is the actual visual content of image "$name" for you to analyze:',
+                    },
+                    {
+                      'type': 'image_url',
+                      'image_url': {'url': 'data:$mime;base64,$b64'},
+                    },
+                  ],
                 });
               } else {
-                toolOutput = 'ERROR: Could not retrieve image data for "$name". Check if name/url is correct.';
+                toolOutput =
+                    'ERROR: Could not retrieve image data for "$name". Check if name/url is correct.';
               }
             } else {
               toolOutput = 'ERROR: onGetImageB64 callback is not registered.';
@@ -244,14 +385,22 @@ class MistyAgent {
             final description = cleanArgs['description']?.toString() ?? '';
             if (onUpdateImageDescription != null) {
               await onUpdateImageDescription!(name, url, description);
-              toolOutput = 'SUCCESS: Updated description for "$name" to: $description';
+              toolOutput =
+                  'SUCCESS: Updated description for "$name" to: $description';
             } else {
-              toolOutput = 'ERROR: onUpdateImageDescription callback is not registered.';
+              toolOutput =
+                  'ERROR: onUpdateImageDescription callback is not registered.';
             }
-          }
-          else toolOutput = 'OK';
+          } else
+            toolOutput = 'OK';
 
-          turnToolHistory.add({'role': 'tool', 'tool_call_id': toolCall['id'] ?? 'call_${DateTime.now().millisecondsSinceEpoch}', 'content': toolOutput});
+          turnToolHistory.add({
+            'role': 'tool',
+            'tool_call_id':
+                toolCall['id'] ??
+                'call_${DateTime.now().millisecondsSinceEpoch}',
+            'content': toolOutput,
+          });
         } else {
           actionCalls.add(fCall);
         }
@@ -265,7 +414,11 @@ class MistyAgent {
       }
 
       if (actionCalls.isNotEmpty) {
-        final compositeReply = DraftBuilder.tryBuildComposite(actionCalls: actionCalls, responseText: responseText, allToolNames: allToolNames);
+        final compositeReply = DraftBuilder.tryBuildComposite(
+          actionCalls: actionCalls,
+          responseText: responseText,
+          allToolNames: allToolNames,
+        );
         if (compositeReply != null) return compositeReply;
       }
 
@@ -275,9 +428,14 @@ class MistyAgent {
           final function = toolCall['function'];
           if (function == null) continue;
           final name = function['name']?.toString() ?? '';
-          if (name.startsWith('query_') || name.startsWith('list_') || name.startsWith('check_') ||
-              name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_') ||
-              name.startsWith('move_') || name == 'join_team_board') {
+          if (name.startsWith('query_') ||
+              name.startsWith('list_') ||
+              name.startsWith('check_') ||
+              name.startsWith('create_') ||
+              name.startsWith('update_') ||
+              name.startsWith('delete_') ||
+              name.startsWith('move_') ||
+              name == 'join_team_board') {
             if (name != 'update_image_description') {
               canSkipSecondCall = false;
               break;
@@ -287,7 +445,11 @@ class MistyAgent {
       }
 
       if (canSkipSecondCall) {
-        return AiReply(text: responseText, reasoning: null, toolCalls: allToolNames);
+        return AiReply(
+          text: responseText,
+          reasoning: null,
+          toolCalls: allToolNames,
+        );
       }
 
       if (turnToolHistory.isNotEmpty) {
@@ -297,25 +459,54 @@ class MistyAgent {
           assistantMessageId: assistantMessageId,
         );
         final secResult = secRes['result'];
-        String secText = '';
-        if (secResult?['choices'] != null && (secResult['choices'] as List).isNotEmpty) {
-          final secMessageObj = secResult['choices'][0]['message'];
-          final secParts = secMessageObj['content'] is List ? secMessageObj['content'] as List : null;
-          if (secParts != null) {
-            secText = ResponseParser.extractTextFromParts(secParts);
-          } else {
-            secText = secMessageObj['content']?.toString() ?? '';
-          }
-        } else {
-          secText = secResult?['response']?.toString() ?? secResult?['text']?.toString() ?? '';
+        String secText = _extractResponseText(secResult);
+        final secondPassToolCalls = _extractToolCalls(secResult);
+        if (secondPassToolCalls.isNotEmpty) {
+          allToolNames.addAll(secondPassToolCalls);
         }
-        
-        secText = ResponseParser.cleanText(secText);
-        _history.add({'role': 'assistant', 'content': secText.isNotEmpty ? secText : null});
-        return AiReply(text: secText.trim(), reasoning: null, toolCalls: allToolNames);
+        if (secText.trim().isEmpty) {
+          final hasUiPayload = secondPassToolCalls.any(
+            (tool) =>
+                tool.name == 'show_ui_content' ||
+                tool.name == 'show_tasks_from_ids',
+          );
+          if (hasUiPayload) {
+            secText = responseText.trim().isNotEmpty ? responseText.trim() : '';
+          }
+        }
+        if (secText.trim().isEmpty) {
+          final recoveryPrompt = _buildEmptyReplyRecoveryPrompt(
+            toolCalls: allToolNames,
+            turnToolHistory: turnToolHistory,
+          );
+          _history.add({'role': 'user', 'content': recoveryPrompt});
+          final recoveryRes = await _callCfApi(
+            systemMessage,
+            sessionId: sessionId,
+            assistantMessageId: assistantMessageId,
+          );
+          secText = _extractResponseText(recoveryRes['result']);
+          if (secText.trim().isEmpty) {
+            final fallback = responseText.trim();
+            secText = fallback.isNotEmpty ? fallback : '';
+          }
+        }
+        _history.add({
+          'role': 'assistant',
+          'content': secText.isNotEmpty ? secText : null,
+        });
+        return AiReply(
+          text: secText.trim(),
+          reasoning: null,
+          toolCalls: allToolNames,
+        );
       }
 
-      return AiReply(text: responseText.trim(), reasoning: null, toolCalls: allToolNames);
+      return AiReply(
+        text: responseText.trim(),
+        reasoning: null,
+        toolCalls: allToolNames,
+      );
     } catch (e) {
       return AiReply(text: 'An error occurred: $e', toolCalls: const []);
     }
@@ -324,11 +515,15 @@ class MistyAgent {
   Future<String> executePending(FunctionCall fc) async {
     final name = fc.name;
     final args = Map<String, dynamic>.from(fc.args);
-    if (name == 'create_team_task') return await TeamHandlers.handleCreate(args);
-    if (name == 'update_team_task') return await TeamHandlers.handleUpdate(args);
-    if (name == 'delete_team_task') return await TeamHandlers.handleDelete(args);
+    if (name == 'create_team_task')
+      return await TeamHandlers.handleCreate(args);
+    if (name == 'update_team_task')
+      return await TeamHandlers.handleUpdate(args);
+    if (name == 'delete_team_task')
+      return await TeamHandlers.handleDelete(args);
     if (name == 'move_team_task') return await TeamHandlers.handleMove(args);
-    if (name == 'create_personal_task') return await PersonalHandlers.handleCreate(args);
+    if (name == 'create_personal_task')
+      return await PersonalHandlers.handleCreate(args);
     return 'Unknown action';
   }
 }

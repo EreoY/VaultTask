@@ -11,7 +11,11 @@ class ChatAI {
     final fallback = Container(
       color: GlassColors.primary.withOpacity(0.1),
       child: const Center(
-        child: Icon(Icons.psychology_rounded, color: GlassColors.primary, size: 24),
+        child: Icon(
+          Icons.psychology_rounded,
+          color: GlassColors.primary,
+          size: 24,
+        ),
       ),
     );
 
@@ -20,7 +24,10 @@ class ChatAI {
       height: 44,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: GlassColors.primary.withOpacity(0.2), width: 1),
+        border: Border.all(
+          color: GlassColors.primary.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: ClipOval(
         child: Container(
@@ -51,7 +58,11 @@ class ChatAI {
 class ChatUser {
   static Widget avatar(bool isDark) {
     final user = FirebaseAuth.instance.currentUser;
-    final fallback = const Icon(Icons.person_outline, color: GlassColors.primary, size: 22);
+    final fallback = const Icon(
+      Icons.person_outline,
+      color: GlassColors.primary,
+      size: 22,
+    );
 
     return Container(
       width: 44,
@@ -59,24 +70,28 @@ class ChatUser {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: GlassColors.surfaceHighest.withOpacity(0.2),
-        border: Border.all(color: GlassColors.outline.withOpacity(0.1), width: 1),
+        border: Border.all(
+          color: GlassColors.outline.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: ClipOval(
-        child: user?.photoURL != null 
-          ? Image.network(
-              user!.photoURL!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => fallback,
-            )
-          : fallback,
+        child: user?.photoURL != null
+            ? Image.network(
+                user!.photoURL!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => fallback,
+              )
+            : fallback,
       ),
     );
   }
 
   static Widget label(String text, bool isDark) {
     final user = FirebaseAuth.instance.currentUser;
-    final name = user?.displayName ?? user?.email?.split('@').first ?? 'Commander';
-    
+    final name =
+        user?.displayName ?? user?.email?.split('@').first ?? 'Commander';
+
     return Padding(
       padding: const EdgeInsets.only(right: 4, bottom: 8),
       child: Text(
@@ -142,13 +157,20 @@ class _CollapsibleCardState extends State<CollapsibleCard> {
                       const SizedBox(width: 10),
                       Text(
                         widget.title.toUpperCase(),
-                        style: GlassText.label().copyWith(fontSize: 10, letterSpacing: 1.5),
+                        style: GlassText.label().copyWith(
+                          fontSize: 10,
+                          letterSpacing: 1.5,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       AnimatedRotation(
                         turns: _isExpanded ? 0.5 : 0,
                         duration: const Duration(milliseconds: 250),
-                        child: const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: GlassColors.onSurfaceVariant),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 16,
+                          color: GlassColors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -179,7 +201,7 @@ class CollapsibleTools extends StatefulWidget {
 
   const CollapsibleTools({
     super.key,
-    required this.toolCalls, 
+    required this.toolCalls,
     required this.isDark,
   });
 
@@ -205,7 +227,9 @@ class _CollapsibleToolsState extends State<CollapsibleTools> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  _isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                  _isExpanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
                   size: 16,
                   color: GlassColors.primary,
                 ),
@@ -224,21 +248,34 @@ class _CollapsibleToolsState extends State<CollapsibleTools> {
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: widget.toolCalls.map((tool) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: GlassDecorations.surface(radius: ExecutiveRadius.s),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.terminal_rounded, size: 12, color: GlassColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      "TOOL: ${tool.name.toUpperCase()}",
-                      style: GlassText.label().copyWith(fontSize: 9),
+              children: widget.toolCalls
+                  .map(
+                    (tool) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: GlassDecorations.surface(
+                        radius: ExecutiveRadius.s,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.terminal_rounded,
+                            size: 12,
+                            color: GlassColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "TOOL: ${tool.name.toUpperCase()}",
+                            style: GlassText.label().copyWith(fontSize: 9),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              )).toList(),
+                  )
+                  .toList(),
             ),
           ),
         ],
@@ -255,91 +292,114 @@ class ThinkingIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 32),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          ChatAI.avatar(isDark),
-          const SizedBox(width: 16),
-          Container(
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: GlassDecorations.surface(radius: ExecutiveRadius.m),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _AnimatedDots(color: GlassColors.primary),
+                const _WorkingGear(),
                 const SizedBox(width: 12),
-                Text(
-                  'Thinking...',
-                  style: GlassText.body().copyWith(
-                    fontSize: 14,
-                    color: GlassColors.onSurfaceVariant,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Jonny is working',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GlassText.body().copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: GlassColors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Running your request now...',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GlassText.caption().copyWith(
+                          color: GlassColors.onSurfaceVariant.withOpacity(0.65),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _AnimatedDots extends StatefulWidget {
-  final Color color;
-  const _AnimatedDots({required this.color});
+class _WorkingGear extends StatefulWidget {
+  const _WorkingGear();
 
   @override
-  State<_AnimatedDots> createState() => _AnimatedDotsState();
+  State<_WorkingGear> createState() => _WorkingGearState();
 }
 
-class _AnimatedDotsState extends State<_AnimatedDots> with TickerProviderStateMixin {
-  late List<AnimationController> _controllers;
-  late List<Animation<double>> _animations;
+class _WorkingGearState extends State<_WorkingGear>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(3, (index) => AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true));
-
-    _animations = _controllers.asMap().entries.map((entry) {
-      final index = entry.key;
-      final controller = entry.value;
-      return Tween<double>(begin: 0.2, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Interval(index * 0.2, 0.6 + (index * 0.2), curve: Curves.easeInOut),
-        ),
-      );
-    }).toList();
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (index) => AnimatedBuilder(
-        animation: _animations[index],
-        builder: (context, child) => Container(
-          width: 4,
-          height: 4,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-            color: widget.color.withOpacity(_animations[index].value),
-            shape: BoxShape.circle,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final pulse = _controller.value < 0.5
+            ? _scaleAnimation.value
+            : 1.95 - _scaleAnimation.value;
+        return Transform.scale(
+          scale: pulse,
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: GlassColors.primary.withOpacity(0.08),
+              border: Border.all(color: GlassColors.primary.withOpacity(0.2)),
+            ),
+            child: Transform.rotate(
+              angle: _controller.value * 6.283185307179586,
+              child: const Icon(
+                Icons.settings_rounded,
+                size: 17,
+                color: GlassColors.primary,
+              ),
+            ),
           ),
-        ),
-      )),
+        );
+      },
     );
   }
 }

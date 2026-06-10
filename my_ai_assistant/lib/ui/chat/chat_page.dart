@@ -8,7 +8,8 @@ import 'widgets/aether_chat_view.dart';
 
 class ChatPage extends StatefulWidget {
   final bool isDark;
-  const ChatPage({super.key, required this.isDark});
+  final ValueChanged<int>? onNavigate;
+  const ChatPage({super.key, required this.isDark, this.onNavigate});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -36,7 +37,12 @@ class _ChatPageState extends State<ChatPage> {
               child: Row(
                 children: [
                   if (_showSidebar) _buildSidebar(chatState),
-                  Expanded(child: AetherChatView(isDark: widget.isDark)),
+                  Expanded(
+                    child: AetherChatView(
+                      isDark: widget.isDark,
+                      onNavigate: widget.onNavigate,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -65,7 +71,7 @@ class _ChatPageState extends State<ChatPage> {
               Row(
                 children: [
                   Text(
-                    'Misty AI',
+                    'Global Chat',
                     style: GlassText.headlineXL().copyWith(fontSize: 48),
                   ),
                   const SizedBox(width: 16),

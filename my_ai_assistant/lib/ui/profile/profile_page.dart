@@ -21,7 +21,6 @@ class ProfilePage extends StatelessWidget {
         ],
       ),
     );
-
   }
 
   Widget _buildHeader(User? user) {
@@ -32,17 +31,28 @@ class ProfilePage extends StatelessWidget {
           height: 140,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: GlassColors.primary.withOpacity(0.1), width: 1),
+            border: Border.all(
+              color: GlassColors.primary.withOpacity(0.1),
+              width: 1,
+            ),
             color: GlassColors.primary.withOpacity(0.05),
           ),
           child: ClipOval(
-            child: user?.photoURL != null 
-              ? Image.network(
-                  user!.photoURL!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.person_outline_rounded, size: 64, color: GlassColors.primary),
-                )
-              : const Icon(Icons.person_outline_rounded, size: 64, color: GlassColors.primary),
+            child: user?.photoURL != null
+                ? Image.network(
+                    user!.photoURL!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.person_outline_rounded,
+                      size: 64,
+                      color: GlassColors.primary,
+                    ),
+                  )
+                : const Icon(
+                    Icons.person_outline_rounded,
+                    size: 64,
+                    color: GlassColors.primary,
+                  ),
           ),
         ),
         const SizedBox(width: 64),
@@ -50,7 +60,9 @@ class ProfilePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              user?.displayName ?? user?.email?.split('@').first.toUpperCase() ?? 'COMMANDER',
+              user?.displayName ??
+                  user?.email?.split('@').first.toUpperCase() ??
+                  'COMMANDER',
               style: GlassText.headlineXL().copyWith(fontSize: 48),
             ),
             const SizedBox(height: 8),
@@ -76,10 +88,7 @@ class ProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
         border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.3)),
       ),
-      child: Text(
-        label,
-        style: GlassText.labelSM().copyWith(fontSize: 10),
-      ),
+      child: Text(label, style: GlassText.labelSM().copyWith(fontSize: 10)),
     );
   }
 
@@ -96,10 +105,30 @@ class ProfilePage extends StatelessWidget {
           spacing: 24,
           runSpacing: 24,
           children: [
-            _buildSettingCard('SECURITY', 'Manage biometric & keys', Icons.security_rounded, isDark),
-            _buildSettingCard('AI MODEL', 'Aether Neural Engine 4.0', Icons.auto_awesome_rounded, isDark),
-            _buildSettingCard('SYNC', 'Cloudflare D1 Storage', Icons.cloud_done_outlined, isDark),
-            _buildSettingCard('THEME', 'Abyssal Dark Mode', Icons.dark_mode_outlined, isDark),
+            _buildSettingCard(
+              'SECURITY',
+              'Manage biometric & keys',
+              Icons.security_rounded,
+              isDark,
+            ),
+            _buildSettingCard(
+              'AI MODEL',
+              'Jonny Neural Engine 4.0',
+              Icons.auto_awesome_rounded,
+              isDark,
+            ),
+            _buildSettingCard(
+              'SYNC',
+              'Cloudflare D1 Storage',
+              Icons.cloud_done_outlined,
+              isDark,
+            ),
+            _buildSettingCard(
+              'THEME',
+              'Abyssal Dark Mode',
+              Icons.dark_mode_outlined,
+              isDark,
+            ),
           ],
         ),
         const SizedBox(height: 80),
@@ -107,14 +136,22 @@ class ProfilePage extends StatelessWidget {
           onTap: () => FirebaseAuth.instance.signOut(),
           child: Text(
             'LOGOUT SESSION',
-            style: GlassText.labelSM().copyWith(color: Colors.red.shade300, letterSpacing: 2.0),
+            style: GlassText.labelSM().copyWith(
+              color: Colors.red.shade300,
+              letterSpacing: 2.0,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSettingCard(String title, String desc, IconData icon, bool isDark) {
+  Widget _buildSettingCard(
+    String title,
+    String desc,
+    IconData icon,
+    bool isDark,
+  ) {
     return Container(
       width: 320,
       padding: const EdgeInsets.all(32),
@@ -128,13 +165,19 @@ class ProfilePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title, 
-                  style: GlassText.labelSM().copyWith(fontSize: 10, color: GlassColors.primary)
+                  title,
+                  style: GlassText.labelSM().copyWith(
+                    fontSize: 10,
+                    color: GlassColors.primary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  desc, 
-                  style: GlassText.bodyMD().copyWith(fontSize: 13, color: GlassColors.onSurfaceVariant)
+                  desc,
+                  style: GlassText.bodyMD().copyWith(
+                    fontSize: 13,
+                    color: GlassColors.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),

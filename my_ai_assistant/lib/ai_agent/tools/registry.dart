@@ -21,4 +21,5 @@ final List<FunctionDeclaration> allAiTools = [
   checkConflictTool,
   updateImageDescriptionTool,
   UIDefs.showUIContent,
+  UIDefs.showTasksFromIds,
 ];

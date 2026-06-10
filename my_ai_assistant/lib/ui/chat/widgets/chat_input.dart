@@ -41,8 +41,7 @@ class AetherChatInput extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (pendingFiles.isNotEmpty)
-            _buildFileChips(),
+          if (pendingFiles.isNotEmpty) _buildFileChips(),
 
           GlassContainer(
             isDark: isDark,
@@ -88,13 +87,16 @@ class AetherChatInput extends StatelessWidget {
                     maxLines: 5,
                     minLines: 1,
                     decoration: InputDecoration(
-                      hintText: 'Message Aether AI...',
+                      hintText: 'Message Jonny...',
                       hintStyle: GlassText.body().copyWith(
                         color: GlassColors.onSurfaceVariant.withOpacity(0.5),
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                     onSubmitted: (_) => onSend(),
                   ),
@@ -133,7 +135,10 @@ class AetherChatInput extends StatelessWidget {
 
           return Container(
             padding: const EdgeInsets.all(6),
-            decoration: GlassDecorations.surface(isDark: isDark, radius: ExecutiveRadius.m),
+            decoration: GlassDecorations.surface(
+              isDark: isDark,
+              radius: ExecutiveRadius.m,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -146,15 +151,26 @@ class AetherChatInput extends StatelessWidget {
                       child: f.bytes != null
                           ? Image.memory(f.bytes!, fit: BoxFit.cover)
                           : (!kIsWeb && f.path != null
-                              ? Image.file(io.File(f.path!), fit: BoxFit.cover)
-                              : const Icon(Icons.image, size: 20, color: GlassColors.primary)),
+                                ? Image.file(
+                                    io.File(f.path!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Icon(
+                                    Icons.image,
+                                    size: 20,
+                                    color: GlassColors.primary,
+                                  )),
                     ),
                   ),
                   const SizedBox(width: 10),
                 ] else ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(_fileTypeIcon(mime), size: 20, color: GlassColors.primary),
+                    child: Icon(
+                      _fileTypeIcon(mime),
+                      size: 20,
+                      color: GlassColors.primary,
+                    ),
                   ),
                 ],
                 Flexible(
@@ -171,7 +187,10 @@ class AetherChatInput extends StatelessWidget {
                   icon: const Icon(Icons.close_rounded, size: 14),
                   onPressed: () => onRemoveFile(i),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
                   color: GlassColors.onSurfaceVariant.withOpacity(0.6),
                 ),
               ],
@@ -196,9 +215,12 @@ class AetherChatInput extends StatelessWidget {
     if (mime.startsWith('audio/')) return Icons.audiotrack_outlined;
     if (mime.startsWith('video/')) return Icons.videocam_outlined;
     if (mime == 'application/pdf') return Icons.picture_as_pdf_outlined;
-    if (mime.contains('word') || mime.contains('document')) return Icons.description_outlined;
-    if (mime.contains('excel') || mime.contains('sheet')) return Icons.table_chart_outlined;
-    if (mime.contains('powerpoint') || mime.contains('presentation')) return Icons.slideshow_outlined;
+    if (mime.contains('word') || mime.contains('document'))
+      return Icons.description_outlined;
+    if (mime.contains('excel') || mime.contains('sheet'))
+      return Icons.table_chart_outlined;
+    if (mime.contains('powerpoint') || mime.contains('presentation'))
+      return Icons.slideshow_outlined;
     if (mime.startsWith('text/')) return Icons.text_snippet_outlined;
     return Icons.insert_drive_file_outlined;
   }
@@ -214,7 +236,11 @@ class AetherChatInput extends StatelessWidget {
           color: GlassColors.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(ExecutiveRadius.l),
         ),
-        child: const Icon(Icons.send_rounded, color: GlassColors.primary, size: 18),
+        child: const Icon(
+          Icons.send_rounded,
+          color: GlassColors.primary,
+          size: 18,
+        ),
       ),
     );
   }

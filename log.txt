@@ -1,0 +1,88 @@
+[wrangler:info] OPTIONS /api/ai/chat 200 OK (1ms)
+
+🤖 [AI CHAT] Request received - User: XrKfjyW7iDbkwqzW3RbxFZRmz9B2
+🤖 [AI CHAT] Messages count: 16
+🤖 [AI CHAT] User Question: "โหลๆ"
+🤖 [AI CHAT] Tools offered: create_personal_task, list_personal_tasks, create_team_task, update_team_task, delete_team_task, move_team_task, join_team_board, list_team_boards, query_team_tasks, query_board_members, check_board_updates, check_member_roles, check_conflict, update_image_description, show_ui_content
+🤖 [AI CHAT] Forwarding to OpenRouter (Model: google/gemma-4-26b-a4b-it)
+💾 [AI CHAT] Assistant response persisted to D1 (ID: 1781055414430)
+┌──────────────────────────────────────────────────────────┐
+│ 🤖 Calenda AI Chat Session Summary                       │
+├──────────────────────────────────────────────────────────┤
+│ User ID   : XrKfjyW7iDbkwqzW3RbxFZRmz9B2                 │
+│ Session ID: session_global_1780749105495                 │
+│ Images    : None                                         │
+│ Tokens    : Prompt: 5750 | Completion: 93 | Total: 5843  │
+│ Est. Cost : $0.000434                                    │
+│ Outcome   : Tool Calls [query_team_tasks]                │
+└──────────────────────────────────────────────────────────┘
+💬 [User Question (Full)]:
+โหลๆ
+🤖 [AI Response (Full)]:
+Tool Calls:
+[
+  {
+    "type": "function",
+    "index": 0,
+    "id": "chatcmpl-tool-b878908605f7c613",
+    "function": {
+      "name": "query_team_tasks",
+      "arguments": "{\"is_completed\": false, \"timeframe\": \"all\"}"
+    }
+  }
+]
+────────────────────────────────────────────────────────────
+[wrangler:info] POST /api/ai/chat 200 OK (7329ms)
+[wrangler:info] OPTIONS /api/boards 200 OK (2ms)
+[wrangler:info] GET /api/boards 200 OK (3ms)
+[wrangler:info] OPTIONS /api/tasks 200 OK (2ms)
+[wrangler:info] GET /api/tasks 200 OK (3ms)
+[wrangler:info] OPTIONS /api/tasks 200 OK (2ms)
+[wrangler:info] GET /api/tasks 200 OK (4ms)
+[wrangler:info] OPTIONS /api/tasks 200 OK (2ms)
+[wrangler:info] GET /api/tasks 200 OK (4ms)
+[wrangler:info] OPTIONS /api/ai/chat 200 OK (2ms)
+
+🤖 [AI CHAT] Request received - User: XrKfjyW7iDbkwqzW3RbxFZRmz9B2
+🤖 [AI CHAT] Messages count: 18
+🤖 [AI CHAT] User Question: "โหลๆ"
+🤖 [AI CHAT] Tools offered: create_personal_task, list_personal_tasks, create_team_task, update_team_task, delete_team_task, move_team_task, join_team_board, list_team_boards, query_team_tasks, query_board_members, check_board_updates, check_member_roles, check_conflict, update_image_description, show_ui_content
+🤖 [AI CHAT] Forwarding to OpenRouter (Model: google/gemma-4-26b-a4b-it)
+[wrangler:info] OPTIONS /api/comments/reads 200 OK (1ms)
+[wrangler:info] GET /api/comments/reads 200 OK (12ms)
+[wrangler:info] OPTIONS /api/comments/reads 200 OK (2ms)
+[wrangler:info] GET /api/comments/reads 200 OK (12ms)
+💾 [AI CHAT] Assistant response persisted to D1 (ID: 1781055414430)
+┌──────────────────────────────────────────────────────────┐
+│ 🤖 Calenda AI Chat Session Summary                       │
+├──────────────────────────────────────────────────────────┤
+│ User ID   : XrKfjyW7iDbkwqzW3RbxFZRmz9B2                 │
+│ Session ID: session_global_1780749105495                 │
+│ Images    : None                                         │
+│ Tokens    : Prompt: 6080 | Completion: 207 | Total: 6287 │
+│ Est. Cost : $0.000496                                    │
+│ Outcome   : Tool Calls [show_ui_content]                 │
+└──────────────────────────────────────────────────────────┘
+💬 [User Question (Full)]:
+โหลๆ
+🤖 [AI Response (Full)]:
+Tool Calls:
+[
+  {
+    "type": "function",
+    "index": 0,
+    "id": "chatcmpl-tool-903cfc3ddae19c54",
+    "function": {
+      "name": "show_ui_content",
+      "arguments": "{\"data_json\": \"[{\\\"ชื่องาน\\\": \\\"456\\\", \\\"ผู้รับผิดชอบ\\\": \\\"kim\\\", \\\"สถานะ\\\": \\\"todo\\\", \\\"กำหนดส่ง\\\": \\\"2026-06-11\\\"}, {\\\"ชื่องาน\\\": \\\"11\\\", \\\"ผู้รับผิดชอบ\\\": \\\"kim\\\", \\\"สถานะ\\\": \\\"done\\\", \\\"กำหนดส่ง\\\": \\\"N/A\\\"}, {\\\"ชื่องาน\\\": \\\"455\\\", \\\"ผู้รับผิดชอบ\\\": \\\"kim\\\", \\\"สถานะ\\\": \\\"doing\\\", \\\"กำหนดส่ง\\\": \\\"2026-06-07\\\"}, {\\\"ชื่องาน\\\": \\\"12กหดdd\\\", \\\"ผู้รับผิดชอบ\\\": \\\"kim\\\", \\\"สถานะ\\\": \\\"doing\\\", \\\"กำหนดส่ง\\\": \\\"2026-06-08\\\"}]\", \"title\": \"รายการงานที่ยังไม่เสร็จทั้งหมด\", \"type\": \"table\"}"
+    }
+  }
+]
+────────────────────────────────────────────────────────────
+[wrangler:info] POST /api/ai/chat 200 OK (17082ms)
+[wrangler:info] OPTIONS /api/chat/messages 200 OK (1ms)
+[wrangler:info] POST /api/chat/messages 200 OK (4ms)
+[wrangler:info] OPTIONS /api/comments/reads 200 OK (3ms)
+[wrangler:info] GET /api/comments/reads 200 OK (11ms)
+[wrangler:info] OPTIONS /api/comments/reads 200 OK (2ms)
+[wrangler:info] GET /api/comments/reads 200 OK (13ms)

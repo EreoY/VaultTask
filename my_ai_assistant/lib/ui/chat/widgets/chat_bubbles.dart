@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:provider/provider.dart';
 import '../../../models/chat_model.dart';
+import '../../../state_managers/state_boards.dart';
 import '../../theme/glass_theme.dart';
 import '../../../config/env_config.dart';
 
@@ -15,14 +17,20 @@ class UserMessageBubble extends StatelessWidget {
   static final Map<String, Uint8List> _b64Cache = {};
   final ChatMessage message;
   final bool isDark;
-  const UserMessageBubble({super.key, required this.message, required this.isDark});
+  const UserMessageBubble({
+    super.key,
+    required this.message,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        ),
         margin: const EdgeInsets.only(bottom: 24, left: 64),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
@@ -41,7 +49,9 @@ class UserMessageBubble extends StatelessWidget {
             if (message.attachments.isNotEmpty) _buildAttachments(context),
             Text(
               message.text,
-              style: GlassText.bodyMD().copyWith(color: isDark ? Colors.white : Colors.black87),
+              style: GlassText.bodyMD().copyWith(
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ],
         ),
@@ -88,19 +98,35 @@ class UserMessageBubble extends StatelessWidget {
                         children: [
                           b64.isNotEmpty
                               ? Image.memory(
-                                  _b64Cache.putIfAbsent(b64, () => base64Decode(b64)),
+                                  _b64Cache.putIfAbsent(
+                                    b64,
+                                    () => base64Decode(b64),
+                                  ),
                                   fit: BoxFit.cover,
                                   gaplessPlayback: true,
-                                  errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 24)),
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(Icons.broken_image, size: 24),
+                                  ),
                                 )
                               : (isFailed
-                                  ? const Center(child: Icon(Icons.broken_image, size: 24))
-                                  : Image.network(
-                                      sanitizedUrl,
-                                      key: ValueKey(sanitizedUrl),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 24)),
-                                    )),
+                                    ? const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 24,
+                                        ),
+                                      )
+                                    : Image.network(
+                                        sanitizedUrl,
+                                        key: ValueKey(sanitizedUrl),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.broken_image,
+                                                size: 24,
+                                              ),
+                                            ),
+                                      )),
                           if (isFailed)
                             Container(
                               color: Colors.black.withOpacity(0.55),
@@ -108,11 +134,19 @@ class UserMessageBubble extends StatelessWidget {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 24),
+                                    Icon(
+                                      Icons.error_outline_rounded,
+                                      color: Colors.redAccent,
+                                      size: 24,
+                                    ),
                                     SizedBox(height: 4),
                                     Text(
                                       'Failed',
-                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -172,9 +206,12 @@ class UserMessageBubble extends StatelessWidget {
     if (mime.startsWith('audio/')) return Icons.audiotrack_outlined;
     if (mime.startsWith('video/')) return Icons.videocam_outlined;
     if (mime == 'application/pdf') return Icons.picture_as_pdf_outlined;
-    if (mime.contains('word') || mime.contains('document')) return Icons.description_outlined;
-    if (mime.contains('excel') || mime.contains('sheet')) return Icons.table_chart_outlined;
-    if (mime.contains('powerpoint') || mime.contains('presentation')) return Icons.slideshow_outlined;
+    if (mime.contains('word') || mime.contains('document'))
+      return Icons.description_outlined;
+    if (mime.contains('excel') || mime.contains('sheet'))
+      return Icons.table_chart_outlined;
+    if (mime.contains('powerpoint') || mime.contains('presentation'))
+      return Icons.slideshow_outlined;
     if (mime.startsWith('text/')) return Icons.text_snippet_outlined;
     return Icons.insert_drive_file_outlined;
   }
@@ -183,7 +220,13 @@ class UserMessageBubble extends StatelessWidget {
 class AssistantMessageBubble extends StatefulWidget {
   final ChatMessage message;
   final bool isDark;
-  const AssistantMessageBubble({super.key, required this.message, required this.isDark});
+  final ValueChanged<int>? onNavigate;
+  const AssistantMessageBubble({
+    super.key,
+    required this.message,
+    required this.isDark,
+    this.onNavigate,
+  });
 
   @override
   State<AssistantMessageBubble> createState() => _AssistantMessageBubbleState();
@@ -205,11 +248,12 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
   Widget build(BuildContext context) {
     final message = widget.message;
     final isDark = widget.isDark;
+    final hasVisibleText = message.text.trim().isNotEmpty;
 
     // 🧮 Aggregate Tool Calls for Stacking
     final Map<String, int> toolCounts = {};
     for (var tc in message.toolCalls) {
-       toolCounts[tc.name] = (toolCounts[tc.name] ?? 0) + 1;
+      toolCounts[tc.name] = (toolCounts[tc.name] ?? 0) + 1;
     }
 
     return Column(
@@ -222,75 +266,123 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: toolCounts.entries.map((e) => DiagnosticToolLog(toolName: e.key, count: e.value)).toList(),
+              children: toolCounts.entries
+                  .map(
+                    (e) => DiagnosticToolLog(toolName: e.key, count: e.value),
+                  )
+                  .toList(),
             ),
           ),
 
         // 💬 2. Text Bubble (Immediate)
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-            margin: const EdgeInsets.only(bottom: 16, right: 48),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey.withOpacity(0.05),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                bottomLeft: Radius.circular(8),
-                topRight: Radius.circular(24),
-                bottomRight: Radius.circular(24),
+        if (hasVisibleText)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.8,
               ),
-              border: Border.all(color: GlassColors.ghostBorder),
-            ),
-            child: MarkdownBody(
-              data: message.text,
-              selectable: true,
-              styleSheet: MarkdownStyleSheet(
-                p: GlassText.bodyMD().copyWith(height: 1.6),
-                strong: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold, color: GlassColors.primary),
-                code: GlassText.bodyMD().copyWith(
-                  backgroundColor: GlassColors.primary.withOpacity(0.05),
-                  fontFamily: 'monospace',
+              margin: const EdgeInsets.only(bottom: 16, right: 48),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.03)
+                    : Colors.grey.withOpacity(0.05),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  bottomLeft: Radius.circular(8),
+                  topRight: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+                border: Border.all(color: GlassColors.ghostBorder),
+              ),
+              child: MarkdownBody(
+                data: message.text,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: GlassText.bodyMD().copyWith(height: 1.6),
+                  strong: GlassText.bodyMD().copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: GlassColors.primary,
+                  ),
+                  code: GlassText.bodyMD().copyWith(
+                    backgroundColor: GlassColors.primary.withOpacity(0.05),
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ),
             ),
           ),
-        ),
 
         // 🎭 3. Delayed Result UI Layer (Tables, Cards, Proposals)
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 600),
-          child: _showResultUI 
-            ? Column(
-                key: ValueKey('results_${message.id}'),
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 📊 Structured UI Layer
-                  ...message.toolCalls.where((tc) => tc.name == 'show_ui_content').map((tc) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: StructuredUIBubble(
-                        data: tc.arguments['data_json'] ?? tc.arguments['data'], 
-                        type: tc.arguments['type']?.toString() ?? 'table'
-                      ),
-                    );
-                  }),
+          child: _showResultUI
+              ? Column(
+                  key: ValueKey('results_${message.id}'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 📊 Structured UI Layer
+                    ...message.toolCalls
+                        .where((tc) => tc.name == 'show_ui_content')
+                        .map((tc) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: StructuredUIBubble(
+                              data:
+                                  tc.arguments['data_json'] ??
+                                  tc.arguments['data'],
+                              type: tc.arguments['type']?.toString() ?? 'table',
+                              isDark: isDark,
+                              onOpenBoard: null,
+                            ),
+                          );
+                        }),
+                    ...message.toolCalls
+                        .where((tc) => tc.name == 'show_tasks_from_ids')
+                        .map((tc) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: StructuredUIBubble(
+                              data: {
+                                'title':
+                                    tc.arguments['title']?.toString() ??
+                                    'Task results',
+                                'task_ids':
+                                    tc.arguments['task_ids'] ?? const [],
+                              },
+                              type: 'task_ids',
+                              isDark: isDark,
+                              onOpenBoard: (board) {
+                                context.read<StateBoards>().setSelectedBoard(
+                                  board,
+                                );
+                                widget.onNavigate?.call(1);
+                              },
+                            ),
+                          );
+                        }),
 
-                  // 📝 Proposal & Confirmation Layer
-                  if (message.hasDraft && message.confirmedDraft == null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: ProposalDraftCard(isDark: isDark, draft: message.draft),
-                    ),
-                  if (message.confirmedDraft != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: ConfirmedActionCard(draft: message.confirmedDraft!, isDark: isDark),
-                    ),
-                ],
-              )
-            : const SizedBox.shrink(),
+                    // 📝 Proposal & Confirmation Layer
+                    if (message.hasDraft && message.confirmedDraft == null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: ProposalDraftCard(
+                          isDark: isDark,
+                          draft: message.draft,
+                        ),
+                      ),
+                    if (message.confirmedDraft != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: ConfirmedActionCard(
+                          draft: message.confirmedDraft!,
+                          isDark: isDark,
+                        ),
+                      ),
+                  ],
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );
@@ -325,7 +417,9 @@ class _CollapsibleDescriptionState extends State<CollapsibleDescription> {
   @override
   Widget build(BuildContext context) {
     final isEmpty = widget.description.isEmpty;
-    final text = isEmpty ? 'กำลังวิเคราะห์รูปภาพด้วย AI...' : widget.description;
+    final text = isEmpty
+        ? 'กำลังวิเคราะห์รูปภาพด้วย AI...'
+        : widget.description;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +441,9 @@ class _CollapsibleDescriptionState extends State<CollapsibleDescription> {
                 Icon(
                   isEmpty
                       ? Icons.hourglass_empty_rounded
-                      : (_isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
+                      : (_isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded),
                   size: 14,
                   color: GlassColors.primary.withOpacity(0.8),
                 ),
@@ -368,7 +464,9 @@ class _CollapsibleDescriptionState extends State<CollapsibleDescription> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: widget.isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02),
+              color: widget.isDark
+                  ? Colors.white.withOpacity(0.03)
+                  : Colors.black.withOpacity(0.02),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: GlassColors.ghostBorder),
             ),
@@ -386,5 +484,3 @@ class _CollapsibleDescriptionState extends State<CollapsibleDescription> {
     );
   }
 }
-
-

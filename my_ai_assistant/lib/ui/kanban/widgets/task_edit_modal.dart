@@ -22,6 +22,7 @@ class TaskEditModal extends StatefulWidget {
   final DateTime? initialDate;
   final bool isDark;
   final bool readOnly;
+  final bool collaborationPreview;
   final VoidCallback? onOpenBoard;
 
   const TaskEditModal({
@@ -32,6 +33,7 @@ class TaskEditModal extends StatefulWidget {
     this.initialDate,
     required this.isDark,
     this.readOnly = false,
+    this.collaborationPreview = false,
     this.onOpenBoard,
   });
 
@@ -43,6 +45,7 @@ class TaskEditModal extends StatefulWidget {
     DateTime? initialDate,
     required bool isDark,
     bool readOnly = false,
+    bool collaborationPreview = false,
     VoidCallback? onOpenBoard,
   }) async {
     final isDesktop = MediaQuery.of(context).size.width > 900;
@@ -63,6 +66,7 @@ class TaskEditModal extends StatefulWidget {
             initialDate: initialDate,
             isDark: isDark,
             readOnly: readOnly,
+            collaborationPreview: collaborationPreview,
             onOpenBoard: onOpenBoard,
           ),
         ),
@@ -79,6 +83,7 @@ class TaskEditModal extends StatefulWidget {
           initialDate: initialDate,
           isDark: isDark,
           readOnly: readOnly,
+          collaborationPreview: collaborationPreview,
           onOpenBoard: onOpenBoard,
         ),
       );
@@ -116,6 +121,8 @@ class _TaskEditModalState extends State<TaskEditModal> {
   ValueNotifier<TaskModel>? _taskNotifier;
   late StateChat _stateChat;
   bool get _isReadOnly => widget.readOnly;
+  bool get _isCollaborationPreview => widget.collaborationPreview;
+  bool get _allowStructuralEditing => !_isReadOnly && !_isCollaborationPreview;
 
   @override
   void didChangeDependencies() {
@@ -770,7 +777,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                   ),
                 ),
               ),
-            if (widget.existingTask != null && !_isReadOnly)
+            if (widget.existingTask != null && _allowStructuralEditing)
               IconButton(
                 icon: const Icon(
                   Icons.delete_outline_rounded,
@@ -904,15 +911,17 @@ class _TaskEditModalState extends State<TaskEditModal> {
           _buildMetadataItem(
             icon: Icons.layers_outlined,
             label: _status.toUpperCase(),
-            onTap: _isReadOnly ? null : () => _pickStatus(currentBoard),
+            onTap: _allowStructuralEditing
+                ? () => _pickStatus(currentBoard)
+                : null,
           ),
           _buildMetadataItem(
             icon: Icons.calendar_today_rounded,
             label: _dueDate.year == 1970
                 ? "NO DATE"
                 : DateFormat('MMM d').format(_dueDate).toUpperCase(),
-            onTap: _isReadOnly ? null : _pickDate,
-            onClear: _isReadOnly || _dueDate.year == 1970
+            onTap: _allowStructuralEditing ? _pickDate : null,
+            onClear: !_allowStructuralEditing || _dueDate.year == 1970
                 ? null
                 : () {
                     setState(() => _dueDate = DateTime(1970, 1, 1));
@@ -922,12 +931,16 @@ class _TaskEditModalState extends State<TaskEditModal> {
           _buildMetadataItem(
             icon: Icons.label_outline_rounded,
             label: '${_labelIds.length} LABELS',
-            onTap: _isReadOnly ? null : () => _pickLabels(currentBoard),
+            onTap: _allowStructuralEditing
+                ? () => _pickLabels(currentBoard)
+                : null,
           ),
           _buildMetadataItem(
             icon: Icons.group_outlined,
             label: '${_members.length} OPERATIVES',
-            onTap: _isReadOnly ? null : () => _pickMembers(currentBoard),
+            onTap: _allowStructuralEditing
+                ? () => _pickMembers(currentBoard)
+                : null,
           ),
         ],
       ),
@@ -984,7 +997,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     return Column(
       children: [
         ..._images.map((img) => _buildAssetRow(img)),
-        if (!_isReadOnly) ...[
+        if (_allowStructuralEditing) ...[
           const SizedBox(height: 16),
           _buildGhostButton(
             'UPLOAD MEDIA ASSET',
@@ -1056,12 +1069,12 @@ class _TaskEditModalState extends State<TaskEditModal> {
               children: [
                 TextField(
                   controller: nameController,
-                  readOnly: _isReadOnly,
+                  readOnly: !_allowStructuralEditing,
                   style: GlassText.bodyMD().copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                   onSubmitted: (v) {
-                    if (_isReadOnly) return;
+                    if (!_allowStructuralEditing) return;
                     setState(() {
                       _images = _images
                           .map((i) => i.id == img.id ? i.copyWith(name: v) : i)
@@ -1088,7 +1101,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
               ],
             ),
           ),
-          if (!_isReadOnly)
+          if (_allowStructuralEditing)
             IconButton(
               icon: Icon(
                 img.isCover ? Icons.star_rounded : Icons.star_border_rounded,
@@ -1106,7 +1119,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                 _autoSaveTask();
               },
             ),
-          if (!_isReadOnly)
+          if (_allowStructuralEditing)
             IconButton(
               icon: const Icon(
                 Icons.close_rounded,
@@ -1298,13 +1311,13 @@ class _TaskEditModalState extends State<TaskEditModal> {
     return ImeSafeTextField(
       controller: controller,
       focusNode: focusNode,
-      readOnly: _isReadOnly,
+      readOnly: !_allowStructuralEditing,
       style: style,
       maxLines: maxLines,
       minLines: 1,
       textInputAction: textInputAction,
       onSubmitted: (_) {
-        if (!_isReadOnly) {
+        if (_allowStructuralEditing) {
           _autoSaveTask();
         }
       },

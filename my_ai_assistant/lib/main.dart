@@ -73,7 +73,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Calenda',
+      title: 'VaultTask',
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
@@ -326,7 +326,10 @@ class _AppShellState extends State<AppShell> {
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 3:
-        return const ChatPage(isDark: false);
+        return ChatPage(
+          isDark: false,
+          onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
+        );
       case 4:
         return const ProfilePage(isDark: false);
       default:
