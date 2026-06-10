@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../config/env_config.dart';
 import '../../../models/task_model.dart';
 import '../../../models/board_model.dart';
+import '../../../models/meeting_model.dart';
 import '../../../models/workspace_model.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../kanban/widgets/task_edit_modal.dart';
@@ -15,19 +16,23 @@ import 'task_type_icon.dart';
 class DailyTimelineView extends StatefulWidget {
   final DateTime date;
   final List<TaskModel> tasks;
+  final List<MeetingModel> meetings;
   final List<BoardModel> boards;
   final List<WorkspaceModel> workspaces;
   final bool isDark;
   final Function(int)? onNavigate;
+  final void Function(MeetingModel meeting, BoardModel? board)? onMeetingTap;
 
   const DailyTimelineView({
     super.key,
     required this.date,
     required this.tasks,
+    required this.meetings,
     required this.boards,
     required this.workspaces,
     required this.isDark,
     this.onNavigate,
+    this.onMeetingTap,
   });
 
   @override
@@ -115,7 +120,10 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
               final hourTasks = upcomingTasks
                   .where((t) => t.dueDate.hour == hour)
                   .toList();
-              return _buildHourRow(hour, hourTasks);
+              final hourMeetings = widget.meetings
+                  .where((meeting) => meeting.startAt.hour == hour)
+                  .toList();
+              return _buildHourRow(hour, hourTasks, hourMeetings);
             },
           ),
         ),
@@ -179,7 +187,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     );
   }
 
-  Widget _buildHourRow(int hour, List<TaskModel> hourTasks) {
+  Widget _buildHourRow(
+    int hour,
+    List<TaskModel> hourTasks,
+    List<MeetingModel> hourMeetings,
+  ) {
     final now = DateTime.now();
     final isMobile = Responsive.isMobile(context);
     final isToday =
@@ -190,7 +202,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
 
     final hh = DateFormat('HH').format(DateTime(2024, 1, 1, hour));
 
-    final hasTasks = hourTasks.isNotEmpty;
+    final hasTasks = hourTasks.isNotEmpty || hourMeetings.isNotEmpty;
 
     final timeColumnWidth = isMobile ? 60.0 : 80.0;
 
@@ -312,10 +324,14 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (hourTasks.isEmpty)
+                      if (hourTasks.isEmpty && hourMeetings.isEmpty)
                         _buildGap()
-                      else
+                      else ...[
+                        ...hourMeetings.map(
+                          (meeting) => _buildMeetingBlock(meeting),
+                        ),
                         ...hourTasks.map((t) => _buildTaskBlock(t)),
+                      ],
                     ],
                   ),
                 ),
@@ -443,33 +459,74 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        calendarTaskTypeIcon(task.type),
-                        size: isMobile ? 14 : 15,
-                        color: calendarTaskTypeColor(
-                          task.type,
-                          active: !isCompleted,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              calendarTaskTypeIcon(task.type),
+                              size: isMobile ? 14 : 15,
+                              color: calendarTaskTypeColor(
+                                task.type,
+                                active: !isCompleted,
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                task.title.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GlassText.bodyMD().copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                  fontSize: isMobile ? 13 : 15,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: GlassColors.onSurface.withOpacity(
+                                    isCompleted ? 0.46 : 0.92,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
-                          task.title.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GlassText.bodyMD().copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                            fontSize: isMobile ? 13 : 15,
-                            decoration: isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: GlassColors.onSurface.withOpacity(
-                              isCompleted ? 0.46 : 0.92,
+                      if (task.hasChecklist) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: GlassColors.success.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: GlassColors.success.withOpacity(0.22),
                             ),
                           ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.checklist_rounded,
+                                size: 11,
+                                color: GlassColors.success.withOpacity(0.95),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                task.checklistProgressLabel,
+                                style: GlassText.labelSM().copyWith(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700,
+                                  color: GlassColors.success.withOpacity(0.98),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   if (task.description.trim().isNotEmpty) ...[
@@ -516,6 +573,111 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
               ),
               const SizedBox(width: 20),
               _buildAvatarStack(task.members),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMeetingBlock(MeetingModel meeting) {
+    final isMobile = Responsive.isMobile(context);
+    int colorValue = GlassColors.primary.value;
+    String boardName = 'Unknown Board';
+    String workspaceName = 'Unknown Workspace';
+    BoardModel? board;
+    try {
+      board = widget.boards.firstWhere((b) => b.id == meeting.boardId);
+      colorValue = board.color;
+      boardName = board.name;
+      if (board.workspaceId.isNotEmpty) {
+        for (final workspace in widget.workspaces) {
+          if (workspace.id == board.workspaceId) {
+            workspaceName = workspace.name;
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
+    final color = Color(colorValue);
+    return InkWell(
+      onTap: () => widget.onMeetingTap?.call(meeting, board),
+      borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 12 : 20,
+          vertical: isMobile ? 10 : 14,
+        ),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+          border: Border.all(color: color.withOpacity(0.24)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        calendarTaskTypeIcon('meeting'),
+                        size: isMobile ? 14 : 15,
+                        color: calendarTaskTypeColor('meeting'),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          meeting.title.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GlassText.bodyMD().copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                            fontSize: isMobile ? 13 : 15,
+                            color: GlassColors.onSurface.withOpacity(0.92),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (meeting.roleTags.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      meeting.roleTags.join(' • '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GlassText.labelSM().copyWith(
+                        fontSize: 8.5,
+                        color: GlassColors.primary.withOpacity(0.88),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 2),
+                  Text(
+                    '$workspaceName / $boardName'.toUpperCase(),
+                    style: GlassText.labelSM().copyWith(
+                      fontSize: 8.4,
+                      color: GlassColors.onSurface.withOpacity(0.56),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isMobile) ...[
+              const SizedBox(width: 16),
+              Text(
+                DateFormat('HH:mm').format(meeting.startAt),
+                style: GlassText.labelSM().copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: GlassColors.primary,
+                ),
+              ),
             ],
           ],
         ),

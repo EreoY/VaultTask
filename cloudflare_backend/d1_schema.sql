@@ -59,11 +59,31 @@ CREATE TABLE IF NOT EXISTS team_tasks (
   FOREIGN KEY(author_uid) REFERENCES users(uid)
 );
 
+-- Team Meetings (belong to a board)
+CREATE TABLE IF NOT EXISTS team_meetings (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  start_at TEXT NOT NULL,
+  end_at TEXT DEFAULT '',
+  role_tags TEXT DEFAULT '[]',
+  attachments TEXT DEFAULT '[]',
+  transcript TEXT DEFAULT '',
+  summary TEXT DEFAULT '',
+  updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(board_id) REFERENCES team_boards(id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_team_boards_owner ON team_boards(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_team_workspaces_owner ON team_workspaces(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_board  ON team_tasks(board_id);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_due    ON team_tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_team_meetings_board ON team_meetings(board_id);
+CREATE INDEX IF NOT EXISTS idx_team_meetings_start ON team_meetings(start_at);
 
 -- Chat Sessions
 CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -104,5 +124,4 @@ CREATE TABLE IF NOT EXISTS task_comment_reads (
   PRIMARY KEY (comment_id, user_id)
 );
 CREATE INDEX IF NOT EXISTS idx_task_comment_reads_user ON task_comment_reads(user_id);
-
 

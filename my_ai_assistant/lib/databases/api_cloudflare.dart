@@ -3,11 +3,13 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/board_model.dart';
+import '../models/meeting_model.dart';
 import '../models/task_model.dart';
 import '../models/workspace_model.dart';
 import '../config/env_config.dart';
 import '../models/chat_model.dart';
-import 'package:google_generative_ai/google_generative_ai.dart' hide ChatSession;
+import 'package:google_generative_ai/google_generative_ai.dart'
+    hide ChatSession;
 
 // DeltaResult is defined inline here (not imported) to avoid Flutter Web DDC
 // cross-file async return type issues (LegacyJavaScriptObject interop bug).
@@ -20,7 +22,9 @@ class DeltaResult {
 class ApiCloudflare {
   static String get _base => EnvConfig.backendUrl;
 
-  static Map<String, String> get _headers => {'Content-Type': 'application/json'};
+  static Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+  };
 
   // ─── BOARDS ───────────────────────────────────────────
 
@@ -28,7 +32,9 @@ class ApiCloudflare {
     final url = '$_base/api/boards?id=$id';
     final response = await http.get(Uri.parse(url), headers: _headers);
     if (response.statusCode == 200) {
-      return BoardModel.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      return BoardModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
     } else {
       throw Exception('Failed to get board: ${response.body}');
     }
@@ -41,9 +47,13 @@ class ApiCloudflare {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data is! List) return [];
-      return data.map((j) => BoardModel.fromJson(j as Map<String, dynamic>)).toList();
+      return data
+          .map((j) => BoardModel.fromJson(j as Map<String, dynamic>))
+          .toList();
     } else {
-      throw Exception('Failed to get boards: ${response.statusCode} - ${response.body}');
+      throw Exception(
+        'Failed to get boards: ${response.statusCode} - ${response.body}',
+      );
     }
   }
 
@@ -139,14 +149,18 @@ class ApiCloudflare {
         final rawData = jsonDecode(response.body);
         final data = (rawData is List) ? List<dynamic>.from(rawData) : [];
         if (data.isEmpty) return [];
-        return data.map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map))).toList();
+        return data
+            .map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map)))
+            .toList();
       } catch (e) {
         debugPrint('JSON Decode Error in getTasksByBoard: $e');
         debugPrint('Raw: ${response.body}');
         throw Exception('Failed to decode tasks: $e');
       }
     } else {
-      throw Exception('Failed to get tasks: ${response.statusCode} - ${response.body}');
+      throw Exception(
+        'Failed to get tasks: ${response.statusCode} - ${response.body}',
+      );
     }
   }
 
@@ -156,16 +170,21 @@ class ApiCloudflare {
     final response = await http.get(Uri.parse(url), headers: _headers);
     if (response.statusCode == 200) {
       final dynamic rawData = jsonDecode(response.body);
-      final Map<String, dynamic> data = Map<String, dynamic>.from(rawData as Map);
+      final Map<String, dynamic> data = Map<String, dynamic>.from(
+        rawData as Map,
+      );
       final rawTasks = data['tasks'];
       final tasksJson = (rawTasks is List) ? List<dynamic>.from(rawTasks) : [];
-      final maxUpdated = int.tryParse(data['maxUpdated']?.toString() ?? '') ?? since;
+      final maxUpdated =
+          int.tryParse(data['maxUpdated']?.toString() ?? '') ?? since;
       final tasks = tasksJson
           .map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map)))
           .toList();
       return DeltaResult(tasks, maxUpdated);
     } else {
-      throw Exception('Failed to get tasks delta: ${response.statusCode} - ${response.body}');
+      throw Exception(
+        'Failed to get tasks delta: ${response.statusCode} - ${response.body}',
+      );
     }
   }
 
@@ -187,6 +206,7 @@ class ApiCloudflare {
         'label_ids': task.labelIds,
         'status': task.status,
         'is_completed': task.isCompleted,
+        'checklist': task.checklist.map((e) => e.toJson()).toList(),
         'images': task.images.map((e) => e.toJson()).toList(),
         'comments': task.comments.map((e) => e.toMap()).toList(),
       }),
@@ -211,6 +231,7 @@ class ApiCloudflare {
         'label_ids': task.labelIds,
         'status': task.status,
         'is_completed': task.isCompleted,
+        'checklist': task.checklist.map((e) => e.toJson()).toList(),
         'images': task.images.map((e) => e.toJson()).toList(),
         'comments': task.comments.map((e) => e.toMap()).toList(),
       }),
@@ -221,7 +242,11 @@ class ApiCloudflare {
     }
   }
 
-  static Future<void> updateTaskStatus(String id, String status, String boardId) async {
+  static Future<void> updateTaskStatus(
+    String id,
+    String status,
+    String boardId,
+  ) async {
     final response = await http.put(
       Uri.parse('$_base/api/tasks_status'),
       headers: _headers,
@@ -242,15 +267,91 @@ class ApiCloudflare {
     }
   }
 
+  // ─── MEETINGS ────────────────────────────────────────
+
+  static Future<List<MeetingModel>> getMeetingsByBoard(String boardId) async {
+    final url = '$_base/api/meetings?board_id=$boardId';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is! List) return [];
+      return data
+          .map((j) => MeetingModel.fromJson(j as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to get meetings: ${response.body}');
+    }
+  }
+
+  static Future<String> insertMeeting(MeetingModel meeting) async {
+    final id = meeting.id.isEmpty
+        ? '${DateTime.now().millisecondsSinceEpoch}'
+        : meeting.id;
+    final response = await http.post(
+      Uri.parse('$_base/api/meetings'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': id,
+        'board_id': meeting.boardId,
+        'title': meeting.title,
+        'description': meeting.description,
+        'notes': meeting.notes,
+        'start_at': meeting.startAt.toIso8601String(),
+        'end_at': meeting.endAt?.toIso8601String(),
+        'role_tags': meeting.roleTags,
+        'attachments': meeting.attachments,
+        'transcript': meeting.transcript,
+        'summary': meeting.summary,
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to insert meeting: ${response.body}');
+    }
+    return id;
+  }
+
+  static Future<void> updateMeeting(MeetingModel meeting) async {
+    final response = await http.put(
+      Uri.parse('$_base/api/meetings'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': meeting.id,
+        'board_id': meeting.boardId,
+        'title': meeting.title,
+        'description': meeting.description,
+        'notes': meeting.notes,
+        'start_at': meeting.startAt.toIso8601String(),
+        'end_at': meeting.endAt?.toIso8601String(),
+        'role_tags': meeting.roleTags,
+        'attachments': meeting.attachments,
+        'transcript': meeting.transcript,
+        'summary': meeting.summary,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update meeting: ${response.body}');
+    }
+  }
+
+  static Future<void> deleteMeeting(String id) async {
+    final response = await http.delete(
+      Uri.parse('$_base/api/meetings?id=$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete meeting: ${response.body}');
+    }
+  }
+
   // Bulk Order Update
-  static Future<void> updateTaskOrder(String boardId, List<Map<String, dynamic>> updates) async {
+  static Future<void> updateTaskOrder(
+    String boardId,
+    List<Map<String, dynamic>> updates,
+  ) async {
     final response = await http.put(
       Uri.parse('$_base/api/tasks_order'),
       headers: _headers,
-      body: jsonEncode({
-        'board_id': boardId,
-        'updates': updates,
-      }),
+      body: jsonEncode({'board_id': boardId, 'updates': updates}),
     );
     if (response.statusCode != 200) {
       debugPrint('UPDATE ORDER ERROR: ${response.body}');
@@ -264,7 +365,11 @@ class ApiCloudflare {
     return '$_base/api/images/$key';
   }
 
-  static Future<Map<String, dynamic>> uploadImage(List<int> bytes, String filename, {String path = 'uploads'}) async {
+  static Future<Map<String, dynamic>> uploadImage(
+    List<int> bytes,
+    String filename, {
+    String path = 'uploads',
+  }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');
 
@@ -272,26 +377,36 @@ class ApiCloudflare {
     final request = http.MultipartRequest('POST', uri);
     request.fields['uid'] = user.uid;
     request.fields['folder'] = path;
-    request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename));
+    request.files.add(
+      http.MultipartFile.fromBytes('file', bytes, filename: filename),
+    );
 
     try {
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
       final response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        if (data['url'] != null && !(data['url'] as String).startsWith('http')) {
+        if (data['url'] != null &&
+            !(data['url'] as String).startsWith('http')) {
           data['url'] = '$_base${data['url']}';
         }
         return data;
       } else {
-        throw Exception('Failed to upload image (${response.statusCode}): ${response.body}');
+        throw Exception(
+          'Failed to upload image (${response.statusCode}): ${response.body}',
+        );
       }
     } catch (e) {
       rethrow;
     }
   }
 
-  static Future<String> generateAiDescription(List<int> imageBytes, String mimeType) async {
+  static Future<String> generateAiDescription(
+    List<int> imageBytes,
+    String mimeType,
+  ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return '';
     try {
@@ -303,29 +418,45 @@ class ApiCloudflare {
           {
             'role': 'user',
             'content': [
-              {'type': 'text', 'text': 'Describe this image clearly and concisely in Thai (1-2 sentences).'},
+              {
+                'type': 'text',
+                'text':
+                    'Describe this image clearly and concisely in Thai (1-2 sentences).',
+              },
               {
                 'type': 'image_url',
-                'image_url': {'url': 'data:$mimeType;base64,$base64Image'}
-              }
-            ]
-          }
+                'image_url': {'url': 'data:$mimeType;base64,$base64Image'},
+              },
+            ],
+          },
         ],
         'max_tokens': 300,
       };
-      
-      final response = await http.post(Uri.parse('$_base/api/ai/chat'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body));
+
+      final response = await http.post(
+        Uri.parse('$_base/api/ai/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return (data['result']?['choices']?[0]?['message']?['content'] ?? '').toString().trim();
+        return (data['result']?['choices']?[0]?['message']?['content'] ?? '')
+            .toString()
+            .trim();
       }
-    } catch (e) { debugPrint('Error generating AI description: $e'); }
+    } catch (e) {
+      debugPrint('Error generating AI description: $e');
+    }
     return '';
   }
 
   // ─── USERS ────────────────────────────────────────────
 
-  static Future<void> registerUser(String uid, String email, String displayName) async {
+  static Future<void> registerUser(
+    String uid,
+    String email,
+    String displayName,
+  ) async {
     final url = '$_base/api/users';
     try {
       final response = await http.post(
@@ -338,14 +469,18 @@ class ApiCloudflare {
         }),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        debugPrint('Failed to register user to Cloudflare D1: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          'Failed to register user to Cloudflare D1: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       debugPrint('Error registering user to Cloudflare D1: $e');
     }
   }
 
-  static Future<Map<String, Map<String, String>>> getUsersByUids(List<String> uids) async {
+  static Future<Map<String, Map<String, String>>> getUsersByUids(
+    List<String> uids,
+  ) async {
     if (uids.isEmpty) return {};
     final query = uids.join(',');
     final url = '$_base/api/users?uids=$query';
@@ -357,19 +492,29 @@ class ApiCloudflare {
           final map = <String, Map<String, String>>{};
           for (final u in data) {
             final uid = u['uid']?.toString() ?? '';
-            final name = u['display_name']?.toString() ?? u['email']?.toString() ?? uid;
+            final name =
+                u['display_name']?.toString() ?? u['email']?.toString() ?? uid;
             final photo = u['photo_url']?.toString() ?? '';
             if (uid.isNotEmpty) map[uid] = {'name': name, 'photo': photo};
           }
           return map;
         }
       }
-    } catch (e) { debugPrint('Failed to get users: $e'); }
+    } catch (e) {
+      debugPrint('Failed to get users: $e');
+    }
     return {};
   }
 
-  static Future<void> updateUserDisplayName(String uid, String displayName) async {
-    await http.put(Uri.parse('$_base/api/users'), headers: _headers, body: jsonEncode({'uid': uid, 'display_name': displayName}));
+  static Future<void> updateUserDisplayName(
+    String uid,
+    String displayName,
+  ) async {
+    await http.put(
+      Uri.parse('$_base/api/users'),
+      headers: _headers,
+      body: jsonEncode({'uid': uid, 'display_name': displayName}),
+    );
   }
 
   // ─── WORKSPACES ───────────────────────────────────────
@@ -380,7 +525,9 @@ class ApiCloudflare {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data is! List) return [];
-      return data.map((j) => WorkspaceModel.fromJson(j as Map<String, dynamic>)).toList();
+      return data
+          .map((j) => WorkspaceModel.fromJson(j as Map<String, dynamic>))
+          .toList();
     } else {
       throw Exception('Failed to get workspaces: ${response.body}');
     }
@@ -413,17 +560,19 @@ class ApiCloudflare {
     }
   }
 
-  static Future<WorkspaceModel> joinWorkspace(String uid, String workspaceId) async {
+  static Future<WorkspaceModel> joinWorkspace(
+    String uid,
+    String workspaceId,
+  ) async {
     final response = await http.post(
       Uri.parse('$_base/api/workspaces_join'),
       headers: _headers,
-      body: jsonEncode({
-        'id': workspaceId,
-        'uid': uid,
-      }),
+      body: jsonEncode({'id': workspaceId, 'uid': uid}),
     );
     if (response.statusCode == 200) {
-      return WorkspaceModel.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      return WorkspaceModel.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
     } else {
       throw Exception('Failed to join workspace: ${response.body}');
     }
@@ -431,28 +580,33 @@ class ApiCloudflare {
 
   // ─── CHAT SYSTEM ──────────────────────────────────────
 
-  static Future<List<ChatSession>> getChatSessions(String uid, {String taskId = ''}) async {
+  static Future<List<ChatSession>> getChatSessions(
+    String uid, {
+    String taskId = '',
+  }) async {
     final url = '$_base/api/chat/sessions?uid=$uid&task_id=$taskId';
     final response = await http.get(Uri.parse(url), headers: _headers);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data is! List) return [];
-      return data.map((j) => ChatSession.fromMap(Map<String, dynamic>.from(j as Map))).toList();
+      return data
+          .map((j) => ChatSession.fromMap(Map<String, dynamic>.from(j as Map)))
+          .toList();
     } else {
       throw Exception('Failed to get chat sessions: ${response.body}');
     }
   }
 
-  static Future<void> insertChatSession(String id, String uid, String name, {String taskId = ''}) async {
+  static Future<void> insertChatSession(
+    String id,
+    String uid,
+    String name, {
+    String taskId = '',
+  }) async {
     final response = await http.post(
       Uri.parse('$_base/api/chat/sessions'),
       headers: _headers,
-      body: jsonEncode({
-        'id': id,
-        'uid': uid,
-        'name': name,
-        'task_id': taskId,
-      }),
+      body: jsonEncode({'id': id, 'uid': uid, 'name': name, 'task_id': taskId}),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to insert chat session: ${response.body}');
@@ -483,7 +637,10 @@ class ApiCloudflare {
         if (pendingCallStr.isNotEmpty) {
           try {
             final pMap = jsonDecode(pendingCallStr);
-            parsedPendingCall = FunctionCall(pMap['name'], Map<String, Object?>.from(pMap['arguments']));
+            parsedPendingCall = FunctionCall(
+              pMap['name'],
+              Map<String, Object?>.from(pMap['arguments']),
+            );
           } catch (_) {}
         }
 
@@ -491,30 +648,40 @@ class ApiCloudflare {
         List<ToolCallInfo> parsedToolCalls = [];
         try {
           final tcList = jsonDecode(toolCallsStr) as List;
-          parsedToolCalls = tcList.map((tc) => ToolCallInfo(
-            name: tc['name'].toString(),
-            arguments: Map<String, dynamic>.from(tc['arguments']),
-          )).toList();
+          parsedToolCalls = tcList
+              .map(
+                (tc) => ToolCallInfo(
+                  name: tc['name'].toString(),
+                  arguments: Map<String, dynamic>.from(tc['arguments']),
+                ),
+              )
+              .toList();
         } catch (_) {}
 
         final attachmentsStr = m['attachments'] as String? ?? '[]';
         List<Map<String, String>> parsedAttachments = [];
         try {
           final attList = jsonDecode(attachmentsStr) as List;
-          parsedAttachments = attList.map((a) => Map<String, String>.from(a)).toList();
+          parsedAttachments = attList
+              .map((a) => Map<String, String>.from(a))
+              .toList();
         } catch (_) {}
 
-        list.add(ChatMessage(
-          id: m['id'] as String,
-          text: m['text'] as String,
-          reasoning: m['reasoning'] as String?,
-          isUser: (m['is_user'] == 1),
-          hasDraft: (m['has_draft'] == 1),
-          pendingCall: parsedPendingCall,
-          toolCalls: parsedToolCalls,
-          attachments: parsedAttachments,
-          timestamp: DateTime.tryParse(m['timestamp'] as String? ?? '') ?? DateTime.now(),
-        ));
+        list.add(
+          ChatMessage(
+            id: m['id'] as String,
+            text: m['text'] as String,
+            reasoning: m['reasoning'] as String?,
+            isUser: (m['is_user'] == 1),
+            hasDraft: (m['has_draft'] == 1),
+            pendingCall: parsedPendingCall,
+            toolCalls: parsedToolCalls,
+            attachments: parsedAttachments,
+            timestamp:
+                DateTime.tryParse(m['timestamp'] as String? ?? '') ??
+                DateTime.now(),
+          ),
+        );
       }
       return list.reversed.toList();
     } else {
@@ -522,7 +689,10 @@ class ApiCloudflare {
     }
   }
 
-  static Future<void> insertChatMessage(ChatMessage message, String sessionId) async {
+  static Future<void> insertChatMessage(
+    ChatMessage message,
+    String sessionId,
+  ) async {
     final cleanedAttachments = message.attachments.map((a) {
       final copy = Map<String, String>.from(a);
       copy.remove('b64');
@@ -539,14 +709,17 @@ class ApiCloudflare {
         'reasoning': message.reasoning ?? '',
         'is_user': message.isUser ? 1 : 0,
         'has_draft': message.hasDraft ? 1 : 0,
-        'pending_call': message.pendingCall != null ? jsonEncode({
-          'name': message.pendingCall.name,
-          'arguments': message.pendingCall.args,
-        }) : '',
-        'tool_calls': jsonEncode(message.toolCalls.map((tc) => {
-          'name': tc.name,
-          'arguments': tc.arguments,
-        }).toList()),
+        'pending_call': message.pendingCall != null
+            ? jsonEncode({
+                'name': message.pendingCall.name,
+                'arguments': message.pendingCall.args,
+              })
+            : '',
+        'tool_calls': jsonEncode(
+          message.toolCalls
+              .map((tc) => {'name': tc.name, 'arguments': tc.arguments})
+              .toList(),
+        ),
         'attachments': jsonEncode(cleanedAttachments),
         'timestamp': message.timestamp.toIso8601String(),
       }),
@@ -570,18 +743,17 @@ class ApiCloudflare {
     }
   }
 
-  static Future<void> markCommentsAsRead(String uid, List<String> commentIds) async {
+  static Future<void> markCommentsAsRead(
+    String uid,
+    List<String> commentIds,
+  ) async {
     final response = await http.post(
       Uri.parse('$_base/api/comments/read'),
       headers: _headers,
-      body: jsonEncode({
-        'uid': uid,
-        'comment_ids': commentIds,
-      }),
+      body: jsonEncode({'uid': uid, 'comment_ids': commentIds}),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to mark comments as read: ${response.body}');
     }
   }
 }
-

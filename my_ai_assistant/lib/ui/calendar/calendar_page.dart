@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/board_model.dart';
+import '../../models/meeting_model.dart';
 import '../../models/workspace_model.dart';
+import '../../state_managers/state_meetings.dart';
 import '../../state_managers/state_tasks.dart';
 import '../../state_managers/state_boards.dart';
 import '../../models/task_model.dart';
@@ -39,6 +41,10 @@ class _CalendarPageState extends State<CalendarPage> {
       await boardsState.fetchAllBoards();
       if (!mounted) return;
       await context.read<StateTasks>().fetchAllTasks(boardsState.boards);
+      await context.read<StateMeetings>().fetchAllMeetings(
+        boardsState.boards,
+        silent: true,
+      );
     });
   }
 
@@ -423,12 +429,20 @@ class _CalendarPageState extends State<CalendarPage> {
     final workspaces = context.select<StateBoards, List<WorkspaceModel>>(
       (state) => state.workspaces,
     );
+    final allMeetings = context.select<StateMeetings, List<MeetingModel>>(
+      (state) => state.allMeetings,
+    );
 
     final myTasks = allTasks.where((t) {
       return t.members.contains(currentUser?.uid) &&
           t.dueDate.year == _selectedDate.year &&
           t.dueDate.month == _selectedDate.month &&
           t.dueDate.day == _selectedDate.day;
+    }).toList();
+    final dayMeetings = allMeetings.where((meeting) {
+      return meeting.startAt.year == _selectedDate.year &&
+          meeting.startAt.month == _selectedDate.month &&
+          meeting.startAt.day == _selectedDate.day;
     }).toList();
 
     final boards = context.select<StateBoards, List<BoardModel>>(
@@ -438,10 +452,12 @@ class _CalendarPageState extends State<CalendarPage> {
     return DailyTimelineView(
       date: _selectedDate,
       tasks: myTasks,
+      meetings: dayMeetings,
       boards: boards,
       workspaces: workspaces,
       isDark: widget.isDark,
       onNavigate: widget.onNavigate,
+      onMeetingTap: _showMeetingPreview,
     );
   }
 
@@ -453,6 +469,9 @@ class _CalendarPageState extends State<CalendarPage> {
     );
     final boards = context.select<StateBoards, List<BoardModel>>(
       (state) => state.boards,
+    );
+    final allMeetings = context.select<StateMeetings, List<MeetingModel>>(
+      (state) => state.allMeetings,
     );
     final workspaces = context.select<StateBoards, List<WorkspaceModel>>(
       (state) => state.workspaces,
@@ -467,6 +486,7 @@ class _CalendarPageState extends State<CalendarPage> {
       currentMonth: _currentMonth,
       selectedDate: _selectedDate,
       allTasks: allTasks,
+      allMeetings: allMeetings,
       boards: boards,
       workspaces: workspaces,
       onPrevious: _goToPrevious,
@@ -481,6 +501,7 @@ class _CalendarPageState extends State<CalendarPage> {
         _saveCalendarSettings();
       },
       onTaskTap: _showTaskPreview,
+      onMeetingTap: _showMeetingPreview,
     );
 
     final bucket = UnscheduledTaskBucket(
@@ -537,6 +558,13 @@ class _CalendarPageState extends State<CalendarPage> {
         widget.onNavigate?.call(1);
       },
     );
+  }
+
+  void _showMeetingPreview(MeetingModel meeting, BoardModel? board) {
+    if (board == null) return;
+    context.read<StateMeetings>().openMeetingDetail(board.id, meeting.id);
+    context.read<StateBoards>().openBoardMeetings(board);
+    widget.onNavigate?.call(1);
   }
 
   BoardModel? _findBoard(TaskModel task, List<BoardModel> boards) {

@@ -1,3 +1,188 @@
+## Phase 152: Meetings Unified Navbar and Edge Scroll Polish
+
+> **Architecture Mandate:** metadata line ของ meetings ต้องอยู่ใน top navbar layer เดียวกับ breadcrumb เพื่อให้ทุกหน้าใช้ pattern เดียวกัน ส่วน scrollbar ต้องถูกดันไปชิดขอบพื้นที่หน้ามากที่สุดและไม่แย่งพื้นที่สายตาจาก document content
+
+### Task 152.1: Register Meetings Navbar Unification Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 152 สำหรับย้าย history/meta ไปอยู่ navbar และเก็บ scrollbar edge polish ให้สม่ำเสมอทุกหน้า meetings
+
+### Task 152.2: Move Meetings Meta into Shared Navbar Pattern
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** สร้าง top navbar/meta section แบบเดียวกันสำหรับ list/detail/create, ย้าย history line ออกจาก editor body, และลด gutter ฝั่งขวาเพื่อให้ scrollbar ชิดขอบมากขึ้น
+
+### Task 152.3: Verify Analyzer and Navbar Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 151: Meetings Scrollbar Edge Alignment and Top-Left History Line
+
+> **Architecture Mandate:** หน้า meetings แบบ document ต้องมี scrollbar ที่อ่านง่ายและอยู่ชิดขอบพื้นที่แสดงผล ไม่ลอยอยู่ข้าง content block ส่วน metadata ประเภทเวลาแก้ไข/สถานะเอกสารต้องแยกจาก title row และไปอยู่มุมบนซ้ายอย่างคงที่เพื่อรักษา hierarchy แบบ document app
+
+### Task 151.1: Register Meetings Scroll/History Refinement Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 151 สำหรับย้าย scrollbar ไปขอบขวาและย้าย history line ไปซ้ายบนของหน้า meetings editor
+
+### Task 151.2: Move Editor Scrollbar to Outer Edge and Relocate History Meta
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ทำให้ scrollable editor ใช้ full-width scroll container เพื่อให้ scrollbar อยู่ชิดขวา และแยก `Edited ...` ออกจาก action row ไปอยู่ใต้ breadcrumb ด้านซ้าย
+
+### Task 151.3: Verify Analyzer and Scroll/History Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 150: In-App Notion-Like Meetings Layout Refinement
+
+> **Architecture Mandate:** หน้า meetings ต้องให้ความรู้สึกเป็น workspace document/index ภายในแอป ไม่ใช่ glass dashboard panel ดังนั้น list view ต้องโปร่งและเรียงแบบ index ตามช่วงเวลา ส่วน detail/create ต้องใช้ property rows และ document sections ที่เบา เรียบ และต่อเนื่องกับ shell เดิม
+
+### Task 150.1: Register Notion-Like Meetings Refinement Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 150 สำหรับย้าย meetings UI จาก panel-heavy ไปสู่ in-app Notion-like layout ใน list/detail/create
+
+### Task 150.2: Rebuild Meetings List and Editor Surfaces with Document-Like Hierarchy
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** จัด list ให้เป็น grouped index style, ปรับ detail/create ให้เป็น document page พร้อม property rows, action tabs, และ spacing แบบเบาเรียบ
+
+### Task 150.3: Verify Analyzer and Meetings Layout Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 149: Workspace-Return Back Navigation and Workspace-Themed Meetings UI
+
+> **Architecture Mandate:** หน้า meetings เป็นส่วนย่อยของ workspace context ไม่ใช่ปลายทางแทน kanban ดังนั้นปุ่มย้อนกลับจากหน้า meetings หลักต้องพาผู้ใช้กลับไป workspace/projects view ส่วนภาษาภาพของ meetings ต้องยืมความโล่ง เรียบ และเส้นบางจากหน้า workspace เดิม
+
+### Task 149.1: Register Meetings Back-Navigation and Theme Alignment Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 149 สำหรับเปลี่ยน back behavior และปรับ meetings ให้เข้าธีม workspace
+
+### Task 149.2: Return Meetings Back Action to Workspace View and Simplify Visual Language
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ให้หน้า meetings หลักย้อนกลับไป workspace page, detail/create ย้อนกลับไป list meetings, และลดความ card-heavy ของ list/detail ให้ใช้เส้นขอบบาง/spacing แบบ workspace
+
+### Task 149.3: Verify Analyzer and Workspace-Themed Meetings Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 148: Single-Time Meeting Scheduling Simplification
+
+> **Architecture Mandate:** meeting ในแพลตฟอร์มนี้ใช้เวลา “นัดหมาย” แบบ task มากกว่าช่วงเวลาเริ่ม-จบ ดังนั้น UI create/edit ต้องใช้เวลาเดียวเพื่อลด noise และทำให้การกรอกเร็วขึ้น
+
+### Task 148.1: Register Single-Time Meeting Schedule Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 148 สำหรับลด meeting scheduling เหลือเวลาเดียวใน create/edit flow
+
+### Task 148.2: Collapse Meeting DateTime Inputs to a Single Scheduled Time
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ใช้เวลาเดียวในการสร้าง/แก้ไข meeting และตัด end time ออกจาก UI
+
+### Task 148.3: Verify Analyzer and Single-Time Meeting Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 147: Full-Page Meeting Creation Flow with Reusable Role Selection
+
+> **Architecture Mandate:** การสร้าง meeting ต้องใช้ surface เดียวกับการแก้ไขเพื่อให้ข้อมูลครบและละเอียดพอ ไม่ใช่ popup ย่อ ส่วน role ต้องเลือกซ้ำจากสิ่งที่เคยมีในบอร์ดได้ทันทีในหน้า create เดียวกัน
+
+### Task 147.1: Register Full-Page Meeting Creation Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 147 สำหรับย้าย create flow จาก popup ไปสู่ full-page detail mode และ reuse role presets ในหน้านั้น
+
+### Task 147.2: Replace Meeting Create Popup with Full-Page Create Detail
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ให้ New meeting เปิด create detail page mode, preload role selections จาก preset เดิม, และเมื่อ save แล้วเข้าสู่ detail ของ meeting จริง
+
+### Task 147.3: Verify Analyzer and Full-Page Create Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 146: Board-Role Presets and Meetings Detail Minimal Polish
+
+> **Architecture Mandate:** role ในหน้า meetings ต้องเริ่มจาก preset ที่มีบริบทของบอร์ดก่อนเพื่อให้การสร้าง meeting เร็วและสอดคล้องกับทีมจริง ส่วน detail page ต้องลดความหนาแน่นแบบ form-builder ลงให้ใกล้ note workspace มากขึ้น
+
+### Task 146.1: Register Meetings Role Preset and Detail Polish Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 146 สำหรับ preset roles จาก board metadata และการเก็บ visual ของหน้า detail
+
+### Task 146.2: Add Board-Driven Role Presets and Slim Detail Styling
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ดึง role presets จาก board member roles/meeting tags มาใช้ใน header และ create dialog พร้อมลดความหนาของ detail editor
+
+### Task 146.3: Verify Analyzer and Meetings Polish Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 145: In-Shell Meetings Workspace, Detail Drill-In, and Create Dialog
+
+> **Architecture Mandate:** หน้า meetings ต้องอยู่ใน shell เดิมของแอปเหมือน kanban เพื่อรักษา sidebar และ mental model ของ board context ไว้ ขณะที่ flow ภายในต้องแยกเป็น 3 ชั้นชัดเจน: board meetings list, meeting detail editor, และ create dialog
+
+### Task 145.1: Register In-Shell Meetings Workspace Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 145 สำหรับย้าย meetings จาก full-route ออกไปเป็น in-shell board surface และแตก flow เป็น list/detail/create
+
+### Task 145.2: Add Board Surface State for Meetings and Keep Sidebar Visible
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_boards.dart`, `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เพิ่ม board surface mode (kanban/meetings) และ route การเปิด meetings ให้แสดงใน shell เดิมแทนการ push หน้าใหม่
+
+### Task 145.3: Rebuild Meetings UX into List View, Detail View, and Create Dialog
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_meetings.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ให้หน้าแรกเป็น meetings list/filter ตาม role, กดเข้า detail editor ได้, และปุ่มสร้างเปิด dialog ก่อนค่อยพาเข้า detail
+
+### Task 145.4: Verify Analyzer and In-Shell Meetings Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 144: Dedicated Meetings Page Navigation and Entry Simplification
+
+> **Architecture Mandate:** การเข้า meetings ต้องเป็น page navigation จริงเหมือนการเข้า kanban มากกว่า modal/sheet เพื่อให้ flow ชัดและขยายต่อได้ง่าย อีกทั้งปุ่มในคอลลัมน์ meetings ต้องทำหน้าที่เป็น action เล็กแบบ `OPEN` เท่านั้น ไม่ใช่ปุ่มขนาดพิเศษที่แย่งสายตา
+
+### Task 144.1: Register Dedicated Meetings Page Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 144 สำหรับย้าย meetings จาก sheet ไปเป็น page route และลด affordance ของปุ่มเหลือ OPEN
+
+### Task 144.2: Add Dedicated Meetings Page and Route All Open Actions There
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** เพิ่มหน้า meetings แบบ route จริง, ให้ปุ่มใน projects table และการเปิดจาก calendar นำทางไปหน้าใหม่นี้, และซ่อม setState-during-build ใน meetings widget
+
+### Task 144.3: Verify Analyzer and Meetings-Route Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 143: Projects Table Meetings Entry Order and Visibility
+
+> **Architecture Mandate:** คอลลัมน์ meetings ในหน้าโปรเจกต์ต้องเป็น action entry ที่เห็นชัดและอยู่ท้ายตารางใกล้ action อื่น ไม่ใช่ metadata นำหน้า เพราะหน้าที่จริงคือเปิด meeting manager ของบอร์ดนั้นโดยตรง
+
+### Task 143.1: Register Meetings Entry Table Cleanup
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 143 สำหรับย้ายคอลลัมน์ meetings ไปท้ายสุดและปรับ affordance ของปุ่มเปิด
+
+### Task 143.2: Reorder Meetings Column and Strengthen Open Affordance
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** ย้าย header/row ของ meetings ไปหลัง docs ก่อน actions และเปลี่ยนจาก count pill จาง ๆ เป็นปุ่ม OPEN MEETINGS ที่ยังแสดงจำนวนได้
+
+### Task 143.3: Verify Analyzer and Table-Entry Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
 ## Phase 142: Calendar-Style Collaboration Preview for Chat Task Rows
 
 > **Architecture Mandate:** ทำให้ task modal ที่เปิดจากตารางในแชตมีพฤติกรรมใกล้กับการ preview จาก calendar มากกว่าการเปิด editor เต็ม โดยเปิดให้ดูรูป, เปิดบอร์ด, ติ๊กสถานะ, ใช้ task chat และ comment ได้ แต่ล็อกการแก้ field เชิงโครงสร้าง
@@ -3533,3 +3718,128 @@
 - **Status:** [x] Done
 - **Action:** รัน `flutter analyze` เพื่อตรวจสอบความเรียบร้อยของโค้ดและการคอมไพล์ทั้งหมด
 - **Why:** เพื่อรับประกันความเสถียร 100% ปราศจากบั๊กและสไตล์มีเดียที่ถูกต้อง
+
+## Phase 130: Task Checklist Foundation & Calendar Visibility
+
+### Task 130.1: Context, Scope, and Graph Setup
+- **Status:** [x] Done
+- **Target File:** `task-graph.md`
+- **Action:** บันทึกเฟสใหม่สำหรับระบบ checklist ของ task โดยแยกงานย่อยเป็น persistence, modal UI, และ calendar/kanban rendering
+- **Why:** เพื่อควบคุมการเปลี่ยน schema และ UI แบบเป็นลำดับและตรวจสอบย้อนกลับได้
+
+### Task 130.2: Add Checklist Persistence Across Model, SQLite, and Team API
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/models/task_model.dart`, `my_ai_assistant/lib/databases/db_personal_sqlite.dart`, `my_ai_assistant/lib/databases/api_cloudflare.dart`, `cloudflare_backend/cloudflare_worker.js`, `cloudflare_backend/d1_migration.sql`
+- **Action:** เพิ่มโครงสร้างข้อมูล checklist และส่งผ่านทุกชั้นของระบบทั้ง local database และ backend worker
+- **Why:** เพื่อให้ checklist ถูกบันทึกและซิงค์ได้จริงทั้ง personal และ team boards
+
+### Task 130.3: Add Checklist Editing Surface to Task Modal
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** เพิ่มส่วน Step Lists ที่เพิ่ม/ลบ/ติ๊ก checklist ได้ พร้อมแสดง progress ภายใน modal
+- **Why:** เพื่อให้การมอบหมายงานละเอียดขึ้นและแก้ไขได้จากหน้ารายละเอียดงานโดยตรง
+
+### Task 130.4: Surface Checklist Progress in Kanban and Calendar Cards
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`
+- **Action:** แสดงผลความคืบหน้า checklist แบบ X/Y ในการ์ดงานของ kanban และ calendar
+- **Why:** เพื่อให้ผู้ใช้เห็นระดับความคืบหน้าของงานโดยไม่ต้องเปิด modal ทุกครั้ง
+
+### Task 130.5: Verification
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze`, และตรวจสอบการ compile ของ flow checklist
+- **Why:** เพื่อยืนยันว่าการเปลี่ยน schema และ UI ใหม่ทำงานครบโดยไม่พังส่วนเดิม
+
+## Phase 131: Checklist Minimal Visual Polish
+
+### Task 131.1: Convert Checklist Indicators to Minimal Metadata Chips
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`, `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** ย้าย checklist progress ให้กลายเป็นชิปขนาดเล็กแนว metadata โดยเฉพาะบน calendar ให้ไปอยู่มุมบนขวาของการ์ดแทน block ข้อความเต็ม
+- **Why:** เพื่อลด visual weight และทำให้เข้ากับธีมแบบมินิมอลมากขึ้น
+
+### Task 131.2: Reduce Checklist UI Weight in Task Modal
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ลดกรอบหนัก progress bar และปุ่มใหญ่ของ checklist section ให้เหลือ list แบบเบา inline add control และ spacing ที่ใกล้กับ notion มากขึ้น
+- **Why:** เพื่อลดความเทอะทะในหน้าแก้ไขงานและทำให้ checklist เป็นองค์ประกอบรองที่อ่านง่าย
+
+### Task 131.3: Verification
+- **Status:** [x] Done
+- **Action:** รัน `dart format` และ `flutter analyze --no-pub`
+- **Why:** ยืนยันว่า visual polish รอบนี้ไม่ทำให้ layout หรือ syntax เสีย
+
+## Phase 132: Green Checklist Affinity & Inline Kanban Toggle
+
+### Task 132.1: Apply Green Checklist Accent on Calendar and Kanban Meta
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`, `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** เปลี่ยน checklist chip ให้ใช้โทนเขียวทั้งพื้น เส้นขอบ ไอคอน และตัวเลข progress
+- **Why:** เพื่อให้ checklist สื่อความหมายเชิง progress ได้ชัดกว่าเดิม
+
+### Task 132.2: Show Real Checklist Item Inline on Kanban Card
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`
+- **Action:** แสดง checklist item ใต้คำบรรยายบนการ์ด kanban พร้อม checkbox ที่กดได้จริง โดยเลือก item ที่ยังไม่เสร็จตัวแรกและตัดให้เหลือ 1 บรรทัดพร้อม `...` เมื่อมีรายการต่อ
+- **Why:** เพื่อให้ผู้ใช้จัดการ checklist ได้จากหน้าบอร์ดทันทีโดยไม่ต้องเปิด modal
+
+### Task 132.3: Verification
+- **Status:** [x] Done
+- **Action:** รัน `dart format` และ `flutter analyze --no-pub`
+- **Why:** ยืนยันว่าการเพิ่ม interaction บนการ์ดไม่ทำให้เกิดปัญหา compile หรือ state update
+
+## Phase 133: Full Inline Checklist Rendering on Kanban Cards
+
+### Task 133.1: Render Every Checklist Item Inline on Card
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`
+- **Action:** แสดง checklist ทุกข้อใต้คำบรรยายบนการ์ด kanban พร้อม checkbox ที่ติ๊กได้จริงจากหน้าบอร์ด
+- **Why:** เพื่อให้ผู้ใช้มองเห็นงานย่อยทั้งหมดและจัดการได้โดยไม่ต้องเปิด modal
+
+### Task 133.2: Move Progress Label Below Checklist List
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`
+- **Action:** เอา progress count ออกจากมุมบนการ์ดและย้ายไปไว้ใต้รายการ checklist เป็นข้อความสีเขียว
+- **Why:** เพื่อลดความรกที่หัวการ์ดและจัด hierarchy การอ่านให้ตรงกับตัว checklist
+
+### Task 133.3: Verification
+- **Status:** [x] Done
+- **Action:** รัน `dart format` และ `flutter analyze --no-pub`
+- **Why:** ยืนยันว่า checklist หลายบรรทัดบนการ์ดไม่ทำให้ layout หรือ state update พัง
+
+## Phase 134: Board-Scoped Meetings Foundation
+
+### Task 134.1: Register Meetings Architecture Slice
+- **Status:** [x] Done
+- **Target File:** `task-graph.md`
+- **Action:** เพิ่มเฟสสำหรับระบบ meetings แบบแยก entity จาก tasks ครอบคลุม persistence, state, boards entry point, detail surface, และ calendar integration
+- **Why:** เพื่อให้การพัฒนา meetings เดินเป็นชั้นและตรวจสอบย้อนหลังได้
+
+### Task 134.2: Add Meeting Model and Persistence Layer
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/models/meeting_model.dart`, `my_ai_assistant/lib/databases/db_personal_sqlite.dart`, `my_ai_assistant/lib/databases/api_cloudflare.dart`, `cloudflare_backend/cloudflare_worker.js`, `cloudflare_backend/d1_schema.sql`
+- **Action:** เพิ่ม MeetingModel และตาราง persistence สำหรับ personal/team meetings
+- **Why:** เพื่อให้ meeting เป็นข้อมูลแยกจาก task และอ้างอิงตาม board ได้จริง
+
+### Task 134.3: Add StateMeetings and App-Level Fetch Wiring
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_meetings.dart`, `my_ai_assistant/lib/main.dart`
+- **Action:** สร้าง state manager สำหรับ meetings พร้อมโหลดข้อมูลตาม boards ที่ผู้ใช้เข้าถึงได้
+- **Why:** เพื่อให้หน้า Projects และ Calendar ใช้ข้อมูล meetings ร่วมกันได้
+
+### Task 134.4: Add Meetings Entry and Management Surface from Projects Table
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่มคอลัมน์/ปุ่ม Meetings ใน project table และสร้าง management surface สำหรับ upcoming/all/past + detail editor
+- **Why:** เพื่อให้เข้าใช้งาน meetings ของแต่ละ board ได้จาก HQ table โดยตรง
+
+### Task 134.5: Integrate Meetings into Calendar
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** แสดง meeting cards ใน month/day calendar และเปิด detail ได้
+- **Why:** เพื่อให้ timeline ของ project ครอบคลุมทั้งงานและการประชุม
+
+### Task 134.6: Verification
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และตรวจ flow หลักของ meetings
+- **Why:** เพื่อยืนยันว่าโครงสร้างใหม่ไม่ทำให้ระบบหน้า board/calendar พัง

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../models/board_model.dart';
+import '../../../models/meeting_model.dart';
 import '../../../models/task_model.dart';
 import '../../../models/workspace_model.dart';
 import '../../theme/glass_theme.dart';
@@ -13,6 +14,7 @@ class MonthCalendarPanel extends StatelessWidget {
   final DateTime currentMonth;
   final DateTime selectedDate;
   final List<TaskModel> allTasks;
+  final List<MeetingModel> allMeetings;
   final List<BoardModel> boards;
   final List<WorkspaceModel> workspaces;
   final VoidCallback onPrevious;
@@ -20,12 +22,14 @@ class MonthCalendarPanel extends StatelessWidget {
   final ValueChanged<DateTime> onMonthSelected;
   final ValueChanged<DateTime> onDateSelected;
   final void Function(TaskModel task, BoardModel? board) onTaskTap;
+  final void Function(MeetingModel meeting, BoardModel? board) onMeetingTap;
 
   const MonthCalendarPanel({
     super.key,
     required this.currentMonth,
     required this.selectedDate,
     required this.allTasks,
+    required this.allMeetings,
     required this.boards,
     required this.workspaces,
     required this.onPrevious,
@@ -33,6 +37,7 @@ class MonthCalendarPanel extends StatelessWidget {
     required this.onMonthSelected,
     required this.onDateSelected,
     required this.onTaskTap,
+    required this.onMeetingTap,
   });
 
   @override
@@ -201,6 +206,17 @@ class MonthCalendarPanel extends StatelessWidget {
             }
             return b.updatedAt.compareTo(a.updatedAt);
           });
+    final dayMeetings =
+        allMeetings
+            .where(
+              (meeting) =>
+                  isCurrentMonth &&
+                  meeting.startAt.year == date.year &&
+                  meeting.startAt.month == date.month &&
+                  meeting.startAt.day == date.day,
+            )
+            .toList()
+          ..sort((a, b) => a.startAt.compareTo(b.startAt));
 
     return InkWell(
       onTap: () => onDateSelected(date),
@@ -251,8 +267,8 @@ class MonthCalendarPanel extends StatelessWidget {
                   isMobile ? 5 : 8,
                 ),
                 child: isMobile
-                    ? _buildMobileTaskDots(myTasks)
-                    : _buildMonthTaskList(myTasks, isCurrentMonth),
+                    ? _buildMobileTaskDots(myTasks, dayMeetings)
+                    : _buildMonthTaskList(myTasks, dayMeetings, isCurrentMonth),
               ),
             ),
           ],
@@ -261,31 +277,54 @@ class MonthCalendarPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileTaskDots(List<TaskModel> tasks) {
+  Widget _buildMobileTaskDots(
+    List<TaskModel> tasks,
+    List<MeetingModel> meetings,
+  ) {
     return Align(
       alignment: Alignment.topLeft,
       child: Wrap(
         spacing: 3,
         runSpacing: 3,
-        children: tasks.take(12).map((task) {
-          return Container(
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(
-              color: _boardColor(task),
-              shape: BoxShape.circle,
-            ),
-          );
-        }).toList(),
+        children: [
+          ...tasks.take(8).map((task) {
+            return Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: _boardColor(task),
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+          ...meetings.take(4).map((meeting) {
+            return Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: _boardColorById(meeting.boardId).withOpacity(0.95),
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  Widget _buildMonthTaskList(List<TaskModel> tasks, bool isCurrentMonth) {
+  Widget _buildMonthTaskList(
+    List<TaskModel> tasks,
+    List<MeetingModel> meetings,
+    bool isCurrentMonth,
+  ) {
     if (!isCurrentMonth) return const SizedBox.shrink();
 
     final visibleTasks = tasks.take(2).toList();
-    final overflow = tasks.length - visibleTasks.length;
+    final visibleMeetings = meetings.take(1).toList();
+    final overflow =
+        (tasks.length - visibleTasks.length) +
+        (meetings.length - visibleMeetings.length);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,33 +357,64 @@ class MonthCalendarPanel extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        calendarTaskTypeIcon(task.type),
-                        size: 12,
-                        color: calendarTaskTypeColor(
-                          task.type,
-                          active: !isCompleted,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              calendarTaskTypeIcon(task.type),
+                              size: 12,
+                              color: calendarTaskTypeColor(
+                                task.type,
+                                active: !isCompleted,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                task.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GlassText.bodyMD().copyWith(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: GlassColors.onSurface.withOpacity(
+                                    isCompleted ? 0.46 : 0.92,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          task.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GlassText.bodyMD().copyWith(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            decoration: isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: GlassColors.onSurface.withOpacity(
-                              isCompleted ? 0.46 : 0.92,
+                      if (task.hasChecklist) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: GlassColors.success.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: GlassColors.success.withOpacity(0.22),
+                            ),
+                          ),
+                          child: Text(
+                            task.checklistProgressLabel,
+                            style: GlassText.labelSM().copyWith(
+                              fontSize: 7.4,
+                              fontWeight: FontWeight.w700,
+                              color: GlassColors.success.withOpacity(0.98),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   if (task.description.trim().isNotEmpty) ...[
@@ -382,6 +452,65 @@ class MonthCalendarPanel extends StatelessWidget {
             ),
           );
         }),
+        ...visibleMeetings.map((meeting) {
+          final board = _findBoardById(meeting.boardId);
+          final boardColor = board != null
+              ? Color(board.color)
+              : GlassColors.primary;
+          final sourceLabel =
+              '${_workspaceName(board)} / ${board?.name ?? 'Unknown board'}';
+          return InkWell(
+            onTap: () => onMeetingTap(meeting, board),
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: boardColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: boardColor.withOpacity(0.22)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        calendarTaskTypeIcon('meeting'),
+                        size: 12,
+                        color: calendarTaskTypeColor('meeting'),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          meeting.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GlassText.bodyMD().copyWith(
+                            fontSize: 11.2,
+                            fontWeight: FontWeight.w700,
+                            color: GlassColors.onSurface.withOpacity(0.92),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    sourceLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GlassText.labelSM().copyWith(
+                      fontSize: 7.8,
+                      color: GlassColors.onSurface.withOpacity(0.56),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
         if (overflow > 0)
           Text(
             '+$overflow more',
@@ -411,6 +540,18 @@ class MonthCalendarPanel extends StatelessWidget {
 
   Color _boardColor(TaskModel task) {
     final board = _findBoard(task);
+    return board != null ? Color(board.color) : GlassColors.primary;
+  }
+
+  BoardModel? _findBoardById(String boardId) {
+    for (final board in boards) {
+      if (board.id == boardId) return board;
+    }
+    return null;
+  }
+
+  Color _boardColorById(String boardId) {
+    final board = _findBoardById(boardId);
     return board != null ? Color(board.color) : GlassColors.primary;
   }
 

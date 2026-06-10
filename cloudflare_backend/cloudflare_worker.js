@@ -55,6 +55,28 @@ async function ensureSchema(db) {
       CREATE INDEX IF NOT EXISTS idx_task_comment_reads_user ON task_comment_reads(user_id)
     `).run();
 
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS team_meetings (
+        id TEXT PRIMARY KEY,
+        board_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        notes TEXT DEFAULT '',
+        start_at TEXT NOT NULL,
+        end_at TEXT DEFAULT '',
+        role_tags TEXT DEFAULT '[]',
+        attachments TEXT DEFAULT '[]',
+        transcript TEXT DEFAULT '',
+        summary TEXT DEFAULT '',
+        updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_team_meetings_board ON team_meetings(board_id)
+    `).run();
+
     try {
       await db.prepare(`ALTER TABLE team_boards ADD COLUMN workspace_id TEXT DEFAULT ''`).run();
     } catch (e) {
@@ -72,6 +94,11 @@ async function ensureSchema(db) {
     }
     try {
       await db.prepare(`ALTER TABLE team_tasks ADD COLUMN comments TEXT DEFAULT '[]'`).run();
+    } catch (e) {
+      // ignore
+    }
+    try {
+      await db.prepare(`ALTER TABLE team_tasks ADD COLUMN checklist TEXT DEFAULT '[]'`).run();
     } catch (e) {
       // ignore
     }
@@ -324,6 +351,7 @@ export default {
         const { results: boards } = await env.DB.prepare(`SELECT id FROM team_boards WHERE workspace_id = ?`).bind(id).all();
         for (const board of boards) {
           await env.DB.prepare(`DELETE FROM team_tasks WHERE board_id = ?`).bind(board.id).run();
+          await env.DB.prepare(`DELETE FROM team_meetings WHERE board_id = ?`).bind(board.id).run();
           await env.DB.prepare(`DELETE FROM team_boards WHERE id = ?`).bind(board.id).run();
         }
         await env.DB.prepare(`DELETE FROM team_workspaces WHERE id = ?`).bind(id).run();
@@ -532,6 +560,9 @@ export default {
         await env.DB.prepare(`DELETE FROM team_tasks WHERE board_id = ?`)
           .bind(id)
           .run();
+        await env.DB.prepare(`DELETE FROM team_meetings WHERE board_id = ?`)
+          .bind(id)
+          .run();
         await env.DB.prepare(`DELETE FROM team_boards WHERE id = ?`)
           .bind(id)
           .run();
@@ -623,6 +654,7 @@ export default {
           status,
           description,
           is_completed,
+          checklist,
           images,
           order_index,
           comments,
@@ -634,8 +666,8 @@ export default {
         const complete = is_completed ? 1 : 0;
         const now = nowMs();
         await env.DB.prepare(
-          `INSERT INTO team_tasks (id, board_id, author_uid, title, description, due_date, members, label_ids, status, is_completed, images, updated_at, order_index, comments)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO team_tasks (id, board_id, author_uid, title, description, due_date, members, label_ids, status, is_completed, checklist, images, updated_at, order_index, comments)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
           .bind(
             taskId,
@@ -648,6 +680,7 @@ export default {
             JSON.stringify(label_ids || []),
             status || "todo",
             complete,
+            JSON.stringify(checklist || []),
             JSON.stringify(images || []),
             now,
             order_index || 0,
@@ -663,6 +696,7 @@ export default {
            updated_at: now,
            members: members || [],
            label_ids: label_ids || [],
+           checklist: checklist || [],
            images: images || [],
            comments: comments || [],
          };
@@ -682,7 +716,7 @@ export default {
     if (url.pathname === "/api/tasks" && request.method === "PUT") {
       try {
         const taskData = await request.json();
-        const { id, board_id, is_completed, members, label_ids, images, comments } = taskData;
+        const { id, board_id, is_completed, members, label_ids, checklist, images, comments } = taskData;
         if (!id) return json({ error: "Missing id" }, 400);
         
         const complete = is_completed ? 1 : 0;
@@ -690,11 +724,11 @@ export default {
         
         // 🚀 Task 64.1: Perform update with provided fields
         await env.DB.prepare(
-          `UPDATE team_tasks SET title=?, description=?, due_date=?, members=?, label_ids=?, status=?, is_completed=?, images=?, updated_at=?, order_index=?, comments=? WHERE id=?`
+          `UPDATE team_tasks SET title=?, description=?, due_date=?, members=?, label_ids=?, status=?, is_completed=?, checklist=?, images=?, updated_at=?, order_index=?, comments=? WHERE id=?`
         ).bind(
           taskData.title, taskData.description, taskData.due_date,
           JSON.stringify(members || []), JSON.stringify(label_ids || []),
-          taskData.status, complete, JSON.stringify(images || []), now,
+          taskData.status, complete, JSON.stringify(checklist || []), JSON.stringify(images || []), now,
           taskData.order_index || 0, JSON.stringify(comments || []), id
         ).run();
 
@@ -708,6 +742,7 @@ export default {
             task: { ...taskData, is_completed: complete, updated_at: now, 
                     members: members || [], 
                     label_ids: label_ids || [], 
+                    checklist: checklist || [],
                     images: images || [],
                     comments: comments || [] },
             at: now,
@@ -797,6 +832,115 @@ export default {
             at: nowMs(),
           });
         }
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/meetings" && request.method === "GET") {
+      try {
+        const board_id = url.searchParams.get("board_id");
+        if (!board_id) return json({ error: "Missing board_id" }, 400);
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM team_meetings WHERE board_id = ? ORDER BY start_at ASC`,
+        )
+          .bind(board_id)
+          .all();
+        return json(results);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/meetings" && request.method === "POST") {
+      try {
+        const {
+          id,
+          board_id,
+          title,
+          description,
+          notes,
+          start_at,
+          end_at,
+          role_tags,
+          attachments,
+          transcript,
+          summary,
+        } = await request.json();
+        if (!id || !board_id || !title || !start_at)
+          return json({ error: "Missing required fields" }, 400);
+        const now = nowMs();
+        await env.DB.prepare(
+          `INSERT INTO team_meetings (id, board_id, title, description, notes, start_at, end_at, role_tags, attachments, transcript, summary, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+          .bind(
+            id,
+            board_id,
+            title,
+            description || "",
+            notes || "",
+            start_at,
+            end_at || "",
+            JSON.stringify(role_tags || []),
+            JSON.stringify(attachments || []),
+            transcript || "",
+            summary || "",
+            now,
+          )
+          .run();
+        return json({ success: true, id }, 201);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/meetings" && request.method === "PUT") {
+      try {
+        const {
+          id,
+          title,
+          description,
+          notes,
+          start_at,
+          end_at,
+          role_tags,
+          attachments,
+          transcript,
+          summary,
+        } = await request.json();
+        if (!id) return json({ error: "Missing id" }, 400);
+        await env.DB.prepare(
+          `UPDATE team_meetings SET title=?, description=?, notes=?, start_at=?, end_at=?, role_tags=?, attachments=?, transcript=?, summary=?, updated_at=? WHERE id=?`,
+        )
+          .bind(
+            title,
+            description || "",
+            notes || "",
+            start_at,
+            end_at || "",
+            JSON.stringify(role_tags || []),
+            JSON.stringify(attachments || []),
+            transcript || "",
+            summary || "",
+            nowMs(),
+            id,
+          )
+          .run();
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/meetings" && request.method === "DELETE") {
+      try {
+        const id = url.searchParams.get("id");
+        if (!id) return json({ error: "Missing id" }, 400);
+        await env.DB.prepare(`DELETE FROM team_meetings WHERE id = ?`)
+          .bind(id)
+          .run();
         return json({ success: true });
       } catch (err) {
         return json({ error: err.message }, 500);

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../models/board_model.dart';
 import '../../models/workspace_model.dart';
 import '../../state_managers/state_boards.dart';
+import '../../state_managers/state_meetings.dart';
 import '../../databases/api_cloudflare.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
@@ -696,6 +697,27 @@ class _BoardsPageState extends State<BoardsPage> {
             ),
           ),
           Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_month_rounded,
+                  size: 14,
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'MEETINGS',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                    fontSize: 11,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
             flex: 1,
             child: Align(
               alignment: Alignment.centerRight,
@@ -859,6 +881,45 @@ class _BoardsPageState extends State<BoardsPage> {
                   const SizedBox(width: 4),
                   _buildUploadDocButton(context, board, stateBoards),
                 ],
+              ),
+            ),
+
+            // Meetings
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InkWell(
+                  onTap: () {
+                    context.read<StateMeetings>().openBoardHome(board.id);
+                    stateBoards.openBoardMeetings(board);
+                  },
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'OPEN',
+                          style: GlassText.labelSM().copyWith(
+                            fontSize: 9,
+                            color: GlassColors.primary.withOpacity(0.6),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          Icons.open_in_new_rounded,
+                          size: 10,
+                          color: GlassColors.primary.withOpacity(0.6),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
 

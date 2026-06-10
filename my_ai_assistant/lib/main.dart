@@ -16,6 +16,7 @@ import 'dart:html' as html;
 import 'firebase_options.dart';
 import 'config/env_config.dart';
 import 'state_managers/state_boards.dart';
+import 'state_managers/state_meetings.dart';
 import 'state_managers/state_tasks.dart';
 import 'state_managers/state_chat.dart';
 import 'models/board_model.dart';
@@ -29,6 +30,7 @@ import 'ui/calendar/calendar_page.dart';
 import 'ui/auth/login_page.dart';
 import 'ui/profile/profile_page.dart';
 import 'ui/boards/boards_page.dart';
+import 'ui/meetings/meetings_board_page.dart';
 import 'ui/common/floating_assistant_shell.dart';
 import 'ui/common/responsive_layout.dart';
 
@@ -60,6 +62,7 @@ void main() async {
           create: (_) => StateTasks(),
           update: (_, boards, tasks) => tasks!..updateStateBoards(boards),
         ),
+        ChangeNotifierProvider(create: (_) => StateMeetings()),
         ChangeNotifierProvider(create: (_) => StateChat()),
       ],
       child: const MainApp(),
@@ -279,7 +282,9 @@ class _AppShellState extends State<AppShell> {
       _index = index;
       _visitedTabs.add(index);
       if (clearBoard) {
+        final selectedBoardId = context.read<StateBoards>().selectedBoard?.id;
         context.read<StateBoards>().setSelectedBoard(null);
+        context.read<StateMeetings>().clearActiveBoard(selectedBoardId);
       }
     });
     if (index == 0) {
@@ -299,6 +304,10 @@ class _AppShellState extends State<AppShell> {
 
     final boardsState = context.read<StateBoards>();
     await boardsState.fetchAllBoards();
+    await context.read<StateMeetings>().fetchAllMeetings(
+      boardsState.boards,
+      silent: true,
+    );
     await boardsState.restorePersistedSelectedBoard();
     if (!mounted) return;
     setState(() {
@@ -351,15 +360,24 @@ class _AppShellState extends State<AppShell> {
     final selectedBoard = context.select<StateBoards, BoardModel?>(
       (state) => state.selectedBoard,
     );
+    final selectedBoardSurface = context.select<StateBoards, BoardSurfaceMode>(
+      (state) => state.selectedBoardSurface,
+    );
     final boardsLoading = context.select<StateBoards, bool>(
       (state) => state.isLoading,
     );
     final tasksLoading = context.select<StateTasks, bool>(
       (state) => state.isLoading,
     );
+    final meetingsLoading = context.select<StateMeetings, bool>(
+      (state) => state.isLoading,
+    );
     final isDesktop = Responsive.isDesktop(context);
     final showLoadingOverlay =
-        _isRestoringShellState || boardsLoading || tasksLoading;
+        _isRestoringShellState ||
+        boardsLoading ||
+        tasksLoading ||
+        meetingsLoading;
 
     return Scaffold(
       backgroundColor: GlassColors.background,
@@ -430,11 +448,20 @@ class _AppShellState extends State<AppShell> {
                             duration: const Duration(milliseconds: 220),
                             switchInCurve: Curves.easeOutCubic,
                             switchOutCurve: Curves.easeInCubic,
-                            child: KanbanPage(
-                              key: ValueKey('kanban_${selectedBoard.id}'),
-                              board: selectedBoard,
-                              isDark: false,
-                            ),
+                            child:
+                                selectedBoardSurface ==
+                                    BoardSurfaceMode.meetings
+                                ? MeetingsBoardPage(
+                                    key: ValueKey(
+                                      'meetings_${selectedBoard.id}',
+                                    ),
+                                    board: selectedBoard,
+                                  )
+                                : KanbanPage(
+                                    key: ValueKey('kanban_${selectedBoard.id}'),
+                                    board: selectedBoard,
+                                    isDark: false,
+                                  ),
                           )
                         : IndexedStack(
                             index: _index,

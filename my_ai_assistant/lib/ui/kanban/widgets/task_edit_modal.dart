@@ -99,6 +99,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
   final _descController = TextEditingController();
   final _descFocusNode = FocusNode();
   final _commentController = TextEditingController();
+  final _newChecklistController = TextEditingController();
 
   // Persistent Controllers for Asset Names
   final Map<String, TextEditingController> _assetNameControllers = {};
@@ -109,6 +110,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
   List<String> _members = [];
   List<String> _labelIds = [];
   List<TaskComment> _comments = [];
+  List<TaskChecklistItem> _checklist = [];
   bool _isSaving = false;
   bool _isUploading = false;
   int _activeTab = 1;
@@ -142,6 +144,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       _members = List.from(widget.existingTask!.members);
       _labelIds = List.from(widget.existingTask!.labelIds);
       _comments = List.from(widget.existingTask!.comments);
+      _checklist = List.from(widget.existingTask!.checklist);
     } else {
       _dueDate = widget.initialDate ?? DateTime(1970, 1, 1);
       _status =
@@ -194,6 +197,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
         _members = List.from(updated.members);
         _labelIds = List.from(updated.labelIds);
         _comments = List.from(updated.comments);
+        _checklist = List.from(updated.checklist);
       });
     }
   }
@@ -205,6 +209,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     _descController.dispose();
     _descFocusNode.dispose();
     _commentController.dispose();
+    _newChecklistController.dispose();
     _taskChatController.dispose();
     for (final c in _assetNameControllers.values) {
       c.dispose();
@@ -243,6 +248,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
           _members = List.from(updated.members);
           _labelIds = List.from(updated.labelIds);
           _comments = List.from(updated.comments);
+          _checklist = List.from(updated.checklist);
         });
       }
     } catch (e) {
@@ -282,6 +288,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
             description: _descController.text.trim(),
             dueDate: _dueDate,
             status: _status,
+            checklist: _checklist,
             images: _images,
             members: _members,
             labelIds: _labelIds,
@@ -295,6 +302,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
             dueDate: _dueDate,
             type: widget.board.type,
             status: _status,
+            checklist: _checklist,
             images: _images,
             members: _members,
             labelIds: _labelIds,
@@ -326,6 +334,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
           dueDate: _dueDate,
           type: widget.board.type,
           status: _status,
+          checklist: _checklist,
           images: _images,
           members: _members,
           labelIds: _labelIds,
@@ -498,6 +507,8 @@ class _TaskEditModalState extends State<TaskEditModal> {
                                       ),
                                       maxLines: 12,
                                     ),
+                                    const SizedBox(height: 28),
+                                    _buildChecklistSection(isDesktop: true),
                                     const SizedBox(height: 48),
                                     _buildSectionTitle('OPERATIONAL ASSETS'),
                                     const SizedBox(height: 24),
@@ -655,6 +666,8 @@ class _TaskEditModalState extends State<TaskEditModal> {
                           ),
                           maxLines: 8,
                         ),
+                        const SizedBox(height: 28),
+                        _buildChecklistSection(isDesktop: false),
                         const SizedBox(height: 32),
                         _buildSectionTitle('OPERATIONAL ASSETS'),
                         const SizedBox(height: 16),
@@ -1007,6 +1020,190 @@ class _TaskEditModalState extends State<TaskEditModal> {
         ],
       ],
     );
+  }
+
+  Widget _buildChecklistSection({required bool isDesktop}) {
+    final total = _checklist.length;
+    final done = _checklist.where((item) => item.isDone).length;
+    final canToggleChecklist = !_isReadOnly;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildSectionTitle('STEP LISTS')),
+            if (total > 0)
+              Text(
+                '$done/$total checked',
+                style: GlassText.labelSM().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.65),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (_checklist.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'ยังไม่มีรายการเช็กลิสต์สำหรับงานนี้',
+              style: GlassText.bodyMD().copyWith(
+                color: GlassColors.onSurfaceVariant.withOpacity(0.48),
+              ),
+            ),
+          )
+        else
+          ..._checklist.map(
+            (item) => _buildChecklistRow(
+              item,
+              canToggle: canToggleChecklist,
+              canDelete: _allowStructuralEditing,
+            ),
+          ),
+        if (_allowStructuralEditing) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.02),
+              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+              border: Border.all(color: GlassColors.ghostBorder),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ImeSafeTextField(
+                    controller: _newChecklistController,
+                    onSubmitted: (_) => _addChecklistItem(),
+                    textInputAction: TextInputAction.done,
+                    style: GlassText.bodyMD().copyWith(
+                      color: GlassColors.onSurface.withOpacity(0.82),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'เพิ่มขั้นตอนที่ต้องทำ...',
+                      hintStyle: GlassText.bodyMD().copyWith(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: _addChecklistItem,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: GlassColors.ghostBorder),
+                    ),
+                    child: Icon(
+                      Icons.add_rounded,
+                      size: 16,
+                      color: GlassColors.onSurfaceVariant.withOpacity(0.75),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildChecklistRow(
+    TaskChecklistItem item, {
+    required bool canToggle,
+    required bool canDelete,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border.all(color: Colors.transparent),
+      ),
+      child: Row(
+        children: [
+          Checkbox(
+            value: item.isDone,
+            onChanged: canToggle
+                ? (value) => _toggleChecklistItem(item.id, value ?? false)
+                : null,
+            activeColor: GlassColors.success,
+            side: BorderSide(
+              color: GlassColors.primary.withOpacity(0.35),
+              width: 1.3,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              item.text,
+              style: GlassText.bodyMD().copyWith(
+                color: GlassColors.onSurface.withOpacity(
+                  item.isDone ? 0.42 : 0.84,
+                ),
+                decoration: item.isDone ? TextDecoration.lineThrough : null,
+                height: 1.35,
+              ),
+            ),
+          ),
+          if (canDelete)
+            IconButton(
+              onPressed: () => _deleteChecklistItem(item.id),
+              icon: Icon(
+                Icons.close_rounded,
+                size: 16,
+                color: GlassColors.onSurfaceVariant.withOpacity(0.42),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addChecklistItem() async {
+    final text = _newChecklistController.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _checklist = [
+        ..._checklist,
+        TaskChecklistItem(
+          id: '${DateTime.now().millisecondsSinceEpoch}_${_checklist.length}',
+          text: text,
+        ),
+      ];
+      _newChecklistController.clear();
+    });
+    await _autoSaveTask();
+  }
+
+  Future<void> _toggleChecklistItem(String itemId, bool value) async {
+    setState(() {
+      _checklist = _checklist
+          .map(
+            (item) => item.id == itemId ? item.copyWith(isDone: value) : item,
+          )
+          .toList();
+    });
+    await _autoSaveTask();
+  }
+
+  Future<void> _deleteChecklistItem(String itemId) async {
+    setState(() {
+      _checklist = _checklist.where((item) => item.id != itemId).toList();
+    });
+    await _autoSaveTask();
   }
 
   Widget _buildAssetRow(TaskImage img) {

@@ -8,6 +8,8 @@ import '../models/workspace_model.dart';
 import '../databases/db_personal_sqlite.dart';
 import '../databases/api_cloudflare.dart';
 
+enum BoardSurfaceMode { kanban, meetings }
+
 class StateBoards extends ChangeNotifier {
   static const _selectedBoardPrefKey = 'app_selected_board_id';
   // 🔄 Broadcast stream for board structure changes (columns, labels, etc.)
@@ -21,12 +23,14 @@ class StateBoards extends ChangeNotifier {
   List<BoardModel> _boards = [];
   bool _isLoading = false;
   BoardModel? _selectedBoard;
+  BoardSurfaceMode _selectedBoardSurface = BoardSurfaceMode.kanban;
 
   List<WorkspaceModel> get workspaces => _workspaces;
   WorkspaceModel? get selectedWorkspace => _selectedWorkspace;
   List<BoardModel> get boards => _boards;
   bool get isLoading => _isLoading;
   BoardModel? get selectedBoard => _selectedBoard;
+  BoardSurfaceMode get selectedBoardSurface => _selectedBoardSurface;
 
   void setSelectedWorkspace(WorkspaceModel? workspace) {
     _selectedWorkspace = workspace;
@@ -35,7 +39,28 @@ class StateBoards extends ChangeNotifier {
 
   void setSelectedBoard(BoardModel? board) {
     _selectedBoard = board;
+    _selectedBoardSurface = BoardSurfaceMode.kanban;
     _persistSelectedBoardId(board?.id);
+    notifyListeners();
+  }
+
+  void openBoardKanban(BoardModel board) {
+    _selectedBoard = board;
+    _selectedBoardSurface = BoardSurfaceMode.kanban;
+    _persistSelectedBoardId(board.id);
+    notifyListeners();
+  }
+
+  void openBoardMeetings(BoardModel board) {
+    _selectedBoard = board;
+    _selectedBoardSurface = BoardSurfaceMode.meetings;
+    _persistSelectedBoardId(board.id);
+    notifyListeners();
+  }
+
+  void setBoardSurface(BoardSurfaceMode mode) {
+    if (_selectedBoard == null) return;
+    _selectedBoardSurface = mode;
     notifyListeners();
   }
 

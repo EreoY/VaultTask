@@ -8,6 +8,7 @@ ALTER TABLE team_boards ADD COLUMN labels TEXT DEFAULT '[]';
 -- Add images & comments columns (will fail harmlessly if already exist)
 ALTER TABLE team_tasks ADD COLUMN images TEXT DEFAULT '[]';
 ALTER TABLE team_tasks ADD COLUMN comments TEXT DEFAULT '[]';
+ALTER TABLE team_tasks ADD COLUMN checklist TEXT DEFAULT '[]';
 
 -- Backfill
 UPDATE team_boards SET updated_at = COALESCE(updated_at, strftime('%s','now')*1000);
@@ -15,6 +16,7 @@ UPDATE team_tasks  SET updated_at = COALESCE(updated_at, strftime('%s','now')*10
 UPDATE team_tasks  SET is_completed = COALESCE(is_completed, 0);
 UPDATE team_tasks  SET images = COALESCE(images, '[]');
 UPDATE team_tasks  SET comments = COALESCE(comments, '[]');
+UPDATE team_tasks  SET checklist = COALESCE(checklist, '[]');
 
 -- ═══════════════════════════════════════════════════════
 -- Migration: Drop `time` column, use `due_date` only
@@ -33,6 +35,7 @@ CREATE TABLE IF NOT EXISTS team_tasks_new (
   label_ids TEXT DEFAULT '[]',
   status TEXT NOT NULL DEFAULT 'todo',
   is_completed INTEGER DEFAULT 0,
+  checklist TEXT DEFAULT '[]',
   images TEXT DEFAULT '[]',
   comments TEXT DEFAULT '[]',
   updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
@@ -44,12 +47,12 @@ CREATE TABLE IF NOT EXISTS team_tasks_new (
 -- 2. Copy data (migrate time → due_date where due_date is null)
 INSERT INTO team_tasks_new (
   id, board_id, author_uid, title, description, due_date,
-  members, label_ids, status, is_completed, images, comments, updated_at, created_at
+  members, label_ids, status, is_completed, checklist, images, comments, updated_at, created_at
 )
 SELECT
   id, board_id, author_uid, title, description,
   COALESCE(due_date, time) as due_date,
-  members, label_ids, status, is_completed, images, comments, updated_at, created_at
+  members, label_ids, status, is_completed, COALESCE(checklist, '[]'), images, comments, updated_at, created_at
 FROM team_tasks;
 
 -- 3. Drop old table

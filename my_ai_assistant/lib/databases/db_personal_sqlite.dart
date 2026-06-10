@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/chat_model.dart';
 import '../models/board_model.dart';
+import '../models/meeting_model.dart';
 import '../models/task_model.dart';
 import '../models/workspace_model.dart';
 
@@ -24,7 +25,12 @@ class DbPersonalSqlite {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 11, onCreate: _createDB, onUpgrade: _upgradeDB);
+    return await openDatabase(
+      path,
+      version: 13,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
   }
 
   Future _createDB(Database db, int version) async {
@@ -65,9 +71,28 @@ CREATE TABLE personal_tasks (
   label_ids TEXT DEFAULT '[]',
   status TEXT NOT NULL DEFAULT 'todo',
   is_completed INTEGER NOT NULL DEFAULT 0,
+  checklist TEXT DEFAULT '[]',
   images TEXT DEFAULT '[]',
   comments TEXT DEFAULT '[]',
   updated_at INTEGER DEFAULT 0,
+  FOREIGN KEY(board_id) REFERENCES personal_boards(id)
+)
+''');
+    await db.execute('''
+CREATE TABLE personal_meetings (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  start_at TEXT NOT NULL,
+  end_at TEXT DEFAULT '',
+  role_tags TEXT DEFAULT '[]',
+  attachments TEXT DEFAULT '[]',
+  transcript TEXT DEFAULT '',
+  summary TEXT DEFAULT '',
+  updated_at INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
   FOREIGN KEY(board_id) REFERENCES personal_boards(id)
 )
 ''');
@@ -83,27 +108,39 @@ CREATE TABLE personal_tasks (
       return;
     }
     if (oldVersion == 2) {
-      await db.execute('ALTER TABLE personal_boards ADD COLUMN labels TEXT DEFAULT "[]";');
-      await db.execute('ALTER TABLE personal_tasks ADD COLUMN label_ids TEXT DEFAULT "[]";');
+      await db.execute(
+        'ALTER TABLE personal_boards ADD COLUMN labels TEXT DEFAULT "[]";',
+      );
+      await db.execute(
+        'ALTER TABLE personal_tasks ADD COLUMN label_ids TEXT DEFAULT "[]";',
+      );
     }
     if (oldVersion < 4) {
       try {
-        await db.execute('ALTER TABLE personal_tasks ADD COLUMN description TEXT DEFAULT ""');
+        await db.execute(
+          'ALTER TABLE personal_tasks ADD COLUMN description TEXT DEFAULT ""',
+        );
       } catch (_) {}
     }
     if (oldVersion < 5) {
       try {
-        await db.execute('ALTER TABLE personal_tasks ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE personal_tasks ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 0',
+        );
       } catch (_) {}
     }
     if (oldVersion < 6) {
       try {
-        await db.execute('ALTER TABLE personal_tasks ADD COLUMN updated_at INTEGER DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE personal_tasks ADD COLUMN updated_at INTEGER DEFAULT 0',
+        );
       } catch (_) {}
     }
     if (oldVersion < 7) {
       try {
-        await db.execute('ALTER TABLE personal_tasks ADD COLUMN images TEXT DEFAULT "[]"');
+        await db.execute(
+          'ALTER TABLE personal_tasks ADD COLUMN images TEXT DEFAULT "[]"',
+        );
       } catch (_) {}
     }
     if (oldVersion < 8) {
@@ -120,22 +157,57 @@ CREATE TABLE personal_workspaces (
 ''');
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE personal_boards ADD COLUMN workspace_id TEXT DEFAULT ""');
+        await db.execute(
+          'ALTER TABLE personal_boards ADD COLUMN workspace_id TEXT DEFAULT ""',
+        );
       } catch (_) {}
     }
     if (oldVersion < 9) {
       try {
-        await db.execute('ALTER TABLE personal_boards ADD COLUMN documents TEXT DEFAULT "[]"');
+        await db.execute(
+          'ALTER TABLE personal_boards ADD COLUMN documents TEXT DEFAULT "[]"',
+        );
       } catch (_) {}
     }
     if (oldVersion < 10) {
       try {
-        await db.execute('ALTER TABLE personal_tasks ADD COLUMN comments TEXT DEFAULT "[]"');
+        await db.execute(
+          'ALTER TABLE personal_tasks ADD COLUMN comments TEXT DEFAULT "[]"',
+        );
       } catch (_) {}
     }
     if (oldVersion < 11) {
       try {
         await _createChatTables(db);
+      } catch (_) {}
+    }
+    if (oldVersion < 12) {
+      try {
+        await db.execute(
+          'ALTER TABLE personal_tasks ADD COLUMN checklist TEXT DEFAULT "[]"',
+        );
+      } catch (_) {}
+    }
+    if (oldVersion < 13) {
+      try {
+        await db.execute('''
+CREATE TABLE personal_meetings (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  start_at TEXT NOT NULL,
+  end_at TEXT DEFAULT '',
+  role_tags TEXT DEFAULT '[]',
+  attachments TEXT DEFAULT '[]',
+  transcript TEXT DEFAULT '',
+  summary TEXT DEFAULT '',
+  updated_at INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(board_id) REFERENCES personal_boards(id)
+)
+''');
       } catch (_) {}
     }
   }
@@ -150,7 +222,11 @@ CREATE TABLE personal_workspaces (
         : workspace.id;
     final map = {...workspace.toMap(), 'id': id};
     try {
-      await db.insert('personal_workspaces', map, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'personal_workspaces',
+        map,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       debugPrint('DB DEBUG insertWorkspace success id=$id');
     } catch (e) {
       debugPrint('DB DEBUG insertWorkspace error: $e');
@@ -162,26 +238,42 @@ CREATE TABLE personal_workspaces (
   Future<List<WorkspaceModel>> getAllWorkspaces() async {
     if (kIsWeb) return [];
     final db = await database;
-    final result = await db.query('personal_workspaces', orderBy: 'created_at DESC');
+    final result = await db.query(
+      'personal_workspaces',
+      orderBy: 'created_at DESC',
+    );
     return result.map((m) => WorkspaceModel.fromMap(m)).toList();
   }
 
   Future<void> updateWorkspace(WorkspaceModel workspace) async {
     if (kIsWeb) return;
     final db = await database;
-    await db.update('personal_workspaces', workspace.toMap(), where: 'id = ?', whereArgs: [workspace.id]);
+    await db.update(
+      'personal_workspaces',
+      workspace.toMap(),
+      where: 'id = ?',
+      whereArgs: [workspace.id],
+    );
   }
 
   Future<void> deleteWorkspace(String workspaceId) async {
     if (kIsWeb) return;
     final db = await database;
     // Delete all boards belonging to this workspace
-    final boards = await db.query('personal_boards', where: 'workspace_id = ?', whereArgs: [workspaceId]);
+    final boards = await db.query(
+      'personal_boards',
+      where: 'workspace_id = ?',
+      whereArgs: [workspaceId],
+    );
     for (final board in boards) {
       final boardId = board['id'] as String;
       await deleteBoard(boardId);
     }
-    await db.delete('personal_workspaces', where: 'id = ?', whereArgs: [workspaceId]);
+    await db.delete(
+      'personal_workspaces',
+      where: 'id = ?',
+      whereArgs: [workspaceId],
+    );
   }
 
   // ─── BOARDS ───────────────────────────────────────────
@@ -194,7 +286,11 @@ CREATE TABLE personal_workspaces (
         : board.id;
     final map = {...board.toMap(), 'id': id};
     try {
-      await db.insert('personal_boards', map, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'personal_boards',
+        map,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       debugPrint('DB DEBUG insertBoard success id=$id');
     } catch (e) {
       debugPrint('DB DEBUG insertBoard error: $e');
@@ -206,20 +302,37 @@ CREATE TABLE personal_workspaces (
   Future<List<BoardModel>> getAllBoards() async {
     if (kIsWeb) return [];
     final db = await database;
-    final result = await db.query('personal_boards', orderBy: 'created_at DESC');
+    final result = await db.query(
+      'personal_boards',
+      orderBy: 'created_at DESC',
+    );
     return result.map((m) => BoardModel.fromMap(m)).toList();
   }
 
   Future<void> updateBoard(BoardModel board) async {
     if (kIsWeb) return;
     final db = await database;
-    await db.update('personal_boards', board.toMap(), where: 'id = ?', whereArgs: [board.id]);
+    await db.update(
+      'personal_boards',
+      board.toMap(),
+      where: 'id = ?',
+      whereArgs: [board.id],
+    );
   }
 
   Future<void> deleteBoard(String boardId) async {
     if (kIsWeb) return;
     final db = await database;
-    await db.delete('personal_tasks', where: 'board_id = ?', whereArgs: [boardId]);
+    await db.delete(
+      'personal_tasks',
+      where: 'board_id = ?',
+      whereArgs: [boardId],
+    );
+    await db.delete(
+      'personal_meetings',
+      where: 'board_id = ?',
+      whereArgs: [boardId],
+    );
     await db.delete('personal_boards', where: 'id = ?', whereArgs: [boardId]);
   }
 
@@ -233,7 +346,11 @@ CREATE TABLE personal_workspaces (
         : task.id;
     final map = {...task.toMap(), 'id': id};
     try {
-      await db.insert('personal_tasks', map, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'personal_tasks',
+        map,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       debugPrint('DB DEBUG insertTask success id=$id board=${task.boardId}');
     } catch (e) {
       debugPrint('DB DEBUG insertTask error: $e');
@@ -245,7 +362,12 @@ CREATE TABLE personal_workspaces (
   Future<List<TaskModel>> getTasksByBoard(String boardId) async {
     if (kIsWeb) return [];
     final db = await database;
-    final result = await db.query('personal_tasks', where: 'board_id = ?', whereArgs: [boardId], orderBy: 'time ASC');
+    final result = await db.query(
+      'personal_tasks',
+      where: 'board_id = ?',
+      whereArgs: [boardId],
+      orderBy: 'time ASC',
+    );
     return result.map((m) => TaskModel.fromMap(m)).toList();
   }
 
@@ -259,7 +381,11 @@ CREATE TABLE personal_workspaces (
   Future<List<TaskModel>> getAllTasksWithDueDate() async {
     if (kIsWeb) return [];
     final db = await database;
-    final result = await db.query('personal_tasks', where: "due_date IS NOT NULL AND due_date != ''", orderBy: 'due_date ASC');
+    final result = await db.query(
+      'personal_tasks',
+      where: "due_date IS NOT NULL AND due_date != ''",
+      orderBy: 'due_date ASC',
+    );
     return result.map((m) => TaskModel.fromMap(m)).toList();
   }
 
@@ -284,7 +410,12 @@ CREATE TABLE personal_workspaces (
     if (kIsWeb) return;
     final db = await database;
     try {
-      await db.update('personal_tasks', {'status': status}, where: 'id = ?', whereArgs: [id]);
+      await db.update(
+        'personal_tasks',
+        {'status': status},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
       debugPrint('DB DEBUG updateTaskStatus id=$id status=$status');
     } catch (e) {
       debugPrint('DB DEBUG updateTaskStatus error: $e');
@@ -302,6 +433,59 @@ CREATE TABLE personal_workspaces (
       debugPrint('DB DEBUG deleteTask error: $e');
       rethrow;
     }
+  }
+
+  // ─── MEETINGS ────────────────────────────────────────
+
+  Future<String> insertMeeting(MeetingModel meeting) async {
+    if (kIsWeb) return meeting.id;
+    final db = await database;
+    final id = meeting.id.isEmpty
+        ? DateTime.now().millisecondsSinceEpoch.toString()
+        : meeting.id;
+    final map = {...meeting.toMap(), 'id': id};
+    await db.insert(
+      'personal_meetings',
+      map,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    return id;
+  }
+
+  Future<List<MeetingModel>> getMeetingsByBoard(String boardId) async {
+    if (kIsWeb) return [];
+    final db = await database;
+    final result = await db.query(
+      'personal_meetings',
+      where: 'board_id = ?',
+      whereArgs: [boardId],
+      orderBy: 'start_at ASC',
+    );
+    return result.map((m) => MeetingModel.fromMap(m)).toList();
+  }
+
+  Future<List<MeetingModel>> getAllMeetings() async {
+    if (kIsWeb) return [];
+    final db = await database;
+    final result = await db.query('personal_meetings', orderBy: 'start_at ASC');
+    return result.map((m) => MeetingModel.fromMap(m)).toList();
+  }
+
+  Future<void> updateMeeting(MeetingModel meeting) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.update(
+      'personal_meetings',
+      meeting.toMap(),
+      where: 'id = ?',
+      whereArgs: [meeting.id],
+    );
+  }
+
+  Future<void> deleteMeeting(String id) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.delete('personal_meetings', where: 'id = ?', whereArgs: [id]);
   }
 
   // ─── CHAT SYSTEM ──────────────────────────────────────
@@ -334,7 +518,12 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 ''');
   }
 
-  Future<void> insertChatSession(String id, String uid, String name, {String taskId = ''}) async {
+  Future<void> insertChatSession(
+    String id,
+    String uid,
+    String name, {
+    String taskId = '',
+  }) async {
     if (kIsWeb) return;
     final db = await database;
     final now = DateTime.now().toIso8601String();
@@ -348,7 +537,10 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<List<Map<String, dynamic>>> getChatSessions(String uid, {String taskId = ''}) async {
+  Future<List<Map<String, dynamic>>> getChatSessions(
+    String uid, {
+    String taskId = '',
+  }) async {
     if (kIsWeb) return [];
     final db = await database;
     return await db.query(
@@ -374,7 +566,11 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     if (kIsWeb) return;
     final db = await database;
     await db.delete('chat_sessions', where: 'id = ?', whereArgs: [sessionId]);
-    await db.delete('chat_messages', where: 'session_id = ?', whereArgs: [sessionId]);
+    await db.delete(
+      'chat_messages',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+    );
   }
 
   Future<void> insertChatMessage(ChatMessage message, String sessionId) async {
@@ -398,14 +594,17 @@ CREATE TABLE IF NOT EXISTS chat_messages (
       'reasoning': message.reasoning ?? '',
       'is_user': message.isUser ? 1 : 0,
       'has_draft': message.hasDraft ? 1 : 0,
-      'pending_call': message.pendingCall != null ? jsonEncode({
-        'name': message.pendingCall.name,
-        'arguments': message.pendingCall.args,
-      }) : '',
-      'tool_calls': jsonEncode(message.toolCalls.map((tc) => {
-        'name': tc.name,
-        'arguments': tc.arguments,
-      }).toList()),
+      'pending_call': message.pendingCall != null
+          ? jsonEncode({
+              'name': message.pendingCall.name,
+              'arguments': message.pendingCall.args,
+            })
+          : '',
+      'tool_calls': jsonEncode(
+        message.toolCalls
+            .map((tc) => {'name': tc.name, 'arguments': tc.arguments})
+            .toList(),
+      ),
       'attachments': jsonEncode(cleanedAttachments),
       'timestamp': message.timestamp.toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -427,37 +626,50 @@ CREATE TABLE IF NOT EXISTS chat_messages (
       if (pendingCallStr.isNotEmpty) {
         try {
           final pMap = jsonDecode(pendingCallStr);
-          parsedPendingCall = FunctionCall(pMap['name'], Map<String, Object?>.from(pMap['arguments']));
+          parsedPendingCall = FunctionCall(
+            pMap['name'],
+            Map<String, Object?>.from(pMap['arguments']),
+          );
         } catch (_) {}
       }
       final toolCallsStr = m['tool_calls'] as String? ?? '[]';
       List<ToolCallInfo> parsedToolCalls = [];
       try {
         final tcList = jsonDecode(toolCallsStr) as List;
-        parsedToolCalls = tcList.map((tc) => ToolCallInfo(
-          name: tc['name'].toString(),
-          arguments: Map<String, dynamic>.from(tc['arguments']),
-        )).toList();
+        parsedToolCalls = tcList
+            .map(
+              (tc) => ToolCallInfo(
+                name: tc['name'].toString(),
+                arguments: Map<String, dynamic>.from(tc['arguments']),
+              ),
+            )
+            .toList();
       } catch (_) {}
 
       final attachmentsStr = m['attachments'] as String? ?? '[]';
       List<Map<String, String>> parsedAttachments = [];
       try {
         final attList = jsonDecode(attachmentsStr) as List;
-        parsedAttachments = attList.map((a) => Map<String, String>.from(a)).toList();
+        parsedAttachments = attList
+            .map((a) => Map<String, String>.from(a))
+            .toList();
       } catch (_) {}
 
-      list.add(ChatMessage(
-        id: m['id'] as String,
-        text: m['text'] as String,
-        reasoning: m['reasoning'] as String?,
-        isUser: (m['is_user'] == 1),
-        hasDraft: (m['has_draft'] == 1),
-        pendingCall: parsedPendingCall,
-        toolCalls: parsedToolCalls,
-        attachments: parsedAttachments,
-        timestamp: DateTime.tryParse(m['timestamp'] as String? ?? '') ?? DateTime.now(),
-      ));
+      list.add(
+        ChatMessage(
+          id: m['id'] as String,
+          text: m['text'] as String,
+          reasoning: m['reasoning'] as String?,
+          isUser: (m['is_user'] == 1),
+          hasDraft: (m['has_draft'] == 1),
+          pendingCall: parsedPendingCall,
+          toolCalls: parsedToolCalls,
+          attachments: parsedAttachments,
+          timestamp:
+              DateTime.tryParse(m['timestamp'] as String? ?? '') ??
+              DateTime.now(),
+        ),
+      );
     }
     return list.reversed.toList();
   }

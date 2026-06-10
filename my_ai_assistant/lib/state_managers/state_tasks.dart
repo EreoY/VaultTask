@@ -709,6 +709,40 @@ class StateTasks extends ChangeNotifier {
             ),
           );
         }
+
+        final oldChecklist = oldTask.checklist;
+        final newChecklist = task.checklist;
+        final oldDone = oldChecklist.where((item) => item.isDone).length;
+        final newDone = newChecklist.where((item) => item.isDone).length;
+        final oldTexts = oldChecklist.map((item) => item.text.trim()).toList();
+        final newTexts = newChecklist.map((item) => item.text.trim()).toList();
+
+        if (oldTexts.length != newTexts.length ||
+            oldTexts.join('|') != newTexts.join('|')) {
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text:
+                  '[ระบบ] อัปเดตรายการเช็กลิสต์ (${newChecklist.length} ขั้นตอน)',
+              time: now,
+            ),
+          );
+        }
+
+        if (oldDone != newDone) {
+          systemComments.add(
+            TaskComment(
+              id: nextCommentId(),
+              userId: currentUid,
+              userName: currentUserName,
+              text:
+                  '[ระบบ] อัปเดตความคืบหน้าเช็กลิสต์เป็น $newDone/${newChecklist.length}',
+              time: now,
+            ),
+          );
+        }
       }
 
       var updatedTask = task;
