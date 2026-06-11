@@ -7,6 +7,8 @@ import '../../models/meeting_model.dart';
 import '../../state_managers/state_boards.dart';
 import '../../state_managers/state_meetings.dart';
 import '../common/responsive_layout.dart';
+import '../common/scroll_gutter.dart';
+import '../common/workspace_chrome.dart';
 import '../theme/glass_theme.dart';
 import 'meetings_board_sheet.dart';
 
@@ -189,23 +191,26 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
                       ),
                     ),
                   )
-                : ListView.separated(
-                    itemCount: grouped.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 28),
-                    itemBuilder: (context, index) {
-                      final group = grouped[index];
-                      return _MeetingSection(
-                        label: group.label,
-                        meetings: group.meetings,
-                        onTapMeeting: (meeting) {
-                          context.read<StateMeetings>().openMeetingDetail(
-                            widget.board.id,
-                            meeting.id,
-                          );
-                        },
-                        boardName: widget.board.name,
-                      );
-                    },
+                : ScrollbarGutterFrame(
+                    child: ListView.separated(
+                      padding: ScrollbarGutter.reserveRight(EdgeInsets.zero),
+                      itemCount: grouped.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 28),
+                      itemBuilder: (context, index) {
+                        final group = grouped[index];
+                        return _MeetingSection(
+                          label: group.label,
+                          meetings: group.meetings,
+                          onTapMeeting: (meeting) {
+                            context.read<StateMeetings>().openMeetingDetail(
+                              widget.board.id,
+                              meeting.id,
+                            );
+                          },
+                          boardName: widget.board.name,
+                        );
+                      },
+                    ),
                   ),
           ),
         ],
@@ -312,76 +317,20 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   }
 
   Widget _buildNavBar({required String metaText}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.home_rounded,
-              size: 13,
-              color: GlassColors.onSurfaceVariant.withOpacity(0.34),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Workspace HQ',
-              style: GlassText.bodyMD().copyWith(
-                fontSize: 12,
-                color: GlassColors.onSurfaceVariant.withOpacity(0.52),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '/',
-              style: GlassText.bodyMD().copyWith(
-                fontSize: 12,
-                color: GlassColors.onSurfaceVariant.withOpacity(0.22),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.calendar_today_rounded,
-              size: 12,
-              color: GlassColors.primary.withOpacity(0.72),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Meetings',
-              style: GlassText.bodyMD().copyWith(
-                fontSize: 12,
-                color: GlassColors.onSurfaceVariant.withOpacity(0.72),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '/',
-              style: GlassText.bodyMD().copyWith(
-                fontSize: 12,
-                color: GlassColors.onSurfaceVariant.withOpacity(0.22),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                widget.board.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GlassText.bodyMD().copyWith(
-                  fontSize: 12,
-                  color: GlassColors.onSurfaceVariant.withOpacity(0.52),
-                ),
-              ),
-            ),
-          ],
+    return WorkspaceChromeHeader(
+      padding: EdgeInsets.zero,
+      gapAfterMeta: 0,
+      crumbs: [
+        const WorkspaceCrumb(icon: Icons.home_rounded, label: 'Workspace HQ'),
+        WorkspaceCrumb(
+          icon: Icons.calendar_today_rounded,
+          label: 'Meetings',
+          color: GlassColors.onSurfaceVariant.withOpacity(0.72),
         ),
-        const SizedBox(height: 10),
-        Text(
-          metaText,
-          style: GlassText.bodyMD().copyWith(
-            color: GlassColors.onSurfaceVariant.withOpacity(0.48),
-          ),
-        ),
+        WorkspaceCrumb(label: widget.board.name),
       ],
+      metaText: metaText,
+      title: const SizedBox.shrink(),
     );
   }
 
@@ -474,12 +423,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       onPressed: onTap,
       icon: const Icon(Icons.add_rounded, size: 16),
       label: Text(label),
-      style: FilledButton.styleFrom(
-        backgroundColor: GlassColors.primary.withOpacity(0.92),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
     );
   }
 

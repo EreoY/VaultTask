@@ -79,11 +79,7 @@ class MainApp extends StatelessWidget {
       title: 'VaultTask',
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: GlassColors.background,
-        useMaterial3: true,
-      ),
+      theme: GlassAppTheme.dark(),
       home: const StartupGuard(),
     );
   }

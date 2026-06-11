@@ -65,191 +65,190 @@ class KanbanTaskCard extends StatelessWidget {
     }
 
     // 🚀 Task 76.3: Dynamic Scaling
-    final double cardPaddingH = isOverviewMode ? 16 : 24;
-    final double cardPaddingV = isOverviewMode ? 14 : 20;
-    final double titleSize = isOverviewMode ? 14 : 18;
-    final double imageHeight = isOverviewMode ? 100 : 140;
+    final double cardPaddingH = isOverviewMode ? 12 : 16;
+    final double cardPaddingV = isOverviewMode ? 12 : 14;
+    final double titleSize = isOverviewMode ? 13 : 15;
+    final double imageHeight = isOverviewMode ? 84 : 108;
+    final hasCover = coverImage != null && coverImage.url.isNotEmpty;
+    final double headerTopInset = hasCover ? 12 : cardPaddingV;
+    final double checkboxSlotSize = isOverviewMode ? 0 : 34;
+    final double dragSlotSize = isOverviewMode ? 28 : 40;
+    final double overlayTop =
+        (hasCover ? imageHeight : 0) + headerTopInset - 4;
 
     final cardContent = Padding(
       padding: EdgeInsets.only(bottom: isOverviewMode ? 8 : 12),
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: cardPaddingH,
-          vertical: cardPaddingV,
-        ),
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withOpacity(0.04)
-              : Colors.black.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-          border: Border.all(color: GlassColors.ghostBorder),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
+              ? Colors.white.withOpacity(0.025)
+              : Colors.black.withOpacity(0.018),
+          borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+          border: Border.all(
+            color: GlassColors.hairlineStrong.withOpacity(0.72),
+          ),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (coverImage != null && coverImage.url.isNotEmpty)
-              Container(
+            if (hasCover)
+              SizedBox(
                 height: imageHeight,
                 width: double.infinity,
-                margin: EdgeInsets.only(bottom: isOverviewMode ? 12 : 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                  color: GlassColors.surfaceHighest.withOpacity(0.1),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                  child: Image.network(
-                    EnvConfig.sanitizeUrl(coverImage.url),
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: imageHeight,
-                    errorBuilder: (context, error, stackTrace) => Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 24,
-                        color: GlassColors.primary.withOpacity(0.3),
-                      ),
+                child: Image.network(
+                  EnvConfig.sanitizeUrl(coverImage.url),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: imageHeight,
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                      size: 24,
+                      color: GlassColors.primary.withOpacity(0.3),
                     ),
                   ),
                 ),
               ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isOverviewMode)
-                  const Opacity(
-                    opacity: 0,
-                    child: Checkbox(value: false, onChanged: null),
-                  ),
-                if (!isOverviewMode) const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    currentTask.title.toUpperCase(),
-                    maxLines: isOverviewMode ? 2 : 4,
-                    overflow: TextOverflow.ellipsis,
-                    style: GlassText.headlineLG().copyWith(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: isOverviewMode ? 0.2 : 0.5,
-                      decoration: currentTask.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                      color: currentTask.isCompleted
-                          ? GlassColors.onSurface.withOpacity(0.3)
-                          : GlassColors.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (currentTask.labelIds.isNotEmpty && !isOverviewMode) ...[
-              const SizedBox(height: 16),
-              _buildLabelPills(currentTask),
-            ],
-            if (currentTask.description.isNotEmpty && !isOverviewMode) ...[
-              const SizedBox(height: 12),
-              Text(
-                currentTask.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: GlassText.bodyMD().copyWith(
-                  fontSize: 13,
-                  color: GlassColors.onSurface.withOpacity(0.6),
-                  height: 1.5,
-                ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                cardPaddingH,
+                hasCover ? 12 : cardPaddingV,
+                cardPaddingH,
+                cardPaddingV,
               ),
-            ],
-            if (currentTask.hasChecklist && !isOverviewMode) ...[
-              const SizedBox(height: 10),
-              _buildChecklistInline(context, currentTask),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.only(left: 30),
-                child: Text(
-                  'Checklist ${currentTask.checklistProgressLabel}',
-                  style: GlassText.labelSM().copyWith(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: GlassColors.success.withOpacity(0.98),
-                  ),
-                ),
-              ),
-            ],
-            SizedBox(height: isOverviewMode ? 12 : 20),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                      if (!isOverviewMode)
+                        Opacity(
+                          opacity: 0,
+                          child: SizedBox(
+                            width: checkboxSlotSize,
+                            height: checkboxSlotSize,
+                            child: Checkbox(value: false, onChanged: null),
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: GlassColors.primary.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                      if (!isOverviewMode) const SizedBox(width: 10),
+                      Expanded(
                         child: Text(
-                          DateFormat(
-                            'MMM d',
-                          ).format(currentTask.dueDate).toUpperCase(),
-                          style: GlassText.labelSM().copyWith(
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                            color: GlassColors.primary.withOpacity(0.7),
+                          currentTask.title,
+                          maxLines: isOverviewMode ? 2 : 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: GlassText.headlineLG().copyWith(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0,
+                            decoration: currentTask.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: currentTask.isCompleted
+                                ? GlassColors.onSurface.withOpacity(0.3)
+                                : GlassColors.onSurface,
                           ),
                         ),
                       ),
-                      if (isOverviewMode && currentTask.labelIds.isNotEmpty)
-                        ...board.labels
-                            .where(
-                              (l) => currentTask.labelIds.contains(l['id']),
-                            )
-                            .map((l) {
-                              final color = Color(
-                                l['color'] as int? ?? GlassColors.primary.value,
-                              );
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: color.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: color.withOpacity(0.3),
-                                  ),
-                                ),
-                                child: Text(
-                                  (l['name'] as String).toUpperCase(),
-                                  style: GlassText.labelSM().copyWith(
-                                    fontSize: 7,
-                                    color: color,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              );
-                            }),
+                      SizedBox(width: dragSlotSize),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                _buildAvatarStack(currentTask),
-              ],
+                  if (currentTask.labelIds.isNotEmpty && !isOverviewMode) ...[
+                    const SizedBox(height: 10),
+                    _buildLabelPills(currentTask),
+                  ],
+                  if (currentTask.description.isNotEmpty &&
+                      !isOverviewMode) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      currentTask.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GlassText.bodyMD().copyWith(
+                        fontSize: 12,
+                        color: GlassColors.onSurface.withOpacity(0.56),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  if (currentTask.hasChecklist) ...[
+                    const SizedBox(height: 10),
+                    _buildChecklistProgress(currentTask),
+                  ],
+                  SizedBox(height: isOverviewMode ? 12 : 14),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: GlassColors.primary.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                DateFormat(
+                                  'MMM d',
+                                ).format(currentTask.dueDate).toUpperCase(),
+                                style: GlassText.labelSM().copyWith(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: GlassColors.primary.withOpacity(0.7),
+                                ),
+                              ),
+                            ),
+                            if (isOverviewMode &&
+                                currentTask.labelIds.isNotEmpty)
+                              ...board.labels
+                                  .where(
+                                    (l) =>
+                                        currentTask.labelIds.contains(l['id']),
+                                  )
+                                  .map((l) {
+                                    final color = Color(
+                                      l['color'] as int? ??
+                                          GlassColors.primary.value,
+                                    );
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: color.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        (l['name'] as String).toUpperCase(),
+                                        style: GlassText.labelSM().copyWith(
+                                          fontSize: 7,
+                                          color: color,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _buildAvatarStack(currentTask),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -272,17 +271,17 @@ class KanbanTaskCard extends StatelessWidget {
 
         if (!isSelectMode && !isOverviewMode)
           Positioned(
-            left: 16,
-            top: (coverImage != null && coverImage.url.isNotEmpty) ? 168 : 16,
+            left: 10,
+            top: overlayTop,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {},
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 color: Colors.transparent,
                 child: SizedBox(
-                  width: 24,
-                  height: 24,
+                  width: 22,
+                  height: 22,
                   child: Checkbox(
                     value: currentTask.isCompleted,
                     onChanged: (v) => onToggleDone(v ?? false),
@@ -338,9 +337,7 @@ class KanbanTaskCard extends StatelessWidget {
         if (!isSelectMode && isDraggable)
           Positioned(
             right: 8,
-            top: (coverImage != null && coverImage.url.isNotEmpty)
-                ? (isOverviewMode ? 108 : 148)
-                : 8,
+            top: overlayTop - (isOverviewMode ? 0 : 3),
             child: Draggable<TaskModel>(
               data: currentTask,
               feedback: Material(
@@ -355,7 +352,7 @@ class KanbanTaskCard extends StatelessWidget {
               ),
               childWhenDragging: Opacity(opacity: 0.2, child: cardContent),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(isOverviewMode ? 6 : 12),
                 color: Colors.transparent,
                 child: Icon(
                   Icons.drag_indicator_rounded,
@@ -369,11 +366,9 @@ class KanbanTaskCard extends StatelessWidget {
         if (!isSelectMode && !isDraggable)
           Positioned(
             right: 8,
-            top: (coverImage != null && coverImage.url.isNotEmpty)
-                ? (isOverviewMode ? 108 : 148)
-                : 8,
+            top: overlayTop - (isOverviewMode ? 0 : 3),
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(isOverviewMode ? 6 : 12),
               child: Icon(
                 Icons.lock_outline_rounded,
                 color: Colors.white.withOpacity(0.1),
@@ -382,6 +377,70 @@ class KanbanTaskCard extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildChecklistProgress(TaskModel currentTask) {
+    final total = currentTask.checklistTotalCount;
+    final done = currentTask.checklistDoneCount;
+    final progress = total == 0 ? 0.0 : done / total;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isOverviewMode ? 10 : 12,
+        vertical: isOverviewMode ? 8 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: GlassColors.success.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+        border: Border.all(color: GlassColors.success.withOpacity(0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                size: isOverviewMode ? 14 : 15,
+                color: GlassColors.success,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Checklist',
+                  style: GlassText.labelSM().copyWith(
+                    fontSize: isOverviewMode ? 9 : 10,
+                    fontWeight: FontWeight.w700,
+                    color: GlassColors.success,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+              Text(
+                '$done/$total',
+                style: GlassText.labelSM().copyWith(
+                  fontSize: isOverviewMode ? 9 : 10,
+                  fontWeight: FontWeight.w800,
+                  color: GlassColors.success,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: isOverviewMode ? 4 : 5,
+              value: progress,
+              backgroundColor: GlassColors.success.withOpacity(0.12),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                GlassColors.success,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -408,69 +467,6 @@ class KanbanTaskCard extends StatelessWidget {
               color: color,
               fontWeight: FontWeight.bold,
             ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildChecklistInline(BuildContext context, TaskModel currentTask) {
-    final state = context.read<StateTasks>();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: currentTask.checklist.map((item) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Checkbox(
-                  value: item.isDone,
-                  onChanged: (value) {
-                    final updatedChecklist = currentTask.checklist
-                        .map(
-                          (checkItem) => checkItem.id == item.id
-                              ? checkItem.copyWith(isDone: value ?? false)
-                              : checkItem,
-                        )
-                        .toList();
-                    state.updateTask(
-                      board,
-                      currentTask.copyWith(checklist: updatedChecklist),
-                    );
-                  },
-                  activeColor: GlassColors.success,
-                  side: BorderSide(
-                    color: GlassColors.success.withOpacity(0.48),
-                    width: 1.2,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: const VisualDensity(
-                    horizontal: -4,
-                    vertical: -4,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GlassText.bodyMD().copyWith(
-                    fontSize: 12,
-                    color: GlassColors.onSurfaceVariant.withOpacity(0.72),
-                    decoration: item.isDone ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-              ),
-            ],
           ),
         );
       }).toList(),

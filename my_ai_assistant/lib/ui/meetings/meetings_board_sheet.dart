@@ -12,6 +12,7 @@ import '../../models/meeting_model.dart';
 import '../../state_managers/state_meetings.dart';
 import '../common/ime_safe_text_field.dart';
 import '../common/responsive_layout.dart';
+import '../common/scroll_gutter.dart';
 import '../theme/glass_theme.dart';
 
 enum MeetingFilter { upcoming, all, past }
@@ -427,46 +428,49 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                       ),
                     ),
                   )
-                : ListView.separated(
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, _) => Divider(
-                      color: GlassColors.outlineVariant.withOpacity(0.1),
-                      height: 1,
-                    ),
-                    itemBuilder: (context, index) {
-                      final meeting = filtered[index];
-                      final isSelected = _selectedMeeting?.id == meeting.id;
-                      return InkWell(
-                        onTap: () => _loadMeeting(meeting),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  meeting.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GlassText.bodyMD().copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
+                : ScrollbarGutterFrame(
+                    child: ListView.separated(
+                      padding: ScrollbarGutter.reserveRight(EdgeInsets.zero),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, _) => Divider(
+                        color: GlassColors.outlineVariant.withOpacity(0.1),
+                        height: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final meeting = filtered[index];
+                        final isSelected = _selectedMeeting?.id == meeting.id;
+                        return InkWell(
+                          onTap: () => _loadMeeting(meeting),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    meeting.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GlassText.bodyMD().copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                DateFormat('MMM d').format(meeting.startAt),
-                                style: GlassText.bodyMD().copyWith(
-                                  color: GlassColors.onSurfaceVariant
-                                      .withOpacity(0.58),
+                                const SizedBox(width: 12),
+                                Text(
+                                  DateFormat('MMM d').format(meeting.startAt),
+                                  style: GlassText.bodyMD().copyWith(
+                                    color: GlassColors.onSurfaceVariant
+                                        .withOpacity(0.58),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
           ),
         ],
@@ -484,147 +488,162 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
     return Scrollbar(
       controller: _editorScrollController,
       thumbVisibility: true,
-      child: SingleChildScrollView(
-        controller: _editorScrollController,
-        padding: EdgeInsets.fromLTRB(
-          isMobile ? 0 : 8,
-          widget.embeddedInPage ? 0 : 20,
-          0,
-          32,
-        ),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: SizedBox(
-            width: contentWidth,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.showTopMeta) ...[
-                  _buildBreadcrumb(),
-                  const SizedBox(height: 10),
-                  _buildHistoryLine(),
-                  const SizedBox(height: 18),
-                ],
-                _buildTopActions(),
-                const SizedBox(height: 18),
-                _buildTitleField(titleHint),
-                const SizedBox(height: 18),
-                _propertyRow(
-                  icon: Icons.schedule_outlined,
-                  label: 'Scheduled',
-                  child: _linkButton(
-                    DateFormat('MMM d, yyyy h:mm a').format(_startAt),
-                    onTap: _pickStartDateTime,
-                  ),
+      child: ScrollbarGutterFrame(
+        child: SingleChildScrollView(
+          controller: _editorScrollController,
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 0 : 8,
+            widget.embeddedInPage ? 0 : 20,
+            0,
+            32,
+          ),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: contentWidth,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  right: ScrollbarGutter.reservedSpace,
                 ),
-                _propertyRow(
-                  icon: Icons.folder_open_outlined,
-                  label: 'Project',
-                  child: Text(
-                    widget.board.name,
-                    style: GlassText.bodyLG().copyWith(
-                      color: GlassColors.onSurface.withOpacity(0.92),
-                    ),
-                  ),
-                ),
-                _propertyRow(
-                  icon: Icons.groups_2_outlined,
-                  label: 'Roles',
-                  child: _buildRolesInline(),
-                ),
-                _propertyRow(
-                  icon: Icons.access_time_rounded,
-                  label: 'Created',
-                  child: Text(
-                    DateFormat(
-                      'MMM d, yyyy h:mm a',
-                    ).format(_selectedMeeting?.createdAt ?? DateTime.now()),
-                    style: GlassText.bodyLG().copyWith(
-                      color: GlassColors.onSurface.withOpacity(0.92),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Divider(color: GlassColors.outlineVariant.withOpacity(0.12)),
-                const SizedBox(height: 20),
-                _buildTabBar(),
-                const SizedBox(height: 16),
-                _buildActiveTabContent(),
-                const SizedBox(height: 22),
-                _sectionTitle('Attachments'),
-                const SizedBox(height: 8),
-                _buildAttachments(),
-                const SizedBox(height: 22),
-                _sectionTitle('Meeting roles'),
-                const SizedBox(height: 12),
-                if (widget.suggestedRoleTags.isNotEmpty)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: widget.suggestedRoleTags.map((tag) {
-                      final selected = _roleTags.contains(tag);
-                      return FilterChip(
-                        label: Text(tag),
-                        selected: selected,
-                        onSelected: (_) {
-                          setState(() {
-                            if (selected) {
-                              _roleTags = _roleTags
-                                  .where((item) => item != tag)
-                                  .toList();
-                            } else {
-                              _roleTags = [..._roleTags, tag];
-                            }
-                          });
-                        },
-                        showCheckmark: false,
-                        backgroundColor: Colors.transparent,
-                        selectedColor: GlassColors.primary.withOpacity(0.08),
-                        side: BorderSide(
-                          color: selected
-                              ? GlassColors.primary.withOpacity(0.18)
-                              : GlassColors.outlineVariant.withOpacity(0.12),
-                        ),
-                        labelStyle: GlassText.bodyMD().copyWith(
-                          color: selected
-                              ? GlassColors.primary.withOpacity(0.9)
-                              : GlassColors.onSurfaceVariant.withOpacity(0.68),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                if (widget.suggestedRoleTags.isNotEmpty)
-                  const SizedBox(height: 12),
-                Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _softTextField(
-                        controller: _roleInputController,
-                        hint: 'Add a role tag',
+                    if (widget.showTopMeta) ...[
+                      _buildBreadcrumb(),
+                      const SizedBox(height: 10),
+                      _buildHistoryLine(),
+                      const SizedBox(height: 18),
+                    ],
+                    _buildTopActions(),
+                    const SizedBox(height: 18),
+                    _buildTitleField(titleHint),
+                    const SizedBox(height: 18),
+                    _propertyRow(
+                      icon: Icons.schedule_outlined,
+                      label: 'Scheduled',
+                      child: _linkButton(
+                        DateFormat('MMM d, yyyy h:mm a').format(_startAt),
+                        onTap: _pickStartDateTime,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: _addRoleTag,
-                      child: const Text('Add'),
+                    _propertyRow(
+                      icon: Icons.folder_open_outlined,
+                      label: 'Project',
+                      child: Text(
+                        widget.board.name,
+                        style: GlassText.bodyLG().copyWith(
+                          color: GlassColors.onSurface.withOpacity(0.92),
+                        ),
+                      ),
                     ),
+                    _propertyRow(
+                      icon: Icons.groups_2_outlined,
+                      label: 'Roles',
+                      child: _buildRolesInline(),
+                    ),
+                    _propertyRow(
+                      icon: Icons.access_time_rounded,
+                      label: 'Created',
+                      child: Text(
+                        DateFormat(
+                          'MMM d, yyyy h:mm a',
+                        ).format(_selectedMeeting?.createdAt ?? DateTime.now()),
+                        style: GlassText.bodyLG().copyWith(
+                          color: GlassColors.onSurface.withOpacity(0.92),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Divider(
+                      color: GlassColors.outlineVariant.withOpacity(0.12),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTabBar(),
+                    const SizedBox(height: 16),
+                    _buildActiveTabContent(),
+                    const SizedBox(height: 22),
+                    _sectionTitle('Attachments'),
+                    const SizedBox(height: 8),
+                    _buildAttachments(),
+                    const SizedBox(height: 22),
+                    _sectionTitle('Meeting roles'),
+                    const SizedBox(height: 12),
+                    if (widget.suggestedRoleTags.isNotEmpty)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: widget.suggestedRoleTags.map((tag) {
+                          final selected = _roleTags.contains(tag);
+                          return FilterChip(
+                            label: Text(tag),
+                            selected: selected,
+                            onSelected: (_) {
+                              setState(() {
+                                if (selected) {
+                                  _roleTags = _roleTags
+                                      .where((item) => item != tag)
+                                      .toList();
+                                } else {
+                                  _roleTags = [..._roleTags, tag];
+                                }
+                              });
+                            },
+                            showCheckmark: false,
+                            backgroundColor: Colors.transparent,
+                            selectedColor: GlassColors.primary.withOpacity(
+                              0.08,
+                            ),
+                            side: BorderSide(
+                              color: selected
+                                  ? GlassColors.primary.withOpacity(0.18)
+                                  : GlassColors.outlineVariant.withOpacity(
+                                      0.12,
+                                    ),
+                            ),
+                            labelStyle: GlassText.bodyMD().copyWith(
+                              color: selected
+                                  ? GlassColors.primary.withOpacity(0.9)
+                                  : GlassColors.onSurfaceVariant.withOpacity(
+                                      0.68,
+                                    ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    if (widget.suggestedRoleTags.isNotEmpty)
+                      const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _softTextField(
+                            controller: _roleInputController,
+                            hint: 'Add a role tag',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        TextButton(
+                          onPressed: _addRoleTag,
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_selectedMeeting != null)
+                      TextButton.icon(
+                        onPressed: _deleteMeeting,
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: GlassColors.error,
+                          size: 16,
+                        ),
+                        label: const Text(
+                          'Delete meeting',
+                          style: TextStyle(color: GlassColors.error),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                if (_selectedMeeting != null)
-                  TextButton.icon(
-                    onPressed: _deleteMeeting,
-                    icon: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: GlassColors.error,
-                      size: 16,
-                    ),
-                    label: const Text(
-                      'Delete meeting',
-                      style: TextStyle(color: GlassColors.error),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -717,13 +736,6 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
         const Spacer(),
         FilledButton(
           onPressed: _isSaving ? null : _saveMeeting,
-          style: FilledButton.styleFrom(
-            backgroundColor: GlassColors.primary.withOpacity(0.92),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
           child: Text(_isSaving ? 'Saving...' : 'Save'),
         ),
       ],
@@ -1118,21 +1130,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
         hintStyle: GlassText.bodyMD().copyWith(
           color: GlassColors.onSurfaceVariant.withOpacity(0.34),
         ),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.015),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: GlassColors.outlineVariant.withOpacity(0.12),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: GlassColors.primary.withOpacity(0.22)),
         ),
       ),
     );

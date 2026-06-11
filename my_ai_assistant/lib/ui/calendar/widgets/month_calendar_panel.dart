@@ -217,6 +217,7 @@ class MonthCalendarPanel extends StatelessWidget {
             )
             .toList()
           ..sort((a, b) => a.startAt.compareTo(b.startAt));
+    final totalItems = myTasks.length + dayMeetings.length;
 
     return InkWell(
       onTap: () => onDateSelected(date),
@@ -245,17 +246,45 @@ class MonthCalendarPanel extends StatelessWidget {
                 isMobile ? 6 : 10,
                 2,
               ),
-              child: Text(
-                '${date.day}',
-                style: GlassText.bodyMD().copyWith(
-                  fontSize: isMobile ? 11 : 14,
-                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
-                  color: !isCurrentMonth
-                      ? GlassColors.onSurfaceVariant.withOpacity(0.22)
-                      : (isToday
-                            ? GlassColors.primary
-                            : GlassColors.onSurface.withOpacity(0.92)),
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${date.day}',
+                      style: GlassText.bodyMD().copyWith(
+                        fontSize: isMobile ? 11 : 14,
+                        fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
+                        color: !isCurrentMonth
+                            ? GlassColors.onSurfaceVariant.withOpacity(0.22)
+                            : (isToday
+                                  ? GlassColors.primary
+                                  : GlassColors.onSurface.withOpacity(0.92)),
+                      ),
+                    ),
+                  ),
+                  if (!isMobile && isCurrentMonth && totalItems > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: GlassColors.ghostBorder.withOpacity(0.9),
+                        ),
+                      ),
+                      child: Text(
+                        '$totalItems',
+                        style: GlassText.labelSM().copyWith(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          color: GlassColors.onSurfaceVariant.withOpacity(0.72),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             Expanded(
@@ -320,206 +349,197 @@ class MonthCalendarPanel extends StatelessWidget {
   ) {
     if (!isCurrentMonth) return const SizedBox.shrink();
 
-    final visibleTasks = tasks.take(2).toList();
-    final visibleMeetings = meetings.take(1).toList();
-    final overflow =
-        (tasks.length - visibleTasks.length) +
-        (meetings.length - visibleMeetings.length);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...visibleTasks.map((task) {
-          final board = _findBoard(task);
-          final boardColor = board != null
-              ? Color(board.color)
-              : GlassColors.primary;
-          final sourceLabel =
-              '${_workspaceName(board)} / ${board?.name ?? 'Unknown board'}';
-          final isCompleted = task.isCompleted;
-          return InkWell(
-            onTap: () => onTaskTap(task, board),
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? boardColor.withOpacity(0.18)
-                    : boardColor.withOpacity(0.28),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: boardColor.withOpacity(isCompleted ? 0.22 : 0.42),
-                ),
+    final entries = <Widget>[
+      ...tasks.map((task) {
+        final board = _findBoard(task);
+        final boardColor = board != null
+            ? Color(board.color)
+            : GlassColors.primary;
+        final sourceLabel =
+            '${_workspaceName(board)} / ${board?.name ?? 'Unknown board'}';
+        final isCompleted = task.isCompleted;
+        return InkWell(
+          onTap: () => onTaskTap(task, board),
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? boardColor.withOpacity(0.18)
+                  : boardColor.withOpacity(0.28),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: boardColor.withOpacity(isCompleted ? 0.22 : 0.42),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              calendarTaskTypeIcon(task.type),
-                              size: 12,
-                              color: calendarTaskTypeColor(
-                                task.type,
-                                active: !isCompleted,
-                              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            calendarTaskTypeIcon(task.type),
+                            size: 12,
+                            color: calendarTaskTypeColor(
+                              task.type,
+                              active: !isCompleted,
                             ),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                task.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GlassText.bodyMD().copyWith(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  decoration: isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: GlassColors.onSurface.withOpacity(
-                                    isCompleted ? 0.46 : 0.92,
-                                  ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              task.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GlassText.bodyMD().copyWith(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: GlassColors.onSurface.withOpacity(
+                                  isCompleted ? 0.46 : 0.92,
                                 ),
                               ),
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (task.hasChecklist) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: GlassColors.success.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: GlassColors.success.withOpacity(0.22),
+                          ),
+                        ),
+                        child: Text(
+                          task.checklistProgressLabel,
+                          style: GlassText.labelSM().copyWith(
+                            fontSize: 7.4,
+                            fontWeight: FontWeight.w700,
+                            color: GlassColors.success.withOpacity(0.98),
+                          ),
                         ),
                       ),
-                      if (task.hasChecklist) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: GlassColors.success.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: GlassColors.success.withOpacity(0.22),
-                            ),
-                          ),
-                          child: Text(
-                            task.checklistProgressLabel,
-                            style: GlassText.labelSM().copyWith(
-                              fontSize: 7.4,
-                              fontWeight: FontWeight.w700,
-                              color: GlassColors.success.withOpacity(0.98),
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
+                  ],
+                ),
+                if (task.description.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    task.description.trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GlassText.bodyMD().copyWith(
+                      fontSize: 9.2,
+                      height: 1.1,
+                      color: GlassColors.onSurface.withOpacity(
+                        isCompleted ? 0.32 : 0.62,
+                      ),
+                    ),
                   ),
-                  if (task.description.trim().isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      task.description.trim(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GlassText.bodyMD().copyWith(
-                        fontSize: 9.2,
-                        height: 1.1,
-                        color: GlassColors.onSurface.withOpacity(
-                          isCompleted ? 0.32 : 0.62,
+                ],
+                const SizedBox(height: 3),
+                Text(
+                  sourceLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GlassText.labelSM().copyWith(
+                    fontSize: 7.8,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                    color: GlassColors.onSurface.withOpacity(
+                      isCompleted ? 0.28 : 0.56,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+      ...meetings.map((meeting) {
+        final board = _findBoardById(meeting.boardId);
+        final boardColor = board != null
+            ? Color(board.color)
+            : GlassColors.primary;
+        final sourceLabel =
+            '${_workspaceName(board)} / ${board?.name ?? 'Unknown board'}';
+        return InkWell(
+          onTap: () => onMeetingTap(meeting, board),
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: boardColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: boardColor.withOpacity(0.22)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      calendarTaskTypeIcon('meeting'),
+                      size: 12,
+                      color: calendarTaskTypeColor('meeting'),
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        meeting.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GlassText.bodyMD().copyWith(
+                          fontSize: 11.2,
+                          fontWeight: FontWeight.w700,
+                          color: GlassColors.onSurface.withOpacity(0.92),
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 3),
-                  Text(
-                    sourceLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GlassText.labelSM().copyWith(
-                      fontSize: 7.8,
-                      decoration: isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                      color: GlassColors.onSurface.withOpacity(
-                        isCompleted ? 0.28 : 0.56,
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  sourceLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GlassText.labelSM().copyWith(
+                    fontSize: 7.8,
+                    color: GlassColors.onSurface.withOpacity(0.56),
                   ),
-                ],
-              ),
-            ),
-          );
-        }),
-        ...visibleMeetings.map((meeting) {
-          final board = _findBoardById(meeting.boardId);
-          final boardColor = board != null
-              ? Color(board.color)
-              : GlassColors.primary;
-          final sourceLabel =
-              '${_workspaceName(board)} / ${board?.name ?? 'Unknown board'}';
-          return InkWell(
-            onTap: () => onMeetingTap(meeting, board),
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: boardColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: boardColor.withOpacity(0.22)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        calendarTaskTypeIcon('meeting'),
-                        size: 12,
-                        color: calendarTaskTypeColor('meeting'),
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          meeting.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GlassText.bodyMD().copyWith(
-                            fontSize: 11.2,
-                            fontWeight: FontWeight.w700,
-                            color: GlassColors.onSurface.withOpacity(0.92),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    sourceLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GlassText.labelSM().copyWith(
-                      fontSize: 7.8,
-                      color: GlassColors.onSurface.withOpacity(0.56),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-        if (overflow > 0)
-          Text(
-            '+$overflow more',
-            style: GlassText.labelSM().copyWith(
-              fontSize: 10,
-              color: GlassColors.onSurfaceVariant.withOpacity(0.52),
+                ),
+              ],
             ),
           ),
-      ],
+        );
+      }),
+    ];
+
+    return ScrollConfiguration(
+      behavior: const _CalendarHiddenScrollBehavior(),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        primary: false,
+        physics: const ClampingScrollPhysics(),
+        children: entries,
+      ),
     );
   }
 
@@ -571,6 +591,19 @@ class MonthCalendarPanel extends StatelessWidget {
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+}
+
+class _CalendarHiddenScrollBehavior extends MaterialScrollBehavior {
+  const _CalendarHiddenScrollBehavior();
+
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }
 

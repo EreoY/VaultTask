@@ -8,6 +8,7 @@ import '../boards/widgets/board_edit_modal.dart';
 import '../theme/glass_theme.dart';
 import 'glass_widgets.dart';
 import 'ime_safe_text_field.dart';
+import 'scroll_gutter.dart';
 
 class AetherSideNav extends StatelessWidget {
   final int selectedIndex;
@@ -41,13 +42,16 @@ class AetherSideNav extends StatelessWidget {
     );
 
     return Container(
-      width: 260,
+      width: 248,
       height: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 64, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
       decoration: BoxDecoration(
-        color: GlassColors.surface,
+        color: GlassColors.surfaceContainer,
         border: Border(
-          right: BorderSide(color: GlassColors.ghostBorder, width: 1.0),
+          right: BorderSide(
+            color: GlassColors.hairlineStrong.withOpacity(0.6),
+            width: 1.0,
+          ),
         ),
       ),
       child: Column(
@@ -61,7 +65,7 @@ class AetherSideNav extends StatelessWidget {
                 'VaultTask',
                 style: GlassText.headlineMD().copyWith(
                   color: GlassColors.onSurface,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   height: 1.0,
                 ),
               ),
@@ -76,255 +80,270 @@ class AetherSideNav extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
           // Navigation & Workspaces Section
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Main Navigation Menu
-                  Column(
-                    children: [
-                      _NavItem(
-                        icon: Icons.dashboard_outlined,
-                        label: 'Dashboard',
-                        isActive: selectedIndex == 0,
-                        onTap: () => onItemSelected(0),
-                      ),
-                      _NavItem(
-                        icon: Icons.calendar_today_outlined,
-                        label: 'Calendar',
-                        isActive: selectedIndex == 2,
-                        onTap: () => onItemSelected(2),
-                      ),
-                      _NavItem(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        label: 'Chat',
-                        isActive: selectedIndex == 3,
-                        onTap: () => onItemSelected(3),
-                      ),
-                      _NavItem(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Profile',
-                        isActive: selectedIndex == 4,
-                        onTap: () => onItemSelected(4),
-                      ),
-                    ],
+            child: ScrollbarGutterFrame(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    right: ScrollbarGutter.reservedSpace,
                   ),
-                  const SizedBox(height: 24),
-                  Divider(color: GlassColors.ghostBorder, height: 1),
-                  const SizedBox(height: 16),
-
-                  // Workspaces Section Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'WORKSPACES',
-                        style: GlassText.labelSM().copyWith(
-                          color: GlassColors.onSurfaceVariant.withOpacity(0.4),
-                          fontSize: 11,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add_rounded, size: 16),
-                        onPressed: () =>
-                            _showAddWorkspaceDialog(context, stateBoards),
-                        color: GlassColors.gold,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        splashRadius: 16,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Workspaces & Projects Hierarchy List
-                  ...workspaces.map((workspace) {
-                    final isSelected = selectedWorkspaceId == workspace.id;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Workspace Header Row
-                        InkWell(
-                          onTap: () {
-                            stateBoards.setSelectedWorkspace(workspace);
-                            stateBoards.setSelectedBoard(null);
-                            onItemSelected(1); // Navigates to Boards Page
-                          },
-                          borderRadius: BorderRadius.circular(
-                            ExecutiveRadius.l,
+                      // Main Navigation Menu
+                      Column(
+                        children: [
+                          _NavItem(
+                            icon: Icons.dashboard_outlined,
+                            label: 'Dashboard',
+                            isActive: selectedIndex == 0,
+                            onTap: () => onItemSelected(0),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
+                          _NavItem(
+                            icon: Icons.calendar_today_outlined,
+                            label: 'Calendar',
+                            isActive: selectedIndex == 2,
+                            onTap: () => onItemSelected(2),
+                          ),
+                          _NavItem(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            label: 'Chat',
+                            isActive: selectedIndex == 3,
+                            onTap: () => onItemSelected(3),
+                          ),
+                          _NavItem(
+                            icon: Icons.person_outline_rounded,
+                            label: 'Profile',
+                            isActive: selectedIndex == 4,
+                            onTap: () => onItemSelected(4),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Divider(
+                        color: GlassColors.hairlineStrong.withOpacity(0.42),
+                        height: 1,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Workspaces Section Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'WORKSPACES',
+                            style: GlassText.labelSM().copyWith(
+                              color: GlassColors.onSurfaceVariant.withOpacity(
+                                0.4,
+                              ),
+                              fontSize: 11,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w600,
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  workspace.type == 'personal'
-                                      ? Icons.person_rounded
-                                      : Icons.group_rounded,
-                                  size: 16,
-                                  color: isSelected
-                                      ? GlassColors.primary
-                                      : GlassColors.onSurfaceVariant
-                                            .withOpacity(0.5),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_rounded, size: 16),
+                            onPressed: () =>
+                                _showAddWorkspaceDialog(context, stateBoards),
+                            color: GlassColors.gold,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+
+                      // Workspaces & Projects Hierarchy List
+                      ...workspaces.map((workspace) {
+                        final isSelected = selectedWorkspaceId == workspace.id;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                stateBoards.setSelectedWorkspace(workspace);
+                                stateBoards.setSelectedBoard(null);
+                                onItemSelected(1);
+                              },
+                              borderRadius: BorderRadius.circular(
+                                ExecutiveRadius.xl,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    workspace.name,
-                                    style: GlassText.bodyMD().copyWith(
-                                      fontSize: 13,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      workspace.type == 'personal'
+                                          ? Icons.person_rounded
+                                          : Icons.group_rounded,
+                                      size: 16,
                                       color: isSelected
-                                          ? GlassColors.onSurface
+                                          ? GlassColors.primary
                                           : GlassColors.onSurfaceVariant
-                                                .withOpacity(0.8),
+                                                .withOpacity(0.5),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        workspace.name,
+                                        style: GlassText.bodyMD().copyWith(
+                                          fontSize: 14,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                          color: isSelected
+                                              ? GlassColors.onSurface
+                                              : GlassColors.onSurfaceVariant
+                                                    .withOpacity(0.8),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.add_circle_outline_rounded,
+                                        size: 14,
+                                      ),
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          backgroundColor: Colors.transparent,
+                                          isScrollControlled: true,
+                                          builder: (context) => BoardEditModal(
+                                            isDark: isDark,
+                                            workspace: workspace,
+                                          ),
+                                        );
+                                      },
+                                      color: GlassColors.gold.withOpacity(0.6),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      splashRadius: 12,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    if (workspace.id != 'default_personal' &&
+                                        !workspace.id.startsWith(
+                                          'default_team_',
+                                        ))
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 14,
+                                        ),
+                                        onPressed: () =>
+                                            _showDeleteWorkspaceConfirmDialog(
+                                              context,
+                                              stateBoards,
+                                              workspace,
+                                            ),
+                                        color: GlassColors.error.withOpacity(
+                                          0.6,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        splashRadius: 12,
+                                      ),
+                                  ],
                                 ),
-                                // Action Button: Add Board
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.add_circle_outline_rounded,
-                                    size: 14,
-                                  ),
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      backgroundColor: Colors.transparent,
-                                      isScrollControlled: true,
-                                      builder: (context) => BoardEditModal(
-                                        isDark: isDark,
-                                        workspace: workspace,
+                              ),
+                            ),
+                            if (isSelected) ...[
+                              const SizedBox(height: 4),
+                              ...boards
+                                  .where((b) => b.workspaceId == workspace.id)
+                                  .map((board) {
+                                    final isBoardSelected =
+                                        selectedBoardId == board.id &&
+                                        selectedIndex == 1;
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 20,
+                                        bottom: 2,
+                                      ),
+                                      child: InkWell(
+                                        onTap: () {
+                                          stateBoards.setSelectedWorkspace(
+                                            workspace,
+                                          );
+                                          stateBoards.setSelectedBoard(board);
+                                          onItemSelected(1);
+                                        },
+                                        borderRadius: BorderRadius.circular(
+                                          ExecutiveRadius.s,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Color(
+                                                    board.color == 0
+                                                        ? 0xFF0D40A5
+                                                        : board.color,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  board.name,
+                                                  style: GlassText.bodyMD()
+                                                      .copyWith(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            isBoardSelected
+                                                            ? FontWeight.w600
+                                                            : FontWeight.w400,
+                                                        color: isBoardSelected
+                                                            ? GlassColors
+                                                                  .onSurface
+                                                            : GlassColors
+                                                                  .onSurfaceVariant
+                                                                  .withOpacity(
+                                                                    0.7,
+                                                                  ),
+                                                      ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     );
-                                  },
-                                  color: GlassColors.gold.withOpacity(0.6),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  splashRadius: 12,
-                                ),
-                                const SizedBox(width: 6),
-                                // Delete Workspace Button (if not default)
-                                if (workspace.id != 'default_personal' &&
-                                    !workspace.id.startsWith('default_team_'))
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline_rounded,
-                                      size: 14,
-                                    ),
-                                    onPressed: () =>
-                                        _showDeleteWorkspaceConfirmDialog(
-                                          context,
-                                          stateBoards,
-                                          workspace,
-                                        ),
-                                    color: GlassColors.error.withOpacity(0.6),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    splashRadius: 12,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Nested Boards List (Bullet points under selected workspace)
-                        if (isSelected) ...[
-                          const SizedBox(height: 4),
-                          ...boards
-                              .where((b) => b.workspaceId == workspace.id)
-                              .map((board) {
-                                final isBoardSelected =
-                                    selectedBoardId == board.id &&
-                                    selectedIndex == 1;
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 20,
-                                    bottom: 2,
-                                  ),
-                                  child: InkWell(
-                                    onTap: () {
-                                      stateBoards.setSelectedWorkspace(
-                                        workspace,
-                                      );
-                                      stateBoards.setSelectedBoard(board);
-                                      onItemSelected(1);
-                                    },
-                                    borderRadius: BorderRadius.circular(
-                                      ExecutiveRadius.s,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 6,
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Color(
-                                                board.color == 0
-                                                    ? 0xFF0D40A5
-                                                    : board.color,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              board.name,
-                                              style: GlassText.bodyMD()
-                                                  .copyWith(
-                                                    fontSize: 12,
-                                                    fontWeight: isBoardSelected
-                                                        ? FontWeight.w600
-                                                        : FontWeight.w400,
-                                                    color: isBoardSelected
-                                                        ? GlassColors.onSurface
-                                                        : GlassColors
-                                                              .onSurfaceVariant
-                                                              .withOpacity(0.7),
-                                                  ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                        ],
-
-                        const SizedBox(height: 8),
-                      ],
-                    );
-                  }),
-                ],
+                                  }),
+                            ],
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-
           const SizedBox(height: 16),
 
           // Profile Avatar at Bottom
@@ -687,11 +706,14 @@ class _NavItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: isActive
               ? BoxDecoration(
-                  color: GlassColors.surfaceBright,
+                  color: Colors.white.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+                  border: Border.all(
+                    color: GlassColors.hairlineStrong.withOpacity(0.55),
+                  ),
                 )
               : null,
           child: Row(
@@ -701,7 +723,7 @@ class _NavItem extends StatelessWidget {
                 color: isActive
                     ? GlassColors.onSurface
                     : GlassColors.onSurfaceVariant.withOpacity(0.6),
-                size: 20,
+                size: 18,
               ),
               const SizedBox(width: 12),
               Text(

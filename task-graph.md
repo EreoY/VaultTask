@@ -1,3 +1,306 @@
+## Phase 168: Kanban Scrollbar Alignment & Consistent Card Width
+
+> **Architecture Mandate:** คอลัมน์คันบันต้องรักษาความสูงแบบยืดหดได้ตามจำนวนการ์ดจริง (dynamic height) แต่ขีดจำกัดสูงสุดต้องแบ่งตามโหมด (ปกติ: max 800px / Overview-Eagle eye: max 940px) โดยขนาดของการ์ดในทุกคอลัมน์ต้องกว้างเท่ากันเป๊ะและสมดุลตรงกลางเสมอ โดยการจองเลน Scrollbar คงที่ (ซ้าย 12px / ขวา 24px) ไม่ว่าจะเลื่อนหรือไม่ก็ตาม
+
+### Task 168.1: Register Kanban Scrollbar Alignment Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 168 สำหรับจัดระเบียบขนาดการ์ดและ Scrollbar ในคอลัมน์คันบัน
+
+### Task 168.2: Convert KanbanColumnWidget to StatefulWidget
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** แปลงเป็น StatefulWidget และเพิ่ม ScrollController เพื่อใช้ควบคุมการเลื่อนและ Scrollbar
+
+### Task 168.3: Set Dynamic Max Height Constraints and Align Limits
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** ตั้งระดับ max height สูงสุดในโหมดปกติเป็น 800 (84% viewport) และ Overview เป็น 940 (90% viewport)
+
+### Task 168.4: Lock Left/Right Padding for Consistent Card Width
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** กำหนด padding คงที่ ซ้าย 12 / ขวา 24px ทั้งใน Header และ ListView เพื่อให้ขนาดการ์ดเท่ากันทุกคอลัมน์
+
+### Task 168.5: Integrate Scrollbar with ScrollController and Verify Layout
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** นำ Scrollbar มารับ ScrollController ของคอลัมน์ และตรวจสอบความถูกต้อง
+
+### Task 168.6: Verify Codebase and Analyze
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` เพื่อรับประกันความเสถียร
+
+## Phase 167: Kanban Column Balance and Height Expansion
+
+> **Architecture Mandate:** เมื่อคอลัมน์กัน scrollbar lane แล้ว พื้นที่การ์ดต้องยังคงสมดุลในแนวนอน ไม่เอนไปซ้ายเพราะ reserve พื้นที่ด้านขวาอย่างเดียว และเพดานความสูงของคอลัมน์ต้องตอบตามโหมดการดู โดยเฉพาะ overview/eagle-eye ที่ควรใช้ความสูงได้มากขึ้นกว่าปกติ
+
+### Task 167.1: Register Kanban Column Balance Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 167 สำหรับปรับ center alignment ของการ์ดในคอลัมน์และขยาย max height ของคอลัมน์
+
+### Task 167.2: Rebalance Column Insets and Raise Height Limits
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** ปรับ padding ซ้าย/ขวาของ list ให้การ์ดอยู่กึ่งกลางหลัง reserve lane และเพิ่ม max shell height ให้ overview และ desktop mode ใช้พื้นที่แนวตั้งได้มากขึ้น
+
+### Task 167.3: Verify Analyzer and Kanban Column Balance Audit
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` และ `git diff --check`
+
+## Phase 166: Kanban Card Header Alignment Repair
+
+> **Architecture Mandate:** interactive chrome บน kanban card ต้องยึดกับ header row เดียวกันเสมอ ไม่ใช้ absolute offset แบบเดา เพราะเมื่อ card มีภาพหรือ density เปลี่ยน checkbox, title, และ drag handle จะเบี้ยวกันทันทีและทำให้การสแกนกับการลากใช้งานยาก
+
+### Task 166.1: Register Kanban Header Alignment Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 166 สำหรับซ่อม alignment ของ checkbox/title/drag handle บนการ์ดคันบัน
+
+### Task 166.2: Anchor Checkbox and Drag Handle to a Shared Header Row
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`
+- **Action:** ย้าย checkbox และ drag handle ให้อยู่ใน flow ของ header row เดียวกับ title เพื่อให้ไม่ทับภาพและไม่เบี้ยวเมื่อมี cover image
+
+### Task 166.3: Verify Analyzer and Kanban Header Audit
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` และ `git diff --check`
+
+## Phase 165: Flush Task Modal Scrollbar Edge Alignment
+
+> **Architecture Mandate:** เมื่อ scrollbar lane ถูกสร้างแล้ว มันต้องชนกับขอบ pane จริง ไม่ใช่ลอยอยู่ใน content padding เพราะจะทำให้ดูเหมือนมีร่องว่างแปลกๆ ระหว่าง lane กับคอลัมน์ข้างเคียง โดยเฉพาะใน task modal แบบ split-pane
+
+### Task 165.1: Register Flush Edge Alignment Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 165 สำหรับดัน scrollbar lane ของ task modal ไปชิดแนวแบ่ง pane จริง
+
+### Task 165.2: Move Left-Pane Scrollbar Lane to the Pane Edge
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ย้าย ScrollbarGutterFrame ของฝั่งซ้ายออกจาก inner padding เพื่อให้ lane ชิด divider/background ของ split pane โดยตรง
+
+### Task 165.3: Verify Analyzer and Flush Edge Audit
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` และ `git diff --check`
+
+## Phase 164: Secondary Scroll Surface Gutter Rollout
+
+> **Architecture Mandate:** หลังจากเก็บจุดหนักใน modal/column/editor แล้ว พื้นผิวรองที่ผู้ใช้เห็นบ่อย เช่น sidebar และ meetings index ต้องใช้ gutter language เดียวกันด้วย ไม่เช่นนั้น scrollbar behavior จะยัง drift ระหว่างหน้าหลักของแอป
+
+### Task 164.1: Register Secondary Gutter Rollout Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 164 สำหรับ rollout scrollbar gutter ไปยัง sidebar และ meetings list surface
+
+### Task 164.2: Apply Shared Gutter Pattern to Sidebar and Meetings Index
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** กัน lane สำหรับ scrollbar ใน sidebar และ list หลักของ meetings เพื่อไม่ให้ overlay ทับชื่อเมนูหรือรายการประชุมเมื่อ content overflow
+
+### Task 164.3: Verify Analyzer and Secondary Gutter Audit
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` และ `git diff --check`
+
+## Phase 163: Unified Left-Pane Scroll Surface in Task Modal
+
+> **Architecture Mandate:** ฝั่งซ้ายของ task detail modal ต้องเลื่อนเป็นผืนเดียวทั้ง pane ไม่ใช่มี header ลอยแยกจาก content เพราะเมื่อผู้ใช้เลื่อนดูรายละเอียด งานต้องพาทั้ง status/title/action chrome ลงไปพร้อมกัน และ scrollbar ต้องไปอยู่ชิดขอบ pane เดียวกันอย่างเนียน
+
+### Task 163.1: Register Unified Left-Pane Scroll Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 163 สำหรับรวม header และ content ฝั่งซ้ายของ task modal ให้เลื่อนเป็น surface เดียว
+
+### Task 163.2: Convert Desktop Left Pane into a Single Scroll Surface
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ย้าย header/title/content/sections ฝั่งซ้ายทั้งหมดเข้า scroll container เดียวและคง scrollbar gutter ไว้ชิดขอบ pane
+
+### Task 163.3: Verify Analyzer and Left-Pane Scroll Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 162: Dedicated Scrollbar Gutter Reservation
+
+> **Architecture Mandate:** ทุก surface ที่มี scrollbar แบบมองเห็นได้ต้องกันพื้นที่ gutter ให้ scrollbar โดยเฉพาะและดันบาร์ไปชิดขอบของ card/column/panel เสมอ เพื่อไม่ให้ thumb ทับตัวอักษร รูป หรือ interactive content และเพื่อให้ภาษาภาพของทุกหน้าสะอาดสม่ำเสมอ
+
+### Task 162.1: Register Shared Scrollbar Gutter Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 162 สำหรับบังคับใช้ scrollbar gutter reservation กับทุก surface ที่มี visible scrollbar
+
+### Task 162.2: Add Shared Scrollbar Gutter Pattern and Apply to Active Scroll Surfaces
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/scroll_gutter.dart`, `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`, `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** สร้าง shared gutter pattern และนำไปใช้กับ column list, task detail/editor panes, และ meetings document/editor surfaces เพื่อให้ scrollbar มี lane ของตัวเองและไม่ทับ content
+
+### Task 162.3: Verify Analyzer and Scrollbar Gutter Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 161: Calendar Day Card Internal Scroll and Count Header
+
+> **Architecture Mandate:** ในมุมมองเดือน day card ต้องแสดงปริมาณงานของวันอย่างชัดเจนที่หัวการ์ดและให้ผู้ใช้เลื่อนดูรายการทั้งหมดภายในการ์ดได้ทันที โดยไม่พึ่งข้อความ overflow อย่าง `+N` และไม่ใช้ scrollbar ที่แย่งสายตา
+
+### Task 161.1: Register Calendar Day Card Scroll Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 161 สำหรับเปลี่ยน day card ในปฏิทินให้มี count header และ internal scroll แบบไม่มี scrollbar
+
+### Task 161.2: Rebuild Month Day Card Content to Scroll Internally Without Overflow Badge
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`
+- **Action:** แสดงจำนวนรายการไว้ที่หัว day card และให้รายการภายในการ์ดเลื่อนดูได้ทั้งหมดด้วย mouse wheel/drag โดยซ่อน scrollbar และตัด `+N more`
+
+### Task 161.3: Verify Analyzer and Calendar Day Card Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 160: Kanban Workspace Chrome Extraction
+
+> **Architecture Mandate:** เมื่อ board header, view switcher, filter controls, team avatars, board menu, และ bulk toolbar รวมกันจนบวมใน page file แล้ว ต้องแยกออกเป็น workspace chrome module เพื่อให้ `kanban_page.dart` เหลือแค่ state orchestration และ surface routing
+
+### Task 160.1: Register Kanban Chrome Extraction Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 160 สำหรับแยก header/toolbar/bulk controls ของคันบันออกจาก page file
+
+### Task 160.2: Extract Kanban Header, Top Controls, and Bulk Toolbar Widgets
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/kanban_page.dart`, `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
+- **Action:** ย้าย workspace header, board/calendar switcher, operative filters, board menu, action buttons, และ bulk toolbar ไปไว้ใน widget module โดยคง page เดิมไว้ถือ state/callbacks
+
+### Task 160.3: Verify Analyzer and Kanban Chrome Extraction Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 159: Kanban Cover Flush and Content-Fit Columns
+
+> **Architecture Mandate:** Kanban card ที่มีภาพต้องใช้ภาพเป็น top section ของ card โดยตรง ไม่ใช่ media block ที่ลอยอยู่ใน padding ภายใน ส่วน column shell ต้องสะท้อนจำนวนการ์ดจริงและหยุดการกินความสูงเกินจำเป็นเมื่อคอลัมน์มีรายการน้อย
+
+### Task 159.1: Register Kanban Cover/Column Fit Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 159 สำหรับ flush cover image เข้ากับ card shell และทำ column height ให้ fit ตาม content
+
+### Task 159.2: Refine Kanban Media Framing and Content-Responsive Column Height
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`, `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`
+- **Action:** ทำให้ภาพอยู่เป็นส่วนบนของการ์ดโดยตรงโดยไม่มีกรอบย่อย และทำ column shell ยืด/หดตามความสูงของ cards จริงพร้อมมี max height เฉพาะกรณีที่รายการเยอะ
+
+### Task 159.3: Verify Analyzer and Content-Fit Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 158: Kanban Density and Column Shell Refinement
+
+> **Architecture Mandate:** กระดานคันบันต้องสแกนง่ายก่อนเสมอ ดังนั้น card density, column grouping, และ checklist signaling ต้องลด noise ให้เหลือระดับ overview เท่านั้น โดย checklist action รายข้อให้กลับไปอยู่ใน detail page ไม่ใช่บน board card
+
+### Task 158.1: Register Kanban Density Refinement Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 158 สำหรับย่อ task cards, เพิ่ม column shell, และแทน checklist preview ด้วย progress summary card
+
+### Task 158.2: Rebuild Kanban Card and Column Presentation for Dense Scanning
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/kanban_card.dart`, `my_ai_assistant/lib/ui/kanban/widgets/kanban_column.dart`, `my_ai_assistant/lib/ui/kanban/kanban_page.dart`
+- **Action:** ลดขนาดการ์ด, ใส่คอลลัมน์เชลล์แบบอ่านง่าย, เอา checklist รายข้อออกจาก board card, และแทนด้วย progress block `x/x` ที่กดเข้า detail เพื่อจัดการต่อ
+
+### Task 158.3: Verify Analyzer and Kanban Density Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 157: Boards Dialog Layer Extraction
+
+> **Architecture Mandate:** หลังจากดึง header/tabs/table ออกแล้ว ชั้นถัดไปที่ทำให้ `boards_page.dart` ยังบวมคือ dialog layer ทั้งหมด ดังนั้น dialogs ของ workspace/board/document/member management ต้องถูกแยกออกเป็นโมดูลเฉพาะเพื่อให้หน้าแม่เหลือแค่ route state และ callback wiring
+
+### Task 157.1: Register Boards Dialog Extraction Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 157 สำหรับแยก dialog layer ของหน้า boards
+
+### Task 157.2: Extract Workspace and Board Dialogs into Shared Module
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_dialogs.dart`
+- **Action:** ย้าย join workspace, rename workspace, rename board, delete board, manage members, และ delete document dialogs ออกไปเป็น shared dialog module
+
+### Task 157.3: Verify Analyzer and Dialog Extraction Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 156: Boards Page Structural Extraction
+
+> **Architecture Mandate:** หน้า workspace projects เป็น shell หลักที่ผู้ใช้เห็นบ่อยและตอนนี้มีทั้ง layout, row rendering, member chips, docs UI, และ dialog triggers รวมอยู่ในไฟล์เดียวมากเกินไป จึงต้องแยก presentational widgets ออกก่อนเพื่อหยุดการบวมของไฟล์และทำให้ visual maintenance ง่ายขึ้น
+
+### Task 156.1: Register Boards Structural Extraction Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 156 สำหรับแยก header/tabs/table presentation ออกจาก `boards_page.dart`
+
+### Task 156.2: Extract Boards Header, Tabs, and Projects Table Presentation
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_tabs.dart`, `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** ย้าย workspace header, tabs, และ projects table UI ไปเป็น widget files โดยคง page เดิมไว้เป็นตัวถือ state และ callbacks
+
+### Task 156.3: Verify Analyzer and Boards Extraction Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 155: Shared Workspace Chrome Extraction
+
+> **Architecture Mandate:** เมื่อ breadcrumb/meta/title pattern เริ่มซ้ำกันใน Boards, Kanban, และ Meetings ต้องแยกเป็น shared chrome component ทันที เพื่อคุม hierarchy และ spacing จากจุดเดียว ลด drift ของหน้าต่างๆ ในรอบถัดไป
+
+### Task 155.1: Register Shared Workspace Chrome Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 155 สำหรับดึง navbar/breadcrumb/meta/title pattern ไปไว้ใน shared component
+
+### Task 155.2: Extract Shared Workspace Chrome and Adopt It in Primary Surfaces
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/workspace_chrome.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/kanban/kanban_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** สร้าง shared workspace chrome component และให้ boards, kanban, meetings ใช้ breadcrumb/meta/title language เดียวกัน
+
+### Task 155.3: Verify Analyzer and Shared Chrome Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 154: Cross-Surface Notion UI Rollout
+
+> **Architecture Mandate:** หลังจากมี shared theme กลางแล้ว ต้อง rollout ไปยัง surface หลักที่ผู้ใช้เห็นบ่อยที่สุดก่อน ได้แก่ Boards, Kanban, และ Task Modal เพื่อให้ shell language, border weight, title hierarchy, และ action chrome เริ่มคงที่ทั้งแอป
+
+### Task 154.1: Register Cross-Surface Rollout Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 154 สำหรับขยาย shared notion-like theme ไปยัง boards, kanban, และ task modal
+
+### Task 154.2: Apply Shared Theme Language to Boards, Kanban, and Task Modal
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`, `my_ai_assistant/lib/ui/kanban/kanban_page.dart`, `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** ทำให้ boards table/header, kanban header/toolbar, และ task modal shell ใช้ border, spacing, title scale, และ action tone ที่สอดคล้องกับ theme กลาง
+
+### Task 154.3: Verify Analyzer and Cross-Surface Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
+## Phase 153: Shared Notion-Like Theme Refactor
+
+> **Architecture Mandate:** UI ที่เริ่มใช้ภาษาของ Notion แล้วต้องถูกคุมผ่าน theme/token กลาง ไม่ใช่แต่งรายหน้าแบบ ad hoc ดังนั้น navbar, card, sidebar, buttons, inputs, dividers, และ scrollbars ต้องย้ายเข้าสู่ shared theme layer เพื่อให้ layout และน้ำหนักภาพสอดคล้องกันทั้งแอป
+
+### Task 153.1: Register Shared Theme Refactor Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่ม Phase 153 สำหรับรีแฟคเตอร์ shared theme และผูก sidebar/meetings เข้ากับระบบนี้
+
+### Task 153.2: Add Shared Notion-Like Theme Tokens and Apply to Shell UI
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`, `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่ม ThemeData/subthemes กลางสำหรับ buttons/inputs/scrollbars/dividers/chips, ปรับ sidebar ให้ใช้ scale/radius/spacing ใหม่, และลด style เฉพาะจุดใน meetings ให้ยึด theme กลางมากขึ้น
+
+### Task 153.3: Verify Analyzer and Shared Theme Audit
+- **Status:** [x] Done
+- **Action:** รัน `dart format`, `flutter analyze --no-pub`, และ `git diff --check`
+
 ## Phase 152: Meetings Unified Navbar and Edge Scroll Polish
 
 > **Architecture Mandate:** metadata line ของ meetings ต้องอยู่ใน top navbar layer เดียวกับ breadcrumb เพื่อให้ทุกหน้าใช้ pattern เดียวกัน ส่วน scrollbar ต้องถูกดันไปชิดขอบพื้นที่หน้ามากที่สุดและไม่แย่งพื้นที่สายตาจาก document content

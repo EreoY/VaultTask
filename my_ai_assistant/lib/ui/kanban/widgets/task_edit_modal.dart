@@ -13,6 +13,7 @@ import '../../../state_managers/state_chat.dart';
 import '../../../databases/api_cloudflare.dart';
 import '../../../config/env_config.dart';
 import '../../../services/auth_service.dart';
+import '../../common/scroll_gutter.dart';
 import '../../theme/glass_theme.dart';
 
 class TaskEditModal extends StatefulWidget {
@@ -476,55 +477,60 @@ class _TaskEditModalState extends State<TaskEditModal> {
                   children: [
                     Expanded(
                       flex: 8,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeader(
-                              isDesktop: true,
-                              hasCover: hasCover,
-                              coverImage: coverImage,
+                      child: ScrollbarGutterFrame(
+                        gutterColor: Colors.black.withOpacity(0.16),
+                        dividerColor: GlassColors.outlineVariant.withOpacity(
+                          0.15,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              40,
+                              40,
+                              ScrollbarGutter.reservedSpace + 28,
+                              40,
                             ),
-                            const SizedBox(height: 24),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildTitleSection(isDesktop: true),
-                                    const SizedBox(height: 16),
-                                    _buildMetadataStrip(currentBoard),
-                                    const SizedBox(height: 32),
-                                    _buildTextField(
-                                      controller: _descController,
-                                      focusNode: _descFocusNode,
-                                      hint: 'Add a strategic description...',
-                                      style: GlassText.bodyLG().copyWith(
-                                        fontSize: 18,
-                                        color: GlassColors.onSurface
-                                            .withOpacity(0.7),
-                                      ),
-                                      maxLines: 12,
-                                    ),
-                                    const SizedBox(height: 28),
-                                    _buildChecklistSection(isDesktop: true),
-                                    const SizedBox(height: 48),
-                                    _buildSectionTitle('OPERATIONAL ASSETS'),
-                                    const SizedBox(height: 24),
-                                    _buildVerticalAssetList(),
-                                    const SizedBox(height: 80),
-                                    if (widget.existingTask == null)
-                                      _buildGhostButton(
-                                        'CREATE STRATEGIC TASK',
-                                        _handleExplicitSave,
-                                        isPrimary: true,
-                                      ),
-                                  ],
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeader(
+                                  isDesktop: true,
+                                  hasCover: hasCover,
+                                  coverImage: coverImage,
                                 ),
-                              ),
+                                const SizedBox(height: 24),
+                                _buildTitleSection(isDesktop: true),
+                                const SizedBox(height: 16),
+                                _buildMetadataStrip(currentBoard),
+                                const SizedBox(height: 32),
+                                _buildTextField(
+                                  controller: _descController,
+                                  focusNode: _descFocusNode,
+                                  hint: 'Add a strategic description...',
+                                  style: GlassText.bodyLG().copyWith(
+                                    fontSize: 18,
+                                    color: GlassColors.onSurface.withOpacity(
+                                      0.7,
+                                    ),
+                                  ),
+                                  maxLines: 12,
+                                ),
+                                const SizedBox(height: 28),
+                                _buildChecklistSection(isDesktop: true),
+                                const SizedBox(height: 48),
+                                _buildSectionTitle('OPERATIONAL ASSETS'),
+                                const SizedBox(height: 24),
+                                _buildVerticalAssetList(),
+                                const SizedBox(height: 80),
+                                if (widget.existingTask == null)
+                                  _buildGhostButton(
+                                    'CREATE STRATEGIC TASK',
+                                    _handleExplicitSave,
+                                    isPrimary: true,
+                                  ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -587,7 +593,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                     width: 1250,
                     height: MediaQuery.of(context).size.height * 0.85,
                     decoration: GlassDecorations.solidSurface(
-                      radius: 32,
+                      radius: 24,
                       hasShadow: true,
                     ),
                     child: GestureDetector(
@@ -644,7 +650,9 @@ class _TaskEditModalState extends State<TaskEditModal> {
                   if (hasCover && _isCoverExpanded)
                     _buildCoverBanner(coverImage),
                   Padding(
-                    padding: const EdgeInsets.all(32),
+                    padding: ScrollbarGutter.reserveRight(
+                      const EdgeInsets.all(32),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -691,10 +699,17 @@ class _TaskEditModalState extends State<TaskEditModal> {
 
               return Container(
                 decoration: GlassDecorations.solidSurface(
-                  radius: 32,
+                  radius: 24,
                   hasShadow: true,
                 ),
-                child: mainBody,
+                child: ScrollbarGutterFrame(
+                  clipRadius: BorderRadius.circular(24),
+                  gutterRadius: const BorderRadius.only(
+                    topRight: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                  child: mainBody,
+                ),
               );
             },
           );
@@ -715,19 +730,20 @@ class _TaskEditModalState extends State<TaskEditModal> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: GlassColors.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                border: Border.all(color: GlassColors.primary.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                border: Border.all(
+                  color: GlassColors.hairlineStrong.withOpacity(0.55),
+                ),
               ),
               child: Text(
                 _status.toUpperCase(),
                 style: GlassText.labelSM().copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                   color: GlassColors.primary,
-                  letterSpacing: 1.2,
                 ),
               ),
             ),
@@ -2151,7 +2167,9 @@ class _TaskEditModalState extends State<TaskEditModal> {
 
         final listWidget = ListView.builder(
           reverse: true,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: ScrollbarGutter.reserveRight(
+            const EdgeInsets.fromLTRB(12, 16, 12, 16),
+          ),
           itemCount: messages.length,
           itemBuilder: (context, idx) {
             final msg = messages[idx];
@@ -2168,17 +2186,22 @@ class _TaskEditModalState extends State<TaskEditModal> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(ExecutiveRadius.l),
-            child: messages.isEmpty
-                ? Center(
-                    child: Text(
-                      'ไม่มีประวัติการพูดคุยในงานนี้\nพิมพ์แชทด้านล่างเพื่อเริ่มถาม AI เกี่ยวกับงานนี้',
-                      textAlign: TextAlign.center,
-                      style: GlassText.caption().copyWith(
-                        color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+            child: ScrollbarGutterFrame(
+              enabled: messages.isNotEmpty,
+              clipRadius: BorderRadius.circular(ExecutiveRadius.l),
+              gutterRadius: BorderRadius.circular(ExecutiveRadius.l),
+              child: messages.isEmpty
+                  ? Center(
+                      child: Text(
+                        'ไม่มีประวัติการพูดคุยในงานนี้\nพิมพ์แชทด้านล่างเพื่อเริ่มถาม AI เกี่ยวกับงานนี้',
+                        textAlign: TextAlign.center,
+                        style: GlassText.caption().copyWith(
+                          color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                        ),
                       ),
-                    ),
-                  )
-                : listWidget,
+                    )
+                  : listWidget,
+            ),
           ),
         );
 
@@ -2339,7 +2362,9 @@ class _TaskEditModalState extends State<TaskEditModal> {
             ),
           )
         : ListView.separated(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: ScrollbarGutter.reserveRight(
+              const EdgeInsets.only(bottom: 16),
+            ),
             itemCount: _comments.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
@@ -2417,6 +2442,14 @@ class _TaskEditModalState extends State<TaskEditModal> {
             },
           );
 
+    final desktopListWidget = _comments.isEmpty
+        ? listWidget
+        : ScrollbarGutterFrame(
+            clipRadius: BorderRadius.circular(ExecutiveRadius.l),
+            gutterRadius: BorderRadius.circular(ExecutiveRadius.l),
+            child: listWidget,
+          );
+
     final inputWidget = Row(
       children: [
         Expanded(
@@ -2457,7 +2490,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: listWidget),
+          Expanded(child: desktopListWidget),
           if (!_isReadOnly) ...[const SizedBox(height: 16), inputWidget],
         ],
       );
