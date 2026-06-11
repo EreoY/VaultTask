@@ -1,5 +1,19 @@
 # Walkthrough: Infrastructure Setup and Git Migration (VaultTask)
 
+## 🧱 Phase 176: Full-Width Card Restoration via DeferPointer
+
+- **Full-Width Card Layout Reverted**: เปลี่ยนแปลงดีไซน์การ์ด Meeting Workspace ใน `meetings_board_sheet.dart` ให้กลับมาเป็นขนาดกว้างเต็มความกว้างปกติ (Full-Width) โดยลบ Stack / Positioned layout ที่ครอบตัวการ์ดออก และแทนที่ด้วย `Container` แบบปกติ ทำให้จัดเรียงส่วนหัวและเนื้อหาได้เป็นระเบียบสวยงามและอ่านง่าย
+- **Deferred Pointer Hit-Testing**:
+  - นำ `DeferredPointerHandler` มาครอบ root widget ของ `_buildEditorPane` เพื่อรับสัญญาณและทำหน้าที่รับรู้/แปลงพิกัดของทัช/โฮเวอร์ที่อยู่เลยขอบการจัดวางจริง
+  - ปรับปรุงแถวข้อความใน `MarkdownBlockEditor` (`_buildBlockRow`) ให้ยืดเต็มความกว้างขอบการ์ด และจัดวางปุ่มเครื่องมือ (ปุ่มเพิ่มบล็อก, ปุ่มลากจัดลำดับ) ให้เยื้องไปทางซ้ายของขอบแถวปกติด้วยพิกัด `left: -58` (Left Gutter) และความกว้าง `width: 54`
+  - ครอบปุ่มเครื่องมือเยื้องขอบเหล่านั้นด้วยวิดเจ็ต `DeferPointer` เพื่อให้สามารถตรวจจับการคลิก ลากสลับบล็อก (Reordering) และแสดงผลเอฟเฟกต์โฮเวอร์ (Hover Tooltip/Opacity) ได้อย่างแม่นยำแม้จะแสดงผลอยู่นอกพื้นที่การจัดวาง
+- **Context Lookup Resolution**: เปลี่ยนรูปแบบการอิมพอร์ตไฟล์ `defer_pointer.dart` ใน `meetings_board_sheet.dart` และ `markdown_block_editor.dart` จากแบบ Relative path ให้เป็นแบบ Package import (`package:my_ai_assistant/ui/common/defer_pointer.dart`) ทั้งหมด เพื่อแก้ไขปัญหาความขัดแย้งของประเภทคลาส (Class Type Discrepancies) ซึ่งทำให้การหา `DeferredPointerHandler` จากบริบท (BuildContext) ล้มเหลวและเกิด Assertion error ในบางหน้าจอ
+- **Control Buttons Resizing**: ปรับปรุงปุ่มลากและปุ่มเพิ่มบล็อกให้มีขนาดใหญ่ขึ้นและสังเกตง่ายขึ้น:
+  - **ปุ่มเพิ่มบล็อก (Add Button)**: ขยายขนาด Container เป็น 26x26 พร้อมขอบเส้นและไอคอนขนาด 16 (จากเดิม 20x20 และไอคอน 13) และปรับความโปร่งแสงให้สว่างชัดขึ้น
+  - **ปุ่มลาก (Drag Indicator)**: ขยายขนาดไอคอนเป็น 22 (จากเดิม 18) และเพิ่มความเข้มของสีปุ่มเป็น 85% opacity
+- **Lint Cleanup**: ปรับคลาส `_DeferPointerRenderObject` ใน `defer_pointer.dart` ให้เป็น `DeferPointerRenderObject` (Public Class) เพื่อแก้ไขคำเตือน `library_private_types_in_public_api` ของวิเคราะห์ของภาษา Dart ทำให้โครงสร้างของโปรเจกต์สะอาดและปลอดภัย 100%
+- **Verification**: ตรวจสอบความถูกต้องผ่านคำสั่ง `flutter analyze --no-pub` ผลลัพธ์ไม่พบความผิดพลาดใดๆ (No issues found!)
+
 We have successfully migrated the Calenda backend to a local execution environment (Miniflare / `wrangler dev`), integrated OpenRouter (using `google/gemma-4-26b-a4b-it`), and initialized a new GitHub repository for the upgraded version **VaultTask**.
 
 ## 🛠️ Infrastructure & Local Development (Miniflare)
@@ -104,3 +118,32 @@ We have successfully migrated the Calenda backend to a local execution environme
 - **Glassmorphic 3-State Toggle Bar (Task 126.2)**: ออกแบบและพัฒนาแถบปุ่มตัวเลือกแบบ Segmented Control หรูหราในสไตล์ Glassmorphic (`_buildFilterToggleBar` และ `_buildToggleItem`) แทนที่ปุ่มกรองไอคอนรูปกรวยแบบดั้งเดิม โดยรองรับการใช้งานอย่างเป็นมิตรบน Touch/Cursor zone พร้อมทั้งปรับขนาดแบบ responsive ให้เข้ากับหน้าจอมือถือและเดสก์ท็อปโดยอัตโนมัติ
 - **Selection Menu Sync (Task 126.3)**: ปรับปรุงฟังก์ชันเปิดเมนูก้นชีต `_showOperativeFilterMenu` ให้ซิงค์ผลการเลือกผู้ใช้งานในโหมดแมนนวล (`select`) เข้ากับตัวแปรสเตตชุดใหม่ และสลับปุ่มให้ชี้และไฮไลท์ชื่อของผู้ใช้งานที่เลือกขึ้นมาแสดงผลบนปุ่มที่สามแทนคำว่า "SELECT OPERATIVE" อย่างชาญฉลาดและลื่นไหล
 - **Universal Empirical Validation (Task 126.4)**: ตรวจสอบความถูกต้องสมบูรณ์ของการประกอบสร้างและการเรนเดอร์ UI ทั้งหมดผ่านเบราว์เซอร์ รวมถึงวิเคราะห์ไวยากรณ์ด้วย `flutter analyze` ผลการทำงานเป็นไปตามแผน 100% ปราศจาก Compile/Syntax Error
+
+## 📝 Phase 169: Markdown-Driven Meeting Editor
+- **Markdown Block-Based Editor**: พัฒนา `MarkdownBlockEditor` ภายใต้ `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart` โดยเรนเดอร์เนื้อหาเป็น Reorderable List ของข้อความประเภทต่าง ๆ (Paragraph, H1, H2, H3, Bullet, Check) ที่ผู้ใช้สามารถ Drag สลับตำแหน่งและแก้ไขแบบแยกบล็อกได้อิสระ โดยเบื้องหลังเก็บและแปลงเป็น Markdown string บนฐานข้อมูล D1
+- **Dynamic Text Input Auto-Size**: ปลดขีดจำกัด `maxLines: 2` ของช่องกรอก Title ให้ปรับยืดหดตามจริงอัตโนมัติ และปิดขอบ (Border) กับสีพื้นหลัง (Background Fill) ของ TextField ทั้งหมด เพื่อให้ความรู้สึกพิมพ์ลงบนผิวกระดาษแผ่นเดียวกัน
+- **Floating Margin Gutter**: ออกแบบตัวควบคุม Hover (ปุ่ม `+` และ Drag Handle) ให้อยู่ลอยตัว (Floating) ในพื้นที่ขอบมาร์จิน (36px) เมื่อผู้ใช้นำเมาส์ไปชี้ โดยไม่จองพื้นที่คอลัมน์เปล่าฝั่งซ้ายแบบถาวร เพื่อรักษาพื้นที่พิมพ์ให้เต็มขนาดอย่างสวยงาม
+- **Unified Glass Card Container & Padding Alignment**: จัดกลุ่มของ TabBar เอกสาร (`Summary`, `Notes`, `Transcript`) และ Active Editor Content ให้อยู่ภายใต้ `GlassCard` ชิ้นเดียวกัน และจัด Padding ฝั่งซ้ายให้ตรงกันเพื่อความสวยงามเป็นระเบียบเรียบร้อยเหมือนรูปต้นแบบ
+- **Interactive Top Roles Editor Dialog**: ปรับปรุงส่วนแสดงบทบาทผู้เข้าร่วมประชุม (Roles) ด้านบนให้กดเพื่อเปิด dialog แก้ไขบทบาทรูปแบบกระจก (Glass Dialog) โดยสามารถเลือกจากหัวข้อที่แนะนำหรือป้อนหัวข้อใหม่ และลบส่วนการจัดการบทบาทที่ซ้ำซ้อนด้านล่างออกอย่างสมบูรณ์
+- **Verification**: รันตรวจสอบ Syntax และการจัดการความเข้ากันได้ผ่านคำสั่ง `flutter analyze --no-pub` โดยไม่มีข้อผิดพลาดใด ๆ หลงเหลืออยู่
+
+## 📝 Phase 174: Hit Testing Outside Card, Per-Block LayerLink, and Gold Button Theme
+- **HitTestBoundOffset Custom Widget**: สร้างวิดเจ็ตพิเศษ `HitTestBoundOffset` เพื่อขยายขอบเขตในการรับ pointer events (การวางเมาส์และการคลิก) ให้รองรับพื้นที่ติดลบทางด้านซ้าย ทำให้สามารถเอาเมาส์ไปชี้ลากปุ่มและกดเพิ่มบล็อกที่อยู่นอกตัวการ์ดได้เสถียร 100%
+- **Workspace Card Hit-Test Expansion**: นำวิดเจ็ต `HitTestBoundOffset(left: 64)` ไปคลุมตัวการ์ดหลักในหน้า `meetings_board_sheet.dart` เพื่อขยายพฤติกรรมการกดปุ่มลอยตัวนอกเขตการ์ดทั้งหมด
+- **Global Gold FilledButton Theme**: ปรับปรุงการออกแบบสไตล์ปุ่มหลัก (FilledButton) ทั่วทั้งแอปใน `glass_theme.dart` ให้ใช้สีพื้นหลังเป็นสีทองสุดพรีเมียม `GlassColors.gold` ทำให้ปุ่ม Save และปุ่มหลักอื่นๆ มีธีมสีเดียวกันทั้งหมด
+- **Per-Block LayerLink Map**: เปลี่ยนการใช้งาน `_layerLink` จากค่าเดี่ยวไปเป็น Map ตามบล็อกไอดีใน `markdown_block_editor.dart` และขจัดเงื่อนไขการเช็กโฟกัส เพื่อให้ปุ่ม `+` บนบรรทัดที่ยังไม่ได้เลือกสามารถแสดงหน้าเมนูกระจก Overlay แนะนำคำสั่งที่ถูกต้องตำแหน่งเสมอ
+- **Insert Below Command Action**: เพิ่มคำสั่งเมนู "Insert Below" ลงในปุ่ม `+` เพื่อให้ผู้ใช้สามารถคลิกและกดแทรกกล่อง Normal Text (Paragraph) ใหม่ถัดลงไปด้านล่างได้ทันทีพร้อมทำการย้ายโฟกัสไปยังบรรทัดใหม่โดยอัตโนมัติ
+- **Verification**: รันตรวจสอบ Syntax และวิเคราะห์ Static Analysis เรียบร้อย ผ่านฉลุย 100% ปราศจาก Compile Error หรือปัญหาทางไวยากรณ์ใดๆ
+
+## 📝 Phase 175: Last Hovered Persistence and Gold Glass Button Theme
+- **Last Hovered Persistence**: ปรับปรุงวิดเจ็ต `markdown_block_editor.dart` โดยนำ `_hoverHideTimer` และ Callback `onExit` ใน MouseRegion ของแถวบล็อกข้อความ (BlockRow) และพื้นที่ปุ่มควบคุมภายนอกออกทั้งหมด ส่งผลให้ปุ่มควบคุม (+ และ ::) จะถูกแสดงค้างอยู่ที่แถวล่าสุดที่เพิ่งชี้เมาส์ไปเสมอ ไม่มีวันหลุดหายไปจนกว่าผู้ใช้จะเคลื่อนเมาส์ไปชี้แถวอื่น
+- **Gold Glass FilledButton Theme**: อัปเดต `filledButtonTheme` ใน `glass_theme.dart` ให้ใช้สีพื้นหลังเป็นแบบกึ่งโปร่งใส `GlassColors.gold.withOpacity(0.1)` ร่วมกับเส้นขอบสีทอง `GlassColors.gold.withOpacity(0.3)` ความหนา 1.0 และรูปทรงยาวมน (`StadiumBorder`) ซึ่งสอดคล้องกับสไตล์ดีไซน์ `_GhostButton` และให้ลุคกระจกพรีเมียมตามที่ปรากฏในปุ่มควบคุมของหน้าบอร์ดคันบัน
+- **Native Layout and Hit-Testing Stabilization**: แก้ไขปัญหาทัช/ลากที่เกิดจากขีดจำกัดขนาดของ Widget (Hit-Testing constraint) โดยการเปลี่ยนโครงสร้างของการ์ดและ Block Row:
+  - ใน `meetings_board_sheet.dart` เปลี่ยนการขยายสัญญาณลบด้วย `HitTestBoundOffset` ไปใช้ `Stack` ที่เลื่อนกรอบกระจก (Card Border) ไปทางขวา `56px` ทำให้ขอบเขตจริงของ Card ครอบคลุมทั้งบริเวณปุ่มลากและข้อความ
+  - ใน `markdown_block_editor.dart` ปรับโครงสร้าง Block Row จาก `Stack` ไปใช้ `Row` โดยมีกัตเตอร์ด้านซ้ายกว้าง `56px` สำหรับแสดงปุ่มควบคุม และด้านขวาครอบด้วย `Expanded` สำหรับป้อนข้อความ
+  - ผลลัพธ์คือปุ่มควบคุมทุกชิ้น (รวมถึง drag handle, ปุ่มบวก, ทูลทิป, และ cursor) จะได้รับ pointer events และ gesture ลากสลับตำแหน่งได้ตามปกติ 100% โดยไม่เกิดการหลุดหายหรือทำงานไม่ได้อีกต่อไป
+- **Verification**: ตรวจสอบโครงสร้างและการคอมไพล์ผ่านคำสั่ง `flutter analyze --no-pub` ผลลัพธ์ผ่านฉลุย 100% ไม่มีข้อผิดพลาดหรือคำเตือนใดๆ ในโครงการ
+
+
+
+

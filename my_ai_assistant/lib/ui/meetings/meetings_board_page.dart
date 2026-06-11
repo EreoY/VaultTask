@@ -103,65 +103,48 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
           _buildNavBar(metaText: 'Board meetings'),
           const SizedBox(height: 18),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Meetings',
-                      style: GlassText.headlineLG().copyWith(
-                        fontSize: isMobile ? 34 : 42,
-                        fontWeight: FontWeight.w800,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        _pillToggle(
-                          label: 'All meetings',
-                          selected: _timeFilter == _MeetingsTimeFilter.all,
-                          onTap: () => setState(
-                            () => _timeFilter = _MeetingsTimeFilter.all,
-                          ),
-                        ),
-                        _pillToggle(
-                          label: 'Upcoming',
-                          selected: _timeFilter == _MeetingsTimeFilter.upcoming,
-                          onTap: () => setState(
-                            () => _timeFilter = _MeetingsTimeFilter.upcoming,
-                          ),
-                        ),
-                        _pillToggle(
-                          label: 'Past',
-                          selected: _timeFilter == _MeetingsTimeFilter.past,
-                          onTap: () => setState(
-                            () => _timeFilter = _MeetingsTimeFilter.past,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _iconAction(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: _exitToWorkspace,
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.85),
+                    iconSize: 20,
+                    onPressed: _exitToWorkspace,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
-                  _primaryAction(label: 'New meeting', onTap: _openCreateDraft),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Meetings',
+                    style: GlassText.headlineLG().copyWith(
+                      fontSize: isMobile ? 34 : 42,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                    ),
+                  ),
                 ],
               ),
+              const Spacer(),
+              if (!isMobile) ...[
+                _segmentedToggle(),
+                const SizedBox(width: 16),
+              ],
+              _primaryAction(label: 'New meeting', onTap: _openCreateDraft),
             ],
           ),
+          if (isMobile) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: _segmentedToggle(),
+              ),
+            ),
+          ],
           if (roleOptions.isNotEmpty) ...[
             const SizedBox(height: 18),
             SingleChildScrollView(
@@ -366,6 +349,68 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
     );
   }
 
+  Widget _segmentedToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: GlassColors.ghostBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _segmentedTab(
+            label: 'ALL MEETINGS',
+            selected: _timeFilter == _MeetingsTimeFilter.all,
+            onTap: () => setState(() => _timeFilter = _MeetingsTimeFilter.all),
+          ),
+          _segmentedTab(
+            label: 'UPCOMING',
+            selected: _timeFilter == _MeetingsTimeFilter.upcoming,
+            onTap: () => setState(() => _timeFilter = _MeetingsTimeFilter.upcoming),
+          ),
+          _segmentedTab(
+            label: 'PAST',
+            selected: _timeFilter == _MeetingsTimeFilter.past,
+            onTap: () => setState(() => _timeFilter = _MeetingsTimeFilter.past),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _segmentedTab({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? GlassColors.gold.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? GlassColors.gold.withOpacity(0.3) : Colors.transparent,
+            width: 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GlassText.labelSM().copyWith(
+            color: selected ? GlassColors.gold : GlassColors.onSurfaceVariant.withOpacity(0.6),
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 10.5,
+            letterSpacing: 0.8,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _roleSelector(String? role, String label) {
     final selected = _selectedRole == role;
     return InkWell(
@@ -431,6 +476,9 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   }
 
   List<_MeetingGroup> _groupMeetings(List<MeetingModel> meetings) {
+    final sortedMeetings = List<MeetingModel>.from(meetings)
+      ..sort((a, b) => b.startAt.compareTo(a.startAt));
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
@@ -438,7 +486,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
     final orderedLabels = <String>[];
     final grouped = <String, List<MeetingModel>>{};
 
-    for (final meeting in meetings) {
+    for (final meeting in sortedMeetings) {
       final date = DateTime(
         meeting.startAt.year,
         meeting.startAt.month,
@@ -523,7 +571,7 @@ class _MeetingSection extends StatelessWidget {
               color: GlassColors.onSurfaceVariant.withOpacity(0.76),
             ),
             Text(
-              label,
+              '$label (${meetings.length})',
               style: GlassText.bodyLG().copyWith(
                 fontWeight: FontWeight.w600,
                 color: GlassColors.onSurfaceVariant.withOpacity(0.9),
@@ -534,7 +582,7 @@ class _MeetingSection extends StatelessWidget {
         const SizedBox(height: 14),
         ...meetings.map((meeting) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 10, left: 20),
             child: InkWell(
               onTap: () => onTapMeeting(meeting),
               borderRadius: BorderRadius.circular(10),

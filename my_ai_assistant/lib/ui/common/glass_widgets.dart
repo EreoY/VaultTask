@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../theme/glass_theme.dart';
 
 /// Aether AI Refined Glassmorphism Widgets
@@ -499,6 +500,71 @@ class GlassNotifications {
 
     _currentEntry = entry;
     overlay.insert(entry);
+  }
+}
+
+class HitTestBoundOffset extends SingleChildRenderObjectWidget {
+  final double left;
+  final double right;
+  final double top;
+  final double bottom;
+
+  const HitTestBoundOffset({
+    super.key,
+    required super.child,
+    this.left = 0,
+    this.right = 0,
+    this.top = 0,
+    this.bottom = 0,
+  });
+
+  @override
+  RenderHitTestBoundOffset createRenderObject(BuildContext context) {
+    return RenderHitTestBoundOffset(left, right, top, bottom);
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, RenderHitTestBoundOffset renderObject) {
+    renderObject
+      ..left = left
+      ..right = right
+      ..top = top
+      ..bottom = bottom;
+  }
+}
+
+class RenderHitTestBoundOffset extends RenderProxyBox {
+  double left;
+  double right;
+  double top;
+  double bottom;
+
+  RenderHitTestBoundOffset(this.left, this.right, this.top, this.bottom);
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final Rect hitTestRect = Rect.fromLTRB(
+      -left,
+      -top,
+      size.width + right,
+      size.height + bottom,
+    );
+
+    if (hitTestRect.contains(position)) {
+      bool hitChild = false;
+      if (child != null) {
+        hitChild = result.addWithPaintOffset(
+          offset: Offset.zero,
+          position: position,
+          hitTest: (BoxHitTestResult result, Offset transformed) {
+            return child!.hitTest(result, position: transformed);
+          },
+        );
+      }
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
   }
 }
 

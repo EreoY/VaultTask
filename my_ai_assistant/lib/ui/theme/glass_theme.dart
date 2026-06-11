@@ -283,14 +283,19 @@ class GlassAppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: GlassColors.primary.withOpacity(0.92),
-          foregroundColor: Colors.white,
+          backgroundColor: GlassColors.gold.withOpacity(0.1),
+          foregroundColor: GlassColors.gold,
+          side: BorderSide(
+            color: GlassColors.gold.withOpacity(0.3),
+            width: 1.0,
+          ),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          textStyle: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w500),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+          textStyle: GlassText.bodyMD().copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.0,
           ),
+          shape: const StadiumBorder(),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(

@@ -1,4 +1,304 @@
+## Phase 176: Full-Width Card Restoration via DeferPointer
+
+> **Architecture Mandate:** คืนค่าบอร์ด Meeting Workspace Card ให้มีขนาดกว้างเต็มความกว้างปกติ (Full-Width) โดยใช้ระบบ DeferPointer ในการส่งต่อสัญญาณคลิก/โฮเวอร์ไปยังปุ่มเพิ่มและปุ่มลากสลับบล็อกที่อยู่เยื้องออกไปนอกขอบการ์ดทางด้านซ้าย (Left Gutter) เพื่อไม่ให้บีบพื้นที่ของเนื้อหาและรองรับการสั่งงานได้อย่างสมบูรณ์
+
+### Task 176.1: Register Phase 176 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 176
+
+### Task 176.2: Revert Card Container Border to Full Width
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เปลี่ยน Stack/Positioned ใน card layout คืนค่าให้เส้นขอบการ์ดชิดขอบการจัดวางปกติ (left: 0)
+
+### Task 176.3: Wrap Sheet Editor with DeferredPointerHandler
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ครอบ ScrollbarGutterFrame หรือ SingleChildScrollView ของเอดิเตอร์ด้วย DeferredPointerHandler
+
+### Task 176.4: Update MarkdownBlockEditor Row Layout and Wrap controls with DeferPointer
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ปรับแถวข้อความให้เต็มพื้นที่การ์ด จัดวางปุ่มเครื่องมือให้เยื้องออกซ้าย และครอบปุ่มด้วย DeferPointer
+
+### Task 176.5: Run static verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` เพื่อรับประกันความถูกต้อง
+
+## Phase 175: Last Hovered Persistence and Gold Glass Button Theme
+
+> **Architecture Mandate:** ปรับระบบ Hover ของบล็อกเอดิเตอร์ให้แสดงปุ่มควบคุมค้างที่บรรทัดล่าสุดที่เมาส์ชี้โดยไม่ซ่อนเมื่อเมาส์ออก (Last Hovered Persistence), ปรับรูปแบบ Card และ Block Row Layout ให้อยู่ในขอบเขตการรับสัญญาณปกติเพื่อแก้ไขปัญหา Hit-Testing, และปรับเปลี่ยน FilledButtonThemeData ในธีมกลางให้เป็นรูปแบบกึ่งโปร่งแสง ขอบทอง ทรง StadiumBorder ให้ตรงกับดีไซน์ Kanban
+
+### Task 175.1: Register Phase 175 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 175
+
+### Task 175.2: Remove hover hide logic and timer from block editor
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ลบ _hoverHideTimer และ callback onExit ใน MouseRegion ของ BlockRow ทั้ง 2 จุด
+
+### Task 175.3: Update FilledButton theme to semi-transparent gold outline style
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** ปรับปรุง FilledButtonThemeData ให้สอดคล้องกับสไตล์ _GhostButton (กึ่งโปร่งแสง ขอบทอง ทรง StadiumBorder)
+
+### Task 175.4: Refactor card container and block row structure for native hit-testing
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ปรับปรุงโครงสร้าง Stack/Row ให้ปุ่มควบคุมและพื้นที่ข้อความอยู่ภายในขอบเขตจริงของวิดเจ็ตพ่อ เพื่อให้สัญญาณการกด ลาก และ Hover ทูลทิปทำงานได้อย่างถูกต้อง
+
+### Task 175.5: Run static verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` เพื่อยืนยันความถูกต้องของโค้ด
+
+## Phase 174: Hit Testing Outside Card, Per-Block LayerLink, and Gold Button Theme
+
+> **Architecture Mandate:** ปรับขอบเขตการรับสัญญาณคลิก/โฮเวอร์ (Hit Testing) ออกไปทางซ้ายนอกตัวการ์ด, แก้ไขการเชื่อมโยง LayerLink ของเมนู Overlay แยกราย Block, และปรับสีปุ่ม FilledButton ในธีมกลางให้เป็นสีทอง (GlassColors.gold)
+
+### Task 174.1: Register Phase 174 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 174
+
+### Task 174.2: Create HitTestBoundOffset custom widget
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** สร้าง Widget สำหรับขยาย hit-test bounds ให้รองรับพิกัดติดลบ
+
+### Task 174.3: Wrap card Container with HitTestBoundOffset
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ห่อหุ้ม workspace card ด้วย HitTestBoundOffset เพื่อให้ส่งต่อสัญญาณเมาส์ไปนอกการ์ดได้
+
+### Task 174.4: Change FilledButton theme color to gold
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** เปลี่ยน FilledButtonThemeData ในธีมให้มีสีพื้นหลังเป็น GlassColors.gold
+
+### Task 174.5: Update block row MouseRegion and LayerLink mapping
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** หุ้ม MouseRegion ใน BlockRow ด้วย HitTestBoundOffset และใช้ LayerLink แยกชิ้นต่อ Block
+
+### Task 174.6: Add "Insert Below" menu item and action
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** เพิ่มปุ่มเมนู "Insert below" และพฤติกรรมการกดเพิ่ม Block ลงไปด้านล่าง
+
+### Task 174.7: Run static verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบความถูกต้องของโค้ด
+
+## Phase 173: Inline Drag Controls, Divider Repositioning & Padding Fix
+
+> **Architecture Mandate:** ปุ่มควบคุม Hover (+ / ::) ต้องอยู่ภายในขอบเขตการ์ด (inline Row) ไม่ยื่นออกนอก GlassCard เส้น Divider ต้องอยู่ใต้คำ "Meeting Workspace" ก่อน TabBar และ Padding ซ้ายต้องกลับสู่ระดับปกติที่สวยงาม
+
+### Task 173.1: Register Phase 173 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 173
+
+### Task 173.2: Rewrite _buildBlockRow to inline Row layout
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** เปลี่ยน Stack/Positioned เป็น Row inline ให้ปุ่มอยู่ภายในการ์ด และแก้ drag ให้ทำงานได้
+
+### Task 173.3: Move Divider above TabBar
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ย้าย Divider ไปอยู่ใต้ "Meeting Workspace" header ก่อน TabBar
+
+### Task 173.4: Reset paddings in tab, header, transcript
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** คืนค่า padding ซ้ายให้เป็นค่าที่เหมาะสม
+
+### Task 173.5: Run static verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub`
+
+## Phase 172: Drag & Drop Stability, Hover Button Sizing & Tooltips
+
+> **Architecture Mandate:** ระบบ Reordering (ลากสลับตำแหน่ง) ของ Markdown blocks ต้องมีความเสถียร ไม่หลุดร่วงหรือยกเลิกตัวเองระหว่างการลาก โดยปุ่มควบคุม Hover ทั้งหมดต้องมีขนาดที่พอเหมาะ คมชัด อ่านข้อมูล Tooltips แนะนำปุ่มได้ และมีเฟรมสถาปัตยกรรมขอบเขตความกว้างที่เหมาะสม
+
+### Task 172.1: Register Phase 172 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 172
+
+### Task 172.2: Add drag tracking state variables to MarkdownBlockEditor
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** เพิ่มตัวแปรแทร็ก `_draggingIndex` เพื่อตรวจสอบและล็อกค่าความโปร่งใสเป็น 1.0 ระหว่างลาก
+
+### Task 172.3: Re-engineer Visibility to Opacity to keep drag handle mounted
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** เปลี่ยนจาก `Visibility` เป็น `Opacity` เพื่อรักษาสถานะ Gesture ป้องกันการพังระหว่างลาก
+
+### Task 172.4: Scale up Add/Drag icon sizes and increase layout spacing
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ขยายขนาดปุ่ม Add เป็น `22x22` และไอคอน Drag เป็น `22px` พร้อมจัดระยะช่องไฟความกว้างใหม่
+
+### Task 172.5: Add Tooltips for Add and Drag handles
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ติดตั้ง `Tooltip` ครอบบนตัวควบคุมเพื่อบอกหน้าการทำงาน
+
+### Task 172.6: Run static verification `flutter analyze --no-pub`
+- **Status:** [x] Done
+- **Action:** รันการตรวจสอบ Static analyzer ของโปรเจกต์
+
+## Phase 171: Auto-Save, Tab Dividers & Drag Handle Stability
+
+> **Architecture Mandate:** ระบบจดบันทึกการประชุม (Meeting Workspace) ต้องมีความเป็นมืออาชีพ ลื่นไหล และข้อมูลปลอดภัยสูงสุด โดยตัวเหนี่ยวนำ Hover Drag Handle ต้องคงอยู่ไม่วูบวาบเมื่อเข้าใกล้และกดลากได้สะดวก แท็บเนื้อหาการประชุมมีเส้นขีดแบ่งระดับสายตา (Dividers) ที่สะท้อนเลย์เอาต์ Notion และการแก้ไขทั้งหมดต้องมีกลไกบันทึกอัติโนมัติ (Auto-Save) พร้อมสัญลักษณ์บอกสถานะที่ชัดเจน
+
+### Task 171.1: Register Phase 171 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 171
+
+### Task 171.2: Stabilize Hover Region and Expand Drag Handle Area
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ห่อหุ้มบล็อกด้วย Container โปร่งใสเพื่อให้การตรวจจับ Hover เสถียร เพิ่มขนาดไอคอนลากเป็น 18px พร้อม Cursor/Padding ลากแบบถนัดมือ
+
+### Task 171.3: Add Divider Under Tab Bar
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่มเส้นขีดแบ่งใต้ตัวเลือกแท็บการประชุม
+
+### Task 171.4: Implement Debounced Auto-Save Engine
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** พัฒนาตัวจับเวลา Debouncer บันทึกเนื้อหา (Summary, Notes, Transcript) ลนลง API/SQLite หลังพิมพ์แบบไม่มีสะดุด
+
+### Task 171.5: Build Premium Auto-Save Status UI
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** แสดงสถานะไอคอนเมฆบอกสถานะบันทึกเบื้องหลัง (Saving / Saved) ถัดจากปุ่ม Save
+
+### Task 171.6: Run Verification and Build Check
+- **Status:** [x] Done
+- **Action:** รันคำสั่งตรวจสอบและวิเคราะห์โค้ด Flutter
+
+## Phase 170: Meetings Layout & Roles Refinement
+
+> **Architecture Mandate:** หน้า Meeting Board UI ต้องมีระบบจัดการบทบาท (Roles) และโครงสร้างโน้ตการประชุมที่มีความลื่นไหล สะอาดตา และไม่บีบตัวพื้นที่ใช้งาน ตัวจัดตำแหน่ง Hover Handle ต้องอยู่ในรัศมีตรวจจับเมาส์เพื่อไม่ให้ดริฟต์ขณะจะคลิกลากสลับบล็อก และการควบคุมบทบาทต้องปรับแก้ไขลบได้โดยตรงจาก Chip ทันที
+
+### Task 170.1: Register Meetings Layout & Roles Refinement Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียน Phase 170 สำหรับการแก้ไขบั๊กตัวลาก บอร์ดโน้ต และระบบบทบาทประชุม
+
+### Task 170.2: Fix Hover Drag Handles Zones
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ปรับให้ `MouseRegion` คลุมพื้นที่ปุ่มเครื่องมือด้านซ้ายและแก้ไขพิกัดให้เป็นเชิงบวกในปุ่มเพื่อป้องกันการหายเมื่อชี้เมาส์
+
+### Task 170.3: Transparent Tab Card Container & Padding Optimization
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เปลี่ยน `GlassCard` เป็น `Container` ขอบแก้วแบบไม่มีสีพื้น และเปลี่ยน padding ซ้ายและขวาให้กว้างขึ้น
+
+### Task 170.4: Add Content Workspace Header
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่มป้ายกำกับและไอคอน "Meeting Workspace" เป็น Header ภายในบอร์ดเขียน
+
+### Task 170.5: Disable Title Field Text Background
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ปิดระบบ background ใน title input field ให้เป็นแบบโปร่งแสงร้อยเปอร์เซ็นต์
+
+### Task 170.6: Inline Interactive Roles Management
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่มปุ่มลบ `x` บน inline role tags และเพิ่มปุ่ม `+ Add` ท้ายสุดเพื่อเรียกเปิด Dialog แทนการทำงานแบบ static
+
+### Task 170.7: Redundancy Removal from Roles Dialog
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** นำส่วนแสดงรายการ Selected Roles ด้านล่างของ `_showRolesEditorDialog` ออก
+
+### Task 170.8: Ecosystem Code Verification
+- **Status:** [x] Done
+- **Action:** รันคำสั่ง `flutter analyze --no-pub` ตรวจสอบความถูกต้องของโค้ดทั้งหมด
+
+## Phase 169: Markdown-Driven Meeting Editor
+
+> **Architecture Mandate:** หน้า Meeting Board UI ต้องรองรับการกรอกและแก้ไขโน้ตการประชุมด้วยระบบ Block-Based Markdown Editor ที่เรียบง่าย สะอาด และลื่นไหล (Notion-style) โดยแต่ละบรรทัดที่แยกด้วย `\n` จะเป็นหนึ่งบล็อกที่ลากสลับตำแหน่งได้ผ่าน Drag Handle และแก้ไขแยกกันได้อย่างอิสระ ข้อมูลจะถูกเก็บเป็นไฟล์เดียวด้วย Markdown string บนฐานข้อมูลเดิม
+
+### Task 169.1: Register Markdown-Driven Meeting Editor Scope
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียน Phase 169 สำหรับระบบจัดเก็บและพัฒนาหน้าตาโน้ตประชุมแบบ Markdown Block Editor
+
+### Task 169.2: Implement Markdown Block Model and Parser
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** สร้างโมเดล MarkdownBlock พร้อม Parser และ Serializer ระหว่าง Markdown string และ Block List
+
+### Task 169.3: Develop MarkdownBlockRow Widget
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** สร้าง UI สำหรับบล็อกแต่ละแบบพร้อมระบบ Hover เพื่อแสดงปุ่มเครื่องมือ (+ และ ::) และเชื่อม TextField แบบไร้กรอบ
+
+### Task 169.4: Build Keyboard Interactions (Enter & Backspace Engine)
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** พัฒนาการแยกบล็อกเมื่อเคาะ Enter และการควบรวมบล็อกพร้อมลบเมื่อเคาะ Backspace รวมถึงการใช้ปุ่มลูกศรย้ายโฟกัส
+
+### Task 169.5: Support Slash Command Menu & Block Type Transformation
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** แสดงป๊อปอัพสำหรับเลือกและสลับชนิดของบล็อก (Heading, Subheading, Bullet, Checklist, Text) เมื่อป้อนตัวอักษร `/` หรือกดปุ่ม `+`
+
+### Task 169.6: Integrate Reorderable Drag-and-Drop
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** นำ Reorderable List มารับบล็อกและเชื่อมต่อ Drag Handle `::` ให้ลากสลับบรรทัดได้
+
+### Task 169.7: Refactor MeetingsBoardSheet to Use Block Editor
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เปลี่ยนการแก้ไข Notes และ Summary มาเป็น `MarkdownBlockEditor` และจัดเก็บเซฟลงฐานข้อมูล SQLite/D1
+
+### Task 169.8: Meeting Title Dynamic Wrap
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ปรับให้ช่องกรอก Title (`_buildTitleField`) ไม่มีข้อจำกัด `maxLines: 2` ให้รองรับการขึ้นบรรทัดใหม่ได้แบบไม่จำกัดและยืดหดตามจริง
+
+### Task 169.9: Clean Markdown Inputs (Background & Border-Free)
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ปรับให้ช่องป้อนข้อมูลมีพฤติกรรมใส ไม่มีขอบ และไม่มีพื้นหลังในบล็อกตัวอักษรทั้งหมด
+
+### Task 169.10: Floating Margin Gutter for Drag & Plus Buttons
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** ออกแบบการจัดวางตัวควบคุม Hover (ปุ่ม + และ Drag Handle) ให้อยู่ลอยตัวในระยะมาร์จิน (36px) แทนการจองขนาด Gutter ถาวร
+
+### Task 169.11: Align TabBar Padding & Card Containerization
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ปรับ Padding ของ `_buildTabBar` ให้ตรงแนวกับข้อความของบล็อก และครอบตัวเลือกแท็บพร้อมเนื้อหาด้วย `GlassCard` ชิ้นเดียวกัน
+
+### Task 169.12: Roles Editing dialog from Top & Redundancy Removal
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เปลี่ยน `_buildRolesInline` ให้คลิกเพื่อเปิด `_showRolesEditorDialog` ป๊อปอัปสไตล์กระจกเพื่อแก้ไข Roles และถอดส่วนล่างออก
+
+### Task 169.13: Code Quality Check and Verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` ตรวจสอบความถูกต้องและสไตล์โค้ดทั้งหมด
+
 ## Phase 168: Kanban Scrollbar Alignment & Consistent Card Width
+
 
 > **Architecture Mandate:** คอลัมน์คันบันต้องรักษาความสูงแบบยืดหดได้ตามจำนวนการ์ดจริง (dynamic height) แต่ขีดจำกัดสูงสุดต้องแบ่งตามโหมด (ปกติ: max 800px / Overview-Eagle eye: max 940px) โดยขนาดของการ์ดในทุกคอลัมน์ต้องกว้างเท่ากันเป๊ะและสมดุลตรงกลางเสมอ โดยการจองเลน Scrollbar คงที่ (ซ้าย 12px / ขวา 24px) ไม่ว่าจะเลื่อนหรือไม่ก็ตาม
 
@@ -4146,3 +4446,40 @@
 - **Status:** [x] Done
 - **Action:** รัน `dart format`, `flutter analyze --no-pub`, และตรวจ flow หลักของ meetings
 - **Why:** เพื่อยืนยันว่าโครงสร้างใหม่ไม่ทำให้ระบบหน้า board/calendar พัง
+
+## Phase 177: Meetings Workspace Refinements
+
+### Task 177.1: Add onDragStateChanged in MarkdownBlockEditor
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** เพิ่ม callback onDragStateChanged และครอบ drag handle ด้วย pointer Listener
+- **Why:** เพื่อให้เอดิเตอร์ส่งสัญญาณระดับสัมผัสเมื่อต้องการลากปรับตรรกะลำดับ
+
+### Task 177.2: Connect Scroll Physics in MeetingsBoardSheet
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** รับ callback onDragStateChanged และปิด scroll physics ของบอร์ดเมื่อมีการลาก
+- **Why:** เพื่อปลดล็อกให้ gesture drag-and-drop ชนะ vertical scroll view หลัก
+
+### Task 177.3: Reposition Back Button
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** ย้ายปุ่มย้อนกลับไปรวมด้านซ้ายของหัวข้อคำว่า Meetings
+- **Why:** จัดสัดส่วนการมองเห็นและทิศทางย้อนกลับให้ชัดเจนและสากลมากขึ้น
+
+### Task 177.4: Implement Segmented Toggle
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** สร้าง segmented toggle สีทองกึ่งโปร่งแสง และย้ายไปข้างขวาข้างปุ่มเพิ่มมีทติ่งใหม่
+- **Why:** เพื่อให้เข้ากับดีไซน์ Glass Gold และสัดส่วนที่กระชับ
+
+### Task 177.5: Order Meetings Descending and Add Hierarchy Indents
+- **Status:** [x] Done
+- **Target File:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** เรียงมีทติ่งล่าสุดขึ้นบนสุด, ระบุยอดจำนวนต่อท้ายวัน, และย่นการ์ดขวา 20px
+- **Why:** เพื่อให้ลำดับการดูเป็นปัจจุบันและอ่านง่ายแบ่งกลุ่มชัดเจน
+
+### Task 177.6: Verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` และทดสอบการทำวิถี
+- **Why:** ยืนยันว่าการแก้ไขทั้งหมดไม่กระทบกับคอมไพเลอร์และทำงานได้อย่างราบรื่น
