@@ -1,6 +1,6 @@
 name = "vaulttask-api-worker"
 main = "cloudflare_worker.js"
-compatibility_date = "2024-03-14"
+compatibility_date = "2026-04-16"
 account_id = "3cf3dea881cea4cdbe2aee3b5f2c8225"
 
 [[d1_databases]]

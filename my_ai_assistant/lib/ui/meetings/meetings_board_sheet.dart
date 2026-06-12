@@ -18,6 +18,8 @@ import '../common/glass_widgets.dart';
 import 'package:my_ai_assistant/ui/common/defer_pointer.dart';
 import '../theme/glass_theme.dart';
 import 'widgets/markdown_block_editor.dart';
+import '../../services/stt_stream_service.dart';
+import '../../config/env_config.dart';
 
 enum MeetingFilter { upcoming, all, past }
 
@@ -91,6 +93,10 @@ class MeetingsBoardSheet extends StatefulWidget {
 }
 
 class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
+  late final SttStreamService _sttService;
+  bool _includeMic = true;
+  bool _includeSystem = false;
+
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _notesController = TextEditingController();
@@ -115,6 +121,22 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
   void _onTitleChanged() {
     _scheduleAutoSave();
+  }
+
+  void _onSttServiceChanged() {
+    if (!mounted) return;
+    if (_sttService.isRecording) {
+      if (_selectedMeeting != null) {
+        final newTranscript = _sttService.getJsonTranscript();
+        setState(() {
+          _selectedMeeting = _selectedMeeting!.copyWith(
+            transcript: newTranscript,
+          );
+        });
+        _scheduleAutoSave();
+      }
+    }
+    setState(() {});
   }
 
   void _scheduleAutoSave() {
@@ -273,6 +295,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   @override
   void initState() {
     super.initState();
+    _sttService = SttStreamService();
+    _sttService.addListener(_onSttServiceChanged);
     _titleController.addListener(_onTitleChanged);
     _ensureDraftInitialized();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -300,6 +324,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
   @override
   void dispose() {
+    _sttService.removeListener(_onSttServiceChanged);
+    _sttService.stopSession();
+    _sttService.dispose();
     _titleController.removeListener(_onTitleChanged);
     _autoSaveTimer?.cancel();
     _titleController.dispose();
@@ -339,6 +366,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       _activeTab = _MeetingDocTab.summary;
       _autoSaveStatus = null;
     });
+    _sttService.loadExistingTranscript(meeting.transcript);
     _isSuppressingAutoSave = false;
   }
 
@@ -356,6 +384,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       _activeTab = _MeetingDocTab.summary;
       _autoSaveStatus = null;
     });
+    _sttService.clearSession();
     _isSuppressingAutoSave = false;
   }
 
@@ -1339,44 +1368,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
           },
         );
       case _MeetingDocTab.transcript:
-        final transcript = _selectedMeeting?.transcript.trim() ?? '';
-        if (transcript.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(left: 4, right: 4),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: GlassColors.outlineVariant.withOpacity(0.12),
-                ),
-              ),
-              child: Text(
-                'No transcript yet',
-                style: GlassText.bodyMD().copyWith(
-                  color: GlassColors.onSurfaceVariant.withOpacity(0.45),
-                ),
-              ),
-            ),
-          );
-        }
         return Padding(
           padding: const EdgeInsets.only(left: 4, right: 4),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: GlassColors.outlineVariant.withOpacity(0.12),
-              ),
-            ),
-            child: Text(
-              transcript,
-              style: GlassText.bodyMD().copyWith(height: 1.55),
-            ),
-          ),
+          child: _buildTranscriptPane(),
         );
     }
   }
@@ -1608,4 +1602,358 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       ),
     );
   }
+
+  Widget _buildTranscriptPane() {
+    if (_selectedMeeting == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: GlassColors.surface.withOpacity(0.05),
+            border: Border.all(
+              color: GlassColors.outlineVariant.withOpacity(0.12),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: GlassColors.onSurfaceVariant.withOpacity(0.4),
+                size: 28,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Please name and save this meeting first to enable live transcription.',
+                textAlign: TextAlign.center,
+                style: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.65),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final utterances = _sttService.utterances;
+    final interim = _sttService.interimUtterance;
+    final isRecording = _sttService.isRecording;
+    final errorMsg = _sttService.errorMessage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSttControls(),
+        if (errorMsg != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    errorMsg,
+                    style: GlassText.secondary().copyWith(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (utterances.isEmpty && interim == null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: GlassColors.outlineVariant.withOpacity(0.12),
+              ),
+            ),
+            child: Text(
+              'No transcript yet. Press "Start Live Transcription" to begin recording.',
+              style: GlassText.bodyMD().copyWith(
+                color: GlassColors.onSurfaceVariant.withOpacity(0.45),
+              ),
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: GlassColors.surface.withOpacity(0.03),
+              border: Border.all(
+                color: GlassColors.outlineVariant.withOpacity(0.12),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...utterances.map((u) => _buildUtteranceBlock(u, false)),
+                if (interim != null) _buildUtteranceBlock(interim, true),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSttControls() {
+    final isRecording = _sttService.isRecording;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: GlassColors.surface.withOpacity(0.05),
+        border: Border.all(
+          color: GlassColors.outlineVariant.withOpacity(0.12),
+        ),
+      ),
+      child: Row(
+        children: [
+          if (!isRecording) ...[
+            _buildSourceToggle(
+              label: 'Microphone',
+              icon: Icons.mic,
+              value: _includeMic,
+              onChanged: (val) {
+                setState(() => _includeMic = val);
+              },
+            ),
+            const SizedBox(width: 12),
+            _buildSourceToggle(
+              label: 'System Audio',
+              icon: Icons.screen_share,
+              value: _includeSystem,
+              onChanged: (val) {
+                setState(() => _includeSystem = val);
+              },
+            ),
+          ] else ...[
+            const _PulsingRecordDot(),
+            const SizedBox(width: 8),
+            Text(
+              'Recording live...',
+              style: GlassText.bodyMD().copyWith(
+                color: GlassColors.gold,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const Spacer(),
+          if (!isRecording)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: GlassColors.gold,
+                foregroundColor: Colors.black,
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              icon: const Icon(Icons.play_arrow_rounded, size: 20),
+              label: Text(
+                'Start Live Transcription',
+                style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                _sttService.startSession(
+                  backendBaseUrl: EnvConfig.backendUrl,
+                  includeMic: _includeMic,
+                  includeSystem: _includeSystem,
+                );
+              },
+            )
+          else
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent.withOpacity(0.8),
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              icon: const Icon(Icons.stop_rounded, size: 20),
+              label: Text(
+                'Stop Transcription',
+                style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                _sttService.stopSession();
+                _saveMeeting();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSourceToggle({
+    required String label,
+    required IconData icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          color: value ? GlassColors.gold.withOpacity(0.15) : Colors.transparent,
+          border: Border.all(
+            color: value ? GlassColors.gold.withOpacity(0.5) : GlassColors.outlineVariant.withOpacity(0.12),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: value ? GlassColors.gold : GlassColors.onSurfaceVariant.withOpacity(0.6),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GlassText.secondary().copyWith(
+                color: value ? GlassColors.gold : GlassColors.onSurfaceVariant,
+                fontWeight: value ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUtteranceBlock(SpeakerUtterance utterance, bool isInterim) {
+    final colors = [
+      GlassColors.gold,
+      Colors.purpleAccent,
+      Colors.tealAccent,
+      Colors.lightBlueAccent,
+      Colors.orangeAccent,
+      Colors.pinkAccent,
+    ];
+
+    final speakerColor = colors[utterance.speaker % colors.length];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: speakerColor.withOpacity(0.12),
+                  border: Border.all(
+                    color: speakerColor.withOpacity(0.4),
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(
+                  'Speaker ${utterance.speaker}',
+                  style: GlassText.labelSM().copyWith(
+                    color: speakerColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (isInterim)
+                Text(
+                  'typing...',
+                  style: GlassText.secondary().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.35),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              utterance.text,
+              style: GlassText.bodyMD().copyWith(
+                color: isInterim ? GlassColors.onSurfaceVariant.withOpacity(0.5) : GlassColors.onSurface,
+                fontStyle: isInterim ? FontStyle.italic : null,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+class _PulsingRecordDot extends StatefulWidget {
+  const _PulsingRecordDot();
+
+  @override
+  __PulsingRecordDotState createState() => __PulsingRecordDotState();
+}
+
+class __PulsingRecordDotState extends State<_PulsingRecordDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.redAccent.withOpacity(0.3 + 0.7 * _controller.value),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.redAccent.withOpacity(0.4 * _controller.value),
+                blurRadius: 6,
+                spreadRadius: 2,
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+

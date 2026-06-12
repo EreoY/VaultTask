@@ -32,6 +32,10 @@ for port in 8787 8788 8789; do
 done
 sleep 1
 
+# Generate local secret variables dynamically
+echo "DEEPGRAM_API_KEY=\"5ad0ebfddedec0b349c567dc7625bef97ad6f3a2\"" > .dev.vars
+echo "OPENROUTER_API_KEY=\"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\"" >> .dev.vars
+
 npx wrangler dev --port 8787 &
 BACKEND_PID=$!
 cd ..

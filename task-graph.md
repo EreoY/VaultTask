@@ -4483,3 +4483,74 @@
 - **Status:** [x] Done
 - **Action:** รัน `flutter analyze --no-pub` และทดสอบการทำวิถี
 - **Why:** ยืนยันว่าการแก้ไขทั้งหมดไม่กระทบกับคอมไพเลอร์และทำงานได้อย่างราบรื่น
+
+## Phase 178: Real-Time Deepgram STT Integration
+
+### Task 178.1: Register Phase 178 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 178
+- **Why:** เพื่อบันทึกประวัติการพัฒนาและโครงสร้างงานทั้งหมดในกราฟ
+
+### Task 178.2: Implement Secure WebSocket Proxy
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** เพิ่ม endpoint /api/meetings/stream-stt เพื่อทำการสร้าง outbound websocket proxy ไปยัง Deepgram
+- **Why:** เพื่อเชื่อมต่อกับ Deepgram อย่างปลอดภัยโดยไม่เปิดเผย API Key ให้ฝั่งเบราว์เซอร์รับรู้
+
+### Task 178.3: Create JavaScript Web Audio Mixer
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/web/audio_recorder.js`
+- **Action:** เขียนสคริปต์ JavaScript ในโฟลเดอร์ web เพื่อดึงสัญญาณและมิกซ์เสียง Mic + System
+- **Why:** เป็นส่วนติดต่อกับ API ของเบราว์เซอร์ในการจับและผสมคลื่นสัญญาณเสียง
+
+### Task 178.4: Implement JS-Interop Interface
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/services/web_audio_service.dart`
+- **Action:** สร้าง Dart interop service เพื่อแมพคำสั่งไปเรียกใช้โค้ดมิกซ์เสียงของ JavaScript
+- **Why:** ทำให้โค้ดฝั่ง Dart สามารถสั่งงานจับและบันทึกสัญญาณเสียงจากเว็บบอร์ดได้โดยตรง
+
+### Task 178.5: Implement Live STT Stream Service
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/services/stt_stream_service.dart`
+- **Action:** สร้างคลาสจัดการการสื่อสารผ่าน WebSocket สตรีมเสียงออกและรับผลการถอดความกลับมาอัปเดตหน้าจอ
+- **Why:** เพื่อจัดการวงจรชีวิตของการแปลเสียงพูดสดแบบเรียลไทม์
+
+### Task 178.6: Enhance Meetings Board Sheet UI
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** อัปเกรดหน้า UI Transcript ให้มีปุ่มสตรีมสด ตัวเลือกอุปกรณ์ และการแสดงข้อความแยกตามผู้พูดเรียลไทม์พร้อมปุ่มบันทึก Auto-Save
+- **Why:** ให้ผู้ใช้ปลายทางใช้งานฟีเจอร์การถอดความแยกประเภทและเข้าถึงคำแปลได้อย่างสะดวกสบาย
+
+### Task 178.7: Verification
+- **Status:** [x] Done
+- **Action:** รัน `flutter analyze --no-pub` และทดสอบฟังก์ชันทั้งหมด
+- **Why:** รับประกันความเรียบร้อย ไร้ปัญหาคอมไพเลอร์ และพร้อมทำงานเสถียรบนเบราว์เซอร์
+
+## Phase 179: Deepgram Real-Time STT Stabilization
+
+### Task 179.1: Register Phase 179 in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** เพิ่มเฟส 179 สำหรับกระบวนการความเสถียรของระบบแปลภาษาเรียลไทม์
+- **Why:** เพื่อควบคุมเวอร์ชันและติดตามผลความก้าวหน้าตาม SOP V2
+
+### Task 179.2: Refactor WebSocket Proxy logic in cloudflare_worker.js
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** แก้ไขโครงสร้างการควบคุมสถานะ WebSocket แทนที่ readyState ด้วยตัวแปร boolean clientClosed/deepgramClosed และล้างความเสี่ยงการปิดดับด้วย try/catch ครอบคลุมทั้งหมด
+- **Why:** ป้องกัน Worker ดับกลางครันและหลีกเลี่ยง error workerd/io/io-context.c++ เมื่อปิดเซสชัน
+
+### Task 179.3: Restart the local Wrangler backend
+- **Status:** [x] Done
+- **Target Files:** ไม่มี (งานระบบ)
+- **Action:** รีสตาร์ท wrangler backend เพื่ออัปเดตโค้ดของ API Proxy ให้ทำงานจริง
+- **Why:** เพื่อให้สามารถทดสอบฟีเจอร์ STT Proxy ที่เพิ่งอัปเดตได้
+
+### Task 179.4: Verify E2E speech capture, Thai transcription accuracy, and clean session closure
+- **Status:** [x] Done
+- **Target Files:** ไม่มี (การทดสอบ)
+- **Action:** ตรวจทานความเสถียรแบบ E2E ทั้งภาษาไทย และการจบเซสชันโดยไม่เกิด runtime hang
+- **Why:** รับประกันความสมบูรณ์แบบ 100% ตามมาตรฐานโปรดักชัน
+
+

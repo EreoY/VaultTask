@@ -5,6 +5,7 @@
 auth.json
 secrets.json
 keys/
+.dev.vars
 
 # Cloudflare Wrangler
 .wrangler/
