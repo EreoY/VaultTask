@@ -403,6 +403,124 @@ class ApiCloudflare {
     }
   }
 
+  /// Generalized media upload (audio / video / arbitrary mime) that reuses the
+  /// same `/api/upload` multipart pipeline as [uploadImage] but stores under a
+  /// meetings-friendly [path] and uses a longer timeout for larger media.
+  ///
+  /// Returns the parsed `{ url, key, ... }` JSON. The resulting public R2 URL
+  /// is what Deepgram fetches in URL-mode transcription.
+  static Future<Map<String, dynamic>> uploadMeetingMedia(
+    List<int> bytes,
+    String filename, {
+    String mimeType = 'application/octet-stream',
+    String path = 'meetings',
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final uri = Uri.parse('$_base/api/upload');
+    final request = http.MultipartRequest('POST', uri);
+    request.fields['uid'] = user.uid;
+    request.fields['folder'] = path;
+    // Carry the real container mime so the backend can identify the media.
+    request.fields['mime'] = mimeType;
+    request.files.add(
+      http.MultipartFile.fromBytes('file', bytes, filename: filename),
+    );
+
+    try {
+      // Larger A/V payloads → allow a generous upload window.
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 180),
+      );
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['url'] != null &&
+            !(data['url'] as String).startsWith('http')) {
+          data['url'] = '$_base${data['url']}';
+        }
+        return data;
+      } else {
+        throw Exception(
+          'Failed to upload media (${response.statusCode}): ${response.body}',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Transcribe a meeting media file via the worker's Deepgram pre-recorded
+  /// proxy. Supports two modes (the worker auto-detects which one):
+  ///
+  /// * URL mode — pass [url] (the public R2 URL from [uploadMeetingMedia]).
+  ///   The body is JSON; Deepgram fetches the media directly so large files
+  ///   never stream through the worker.
+  /// * Bytes mode — pass raw [bytes] with the proper [mimeType]. The bytes are
+  ///   POSTed as the raw (non-JSON) request body so the worker auto-detects
+  ///   bytes mode and forwards them straight to Deepgram. Required for large
+  ///   local files that do not have a public URL yet.
+  ///
+  /// Exactly one of [url] / [bytes] must be provided.
+  ///
+  /// Returns the decoded response JSON `{ success, mode, result }` where
+  /// `result` is the full Deepgram pre-recorded payload.
+  Future<Map<String, dynamic>> transcribeMeetingFile({
+    String? url,
+    List<int>? bytes,
+    String mimeType = 'application/octet-stream',
+    String language = 'th',
+    String? meetingId,
+  }) async {
+    // Exactly one source: either a public URL OR raw bytes — never both/neither.
+    assert(
+      (url == null) != (bytes == null),
+      'transcribeMeetingFile requires exactly one of `url` or `bytes`',
+    );
+
+    final http.Response response;
+    if (bytes != null) {
+      // ── Bytes mode ────────────────────────────────────────────────
+      // Raw (non-JSON) body → worker auto-detects bytes mode and streams the
+      // media straight to Deepgram. Language/meetingId travel as query params.
+      final endpoint =
+          '$_base/api/meetings/transcribe-file'
+          '?language=$language&meetingId=${meetingId ?? ''}';
+      response = await http
+          .post(
+            Uri.parse(endpoint),
+            headers: {'Content-Type': mimeType},
+            body: bytes,
+          )
+          // Uploading + transcribing long media can take a while.
+          .timeout(const Duration(seconds: 180));
+    } else {
+      // ── URL mode ──────────────────────────────────────────────────
+      // JSON body → worker auto-detects URL mode and lets Deepgram fetch R2.
+      final endpoint = '$_base/api/meetings/transcribe-file';
+      response = await http
+          .post(
+            Uri.parse(endpoint),
+            headers: _headers,
+            body: jsonEncode({
+              'url': url,
+              'language': language,
+              'meetingId': ?meetingId,
+            }),
+          )
+          // Pre-recorded transcription of long media can take a while.
+          .timeout(const Duration(seconds: 180));
+    }
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception(
+      'Failed to transcribe meeting file (${response.statusCode}): ${response.body}',
+    );
+  }
+
   static Future<String> generateAiDescription(
     List<int> imageBytes,
     String mimeType,

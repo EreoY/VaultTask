@@ -791,6 +791,110 @@ export default {
       }
     }
 
+    // MEETING TRANSCRIBE (Deepgram pre-recorded) ──────────────
+    // POST /api/meetings/transcribe-file  (DEEPGRAM_API_KEY never leaves the worker)
+    //  • URL mode   (PRIMARY, large files): Content-Type: application/json
+    //                body { url, language, meetingId } → Deepgram fetches R2 itself.
+    //  • bytes mode (SECONDARY, small/local): Content-Type: <audio|video mime>
+    //                raw binary body, ?language=&meetingId= → worker forwards bytes.
+    if (url.pathname === "/api/meetings/transcribe-file" && request.method === "POST") {
+      const reqContentType = request.headers.get("content-type") || "";
+      const isUrlMode = reqContentType.includes("application/json");
+      // bytes-mode guard: keep well under the worker ~100MB request-body cap.
+      const MAX_BYTES = 90 * 1024 * 1024;
+
+      try {
+        let language = url.searchParams.get("language") || "th";
+        let meetingId = url.searchParams.get("meetingId") || "";
+        let deepgramBody;
+        let deepgramContentType;
+        let logUrl = "";
+        let logSize = 0;
+
+        if (isUrlMode) {
+          let payload;
+          try {
+            payload = await request.json();
+          } catch (e) {
+            console.error("[Meeting][Transcribe][Error] Invalid JSON body:", e.message);
+            return json({ success: false, error: "Invalid JSON body" }, 400);
+          }
+          const mediaUrl = payload && payload.url;
+          if (!mediaUrl) {
+            return json({ success: false, error: "Missing url" }, 400);
+          }
+          language = payload.language || language;
+          meetingId = payload.meetingId || meetingId;
+          logUrl = mediaUrl;
+          deepgramContentType = "application/json";
+          deepgramBody = JSON.stringify({ url: mediaUrl });
+          console.log(`[Meeting][Transcribe] mode=url meetingId=${meetingId} language=${language} url=${logUrl}`);
+        } else {
+          const buffer = await request.arrayBuffer();
+          logSize = buffer.byteLength;
+          if (logSize === 0) {
+            return json({ success: false, error: "Missing audio body" }, 400);
+          }
+          if (logSize > MAX_BYTES) {
+            console.error(`[Meeting][Transcribe][Error] bytes-mode oversized size=${logSize} limit=${MAX_BYTES}`);
+            return json({ success: false, error: "File exceeds bytes-mode limit; use URL mode" }, 413);
+          }
+          deepgramContentType = reqContentType || "application/octet-stream";
+          deepgramBody = buffer;
+          console.log(`[Meeting][Transcribe] mode=bytes meetingId=${meetingId} language=${language} size=${logSize} contentType=${deepgramContentType}`);
+        }
+
+        const deepgramUrl =
+          `https://api.deepgram.com/v1/listen?model=nova-3&language=${encodeURIComponent(language || "th")}` +
+          `&diarize=true&utterances=true&punctuate=true&smart_format=true`;
+
+        const dgStart = Date.now();
+        let dgResponse;
+        try {
+          dgResponse = await fetch(deepgramUrl, {
+            method: "POST",
+            headers: {
+              "Authorization": `Token ${env.DEEPGRAM_API_KEY || ""}`,
+              "Content-Type": deepgramContentType,
+            },
+            body: deepgramBody,
+          });
+        } catch (err) {
+          console.error(`[Meeting][Transcribe][Error] Deepgram fetch failed: ${err.message}`);
+          return json({ success: false, error: "Deepgram request failed: " + err.message }, 502);
+        }
+
+        const elapsedMs = Date.now() - dgStart;
+
+        if (!dgResponse.ok) {
+          const errBody = await dgResponse.text().catch(() => "no body");
+          console.error(`[Meeting][Transcribe][Error] Deepgram status=${dgResponse.status} elapsedMs=${elapsedMs} body=${errBody}`);
+          return json({ success: false, error: `Deepgram failed: ${dgResponse.status} ${errBody}` }, 502);
+        }
+
+        const result = await dgResponse.json();
+        // High-verbosity success log — duration is the billing basis (cost proxy); API key never logged.
+        const meta = (result && result.metadata) || {};
+        const audioDuration = meta.duration != null ? meta.duration : "n/a";
+        const channelCount = meta.channels != null ? meta.channels : "n/a";
+        const requestId = meta.request_id || "n/a";
+        const utteranceCount =
+          result && result.results && Array.isArray(result.results.utterances)
+            ? result.results.utterances.length
+            : 0;
+        console.log(
+          `[Meeting][Transcribe] success mode=${isUrlMode ? "url" : "bytes"} elapsedMs=${elapsedMs} ` +
+          `audioDuration=${audioDuration}s channels=${channelCount} utterances=${utteranceCount} requestId=${requestId}` +
+          `${logUrl ? ` url=${logUrl}` : ""}${logSize ? ` size=${logSize}` : ""}`,
+        );
+
+        return json({ success: true, mode: isUrlMode ? "url" : "bytes", result });
+      } catch (err) {
+        console.error(`[Meeting][Transcribe][Error] Unexpected: ${err.message}`);
+        return json({ success: false, error: err.message }, 500);
+      }
+    }
+
     // TASKS ──────────────────────────────────
     if (url.pathname === "/api/tasks" && request.method === "GET") {
       try {
@@ -1244,7 +1348,10 @@ export default {
           model: actualModel,
           messages: normalizedMessages,
           tools: (tools && tools.length > 0) ? tools : undefined,
-          stream: stream
+          stream: stream,
+          // [AI CHAT] Defense-in-depth: ask OpenRouter/model to omit reasoning
+          // entirely so harmony/channel "thought" markers never reach client.
+          reasoning: { exclude: true }
         };
 
         console.log(`🤖 [AI CHAT] Forwarding to OpenRouter (Model: ${actualModel})`);
@@ -1310,7 +1417,7 @@ export default {
                 assistant_message_id,
                 session_id,
                 responseText,
-                choice.reasoning || "",
+                "", // [Database] reasoning intentionally NOT stored (stripped at source)
                 0, // is_user = false
                 0, // has_draft = false
                 "", // pending_call = empty

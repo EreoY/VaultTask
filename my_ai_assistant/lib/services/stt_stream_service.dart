@@ -236,4 +236,131 @@ class SttStreamService extends ChangeNotifier {
       debugPrint("Error parsing transcript JSON: $e");
     }
   }
+
+  /// Ingests a Deepgram *pre-recorded* result (from an uploaded audio/video
+  /// file) into the same [SpeakerUtterance] model used by the live stream, so
+  /// downstream [getJsonTranscript] / autosave / rendering work unchanged.
+  ///
+  /// Reads `results.utterances[]` (present when `utterances=true`). Falls back
+  /// to `results.channels[0].alternatives[0]` (word-grouping, then the plain
+  /// transcript string) when utterances are absent.
+  ///
+  /// When [replace] is true the existing utterances are cleared first;
+  /// otherwise the parsed utterances are appended (default — an uploaded file's
+  /// diarization indices are per-source and may not align with prior live
+  /// utterances). Returns the newly parsed utterances.
+  List<SpeakerUtterance> ingestPrerecordedResult(
+    Map<String, dynamic> deepgramJson, {
+    bool replace = false,
+  }) {
+    final parsed = _utterancesFromPrerecorded(deepgramJson);
+    if (replace) {
+      _utterances.clear();
+    }
+    _utterances.addAll(parsed);
+    _interimUtterance = null;
+    notifyListeners();
+    return List.unmodifiable(parsed);
+  }
+
+  /// Pure (no side-effect) converter from a Deepgram pre-recorded JSON map to a
+  /// list of [SpeakerUtterance]. Timing is folded into [SpeakerUtterance.timestamp]
+  /// via `base + start` so chronological order is preserved without any model
+  /// change. Unit-testable in isolation.
+  List<SpeakerUtterance> _utterancesFromPrerecorded(
+    Map<String, dynamic> json, {
+    DateTime? base,
+  }) {
+    final DateTime baseTime = base ?? DateTime.now();
+    final List<SpeakerUtterance> out = [];
+
+    final results = json['results'];
+    if (results is! Map) return out;
+
+    // Primary source: results.utterances[]
+    final utterances = results['utterances'];
+    if (utterances is List && utterances.isNotEmpty) {
+      for (final u in utterances) {
+        if (u is! Map) continue;
+        final int speaker = (u['speaker'] as num?)?.toInt() ?? 0;
+        final String text = ((u['transcript'] as String?) ?? '').trim();
+        if (text.isEmpty) continue;
+        final double startSec = (u['start'] as num?)?.toDouble() ?? 0.0;
+        out.add(SpeakerUtterance(
+          speaker: speaker,
+          text: text,
+          timestamp:
+              baseTime.add(Duration(milliseconds: (startSec * 1000).round())),
+        ));
+      }
+      if (out.isNotEmpty) return out;
+    }
+
+    // Fallback: results.channels[0].alternatives[0]
+    final channels = results['channels'];
+    if (channels is List && channels.isNotEmpty) {
+      final ch = channels[0];
+      final alts = (ch is Map) ? ch['alternatives'] : null;
+      if (alts is List && alts.isNotEmpty) {
+        final alt = alts[0];
+        if (alt is Map) {
+          // Fallback A: word-level grouping (mirrors the live algorithm).
+          final words = alt['words'];
+          if (words is List && words.isNotEmpty) {
+            int? currentSpeaker;
+            double groupStart = 0.0;
+            List<String> currentWords = [];
+
+            void flush() {
+              if (currentSpeaker != null && currentWords.isNotEmpty) {
+                out.add(SpeakerUtterance(
+                  speaker: currentSpeaker,
+                  text: currentWords.join(' '),
+                  timestamp: baseTime
+                      .add(Duration(milliseconds: (groupStart * 1000).round())),
+                ));
+              }
+            }
+
+            for (final w in words) {
+              if (w is! Map) continue;
+              final int speaker = (w['speaker'] as num?)?.toInt() ?? 0;
+              final String wordText = (w['punctuated_word'] as String?) ??
+                  (w['word'] as String?) ??
+                  '';
+              final double wStart = (w['start'] as num?)?.toDouble() ?? 0.0;
+
+              if (currentSpeaker == null) {
+                currentSpeaker = speaker;
+                groupStart = wStart;
+                currentWords = [wordText];
+              } else if (currentSpeaker == speaker) {
+                currentWords.add(wordText);
+              } else {
+                flush();
+                currentSpeaker = speaker;
+                groupStart = wStart;
+                currentWords = [wordText];
+              }
+            }
+            flush();
+            if (out.isNotEmpty) return out;
+          }
+
+          // Fallback B: the plain transcript string as a single utterance.
+          final String transcript =
+              ((alt['transcript'] as String?) ?? '').trim();
+          if (transcript.isNotEmpty) {
+            out.add(SpeakerUtterance(
+              speaker: 0,
+              text: transcript,
+              timestamp: baseTime,
+            ));
+          }
+        }
+      }
+    }
+
+    return out;
+  }
 }

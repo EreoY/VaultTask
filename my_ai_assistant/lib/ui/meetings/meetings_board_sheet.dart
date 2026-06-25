@@ -19,6 +19,7 @@ import 'package:my_ai_assistant/ui/common/defer_pointer.dart';
 import '../theme/glass_theme.dart';
 import 'widgets/markdown_block_editor.dart';
 import '../../services/stt_stream_service.dart';
+import '../../services/meeting_transcription_service.dart';
 import '../../config/env_config.dart';
 
 enum MeetingFilter { upcoming, all, past }
@@ -112,6 +113,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   List<Map<String, String>> _attachments = [];
   bool _isSaving = false;
   bool _isUploading = false;
+  bool _isTranscribing = false;
+  String? _transcribeStatus; // 'Uploading...', 'Transcribing...', etc.
   bool _draftInitialized = false;
 
   Timer? _autoSaveTimer;
@@ -1724,8 +1727,12 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
           color: GlassColors.outlineVariant.withOpacity(0.12),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Row(
+            children: [
           if (!isRecording) ...[
             _buildSourceToggle(
               label: 'Microphone',
@@ -1795,9 +1802,159 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                 _saveMeeting();
               },
             ),
+          ],
+          ),
+          if (!isRecording) _buildUploadTranscribeSection(),
         ],
       ),
     );
+  }
+
+  Widget _buildUploadTranscribeSection() {
+    final busy = _isTranscribing;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: GlassColors.gold,
+              side: BorderSide(color: GlassColors.gold.withOpacity(0.5)),
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+            ),
+            icon: busy
+                ? SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.6,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        GlassColors.gold,
+                      ),
+                    ),
+                  )
+                : const Icon(Icons.upload_file_rounded, size: 18),
+            label: Text(
+              busy
+                  ? (_transcribeStatus ?? 'Processing...')
+                  : 'Upload audio/video',
+              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+            ),
+            onPressed: busy ? null : _handleUploadTranscribe,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Transcribe an existing recording into this meeting.',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GlassText.secondary().copyWith(
+                color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleUploadTranscribe() async {
+    if (_sttService.isRecording || _isTranscribing) return;
+    if (_selectedMeeting == null) {
+      GlassNotifications.show(
+        context,
+        'Please save the meeting before transcribing a file.',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() {
+      _isTranscribing = true;
+      _transcribeStatus = 'Preparing...';
+    });
+
+    try {
+      final result = await MeetingTranscriptionService.pickAndTranscribe(
+        meetingId: _selectedMeeting!.id,
+        sttService: _sttService,
+        onProgress: (stage, {message}) {
+          if (!mounted) return;
+          setState(() => _transcribeStatus = message ?? _stageLabel(stage));
+        },
+      );
+
+      if (!mounted) return;
+
+      // User cancelled the file picker.
+      if (result == null) return;
+
+      // Utterances were already ingested into _sttService by the orchestration
+      // service. Because _onSttServiceChanged only auto-saves while recording,
+      // we MUST push the transcript + schedule autosave explicitly here.
+      setState(() {
+        _selectedMeeting = _selectedMeeting!.copyWith(
+          transcript: _sttService.getJsonTranscript(),
+        );
+        final url = result.mediaUrl;
+        if (url != null && url.isNotEmpty) {
+          _attachments = [
+            ..._attachments,
+            {
+              'name': result.fileName ?? 'Recording',
+              'url': url,
+              'mime': result.mimeType ?? '',
+            },
+          ];
+        }
+        _activeTab = _MeetingDocTab.transcript;
+      });
+      _scheduleAutoSave();
+
+      GlassNotifications.show(
+        context,
+        'Added ${result.utterances.length} transcript segment(s).',
+      );
+    } catch (e) {
+      debugPrint('[UI] Upload transcription failed: $e');
+      if (mounted) {
+        GlassNotifications.show(
+          context,
+          'Transcription failed: $e',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTranscribing = false;
+          _transcribeStatus = null;
+        });
+      }
+    }
+  }
+
+  String _stageLabel(MeetingTranscriptionStage stage) {
+    switch (stage) {
+      case MeetingTranscriptionStage.picking:
+        return 'Selecting file...';
+      case MeetingTranscriptionStage.uploading:
+        return 'Uploading media...';
+      case MeetingTranscriptionStage.transcribing:
+        return 'Transcribing...';
+      case MeetingTranscriptionStage.ingesting:
+        return 'Adding to transcript...';
+      case MeetingTranscriptionStage.done:
+        return 'Done';
+      case MeetingTranscriptionStage.cancelled:
+        return 'Cancelled';
+      case MeetingTranscriptionStage.error:
+        return 'Error';
+    }
   }
 
   Widget _buildSourceToggle({
