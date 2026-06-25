@@ -375,39 +375,16 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
         } else {
           setState(() {
             final currentBlock = _blocks[index];
-            if (isFromPlus && currentBlock.text.trim().isNotEmpty) {
-              final newBlock = MarkdownBlock(
-                id: const Uuid().v4(),
-                type: type,
-                text: '',
-              );
-              _blocks.insert(index + 1, newBlock);
-              _syncControllers();
-              _notifyChanged();
+            currentBlock.type = type;
 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && index + 1 < _blocks.length) {
-                  final nextBlock = _blocks[index + 1];
-                  final nextFocus = _focusNodes[nextBlock.id];
-                  final nextController = _controllers[nextBlock.id];
-                  if (nextFocus != null && nextController != null) {
-                    nextFocus.requestFocus();
-                    nextController.selection = const TextSelection.collapsed(offset: 0);
-                  }
-                }
-              });
-            } else {
-              currentBlock.type = type;
-
-              final controller = _controllers[currentBlock.id];
-              if (controller != null && (controller.text == '/' || controller.text == '')) {
-                controller.text = '';
-                currentBlock.text = '';
-              }
-
-              _syncControllers();
-              _notifyChanged();
+            final controller = _controllers[currentBlock.id];
+            if (controller != null && (controller.text == '/' || controller.text == '')) {
+              controller.text = '';
+              currentBlock.text = '';
             }
+
+            _syncControllers();
+            _notifyChanged();
           });
         }
         _hideMenu();
@@ -435,20 +412,22 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
   }
 
   Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (BuildContext context, Widget? child) {
-        final double animValue = Curves.easeInOut.transform(animation.value);
-        final double elevation = lerpDouble(0, 8, animValue)!;
-        return Material(
-          elevation: elevation,
-          color: GlassColors.surface.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(8),
-          shadowColor: Colors.black.withOpacity(0.3),
-          child: child,
-        );
-      },
-      child: child,
+    return DeferredPointerHandler(
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (BuildContext context, Widget? child) {
+          final double animValue = Curves.easeInOut.transform(animation.value);
+          final double elevation = lerpDouble(0, 8, animValue)!;
+          return Material(
+            elevation: elevation,
+            color: GlassColors.surface.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(8),
+            shadowColor: Colors.black.withOpacity(0.3),
+            child: child,
+          );
+        },
+        child: child,
+      ),
     );
   }
 

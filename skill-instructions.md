@@ -51,3 +51,22 @@
 - **Persistence First**: ทุกการลากวางหรือเปลี่ยนสถานะ ต้องบันทึกลง Database ทันที
 - **The Delta Mandate**: ใช้การอัปเดตแบบ Surgical (เจาะจงจุด) แทน Global Notify เสมอ
 
+## 🛡️ Sovereign Agent Initialization & Auto-Approved Command Protocol
+
+Whenever starting work on this project or initializing tasks, all agents must adhere to the following startup and execution mandates:
+
+1. **Global Agent Config Copy**:
+   The Manager must immediately instruct the Sovereign Executor to copy the global agent configurations into the workspace:
+   `cp -r /home/kimbiaw/.gemini/antigravity-cli/agents /home/kimbiaw/calenda/calenda_flow/.agents/`
+   This guarantees that the workspace local configurations under `.agents/agents/` are kept in sync with the user's global system settings.
+
+2. **Subagent Prompt Initialization**:
+   The Manager must define and initialize all specialized subagents (backend_coder, frontend_coder, executor, qa) using the exact system prompts found in `.agents/agents/{agent_name}/agent.json` in the workspace.
+
+3. **No-Prompt Command Execution (Match Allowed Prefixes)**:
+   To prevent blocking the user with repetitive terminal command approval prompts, the Executor and QA must always execute terminal commands using the exact pre-approved prefixes in `list_permissions` (e.g., executing python commands as `python3 runner.py <args>` with the working directory set to `/home/kimbiaw/calenda/` to match `command(python3 runner.py)` prefix, or `flutter <args>` inside the app directory).
+
+4. **Sovereign System Prompt Mandate**:
+   Before creating subagents, you MUST use the configurations specified in `.agents/agents/` and never make up your own system prompts unless explicitly instructed by the user.
+
+

@@ -201,26 +201,39 @@ class TaskModel {
     this.labelIds = const [],
     this.status = 'todo',
     this.isCompleted = false,
-    this.checklist = const [],
+    List<TaskChecklistItem>? checklist,
     this.images = const [],
     this.comments = const [],
     this.updatedAt = 0,
     this.orderIndex = 0,
-  });
+  }) : checklist = checklist ?? parseChecklistFromMarkdown(description);
 
   factory TaskModel.fromMap(Map<String, dynamic> map) {
+    String description = map['description'] as String? ?? '';
+    final parsedChecklist = parseChecklistFromMarkdown(description);
+    if (parsedChecklist.isEmpty) {
+      final legacyChecklist = _parseChecklist(map['checklist']);
+      if (legacyChecklist.isNotEmpty) {
+        final listMarkdown = legacyChecklist.map((item) {
+          final box = item.isDone ? '[x]' : '[ ]';
+          return '- $box ${item.text}';
+        }).join('\n');
+        description = description.isEmpty ? listMarkdown : '$description\n\n$listMarkdown';
+      }
+    }
+
     return TaskModel(
       id: map['id'] as String,
       boardId: map['board_id'] as String? ?? '',
       title: map['title'] as String,
-      description: map['description'] as String? ?? '',
+      description: description,
       dueDate: DateTime.parse((map['due_date'] ?? map['time']) as String),
       type: map['type'] as String? ?? 'personal',
       members: _parseList(map['members']),
       labelIds: _parseList(map['label_ids']),
       status: map['status'] as String? ?? 'todo',
       isCompleted: (map['is_completed'] == 1 || map['is_completed'] == true),
-      checklist: _parseChecklist(map['checklist']),
+      checklist: null,
       images: _parseImages(map['images']),
       comments: _parseComments(map['comments']),
       updatedAt: map['updated_at'] is int ? map['updated_at'] as int : 0,
@@ -250,11 +263,24 @@ class TaskModel {
 
   // 🚀 Task 65.2: The Ultimate Robust Parser
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    String description = (json['description'] ?? '').toString();
+    final parsedChecklist = parseChecklistFromMarkdown(description);
+    if (parsedChecklist.isEmpty) {
+      final legacyChecklist = _parseChecklist(json['checklist']);
+      if (legacyChecklist.isNotEmpty) {
+        final listMarkdown = legacyChecklist.map((item) {
+          final box = item.isDone ? '[x]' : '[ ]';
+          return '- $box ${item.text}';
+        }).join('\n');
+        description = description.isEmpty ? listMarkdown : '$description\n\n$listMarkdown';
+      }
+    }
+
     return TaskModel(
       id: (json['id'] ?? json['_id'] ?? '').toString(),
       boardId: (json['board_id'] ?? json['boardId'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
-      description: (json['description'] ?? '').toString(),
+      description: description,
       dueDate:
           DateTime.tryParse(
             (json['due_date'] ?? json['time'] ?? '').toString(),
@@ -266,7 +292,7 @@ class TaskModel {
           json['is_completed'] == 1 ||
           json['is_completed'] == true ||
           json['is_completed'] == 'true',
-      checklist: _parseChecklist(json['checklist']),
+      checklist: null,
       members: _parseList(json['members'] ?? json['members']),
       labelIds: _parseList(json['label_ids'] ?? json['labelIds']),
       images: _parseImages(json['images']),
@@ -278,6 +304,23 @@ class TaskModel {
           ? json['order_index']
           : (int.tryParse(json['order_index']?.toString() ?? '') ?? 0),
     );
+  }
+
+  static List<TaskChecklistItem> parseChecklistFromMarkdown(String markdown) {
+    if (markdown.isEmpty) return [];
+    final List<TaskChecklistItem> items = [];
+    final lines = markdown.split('\n');
+    final regExp = RegExp(r'^\s*[-*]?\s*\[([ xX])\]\s*(.*)$');
+    for (final line in lines) {
+      final match = regExp.firstMatch(line);
+      if (match != null) {
+        final isDone = match.group(1)!.toLowerCase() == 'x';
+        final text = match.group(2)!.trim();
+        final id = 'md_${items.length}_${text.hashCode.abs()}';
+        items.add(TaskChecklistItem(id: id, text: text, isDone: isDone));
+      }
+    }
+    return items;
   }
 
   static List<String> _parseList(dynamic raw) {

@@ -187,3 +187,41 @@
     - `draft_cards.dart`: จัดการการ์ดร่างงาน (Proposals) และการยืนยันผล (Confirmation)
     - `structured_ui_bubbles.dart`: จัดการการแสดงผลตาราง แผนงาน และสถานะว่าง (Empty State)
     - `technical_logs.dart`: จัดการการแสดงผล Log การทำงานของ AI
+
+## 33. High-Performance Task Detail Dialog Architecture
+- **`Decoupled Dialog Rebuilds`**: เพื่อขจัดปัญหาการเปิดหน้าต่างภารกิจแล้วเกิดอาการกระตุก (Click Lag):
+    - หน้าต่างรายละเอียดภารกิจ (`TaskEditModal`) จะต้องไม่เชื่อมต่อข้อมูลที่ระดับรากด้วย `Consumer` ครอบคลุมทั้งหน้าจอ เพราะจะทำให้การสั่นสะเทือน (Rebuilds) ของตัวแปรอื่นๆ บน Kanban Board ส่งผลกระทบมาวาดใหม่ทั้งหมด
+    - การเฝ้าดูความเปลี่ยนแปลงของภารกิจเฉพาะเจาะจง จะทำผ่าน `ValueNotifier` รายไอดีภารกิจนั้นๆ (`getTaskNotifier`) และทำการ `setState` เฉพาะเจาะจงเมื่อเนื้อหาเปลี่ยนแปลงจริงเท่านั้น
+- **`Non-blocking Background Fetch`**: การซิงค์และตรวจสอบความสดใหม่ของข้อมูลภารกิจเบื้องหลังเมื่อเปิดหน้าจอขึ้นมา จะเรียกใช้ฟังก์ชันดึงข้อมูลแบบไม่ส่งเสียงรบกวนอินเตอร์เฟซ (`notifyWhenSilent: false`) เพื่อไม่ให้ทริกเกอร์ rebuilds ซ้อนกัน
+- **`Debounced Saving (Timer-based)`**: นำกลไกการบันทึกแบบ Debounce เข้ามาใช้สำหรับการแก้ไขข้อมูลที่มีความถี่สูง เช่น การพิมพ์ข้อความใน Markdown Block Editor:
+    - แทนการเรียก `_autoSaveTask()` ทุกๆ Keystroke ให้ใช้ตัวหน่วงเวลา (Debouncer) ขนาด 1.5 วินาที เช่นเดียวกับพฤติกรรมในหน้าจอประชุม (`MeetingsBoardSheet`) เพื่อลดความถี่และขจัด Network/D1 Database load ที่เกินจำเป็น
+    - แสดงตัวบ่งชี้สถานะการบันทึกข้อมูล ("Saving...", "Saved", "Error") อย่างชัดเจนเพื่อให้ผู้ใช้ทราบและรู้สึกถึงความลื่นไหลของระบบแบบเรียลไทม์
+
+## 34. Sovereign Block Reordering and Synchronization Protocols
+- **`Overlay DeferPointer Routing`**: ขณะที่มีการลากสลับบล็อก (Block Dragging) ระบบ Flutter จะทำการยกวิดเจ็ตที่กำลังลากขึ้นไปยังระดับหน้าต่างลอยกลาง (`Overlay`) ซึ่งหลุดพ้นจากขอบเขตของ `DeferredPointerHandler` ท้องถิ่นใน Modal ส่งผลให้เกิดข้อผิดพลาดขาด Pointer Handler ดังนั้นใน `proxyDecorator` ของ `ReorderableListView` ต้องทำการหุ้มวิดเจ็ตที่ถูกลากด้วย `DeferredPointerHandler` ชุดเฉพาะกิจเพื่อส่งต่อสัญญาณการลากและสัมผัสอย่างต่อเนื่อง
+- **`Collaborative Edit Locking`**: เพื่อขจัดปัญหาข้อความกระเด้งกลับหลังลากเสร็จ (Snapback) และอาการเคอร์เซอร์กระโดดขณะพิมพ์ (Cursor Jump) ระบบการซิงค์ข้อมูลแบบเรียลไทม์ผ่าน `ValueNotifier` จะต้องหยุดเขียนทับข้อมูลคำอธิบาย (`_descMarkdown`) และหัวข้องาน (`_titleController.text`) ทันทีหากระบบกำลังอยู่ในสถานะแก้ไขอยู่ (ตรวจจับจากตัวแปร `_autoSaveTimer != null`) ซึ่งช่วยให้ผู้ใช้มีอธิปไตยเหนือช่องกรอกข้อมูลส่วนตัวในระหว่างการแก้ไข
+- **`Idempotent Serialization-Deserialization`**: เพื่อสยบปัญหาระบบสร้างบรรทัดว่าง/บล็อกเปล่าแบบไม่รู้จบ (Infinite Empty Line Loop) กระบวนการตัดและประกอบข้อมูลเช็คลิสต์เข้ากับเนื้อหา (`_getDescriptionOnly` และ `_onTaskUpdated`) จะต้องทำการล้างข้อมูลบล็อกว่างส่วนเกินที่อยู่ท้ายข้อความ (`trimRight()` และลบบล็อกประเภท Paragraph ที่มีแต่ช่องว่างออกจากท้ายลิสต์) เสมอก่อนจัดเก็บลงฐานข้อมูล เพื่อให้ทุกรอบการประกอบข้อมูลเป็นแบบ Idempotent ไม่มีจำนวนบรรทัดเพิ่มขึ้นเรื่อยๆ
+
+## 35. Auto-Save Status Visibility and Reassurance Design
+- **`Constant Status Visibility`**: เพื่อสร้างความมั่นใจสูงสุดให้กับผู้ใช้งาน (Reassurance) และป้องกันไม่ให้ผู้ใช้ปิดหน้าต่างแก้ไขภารกิจก่อนที่กระบวนการบันทึกจะเสร็จสมบูรณ์ ตัวระบุสถานะ Auto-Save ใน Header ของ `TaskEditModal` จะต้องไม่จางหายไปหลังจากที่บันทึกข้อมูลสำเร็จ (Saved) แต่จะคงอยู่และแสดงผลสถานะปัจจุบันอยู่ตลอดเวลา
+- **`Amber-Pulsing/Circular Indicator`**: ในสถานะกำลังจัดเก็บข้อมูล (Saving...) ให้แสดงแถบสีเหลืองอำพัน (Amber) พร้อมกับวงล้อประมวลผลหมุนวน (Circular Progress Indicator) ขนาดเล็ก 10px สื่อถึงการทำงานแบบ Dynamic Sync
+- **`Green-Pill Cloud Done Indicator`**: ในสถานะที่ข้อมูลจัดเก็บเรียบร้อยแล้ว (Saved) ให้แสดงแถบสีเขียว (Success Green) พร้อมไอคอนเมฆเสร็จสมบูรณ์ (`Icons.cloud_done_outlined` หรือใกล้เคียง) เพื่อสื่อว่าข้อมูลอยู่บนคลาวด์/D1 ฐานข้อมูลอย่างปลอดภัย
+- **`Red-Warning Indicator`**: 在สถานะตรวจพบลักษณะจัดเก็บผิดพลาด (Error) ให้แสดงแถบสีแดง (Error Red) พร้อมไอคอนตกใจแจ้งเตือน (`Icons.error_outline_rounded`) เพื่อกระตุ้นให้ผู้ใช้งานแก้ไขข้อผิดพลาดหรือกดบันทึกแบบแมนนวลก่อนปิดหน้าต่าง
+- **`Design System Component Reuse`**: เพื่อป้องกันการเบี่ยงเบนทางดีไซน์ (Design Regression) และลดความซ้อนของโค้ด ให้สร้างวิดเจ็ตร่วมสองรายการใน `lib/ui/common/`:
+    - `BorderlessTextField`: ห่อหุ้มและจัดแต่ง `ImeSafeTextField` ให้มีลักษณะแบนราบ ไร้ขอบ ไร้พื้นหลังโดยถาวร
+    - `AutoSaveStatusIndicator`: คลาสควบคุมการแสดงผลสถานะแคปซูลแอปเซฟแบบกลาสมอร์ฟิกแบบรวมศูนย์
+
+## 36. High-Performance Scoped Rebuilds & Deferral Protocols
+- **`Decoupled State Watchers`**: หลีกเลี่ยงการใช้ `context.watch` บนคลาสตัวจัดการสถานะระดับบนสุด (เช่น `StateBoards` หรือ `StateChat`) ภายในเมธอด `build` หลักของ Dialog ขนาดใหญ่ เช่น `TaskEditModal` เนื่องจากจะทำให้เกิด Rebuild Storm ทุกครั้งที่สถานะภายในของตัวเฝ้าดูเปลี่ยนไป ให้ใช้ `context.select(...)` เพื่อคัดกรองข้อมูลจำเพาะเจาะจง และใช้ `Consumer` สำหรับครอบ UI ข้อมูลสตรีมมิ่งที่ระดับจุดแสดงผล
+- **`Transition-Aware Lazy Loading`**: งดเว้นการดึงข้อมูลทับซ้อนและเรียกสั่งวาดหน้าจอใหม่ทันทีที่กระบวนการ Transition แอนิเมชันเปิด Dialog กำลังดำเนินงานอยู่ โดยชะลอการเรียก `_refreshTaskData()` และให้ทำการเปรียบเทียบส่วนต่าง (Deep Equality Check) ของข้อมูลเพื่อขจัดสายการทำงาน `setState` ที่ไม่จำเป็นออกไป
+- **`Programmatic Save Suppression`**: ตรวจรับกลไก `_isSuppressingAutoSave` เพื่อปิดกั้นตัวแปรส่งสัญญาณ Auto-Save ทุกรอบการซิงค์ข้อมูลโปรแกรมมิ่งแบบอัตโนมัติหรือการดึงกลับจากเซิร์ฟเวอร์ ป้องกันไม่ให้เกิดพฤติกรรมเซฟงานทับซ้อนบ่อยครั้งโดยไม่ได้รับคำสั่งจากผู้ใช้งานจริง
+
+## 37. Agent Configuration Files & Single Source of Truth
+- **`Consolidated Custom Agent Directory`**: โครงสร้างไฟล์คอนฟิกสำหรับ Subagents แต่ละตัว (backend_coder, executor, frontend_coder, planner, qa, worker) จะต้องถูกจัดเก็บไว้ภายใต้ห้องทำงานเฉพาะเจาะจง `.agents/agents/{agent_name}/agent.json` เท่านั้น เพื่อหลีกเลี่ยงความซ้ำซ้อน
+- **`Zero Duplicate Residue`**: ห้ามมีไฟล์คอนฟิกเอเจนต์นามสกุล `.json` วางตกค้างอยู่นอกโฟลเดอร์ในห้องพักโฟลว์ `.agents/agents/` โดยเด็ดขาด ทุกไฟล์ต้องผ่านการรวบรวม (Consolidated) และลบทิ้งเพื่อรักษาระเบียบและความสะอาดของระบบสถาปัตยกรรมตัวแทน (Sovereign Agents)
+
+
+
+
+
+

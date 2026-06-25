@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart' show listEquals;
 import '../../common/ime_safe_text_field.dart';
+import '../../common/borderless_text_field.dart';
+import '../../common/auto_save_status_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,6 +19,8 @@ import '../../../config/env_config.dart';
 import '../../../services/auth_service.dart';
 import '../../common/scroll_gutter.dart';
 import '../../theme/glass_theme.dart';
+import '../../meetings/widgets/markdown_block_editor.dart';
+import 'package:my_ai_assistant/ui/common/defer_pointer.dart';
 
 class TaskEditModal extends StatefulWidget {
   final BoardModel board;
@@ -97,10 +103,12 @@ class TaskEditModal extends StatefulWidget {
 
 class _TaskEditModalState extends State<TaskEditModal> {
   final _titleController = TextEditingController();
-  final _descController = TextEditingController();
-  final _descFocusNode = FocusNode();
+  ScrollPhysics? _editorScrollPhysics;
+  String _descMarkdown = '';
   final _commentController = TextEditingController();
-  final _newChecklistController = TextEditingController();
+  Timer? _autoSaveTimer;
+  String? _autoSaveStatus = 'Saved';
+  bool _isSuppressingAutoSave = false;
 
   // Persistent Controllers for Asset Names
   final Map<String, TextEditingController> _assetNameControllers = {};
@@ -133,12 +141,19 @@ class _TaskEditModalState extends State<TaskEditModal> {
     _stateChat = context.read<StateChat>();
   }
 
+  void _onTitleChanged() {
+    if (!_isSuppressingAutoSave && _allowStructuralEditing) {
+      _scheduleAutoSave();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _isSuppressingAutoSave = true;
     if (widget.existingTask != null) {
       _titleController.text = widget.existingTask!.title;
-      _descController.text = widget.existingTask!.description;
+      _descMarkdown = widget.existingTask!.description;
       _dueDate = widget.existingTask!.dueDate;
       _status = widget.existingTask!.status;
       _images = List.from(widget.existingTask!.images);
@@ -155,18 +170,18 @@ class _TaskEditModalState extends State<TaskEditModal> {
               : 'todo');
     }
 
-    _descFocusNode.addListener(() {
-      if (!_descFocusNode.hasFocus) {
-        _autoSaveTask();
-      }
-    });
-
     _loadBoardMembers();
+    _titleController.addListener(_onTitleChanged);
+    _isSuppressingAutoSave = false;
 
     // 🔄 Fetch fresh task data when opening edit modal
     if (widget.existingTask != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _refreshTaskData();
+        Future.delayed(const Duration(milliseconds: 350), () {
+          if (mounted) {
+            _refreshTaskData();
+          }
+        });
         context.read<StateChat>().selectTaskSession(
           widget.existingTask!.id,
           taskTitle: widget.existingTask!.title,
@@ -184,14 +199,22 @@ class _TaskEditModalState extends State<TaskEditModal> {
   void _onTaskUpdated() {
     final updated = _taskNotifier?.value;
     if (updated == null || !mounted) return;
+    
+    final newDescMarkdown = updated.description;
+
     // Only update if data actually changed
-    if (_titleController.text != updated.title ||
-        _descController.text != updated.description ||
-        _status != updated.status ||
-        !_dueDate.isAtSameMomentAs(updated.dueDate)) {
+    final titleChanged = _titleController.text != updated.title;
+    final descChanged = _descMarkdown != newDescMarkdown;
+    final statusChanged = _status != updated.status;
+    final dateChanged = !_dueDate.isAtSameMomentAs(updated.dueDate);
+
+    if (titleChanged || descChanged || statusChanged || dateChanged) {
+      _isSuppressingAutoSave = true;
       setState(() {
-        _titleController.text = updated.title;
-        _descController.text = updated.description;
+        if (_autoSaveTimer == null) {
+          _titleController.text = updated.title;
+          _descMarkdown = newDescMarkdown;
+        }
         _dueDate = updated.dueDate;
         _status = updated.status;
         _images = List.from(updated.images);
@@ -200,23 +223,56 @@ class _TaskEditModalState extends State<TaskEditModal> {
         _comments = List.from(updated.comments);
         _checklist = List.from(updated.checklist);
       });
+      _isSuppressingAutoSave = false;
     }
   }
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
     _taskNotifier?.removeListener(_onTaskUpdated);
+    _titleController.removeListener(_onTitleChanged);
     _titleController.dispose();
-    _descController.dispose();
-    _descFocusNode.dispose();
     _commentController.dispose();
-    _newChecklistController.dispose();
     _taskChatController.dispose();
     for (final c in _assetNameControllers.values) {
       c.dispose();
     }
     _stateChat.switchToGlobalContext();
     super.dispose();
+  }
+
+  Widget _buildAutoSaveStatusIndicator() {
+    return AutoSaveStatusIndicator(status: _autoSaveStatus);
+  }
+
+  void _scheduleAutoSave() {
+    _autoSaveTimer?.cancel();
+    setState(() {
+      _autoSaveStatus = 'Saving...';
+    });
+    _autoSaveTimer = Timer(const Duration(milliseconds: 1500), () {
+      _performAutoSave();
+    });
+  }
+
+  Future<void> _performAutoSave() async {
+    try {
+      await _autoSaveTask();
+      if (mounted) {
+        setState(() {
+          _autoSaveStatus = 'Saved';
+          _autoSaveTimer = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _autoSaveStatus = 'Error';
+          _autoSaveTimer = null;
+        });
+      }
+    }
   }
 
   Future<void> _loadBoardMembers() async {
@@ -233,28 +289,109 @@ class _TaskEditModalState extends State<TaskEditModal> {
     if (widget.existingTask == null) return;
     try {
       final taskState = context.read<StateTasks>();
-      await taskState.fetchTasksForBoard(widget.board, silent: true);
+      await taskState.fetchTasksForBoard(widget.board, silent: true, notifyWhenSilent: false);
       final tasks = taskState.tasksForBoard(widget.board.id);
       final updated = tasks.firstWhere(
         (t) => t.id == widget.existingTask!.id,
         orElse: () => widget.existingTask!,
       );
       if (mounted && updated.id == widget.existingTask!.id) {
-        setState(() {
-          _titleController.text = updated.title;
-          _descController.text = updated.description;
-          _dueDate = updated.dueDate;
-          _status = updated.status;
-          _images = List.from(updated.images);
-          _members = List.from(updated.members);
-          _labelIds = List.from(updated.labelIds);
-          _comments = List.from(updated.comments);
-          _checklist = List.from(updated.checklist);
-        });
+        bool hasChanges = false;
+        if (updated.title != _titleController.text) hasChanges = true;
+        if (updated.description != _descMarkdown) hasChanges = true;
+        if (updated.status != _status) hasChanges = true;
+        if (!updated.dueDate.isAtSameMomentAs(_dueDate)) hasChanges = true;
+
+        if (!listEquals(updated.members, _members)) hasChanges = true;
+        if (!listEquals(updated.labelIds, _labelIds)) hasChanges = true;
+
+        if (updated.images.length != _images.length) {
+          hasChanges = true;
+        } else {
+          for (int i = 0; i < _images.length; i++) {
+            final a = _images[i];
+            final b = updated.images[i];
+            if (a.id != b.id ||
+                a.url != b.url ||
+                a.r2Key != b.r2Key ||
+                a.isCover != b.isCover ||
+                a.name != b.name ||
+                a.aiDescription != b.aiDescription) {
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+
+        if (updated.comments.length != _comments.length) {
+          hasChanges = true;
+        } else {
+          for (int i = 0; i < _comments.length; i++) {
+            final a = _comments[i];
+            final b = updated.comments[i];
+            if (a.id != b.id ||
+                a.userId != b.userId ||
+                a.userName != b.userName ||
+                a.text != b.text ||
+                !a.time.isAtSameMomentAs(b.time)) {
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+
+        if (updated.checklist.length != _checklist.length) {
+          hasChanges = true;
+        } else {
+          for (int i = 0; i < _checklist.length; i++) {
+            final a = _checklist[i];
+            final b = updated.checklist[i];
+            if (a.id != b.id || a.text != b.text || a.isDone != b.isDone) {
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+
+        if (hasChanges) {
+          debugPrint('[UI] [Render] Task data changes detected, refreshing task edit modal state.');
+          _isSuppressingAutoSave = true;
+          final newDescMarkdown = updated.description;
+          setState(() {
+            if (_autoSaveTimer == null) {
+              _titleController.text = updated.title;
+              _descMarkdown = newDescMarkdown;
+            }
+            _dueDate = updated.dueDate;
+            _status = updated.status;
+            _images = List.from(updated.images);
+            _members = List.from(updated.members);
+            _labelIds = List.from(updated.labelIds);
+            _comments = List.from(updated.comments);
+            _checklist = List.from(updated.checklist);
+          });
+          _isSuppressingAutoSave = false;
+        } else {
+          debugPrint('[UI] [Render] No changes detected in task data refresh.');
+        }
       }
     } catch (e) {
-      debugPrint('Error refreshing task data: $e');
+      debugPrint('[Error] Error refreshing task data: $e');
     }
+  }
+
+  void _syncChecklistFromMarkdown(String markdown) {
+    final blocks = parseMarkdownToBlocks(markdown);
+    setState(() {
+      _checklist = blocks
+          .where((b) => b.type == 'todo')
+          .map((b) => TaskChecklistItem(
+                id: b.id,
+                text: b.text,
+                isDone: b.isChecked,
+              ))
+          .toList();
+    });
   }
 
   String get _coverPrefKey => 'task_modal_cover_expanded_global';
@@ -286,7 +423,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
       final task =
           widget.existingTask?.copyWith(
             title: title,
-            description: _descController.text.trim(),
+            description: _descMarkdown.trimRight(),
             dueDate: _dueDate,
             status: _status,
             checklist: _checklist,
@@ -299,7 +436,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             boardId: widget.board.id,
             title: title,
-            description: _descController.text.trim(),
+            description: _descMarkdown.trimRight(),
             dueDate: _dueDate,
             type: widget.board.type,
             status: _status,
@@ -331,7 +468,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           boardId: widget.board.id,
           title: title,
-          description: _descController.text.trim(),
+          description: _descMarkdown.trimRight(),
           dueDate: _dueDate,
           type: widget.board.type,
           status: _status,
@@ -436,284 +573,275 @@ class _TaskEditModalState extends State<TaskEditModal> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
+    final currentBoard = context.select<StateBoards, BoardModel?>((state) {
+      final matches = state.boards.where((b) => b.id == widget.board.id);
+      return matches.isNotEmpty ? matches.first : widget.board;
+    }) ?? widget.board;
+
+    final coverImage = _images.isEmpty
+        ? null
+        : _images.firstWhere(
+            (img) => img.isCover,
+            orElse: () => _images.first,
+          );
+    final hasCover = coverImage != null && coverImage.url.isNotEmpty;
 
     if (isDesktop) {
-      return Consumer2<StateBoards, StateTasks>(
-        builder: (context, boardState, taskState, _) {
-          final currentBoard = boardState.boards.firstWhere(
-            (b) => b.id == widget.board.id,
-            orElse: () => widget.board,
-          );
-
-          if (widget.existingTask != null) {
-            final tasks = taskState.tasksForBoard(widget.board.id);
-            final updatedTask = tasks.firstWhere(
-              (t) => t.id == widget.existingTask!.id,
-              orElse: () => widget.existingTask!,
-            );
-
-            _labelIds = updatedTask.labelIds;
-            _members = updatedTask.members;
-            _images = updatedTask.images;
-            _status = updatedTask.status;
-            _dueDate = updatedTask.dueDate;
-          }
-
-          final coverImage = _images.isEmpty
-              ? null
-              : _images.firstWhere(
-                  (img) => img.isCover,
-                  orElse: () => _images.first,
-                );
-          final hasCover = coverImage != null && coverImage.url.isNotEmpty;
-
-          final mainBody = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (hasCover && _isCoverExpanded) _buildCoverBanner(coverImage),
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 8,
-                      child: ScrollbarGutterFrame(
-                        gutterColor: Colors.black.withOpacity(0.16),
-                        dividerColor: GlassColors.outlineVariant.withOpacity(
-                          0.15,
-                        ),
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              40,
-                              40,
-                              ScrollbarGutter.reservedSpace + 28,
-                              40,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildHeader(
-                                  isDesktop: true,
-                                  hasCover: hasCover,
-                                  coverImage: coverImage,
-                                ),
-                                const SizedBox(height: 24),
-                                _buildTitleSection(isDesktop: true),
-                                const SizedBox(height: 16),
-                                _buildMetadataStrip(currentBoard),
-                                const SizedBox(height: 32),
-                                _buildTextField(
-                                  controller: _descController,
-                                  focusNode: _descFocusNode,
-                                  hint: 'Add a strategic description...',
-                                  style: GlassText.bodyLG().copyWith(
-                                    fontSize: 18,
-                                    color: GlassColors.onSurface.withOpacity(
-                                      0.7,
-                                    ),
-                                  ),
-                                  maxLines: 12,
-                                ),
-                                const SizedBox(height: 28),
-                                _buildChecklistSection(isDesktop: true),
-                                const SizedBox(height: 48),
-                                _buildSectionTitle('OPERATIONAL ASSETS'),
-                                const SizedBox(height: 24),
-                                _buildVerticalAssetList(),
-                                const SizedBox(height: 80),
-                                if (widget.existingTask == null)
-                                  _buildGhostButton(
-                                    'CREATE STRATEGIC TASK',
-                                    _handleExplicitSave,
-                                    isPrimary: true,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 5,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: const BorderRadius.only(
-                            topRight: Radius.circular(32),
-                            bottomRight: Radius.circular(32),
-                          ),
-                          border: Border(
-                            left: BorderSide(
-                              color: GlassColors.outlineVariant.withOpacity(
-                                0.15,
-                              ),
-                              width: 1.0,
-                            ),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
-                          child: widget.existingTask != null
-                              ? _buildRightTabSection(isDesktop: true)
-                              : Center(
-                                  child: Text(
-                                    'บันทึกงานนี้ก่อนเพื่อเริ่มการสนทนาและเขียนคอมเม้น',
-                                    style: GlassText.bodyMD().copyWith(
-                                      color: GlassColors.onSurfaceVariant
-                                          .withOpacity(0.5),
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-
-          return Material(
-            color: Colors.transparent,
-            child: Stack(
+      final mainBody = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasCover && _isCoverExpanded) _buildCoverBanner(coverImage),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Positioned.fill(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Container(color: Colors.transparent),
+                Expanded(
+                  flex: 8,
+                  child: ScrollbarGutterFrame(
+                    gutterColor: Colors.black.withOpacity(0.16),
+                    dividerColor: GlassColors.outlineVariant.withOpacity(
+                      0.15,
+                    ),
+                    child: SingleChildScrollView(
+                      physics: _editorScrollPhysics,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          40,
+                          40,
+                          ScrollbarGutter.reservedSpace + 28,
+                          40,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(
+                              isDesktop: true,
+                              hasCover: hasCover,
+                              coverImage: coverImage,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildTitleSection(isDesktop: true),
+                            const SizedBox(height: 16),
+                            _buildMetadataStrip(currentBoard),
+                            const SizedBox(height: 32),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+                                border: Border.all(
+                                  color: GlassColors.ghostBorder,
+                                  width: 1.0,
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: MarkdownBlockEditor(
+                                initialMarkdown: _descMarkdown,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _descMarkdown = val;
+                                  });
+                                  _syncChecklistFromMarkdown(val);
+                                  if (_allowStructuralEditing) {
+                                    _scheduleAutoSave();
+                                  }
+                                },
+                                onDragStateChanged: (isDragging) {
+                                  setState(() {
+                                    _editorScrollPhysics = isDragging
+                                        ? const NeverScrollableScrollPhysics()
+                                        : null;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+                            _buildSectionTitle('OPERATIONAL ASSETS'),
+                            const SizedBox(height: 24),
+                            _buildVerticalAssetList(),
+                            const SizedBox(height: 80),
+                            if (widget.existingTask == null)
+                              _buildGhostButton(
+                                'CREATE STRATEGIC TASK',
+                                _handleExplicitSave,
+                                isPrimary: true,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                Center(
+                Expanded(
+                  flex: 5,
                   child: Container(
-                    width: 1250,
-                    height: MediaQuery.of(context).size.height * 0.85,
-                    decoration: GlassDecorations.solidSurface(
-                      radius: 24,
-                      hasShadow: true,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
+                      ),
+                      border: Border(
+                        left: BorderSide(
+                          color: GlassColors.outlineVariant.withOpacity(
+                            0.15,
+                          ),
+                          width: 1.0,
+                        ),
+                      ),
                     ),
-                    child: GestureDetector(
-                      onTap: () {}, // Prevent pop on clicking container
-                      child: mainBody,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
+                      child: widget.existingTask != null
+                          ? _buildRightTabSection(isDesktop: true)
+                          : Center(
+                              child: Text(
+                                'บันทึกงานนี้ก่อนเพื่อเริ่มการสนทนาและเขียนคอมเม้น',
+                                style: GlassText.bodyMD().copyWith(
+                                  color: GlassColors.onSurfaceVariant
+                                      .withOpacity(0.5),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                     ),
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+        ],
+      );
+
+      return DeferredPointerHandler(
+        child: Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Container(color: Colors.transparent),
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: 1250,
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  decoration: GlassDecorations.solidSurface(
+                    radius: 24,
+                    hasShadow: true,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {}, // Prevent pop on clicking container
+                    child: mainBody,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } else {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        maxChildSize: 0.95,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (context, scrollController) {
-          return Consumer2<StateBoards, StateTasks>(
-            builder: (context, boardState, taskState, _) {
-              final currentBoard = boardState.boards.firstWhere(
-                (b) => b.id == widget.board.id,
-                orElse: () => widget.board,
-              );
-
-              if (widget.existingTask != null) {
-                final tasks = taskState.tasksForBoard(widget.board.id);
-                final updatedTask = tasks.firstWhere(
-                  (t) => t.id == widget.existingTask!.id,
-                  orElse: () => widget.existingTask!,
-                );
-
-                _labelIds = updatedTask.labelIds;
-                _members = updatedTask.members;
-                _images = updatedTask.images;
-                _status = updatedTask.status;
-                _dueDate = updatedTask.dueDate;
-              }
-
-              final coverImage = _images.isEmpty
-                  ? null
-                  : _images.firstWhere(
-                      (img) => img.isCover,
-                      orElse: () => _images.first,
-                    );
-              final hasCover = coverImage != null && coverImage.url.isNotEmpty;
-
-              final mainBody = ListView(
-                controller: scrollController,
-                padding: EdgeInsets.zero,
-                children: [
-                  if (hasCover && _isCoverExpanded)
-                    _buildCoverBanner(coverImage),
-                  Padding(
-                    padding: ScrollbarGutter.reserveRight(
-                      const EdgeInsets.all(32),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(
-                          hasCover: hasCover,
-                          coverImage: coverImage,
-                        ),
-                        const SizedBox(height: 32),
-                        _buildTitleSection(isDesktop: false),
-                        const SizedBox(height: 16),
-                        _buildMetadataStrip(currentBoard),
-                        const SizedBox(height: 24),
-                        _buildTextField(
-                          controller: _descController,
-                          hint: 'Add a strategic description...',
-                          style: GlassText.bodyLG().copyWith(
-                            fontSize: 16,
-                            color: GlassColors.onSurface.withOpacity(0.7),
+      return DeferredPointerHandler(
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          maxChildSize: 0.95,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (context, scrollController) {
+            final mainBody = ListView(
+              controller: scrollController,
+              physics: _editorScrollPhysics,
+              padding: EdgeInsets.zero,
+              children: [
+                if (hasCover && _isCoverExpanded)
+                  _buildCoverBanner(coverImage),
+                Padding(
+                  padding: ScrollbarGutter.reserveRight(
+                    const EdgeInsets.all(32),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(
+                        hasCover: hasCover,
+                        coverImage: coverImage,
+                      ),
+                      const SizedBox(height: 32),
+                      _buildTitleSection(isDesktop: false),
+                      const SizedBox(height: 16),
+                      _buildMetadataStrip(currentBoard),
+                      const SizedBox(height: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+                          border: Border.all(
+                            color: GlassColors.ghostBorder,
+                            width: 1.0,
                           ),
-                          maxLines: 8,
                         ),
-                        const SizedBox(height: 28),
-                        _buildChecklistSection(isDesktop: false),
+                        padding: const EdgeInsets.all(16),
+                        child: MarkdownBlockEditor(
+                          initialMarkdown: _descMarkdown,
+                          onChanged: (val) {
+                            setState(() {
+                              _descMarkdown = val;
+                            });
+                            _syncChecklistFromMarkdown(val);
+                            if (_allowStructuralEditing) {
+                              _scheduleAutoSave();
+                            }
+                          },
+                          onDragStateChanged: (isDragging) {
+                            setState(() {
+                              _editorScrollPhysics = isDragging
+                                  ? const NeverScrollableScrollPhysics()
+                                  : null;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle('OPERATIONAL ASSETS'),
+                      const SizedBox(height: 16),
+                      _buildVerticalAssetList(),
+                      if (widget.existingTask != null) ...[
                         const SizedBox(height: 32),
-                        _buildSectionTitle('OPERATIONAL ASSETS'),
-                        const SizedBox(height: 16),
-                        _buildVerticalAssetList(),
-                        if (widget.existingTask != null) ...[
-                          const SizedBox(height: 32),
-                          _buildRightTabSection(isDesktop: false),
-                        ],
-                        const SizedBox(height: 48),
-                        if (widget.existingTask == null)
-                          _buildGhostButton(
-                            'CREATE STRATEGIC TASK',
-                            _handleExplicitSave,
-                            isPrimary: true,
-                          ),
+                        _buildRightTabSection(isDesktop: false),
                       ],
-                    ),
+                      const SizedBox(height: 48),
+                      if (widget.existingTask == null)
+                        _buildGhostButton(
+                          'CREATE STRATEGIC TASK',
+                          _handleExplicitSave,
+                          isPrimary: true,
+                        ),
+                    ],
                   ),
-                ],
-              );
+                ),
+              ],
+            );
 
-              return Container(
-                decoration: GlassDecorations.solidSurface(
-                  radius: 24,
-                  hasShadow: true,
+            return Container(
+              decoration: GlassDecorations.solidSurface(
+                radius: 24,
+                hasShadow: true,
+              ),
+              child: ScrollbarGutterFrame(
+                clipRadius: BorderRadius.circular(24),
+                gutterRadius: const BorderRadius.only(
+                  topRight: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
                 ),
-                child: ScrollbarGutterFrame(
-                  clipRadius: BorderRadius.circular(24),
-                  gutterRadius: const BorderRadius.only(
-                    topRight: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                  child: mainBody,
-                ),
-              );
-            },
-          );
-        },
+                child: mainBody,
+              ),
+            );
+          },
+        ),
       );
     }
   }
@@ -747,6 +875,8 @@ class _TaskEditModalState extends State<TaskEditModal> {
                 ),
               ),
             ),
+            const SizedBox(width: 12),
+            _buildAutoSaveStatusIndicator(),
           ],
         ),
         Row(
@@ -1038,189 +1168,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     );
   }
 
-  Widget _buildChecklistSection({required bool isDesktop}) {
-    final total = _checklist.length;
-    final done = _checklist.where((item) => item.isDone).length;
-    final canToggleChecklist = !_isReadOnly;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(child: _buildSectionTitle('STEP LISTS')),
-            if (total > 0)
-              Text(
-                '$done/$total checked',
-                style: GlassText.labelSM().copyWith(
-                  color: GlassColors.onSurfaceVariant.withOpacity(0.65),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (_checklist.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              'ยังไม่มีรายการเช็กลิสต์สำหรับงานนี้',
-              style: GlassText.bodyMD().copyWith(
-                color: GlassColors.onSurfaceVariant.withOpacity(0.48),
-              ),
-            ),
-          )
-        else
-          ..._checklist.map(
-            (item) => _buildChecklistRow(
-              item,
-              canToggle: canToggleChecklist,
-              canDelete: _allowStructuralEditing,
-            ),
-          ),
-        if (_allowStructuralEditing) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
-              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-              border: Border.all(color: GlassColors.ghostBorder),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ImeSafeTextField(
-                    controller: _newChecklistController,
-                    onSubmitted: (_) => _addChecklistItem(),
-                    textInputAction: TextInputAction.done,
-                    style: GlassText.bodyMD().copyWith(
-                      color: GlassColors.onSurface.withOpacity(0.82),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'เพิ่มขั้นตอนที่ต้องทำ...',
-                      hintStyle: GlassText.bodyMD().copyWith(
-                        color: GlassColors.onSurfaceVariant.withOpacity(0.3),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: _addChecklistItem,
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: GlassColors.ghostBorder),
-                    ),
-                    child: Icon(
-                      Icons.add_rounded,
-                      size: 16,
-                      color: GlassColors.onSurfaceVariant.withOpacity(0.75),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildChecklistRow(
-    TaskChecklistItem item, {
-    required bool canToggle,
-    required bool canDelete,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        border: Border.all(color: Colors.transparent),
-      ),
-      child: Row(
-        children: [
-          Checkbox(
-            value: item.isDone,
-            onChanged: canToggle
-                ? (value) => _toggleChecklistItem(item.id, value ?? false)
-                : null,
-            activeColor: GlassColors.success,
-            side: BorderSide(
-              color: GlassColors.primary.withOpacity(0.35),
-              width: 1.3,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              item.text,
-              style: GlassText.bodyMD().copyWith(
-                color: GlassColors.onSurface.withOpacity(
-                  item.isDone ? 0.42 : 0.84,
-                ),
-                decoration: item.isDone ? TextDecoration.lineThrough : null,
-                height: 1.35,
-              ),
-            ),
-          ),
-          if (canDelete)
-            IconButton(
-              onPressed: () => _deleteChecklistItem(item.id),
-              icon: Icon(
-                Icons.close_rounded,
-                size: 16,
-                color: GlassColors.onSurfaceVariant.withOpacity(0.42),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _addChecklistItem() async {
-    final text = _newChecklistController.text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      _checklist = [
-        ..._checklist,
-        TaskChecklistItem(
-          id: '${DateTime.now().millisecondsSinceEpoch}_${_checklist.length}',
-          text: text,
-        ),
-      ];
-      _newChecklistController.clear();
-    });
-    await _autoSaveTask();
-  }
-
-  Future<void> _toggleChecklistItem(String itemId, bool value) async {
-    setState(() {
-      _checklist = _checklist
-          .map(
-            (item) => item.id == itemId ? item.copyWith(isDone: value) : item,
-          )
-          .toList();
-    });
-    await _autoSaveTask();
-  }
-
-  Future<void> _deleteChecklistItem(String itemId) async {
-    setState(() {
-      _checklist = _checklist.where((item) => item.id != itemId).toList();
-    });
-    await _autoSaveTask();
-  }
 
   Widget _buildAssetRow(TaskImage img) {
     // Task 36.2: Persistent Controller Implementation
@@ -1236,17 +1184,9 @@ class _TaskEditModalState extends State<TaskEditModal> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-        border: Border.all(
-          color: img.isCover
-              ? GlassColors.gold.withOpacity(0.3)
-              : GlassColors.ghostBorder,
-        ),
-        color: img.isCover
-            ? GlassColors.gold.withOpacity(0.05)
-            : Colors.transparent,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: Row(
         children: [
@@ -1280,7 +1220,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
+                BorderlessTextField(
                   controller: nameController,
                   readOnly: !_allowStructuralEditing,
                   style: GlassText.bodyMD().copyWith(
@@ -1295,11 +1235,6 @@ class _TaskEditModalState extends State<TaskEditModal> {
                     });
                     _autoSaveTask();
                   },
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1513,46 +1448,24 @@ class _TaskEditModalState extends State<TaskEditModal> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    FocusNode? focusNode,
-    required String hint,
-    required TextStyle style,
-    required int? maxLines,
-    TextInputAction? textInputAction,
-  }) {
-    return ImeSafeTextField(
-      controller: controller,
-      focusNode: focusNode,
-      readOnly: !_allowStructuralEditing,
-      style: style,
-      maxLines: maxLines,
-      minLines: 1,
-      textInputAction: textInputAction,
-      onSubmitted: (_) {
-        if (_allowStructuralEditing) {
-          _autoSaveTask();
-        }
-      },
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: style.copyWith(
-          color: GlassColors.onSurfaceVariant.withOpacity(0.2),
-        ),
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.zero,
-      ),
-    );
-  }
-
   Widget _buildTitleSection({required bool isDesktop}) {
     final titleField = Expanded(
-      child: _buildTextField(
+      child: BorderlessTextField(
         controller: _titleController,
-        hint: 'Task Title',
+        hintText: 'Task Title',
+        hintStyle: GlassText.headlineLG().copyWith(
+          fontSize: isDesktop ? 38 : 32,
+          color: GlassColors.onSurfaceVariant.withOpacity(0.2),
+        ),
         style: GlassText.headlineLG().copyWith(fontSize: isDesktop ? 38 : 32),
         maxLines: null,
         textInputAction: TextInputAction.done,
+        readOnly: !_allowStructuralEditing,
+        onSubmitted: (_) {
+          if (_allowStructuralEditing) {
+            _autoSaveTask();
+          }
+        },
       ),
     );
 
@@ -1926,236 +1839,239 @@ class _TaskEditModalState extends State<TaskEditModal> {
   }
 
   Widget _buildRightTabSection({required bool isDesktop}) {
-    final chatState = context.watch<StateChat>();
-    final sessions = chatState.taskSessions;
-    final activeSessionId = chatState.activeSessionId;
+    return Consumer<StateChat>(
+      builder: (context, chatState, _) {
+        final sessions = chatState.taskSessions;
+        final activeSessionId = chatState.activeSessionId;
 
-    final tabContent = AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      child: _activeTab == 0
-          ? _buildCommentsSection(isDesktop: isDesktop)
-          : _buildTaskChatSection(isDesktop: isDesktop),
-    );
+        final tabContent = AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: _activeTab == 0
+              ? _buildCommentsSection(isDesktop: isDesktop)
+              : _buildTaskChatSection(isDesktop: isDesktop),
+        );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Tab Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _activeTab == 1 ? 'Agent QA Discussion' : 'ประวัติคอมเม้น',
-              style: GlassText.headlineMD().copyWith(fontSize: 18),
-            ),
+            // Tab Header
             Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Glassmorphic toggle switch with icons only
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: GlassColors.surfaceHighest.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-                    border: Border.all(color: GlassColors.ghostBorder),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Chat Icon Button (index 1)
-                      GestureDetector(
-                        onTap: () => setState(() => _activeTab = 1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _activeTab == 1
-                                ? GlassColors.primary.withOpacity(0.15)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(
-                              ExecutiveRadius.s,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.chat_bubble_outline_rounded,
-                            size: 16,
-                            color: _activeTab == 1
-                                ? GlassColors.primary
-                                : GlassColors.onSurfaceVariant.withOpacity(0.5),
-                          ),
-                        ),
+                Text(
+                  _activeTab == 1 ? 'Agent QA Discussion' : 'ประวัติคอมเม้น',
+                  style: GlassText.headlineMD().copyWith(fontSize: 18),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Glassmorphic toggle switch with icons only
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: GlassColors.surfaceHighest.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                        border: Border.all(color: GlassColors.ghostBorder),
                       ),
-                      const SizedBox(width: 2),
-                      // Comment Icon Button (index 0)
-                      GestureDetector(
-                        onTap: () => setState(() => _activeTab = 0),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _activeTab == 0
-                                ? GlassColors.primary.withOpacity(0.15)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(
-                              ExecutiveRadius.s,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Chat Icon Button (index 1)
+                          GestureDetector(
+                            onTap: () => setState(() => _activeTab = 1),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _activeTab == 1
+                                    ? GlassColors.primary.withOpacity(0.15)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(
+                                  ExecutiveRadius.s,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 16,
+                                color: _activeTab == 1
+                                    ? GlassColors.primary
+                                    : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                              ),
                             ),
                           ),
-                          child: Icon(
-                            Icons.comment_outlined,
-                            size: 16,
-                            color: _activeTab == 0
-                                ? GlassColors.primary
-                                : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                          const SizedBox(width: 2),
+                          // Comment Icon Button (index 0)
+                          GestureDetector(
+                            onTap: () => setState(() => _activeTab = 0),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _activeTab == 0
+                                    ? GlassColors.primary.withOpacity(0.15)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(
+                                  ExecutiveRadius.s,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.comment_outlined,
+                                size: 16,
+                                color: _activeTab == 0
+                                    ? GlassColors.primary
+                                    : GlassColors.onSurfaceVariant.withOpacity(0.5),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                    if (isDesktop) ...[
+                      const SizedBox(width: 12),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded, size: 24),
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-                if (isDesktop) ...[
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 24),
-                    onPressed: () => Navigator.pop(context),
-                    color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
               ],
             ),
-          ],
-        ),
-        if (_activeTab == 1 && widget.existingTask != null) ...[
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: PopupMenuButton<String>(
-                  tooltip: 'เลือกเสสชัน',
-                  color: const Color(0xFF1E1E2C),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-                    side: BorderSide(
-                      color: GlassColors.outlineVariant.withOpacity(0.2),
-                    ),
-                  ),
-                  offset: const Offset(0, 48),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: GlassColors.surfaceHighest.withOpacity(0.04),
-                      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-                      border: Border.all(
-                        color: GlassColors.outlineVariant.withOpacity(0.2),
+            if (_activeTab == 1 && widget.existingTask != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: PopupMenuButton<String>(
+                      tooltip: 'เลือกเสสชัน',
+                      color: const Color(0xFF1E1E2C),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                        side: BorderSide(
+                          color: GlassColors.outlineVariant.withOpacity(0.2),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            sessions.any((s) => s.id == activeSessionId)
-                                ? sessions
-                                      .firstWhere(
-                                        (s) => s.id == activeSessionId,
-                                      )
-                                      .name
-                                : 'เลือกเสสชัน...',
-                            style: GlassText.bodyMD().copyWith(
-                              color:
-                                  sessions.any((s) => s.id == activeSessionId)
-                                  ? GlassColors.onSurface
-                                  : GlassColors.onSurfaceVariant.withOpacity(
-                                      0.4,
-                                    ),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      offset: const Offset(0, 48),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: GlassColors.surfaceHighest.withOpacity(0.04),
+                          borderRadius: BorderRadius.circular(ExecutiveRadius.s),
+                          border: Border.all(
+                            color: GlassColors.outlineVariant.withOpacity(0.2),
                           ),
                         ),
-                        Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: GlassColors.onSurfaceVariant.withOpacity(0.6),
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                  ),
-                  itemBuilder: (context) {
-                    return sessions.map((sess) {
-                      final isSelected = sess.id == activeSessionId;
-                      return PopupMenuItem<String>(
-                        value: sess.id,
-                        height: 40,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Text(
-                                sess.name,
+                                sessions.any((s) => s.id == activeSessionId)
+                                    ? sessions
+                                          .firstWhere(
+                                            (s) => s.id == activeSessionId,
+                                          )
+                                          .name
+                                    : 'เลือกเสสชัน...',
                                 style: GlassText.bodyMD().copyWith(
-                                  color: isSelected
-                                      ? GlassColors.primary
-                                      : GlassColors.onSurface,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                                  color:
+                                      sessions.any((s) => s.id == activeSessionId)
+                                      ? GlassColors.onSurface
+                                      : GlassColors.onSurfaceVariant.withOpacity(
+                                          0.4,
+                                        ),
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (isSelected)
-                              const Icon(
-                                Icons.check_rounded,
-                                color: GlassColors.primary,
-                                size: 18,
-                              ),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                              size: 18,
+                            ),
                           ],
                         ),
-                      );
-                    }).toList();
-                  },
-                  onSelected: (newSessionId) {
-                    if (widget.existingTask != null) {
-                      chatState.switchTaskSession(
-                        widget.existingTask!.id,
-                        newSessionId,
-                      );
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: _isReadOnly
-                    ? null
-                    : () {
+                      ),
+                      itemBuilder: (context) {
+                        return sessions.map((sess) {
+                          final isSelected = sess.id == activeSessionId;
+                          return PopupMenuItem<String>(
+                            value: sess.id,
+                            height: 40,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    sess.name,
+                                    style: GlassText.bodyMD().copyWith(
+                                      color: isSelected
+                                          ? GlassColors.primary
+                                          : GlassColors.onSurface,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    color: GlassColors.primary,
+                                    size: 18,
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList();
+                      },
+                      onSelected: (newSessionId) {
                         if (widget.existingTask != null) {
-                          chatState.startNewTaskSession(
+                          chatState.switchTaskSession(
                             widget.existingTask!.id,
-                            taskTitle: widget.existingTask!.title,
+                            newSessionId,
                           );
                         }
                       },
-                icon: const Icon(Icons.add_comment_outlined, size: 20),
-                color: GlassColors.primary,
-                tooltip: 'เริ่มเสสชันใหม่',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _isReadOnly
+                        ? null
+                        : () {
+                            if (widget.existingTask != null) {
+                              chatState.startNewTaskSession(
+                                widget.existingTask!.id,
+                                taskTitle: widget.existingTask!.title,
+                              );
+                            }
+                          },
+                    icon: const Icon(Icons.add_comment_outlined, size: 20),
+                    color: GlassColors.primary,
+                    tooltip: 'เริ่มเสสชันใหม่',
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
-        const SizedBox(height: 16),
-        // Tab Content
-        isDesktop ? Expanded(child: tabContent) : tabContent,
-      ],
+            const SizedBox(height: 16),
+            // Tab Content
+            isDesktop ? Expanded(child: tabContent) : tabContent,
+          ],
+        );
+      },
     );
   }
 
@@ -2321,7 +2237,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
     final activeTask =
         widget.existingTask?.copyWith(
           title: _titleController.text.trim(),
-          description: _descController.text.trim(),
+          description: _descMarkdown.trimRight(),
           dueDate: _dueDate,
           status: _status,
           images: _images,
@@ -2333,7 +2249,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           boardId: widget.board.id,
           title: _titleController.text.trim(),
-          description: _descController.text.trim(),
+          description: _descMarkdown.trimRight(),
           dueDate: _dueDate,
           type: widget.board.type,
           status: _status,

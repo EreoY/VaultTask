@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:provider/provider.dart';
 import '../../../models/chat_model.dart';
 import '../../../state_managers/state_boards.dart';
@@ -299,15 +300,101 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
               child: MarkdownBody(
                 data: message.text,
                 selectable: true,
+                // GitHub-Flavored Markdown so tables / strikethrough / autolinks
+                // render reliably. ('gitHubFlavoredMarkdown' is not exported by
+                // the markdown package; 'gitHubWeb' is the correct GFM constant.)
+                extensionSet: md.ExtensionSet.gitHubWeb,
                 styleSheet: MarkdownStyleSheet(
+                  // Paragraph
                   p: GlassText.bodyMD().copyWith(height: 1.6),
+                  // Emphasis
                   strong: GlassText.bodyMD().copyWith(
                     fontWeight: FontWeight.bold,
                     color: GlassColors.primary,
                   ),
+                  em: GlassText.bodyMD().copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+                  // Headings (descending sizes, bold)
+                  h1: GlassText.bodyMD().copyWith(
+                    fontSize: 26,
+                    height: 1.3,
+                    fontWeight: FontWeight.w700,
+                    color: GlassColors.onSurface,
+                  ),
+                  h2: GlassText.bodyMD().copyWith(
+                    fontSize: 22,
+                    height: 1.3,
+                    fontWeight: FontWeight.w700,
+                    color: GlassColors.onSurface,
+                  ),
+                  h3: GlassText.bodyMD().copyWith(
+                    fontSize: 18,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                    color: GlassColors.onSurface,
+                  ),
+                  // Lists
+                  listBullet: GlassText.bodyMD(),
+                  listIndent: 22,
+                  // Links
+                  a: GlassText.bodyMD().copyWith(
+                    color: GlassColors.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                  // Blockquote
+                  blockquote: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  blockquotePadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  blockquoteDecoration: BoxDecoration(
+                    color: GlassColors.primary.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border(
+                      left: BorderSide(
+                        color: GlassColors.primary.withOpacity(0.4),
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                  // Inline code
                   code: GlassText.bodyMD().copyWith(
                     backgroundColor: GlassColors.primary.withOpacity(0.05),
                     fontFamily: 'monospace',
+                  ),
+                  // Code block
+                  codeblockPadding: const EdgeInsets.all(14),
+                  codeblockDecoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: GlassColors.ghostBorder),
+                  ),
+                  // Tables (GFM)
+                  tableHead: GlassText.bodyMD().copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: GlassColors.onSurface,
+                  ),
+                  tableBody: GlassText.bodyMD(),
+                  tableBorder: TableBorder.all(
+                    color: GlassColors.ghostBorder,
+                    width: 1,
+                  ),
+                  tableCellsPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  tableCellsDecoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.02),
+                  ),
+                  // Horizontal rule
+                  horizontalRuleDecoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: GlassColors.ghostBorder, width: 1),
+                    ),
                   ),
                 ),
               ),
