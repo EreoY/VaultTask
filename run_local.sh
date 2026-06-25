@@ -3,6 +3,12 @@
 # Exit immediately if any command fails
 set -e
 
+# Save root directory of the project
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Copy local development configuration to active env on startup
+cp "$ROOT_DIR/my_ai_assistant/assets/env.development" "$ROOT_DIR/my_ai_assistant/assets/env"
+
 echo "=== VaultTask: Starting Local Environment ==="
 
 # 1. Initialize/Migrate Local D1 Database Schema
@@ -45,6 +51,8 @@ cleanup() {
   echo ""
   echo "=== Stopping local backend and cleaning up... ==="
   kill $BACKEND_PID 2>/dev/null || true
+  # Restore production env configuration on exit to prevent committing dev credentials
+  cp "$ROOT_DIR/my_ai_assistant/assets/env.production" "$ROOT_DIR/my_ai_assistant/assets/env"
   exit 0
 }
 trap cleanup SIGINT SIGTERM EXIT

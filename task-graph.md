@@ -1,3 +1,40 @@
+## Phase 186: Split Environment Configuration Setup
+
+> **Architecture Mandate:** แยกไฟล์กำหนดค่าสภาพแวดล้อม (Environment Configuration) เพื่อรองรับการสลับระหว่าง Local Development และ Production โดยไม่ต้องสลับแบบ Manual:
+> 1. สร้าง `assets/env.development` และ `assets/env.production` ภายใต้โฟลเดอร์ `my_ai_assistant/assets/`
+> 2. แก้ไขให้ `my_ai_assistant/lib/main.dart` โหลด `assets/env` เสมอในทุกแพลตฟอร์มเพื่อแก้ไขปัญหาการโหลดพาร์ทบนเว็บ
+> 3. ปรับปรุง `run_local.sh` ให้สลับมาใช้คอนฟิกพัฒนาขณะทำงานแบบ Local และกู้คืนคอนฟิกโปรดักชันเมื่อปิดสคริปต์ เพื่อป้องกันการสับสนและ Git pollution
+
+### Task 186.1: Register Phase 186 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกโครงสร้างภารกิจของ Phase 186 ลงใน task-graph.md
+- **Why:** เพื่อติดตามและตรวจสอบความคืบหน้าของเฟสตามสถาปัตยกรรม Sovereign
+
+### Task 186.2: Create Split Env Files
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/assets/env.development`, `my_ai_assistant/assets/env.production`, `my_ai_assistant/assets/env`
+- **Action:** คัดลอกและสร้างไฟล์ env.development, env.production และเซ็ตไฟล์ env หลักเป็นแบบโปรดักชัน
+- **Why:** เพื่อเป็นแหล่งข้อมูลที่ถูกต้องสำหรับแต่ละสภาพแวดล้อม
+
+### Task 186.3: Unify Web Asset Path in lib/main.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** ปรับเปลี่ยนค่า `envPath` ในฟังก์ชัน `main()` ให้เป็น `assets/env` เสมอ
+- **Why:** เพื่อแก้ไขความผิดพลาดของการโหลด env บน Flutter Web
+
+### Task 186.4: Automate Environment Copying in run_local.sh
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** เพิ่มคำสั่งการคัดลอกไฟล์ `env.development` ตอนเริ่มทำงาน และกู้คืน `env.production` เมื่อจบการทำงาน (ผ่าน `cleanup()` trap)
+- **Why:** ปรับแต่งกระบวนการทำงานให้เป็นอัตโนมัติ 100% ป้องกันความเสี่ยงจากการคอมมิตค่าพัฒนา
+
+### Task 186.5: Verify Local and Production Builds
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รันและตรวจสอบระบบในพื้นที่โลคัลเพื่อทดสอบความถูกต้องของสคริปต์
+- **Why:** รับประกันความมั่นคงและการกู้คืนไฟล์ 100%
+
 ## Phase 185: Agent Configuration Files Consolidation & Cleanup
 
 > **Architecture Mandate:** ปรับปรุงความสะอาดระเบียบของระบบการกำหนดค่าเอเจนต์ (Agent Configurations) ใน `.agents/agents/` เพื่อให้สอดคล้องตามเกณฑ์มาตรฐานล่าสุด (Sovereign Mandates):

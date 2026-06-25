@@ -43,7 +43,7 @@ void main() async {
   }
 
   try {
-    final envPath = kIsWeb ? 'env' : 'assets/env';
+    final envPath = 'assets/env';
     await dotenv.load(fileName: envPath, isOptional: true);
   } catch (e) {
     debugPrint('No env file found: $e');
