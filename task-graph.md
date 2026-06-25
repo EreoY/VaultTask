@@ -1,3 +1,33 @@
+## Phase 187: Workspace Board Visibility & Access Authorization Fix
+
+> **Architecture Mandate:** แก้ไขการดึงข้อมูลบอร์ด (GET /api/boards) เพื่อให้ผู้ใช้ทุกคนในทีมที่เป็นสมาชิกของพื้นที่ทำงาน (Workspace) สามารถมองเห็นบอร์ดทั้งหมดในพื้นที่ทำงานนั้นๆ ได้:
+> 1. ปรับปรุง Query ในส่วนการดึงข้อมูลบอร์ดของ Cloudflare Worker Backend จากเดิมที่เช็คเฉพาะสิทธิ์ความเป็นเจ้าของบอร์ดหรือเป็นสมาชิกบอร์ดโดยตรง (`owner_uid` หรือ `members`) ให้ครอบคลุมไปถึงสิทธิ์การเข้าใช้พื้นที่ทำงาน (`workspace_id`) ที่ผู้ใช้คนนั้นเป็นเจ้าของหรือเป็นสมาชิกด้วย
+> 2. พัฒนาระบบให้ทำงานร่วมกันย้อนหลังได้ (Backward Compatible) สำหรับบอร์ดที่ไม่มีความเกี่ยวข้องกับพื้นที่ทำงานใดๆ
+
+### Task 187.1: Register Phase 187 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 187 ใน task-graph.md
+- **Why:** เพื่อบันทึกประวัติการพัฒนาและสอดคล้องกับนโยบายสถาปัตยกรรม Sovereign
+
+### Task 187.2: Update Board Retrieval SQL Query in cloudflare_worker.js
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** แก้ไข `GET /api/boards` โดยปรับปรุง SQL query ให้ตรวจสอบสิทธิ์เข้าถึงบอร์ดผ่านความสัมพันธ์ของ `workspace_id` ด้วย
+- **Why:** เพื่อให้สิทธิ์การมองเห็นบอร์ดถ่ายทอดจากระดับพื้นที่ทำงานไปยังผู้ใช้ปลายทางโดยอัตโนมัติ
+
+### Task 187.3: Deploy Updated Backend Worker
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดีพลอย Cloudflare Worker Backend เวอร์ชันใหม่ขึ้นไปทำงานบน Cloudflare
+- **Why:** เพื่อเปิดใช้งานการดึงข้อมูลที่แก้ไขสิทธิ์แล้วในระดับระบบจริง
+
+### Task 187.4: Verify Board Visibility for Non-Owners
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ทดสอบการดึงข้อมูลและยืนยันว่าผู้ใช้คนอื่นๆ สามารถมองเห็นบอร์ดในพื้นที่ทำงานได้ตามปกติหลังจากเข้าร่วมพื้นที่ทำงาน
+- **Why:** รับประกันพฤติกรรมการใช้งานที่ถูกต้องตามสถาปัตยกรรมของแอปพลิเคชัน
+
 ## Phase 186: Split Environment Configuration Setup
 
 > **Architecture Mandate:** แยกไฟล์กำหนดค่าสภาพแวดล้อม (Environment Configuration) เพื่อรองรับการสลับระหว่าง Local Development และ Production โดยไม่ต้องสลับแบบ Manual:

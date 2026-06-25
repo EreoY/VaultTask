@@ -542,9 +542,15 @@ export default {
 
         if (!uid) return json({ error: "Missing uid" }, 400);
         const { results } = await env.DB.prepare(
-          `SELECT * FROM team_boards WHERE owner_uid = ? OR members LIKE ? ORDER BY created_at DESC`,
+          `SELECT * FROM team_boards 
+           WHERE owner_uid = ? 
+              OR members LIKE ? 
+              OR (workspace_id IS NOT NULL AND workspace_id != '' AND workspace_id IN (
+                  SELECT id FROM team_workspaces WHERE owner_uid = ? OR members LIKE ?
+              ))
+           ORDER BY created_at DESC`,
         )
-          .bind(uid, `%${uid}%`)
+          .bind(uid, `%${uid}%`, uid, `%${uid}%`)
           .all();
         return json(results);
       } catch (err) {
