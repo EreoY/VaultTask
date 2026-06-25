@@ -1,3 +1,34 @@
+## Phase 188: Bulk Board Member Selection UI Redesign
+
+> **Architecture Mandate:** ปรับปรุงระบบจัดการสมาชิกบอร์ด (Manage Board Members) เพื่อให้รองรับการเลือกและเพิ่มสมาชิกบอร์ดแบบทีละหลายคน (Bulk Selection) จากสมาชิกของพื้นที่ทำงาน (Workspace) แทนการเลือกทีละคนผ่าน Dropdown:
+> 1. ปรับปรุง `showManageMembersDialog` ใน `boards_dialogs.dart` ให้เปลี่ยนจากการเลือกสมาชิกผ่าน Dropdown ทีละคน ไปเป็นการเลือกแบบ Bulk Multi-select (เช่น ใช้ตาราง/รายการที่แต่ละคนมี Checkbox)
+> 2. พัฒนากลไกการจัดการสถานะภายใน Dialog เพื่อบันทึกการเลือกสมาชิกหลายคนพร้อมกัน และทำการเพิ่มสมาชิกในคราวเดียวเมื่อกดปุ่มบันทึก
+> 3. ปรับปรุง State Manager `state_boards.dart` หรือ API/ฟังก์ชันที่เกี่ยวข้องเพื่อรองรับการเพิ่มสมาชิกแบบเป็นชุด (Bulk Add) หรือรับประกันว่าการเพิ่มทีละหลายคนทำงานได้อย่างเสถียรและราบรื่น
+
+### Task 188.1: Register Phase 188 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกโครงสร้างภารกิจของ Phase 188 ลงใน task-graph.md
+- **Why:** เพื่อบันทึกประวัติและสอดคล้องกับนโยบายสถาปัตยกรรม Sovereign
+
+### Task 188.2: Redesign showManageMembersDialog UI for Multi-Selection
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_dialogs.dart`
+- **Action:** แก้ไข Dialog จัดการสมาชิกให้แสดงรายชื่อสมาชิกใน Workspace ที่มีคุณสมบัติพร้อมจะถูกดึงเข้าบอร์ด (availableMembers) ในรูปแบบของรายการที่มี Checkbox
+- **Why:** เพื่อเปลี่ยนจาก Single Selection Dropdown เป็น Multi-Selection UI ที่ใช้งานง่ายและตรงตามความต้องการผู้ใช้งาน
+
+### Task 188.3: Implement Bulk Addition State & Logic in Dialog
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_dialogs.dart`
+- **Action:** สร้างตัวแปรเก็บเซ็ตของ UID ที่ถูกเลือกชั่วคราว และเมื่อกดปุ่ม ADD ให้ส่งรายการ UID ทั้งหมดที่เลือกในคราวเดียวโดยทำการเรียกคำสั่งเพื่อเพิ่มสมาชิกเข้าบอร์ด
+- **Why:** จัดการ State การเลือกและส่งข้อมูลไปยัง Backend/State Manager อย่างราบรื่นในครั้งเดียว
+
+### Task 188.4: Validate and Verify Bulk Member Addition Flow
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ทดสอบการเลือกสมาชิกหลายคนพร้อมกันและกดบันทึก ยืนยันว่าสมาชิกทั้งหมดได้รับการอัปเดตและแสดงผลถูกต้องใน UI บอร์ด
+- **Why:** รับประกันความเสถียรและความถูกต้องของการแก้ไขสิทธิ์และการแสดงผลสมาชิกในระบบ
+
 ## Phase 187: Workspace Board Visibility & Access Authorization Fix
 
 > **Architecture Mandate:** แก้ไขการดึงข้อมูลบอร์ด (GET /api/boards) เพื่อให้ผู้ใช้ทุกคนในทีมที่เป็นสมาชิกของพื้นที่ทำงาน (Workspace) สามารถมองเห็นบอร์ดทั้งหมดในพื้นที่ทำงานนั้นๆ ได้:

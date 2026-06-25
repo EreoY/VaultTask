@@ -240,8 +240,11 @@ class StateBoards extends ChangeNotifier {
 
       _boards = [...finalPersonalBoards, ...finalTeamBoards];
 
-      // Fetch profiles for all members found in boards
-      final allUids = _boards.expand((b) => b.members).toSet().toList();
+      // Fetch profiles for all members found in boards and workspaces
+      final allUids = {
+        ..._boards.expand((b) => b.members),
+        ..._workspaces.expand((w) => w.members),
+      }.toList();
       if (allUids.isNotEmpty) {
         final profiles = await ApiCloudflare.getUsersByUids(allUids);
         for (final uid in allUids) {

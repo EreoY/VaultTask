@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -301,7 +300,7 @@ class BoardsDialogs {
   }
 
   static void showManageMembersDialog(BuildContext context, BoardModel board) {
-    final uidController = TextEditingController();
+    List<String>? tempSelectedUids;
     showDialog(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -312,6 +311,16 @@ class BoardsDialogs {
                   .cast<BoardModel?>()
                   .firstWhere((b) => b?.id == board.id, orElse: () => board)!;
 
+              final parentWorkspace = stateBoards.workspaces.firstWhere(
+                (w) => w.id == currentBoard.workspaceId,
+                orElse: () => WorkspaceModel(id: '', name: '', type: 'team'),
+              );
+
+              // Initialize tempSelectedUids on first build
+              tempSelectedUids ??= List<String>.from(currentBoard.members);
+
+              final workspaceMembers = parentWorkspace.members;
+
               return _ModalShell(
                 width: 450,
                 child: Column(
@@ -321,156 +330,126 @@ class BoardsDialogs {
                     _kicker('MANAGE BOARD MEMBERS', GlassColors.primary),
                     const SizedBox(height: 24),
                     Text(
-                      'CURRENT MEMBERS',
+                      'WORKSPACE MEMBERS',
                       style: GlassText.labelSM().copyWith(
                         color: GlassColors.onSurfaceVariant.withOpacity(0.5),
                       ),
                     ),
                     const SizedBox(height: 12),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 180),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: currentBoard.members.length,
-                        itemBuilder: (context, index) {
-                          final memberUid = currentBoard.members[index];
-                          final profile = stateBoards.getMemberProfile(
-                            memberUid,
-                          );
-                          final name = profile?['name'] ?? memberUid;
-                          final isOwner = currentBoard.ownerUid == memberUid;
+                      constraints: const BoxConstraints(maxHeight: 280),
+                      child: workspaceMembers.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 24),
+                                child: Text(
+                                  'No workspace members available',
+                                  style: GlassText.bodyMD().copyWith(
+                                    color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: workspaceMembers.length,
+                              itemBuilder: (context, index) {
+                                final memberUid = workspaceMembers[index];
+                                final profile = stateBoards.getMemberProfile(memberUid);
+                                final name = profile?['name'] ?? memberUid;
+                                final isOwner = currentBoard.ownerUid == memberUid;
+                                final isChecked = tempSelectedUids!.contains(memberUid);
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
-                              children: [
-                                _MemberAvatar(
-                                  uid: memberUid,
-                                  name: name,
-                                  photoUrl: profile?['photo'],
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    '$name${isOwner ? ' (Owner)' : ''}',
-                                    style: GlassText.bodyMD(),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Checkbox(
+                                          value: isChecked,
+                                          activeColor: GlassColors.gold,
+                                          checkColor: GlassColors.background,
+                                          side: BorderSide(
+                                            color: isChecked
+                                                ? GlassColors.gold
+                                                : GlassColors.onSurfaceVariant.withOpacity(0.3),
+                                            width: 1.5,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          onChanged: isOwner
+                                              ? null
+                                              : (bool? checked) {
+                                                  setLocalState(() {
+                                                    if (checked == true) {
+                                                      if (!tempSelectedUids!.contains(memberUid)) {
+                                                        tempSelectedUids!.add(memberUid);
+                                                      }
+                                                    } else {
+                                                      tempSelectedUids!.remove(memberUid);
+                                                    }
+                                                  });
+                                                },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _MemberAvatar(
+                                        uid: memberUid,
+                                        name: name,
+                                        photoUrl: profile?['photo'],
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          '$name${isOwner ? ' (Owner)' : ''}',
+                                          style: GlassText.bodyMD(),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                if (!isOwner &&
-                                    memberUid !=
-                                        FirebaseAuth.instance.currentUser?.uid)
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.remove_circle_outline_rounded,
-                                      size: 18,
-                                      color: GlassColors.error,
-                                    ),
-                                    onPressed: () async {
-                                      try {
-                                        await stateBoards.removeMember(
-                                          currentBoard,
-                                          memberUid,
-                                        );
-                                        setLocalState(() {});
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          GlassNotifications.show(
-                                            context,
-                                            'Error: $e',
-                                            isError: true,
-                                          );
-                                        }
-                                      }
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'ADD MEMBER BY UID',
-                      style: GlassText.labelSM().copyWith(
-                        color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ImeSafeTextField(
-                            controller: uidController,
-                            style: GlassText.bodyMD(),
-                            decoration: InputDecoration(
-                              hintText: 'Enter Firebase User UID',
-                              hintStyle: GlassText.bodyMD().copyWith(
-                                color: GlassColors.onSurfaceVariant.withOpacity(
-                                  0.3,
-                                ),
-                              ),
-                              filled: true,
-                              fillColor: GlassColors.primary.withOpacity(0.05),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.all(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _accentAction(
-                          label: 'ADD',
-                          color: GlassColors.gold,
-                          onPressed: () async {
-                            final newUid = uidController.text.trim();
-                            if (newUid.isEmpty) return;
-                            if (currentBoard.members.contains(newUid)) {
-                              GlassNotifications.show(
-                                context,
-                                'User is already a member',
-                                isError: true,
-                              );
-                              return;
-                            }
-                            try {
-                              final updatedBoard = currentBoard.copyWith(
-                                members: [...currentBoard.members, newUid],
-                              );
-                              await stateBoards.updateBoard(updatedBoard);
-                              uidController.clear();
-                              await stateBoards.fetchAllBoards();
-                              setLocalState(() {});
-                            } catch (e) {
-                              if (context.mounted) {
-                                GlassNotifications.show(
-                                  context,
-                                  'Failed to add member: $e',
-                                  isError: true,
                                 );
-                              }
-                            }
-                          },
-                        ),
-                      ],
+                              },
+                            ),
                     ),
                     const SizedBox(height: 32),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: Text(
-                            'CLOSE',
-                            style: GlassText.labelSM().copyWith(
-                              color: GlassColors.primary,
-                            ),
+                        Expanded(
+                          child: _secondaryAction(
+                            label: 'CANCEL',
+                            onPressed: () => Navigator.pop(dialogContext),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _accentAction(
+                            label: 'SAVE',
+                            color: GlassColors.gold,
+                            onPressed: () async {
+                              try {
+                                final updatedBoard = currentBoard.copyWith(
+                                  members: tempSelectedUids,
+                                );
+                                await stateBoards.updateBoard(updatedBoard);
+                                await stateBoards.fetchAllBoards();
+                                if (dialogContext.mounted) {
+                                  Navigator.pop(dialogContext);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  GlassNotifications.show(
+                                    context,
+                                    'Failed to update board members: $e',
+                                    isError: true,
+                                  );
+                                }
+                              }
+                            },
                           ),
                         ),
                       ],
