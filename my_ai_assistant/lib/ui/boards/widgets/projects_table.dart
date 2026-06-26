@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../models/board_model.dart';
+import '../../../state_managers/state_documents.dart';
+import '../../../state_managers/state_meetings.dart';
 import '../../theme/glass_theme.dart';
 
 typedef MemberProfileResolver = Map<String, dynamic>? Function(String uid);
@@ -50,10 +53,11 @@ class ProjectsTable extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _ProjectsTableHeader(),
+            if (!isMobile) const _ProjectsTableHeader(),
             ...boards.map(
               (board) => _BoardRow(
                 board: board,
+                isMobile: isMobile,
                 resolveMemberProfile: resolveMemberProfile,
                 onOpenBoard: onOpenBoard,
                 onOpenMeetings: onOpenMeetings,
@@ -90,14 +94,9 @@ class _ProjectsTableHeader extends StatelessWidget {
       child: Row(
         children: const [
           _HeaderCell(
-            flex: 4,
+            flex: 6,
             icon: Icons.text_fields_rounded,
             label: 'PROJECT',
-          ),
-          _HeaderCell(
-            flex: 2,
-            icon: Icons.info_outline_rounded,
-            label: 'STAGE',
           ),
           _HeaderCell(
             flex: 2,
@@ -182,6 +181,7 @@ class _ActionsHeaderCell extends StatelessWidget {
 
 class _BoardRow extends StatelessWidget {
   final BoardModel board;
+  final bool isMobile;
   final MemberProfileResolver resolveMemberProfile;
   final BoardAction onOpenBoard;
   final BoardAction onOpenMeetings;
@@ -192,6 +192,7 @@ class _BoardRow extends StatelessWidget {
 
   const _BoardRow({
     required this.board,
+    required this.isMobile,
     required this.resolveMemberProfile,
     required this.onOpenBoard,
     required this.onOpenMeetings,
@@ -205,6 +206,29 @@ class _BoardRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTeam = board.type == 'team';
     final projectColor = Color(board.color == 0 ? 0xFF0D40A5 : board.color);
+    final mtgCount = context.select<StateMeetings, int>(
+      (s) => s.meetingCountForBoard(board.id),
+    );
+    final docCount = context.select<StateDocuments, int>(
+      (s) => s.documentCountForBoard(board.id),
+    );
+
+    if (isMobile) {
+      return _ProjectMobileCard(
+        board: board,
+        isTeam: isTeam,
+        projectColor: projectColor,
+        mtgCount: mtgCount,
+        docCount: docCount,
+        resolveMemberProfile: resolveMemberProfile,
+        onOpenBoard: onOpenBoard,
+        onOpenMeetings: onOpenMeetings,
+        onOpenDocs: onOpenDocs,
+        onEditBoard: onEditBoard,
+        onDeleteBoard: onDeleteBoard,
+        onManageMembers: onManageMembers,
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -220,7 +244,7 @@ class _BoardRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              flex: 4,
+              flex: 6,
               child: Row(
                 children: [
                   Container(
@@ -250,39 +274,11 @@ class _BoardRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _OpenInlineButton(onTap: () => onOpenBoard(board)),
+                  _OpenInlineButton(
+                    onTap: () => onOpenBoard(board),
+                    labelText: isTeam ? 'OPEN | TEAM' : 'OPEN | PERSONAL',
+                  ),
                 ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isTeam
-                        ? GlassColors.primary.withOpacity(0.08)
-                        : GlassColors.surfaceBright.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-                    border: Border.all(
-                      color: GlassColors.hairlineStrong.withOpacity(0.45),
-                    ),
-                  ),
-                  child: Text(
-                    isTeam ? 'Team Project' : 'Personal',
-                    style: GlassText.labelSM().copyWith(
-                      fontSize: 10,
-                      color: isTeam
-                          ? GlassColors.primary
-                          : GlassColors.onSurfaceVariant.withOpacity(0.7),
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ),
               ),
             ),
             Expanded(
@@ -297,14 +293,20 @@ class _BoardRow extends StatelessWidget {
               flex: 4,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _OpenInlineButton(onTap: () => onOpenDocs(board)),
+                child: _OpenInlineButton(
+                  onTap: () => onOpenDocs(board),
+                  count: docCount,
+                ),
               ),
             ),
             Expanded(
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _OpenInlineButton(onTap: () => onOpenMeetings(board)),
+                child: _OpenInlineButton(
+                  onTap: () => onOpenMeetings(board),
+                  count: mtgCount,
+                ),
               ),
             ),
             Expanded(
@@ -339,34 +341,331 @@ class _BoardRow extends StatelessWidget {
   }
 }
 
-class _OpenInlineButton extends StatelessWidget {
+class _OpenInlineButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final int? count;
+  final String? labelText;
+
+  const _OpenInlineButton({
+    required this.onTap,
+    this.count,
+    this.labelText,
+  });
+
+  @override
+  State<_OpenInlineButton> createState() => _OpenInlineButtonState();
+}
+
+class _OpenInlineButtonState extends State<_OpenInlineButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = GlassColors.primary;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: accent.withOpacity(_hovered ? 0.18 : 0.08),
+            borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+            border: Border.all(
+              color: accent.withOpacity(_hovered ? 0.5 : 0.28),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.labelText ?? 'OPEN',
+                style: GlassText.labelSM().copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Icon(
+                Icons.open_in_new_rounded,
+                size: 12,
+                color: accent,
+              ),
+              if (widget.count != null) ...[
+                const SizedBox(width: 8),
+                _CountBadge(count: widget.count!),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  final int count;
+
+  const _CountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final isEmpty = count <= 0;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: isEmpty
+            ? GlassColors.surfaceBright.withOpacity(0.08)
+            : GlassColors.primary.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isEmpty
+              ? GlassColors.hairlineStrong.withOpacity(0.4)
+              : GlassColors.primary.withOpacity(0.3),
+          width: 0.8,
+        ),
+      ),
+      child: Text(
+        isEmpty ? '–' : '$count',
+        textAlign: TextAlign.center,
+        style: GlassText.labelSM().copyWith(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: isEmpty
+              ? GlassColors.onSurfaceVariant.withOpacity(0.5)
+              : GlassColors.primary,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectMobileCard extends StatelessWidget {
+  final BoardModel board;
+  final bool isTeam;
+  final Color projectColor;
+  final int mtgCount;
+  final int docCount;
+  final MemberProfileResolver resolveMemberProfile;
+  final BoardAction onOpenBoard;
+  final BoardAction onOpenMeetings;
+  final BoardAction onOpenDocs;
+  final BoardAction onEditBoard;
+  final BoardAction onDeleteBoard;
+  final BoardAction onManageMembers;
+
+  const _ProjectMobileCard({
+    required this.board,
+    required this.isTeam,
+    required this.projectColor,
+    required this.mtgCount,
+    required this.docCount,
+    required this.resolveMemberProfile,
+    required this.onOpenBoard,
+    required this.onOpenMeetings,
+    required this.onOpenDocs,
+    required this.onEditBoard,
+    required this.onDeleteBoard,
+    required this.onManageMembers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: GlassColors.surfaceBright.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+        border: Border.all(
+          color: GlassColors.hairlineStrong.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top row: dot + name + edit/delete
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: projectColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onOpenBoard(board),
+                  child: Text(
+                    board.name,
+                    style: GlassText.bodyMD().copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: GlassColors.onSurface,
+                      fontSize: 15,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                icon: const Icon(Icons.edit_rounded, size: 18),
+                color: GlassColors.onSurfaceVariant.withOpacity(0.55),
+                onPressed: () => onEditBoard(board),
+                tooltip: 'Rename Board',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                color: GlassColors.error.withOpacity(0.6),
+                onPressed: () => onDeleteBoard(board),
+                tooltip: 'Delete Board',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Members
+          _MembersCell(
+            board: board,
+            resolveMemberProfile: resolveMemberProfile,
+            onManageMembers: onManageMembers,
+          ),
+          const SizedBox(height: 14),
+          // Open board button (enter Kanban)
+          InkWell(
+            onTap: () => onOpenBoard(board),
+            borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+            child: Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: GlassColors.gold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+                border: Border.all(
+                  color: GlassColors.gold.withOpacity(0.4),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.dashboard_customize_rounded,
+                    size: 17,
+                    color: GlassColors.gold,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isTeam ? 'OPEN BOARD | TEAM' : 'OPEN BOARD | PERSONAL',
+                    style: GlassText.labelSM().copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: GlassColors.gold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Docs + Meetings open tiles
+          Row(
+            children: [
+              Expanded(
+                child: _MobileOpenTile(
+                  icon: Icons.insert_drive_file_outlined,
+                  label: 'DOCS',
+                  count: docCount,
+                  onTap: () => onOpenDocs(board),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MobileOpenTile(
+                  icon: Icons.calendar_month_rounded,
+                  label: 'MEETINGS',
+                  count: mtgCount,
+                  onTap: () => onOpenMeetings(board),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileOpenTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int count;
   final VoidCallback onTap;
 
-  const _OpenInlineButton({required this.onTap});
+  const _MobileOpenTile({
+    required this.icon,
+    required this.label,
+    required this.count,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: GlassColors.primary.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+          border: Border.all(
+            color: GlassColors.primary.withOpacity(0.25),
+            width: 1,
+          ),
+        ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'OPEN',
-              style: GlassText.labelSM().copyWith(
-                fontSize: 9,
-                color: GlassColors.primary.withOpacity(0.6),
+            Icon(icon, size: 16, color: GlassColors.primary.withOpacity(0.75)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GlassText.labelSM().copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                  color: GlassColors.primary.withOpacity(0.85),
+                ),
               ),
             ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.open_in_new_rounded,
-              size: 10,
-              color: GlassColors.primary.withOpacity(0.6),
-            ),
+            const SizedBox(width: 8),
+            _CountBadge(count: count),
           ],
         ),
       ),

@@ -15,7 +15,7 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(user),
+          _buildHeader(context, user),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
           _buildSettingsSection(isDark),
         ],
@@ -23,60 +23,82 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(User? user) {
+  Widget _buildHeader(BuildContext context, User? user) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final double avatarSize = isMobile ? 100 : 140;
+
+    final avatarWidget = Container(
+      width: avatarSize,
+      height: avatarSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: GlassColors.primary.withOpacity(0.1),
+          width: 1,
+        ),
+        color: GlassColors.primary.withOpacity(0.05),
+      ),
+      child: ClipOval(
+        child: user?.photoURL != null
+            ? Image.network(
+                user!.photoURL!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.person_outline_rounded,
+                  size: isMobile ? 48 : 64,
+                  color: GlassColors.primary,
+                ),
+              )
+            : Icon(
+                Icons.person_outline_rounded,
+                size: isMobile ? 48 : 64,
+                color: GlassColors.primary,
+              ),
+      ),
+    );
+
+    final detailsWidget = Column(
+      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: [
+        Text(
+          user?.displayName ??
+              user?.email?.split('@').first.toUpperCase() ??
+              'COMMANDER',
+          style: GlassText.headlineXL().copyWith(
+            fontSize: isMobile ? 28 : 48,
+          ),
+          textAlign: isMobile ? TextAlign.center : TextAlign.start,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          user?.email?.toUpperCase() ?? 'STRATEGIC OPERATOR',
+          style: GlassText.labelSM().copyWith(
+            color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+            letterSpacing: 2.0,
+          ),
+          textAlign: isMobile ? TextAlign.center : TextAlign.start,
+        ),
+        const SizedBox(height: 24),
+        _buildGhostButton('EDIT PROFILE'),
+      ],
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(child: avatarWidget),
+          const SizedBox(height: 24),
+          detailsWidget,
+        ],
+      );
+    }
+
     return Row(
       children: [
-        Container(
-          width: 140,
-          height: 140,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: GlassColors.primary.withOpacity(0.1),
-              width: 1,
-            ),
-            color: GlassColors.primary.withOpacity(0.05),
-          ),
-          child: ClipOval(
-            child: user?.photoURL != null
-                ? Image.network(
-                    user!.photoURL!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.person_outline_rounded,
-                      size: 64,
-                      color: GlassColors.primary,
-                    ),
-                  )
-                : const Icon(
-                    Icons.person_outline_rounded,
-                    size: 64,
-                    color: GlassColors.primary,
-                  ),
-          ),
-        ),
+        avatarWidget,
         const SizedBox(width: 64),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              user?.displayName ??
-                  user?.email?.split('@').first.toUpperCase() ??
-                  'COMMANDER',
-              style: GlassText.headlineXL().copyWith(fontSize: 48),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              user?.email?.toUpperCase() ?? 'STRATEGIC OPERATOR',
-              style: GlassText.labelSM().copyWith(
-                color: GlassColors.onSurfaceVariant.withOpacity(0.6),
-                letterSpacing: 2.0,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildGhostButton('EDIT PROFILE'),
-          ],
-        ),
+        Expanded(child: detailsWidget),
       ],
     );
   }

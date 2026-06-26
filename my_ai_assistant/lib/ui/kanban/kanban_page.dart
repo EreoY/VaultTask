@@ -395,6 +395,30 @@ class _KanbanPageState extends State<KanbanPage> {
               },
             ),
             const Divider(color: Colors.white10),
+            ListTile(
+              leading: Icon(
+                Icons.person_rounded,
+                color: _filterMode == OperativeFilterMode.mine
+                    ? GlassColors.primary
+                    : Colors.white30,
+              ),
+              title: Text(
+                'MY TASKS',
+                style: GlassText.bodyMD().copyWith(
+                  fontWeight: _filterMode == OperativeFilterMode.mine
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  _filterMode = OperativeFilterMode.mine;
+                  _activeOperativeId = AuthService().currentUser?.uid;
+                });
+                Navigator.pop(context);
+              },
+            ),
+            const Divider(color: Colors.white10),
             ...board.members.map((uid) {
               final profile = boardState.getMemberProfile(uid);
               final name = profile?['name'] ?? 'Operative';
@@ -470,18 +494,7 @@ class _KanbanPageState extends State<KanbanPage> {
   }
 
   void _handleSelectFilterTap(BoardModel board) {
-    if (_filterMode == OperativeFilterMode.select) {
-      _showOperativeFilterMenu(context, board);
-      return;
-    }
-    if (_selectedOperativeId == null) {
-      _showOperativeFilterMenu(context, board);
-      return;
-    }
-    setState(() {
-      _filterMode = OperativeFilterMode.select;
-      _activeOperativeId = _selectedOperativeId;
-    });
+    _showOperativeFilterMenu(context, board);
   }
 
   void _showAddTask(BoardModel board, [String? col]) => TaskEditModal.show(

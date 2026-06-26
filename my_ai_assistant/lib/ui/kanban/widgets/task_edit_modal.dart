@@ -851,112 +851,169 @@ class _TaskEditModalState extends State<TaskEditModal> {
     required bool hasCover,
     TaskImage? coverImage,
   }) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final statusBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: GlassColors.primary.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.m),
+        border: Border.all(
+          color: GlassColors.hairlineStrong.withOpacity(0.55),
+        ),
+      ),
+      child: Text(
+        _status.toUpperCase(),
+        style: GlassText.labelSM().copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: GlassColors.primary,
+        ),
+      ),
+    );
+
+    final actionButtons = <Widget>[
+      if (hasCover && coverImage != null)
+        TextButton.icon(
+          onPressed: () {
+            _setCoverExpanded(!_isCoverExpanded);
+          },
+          icon: Icon(
+            _isCoverExpanded
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            size: 16,
+            color: GlassColors.onSurfaceVariant,
+          ),
+          label: Text(
+            _isCoverExpanded ? 'HIDE COVER' : 'SHOW COVER',
+            style: GlassText.labelSM().copyWith(
+              color: GlassColors.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+      if (hasCover && coverImage != null)
+        TextButton.icon(
+          onPressed: () => _showFullImage(coverImage),
+          icon: const Icon(
+            Icons.fullscreen_rounded,
+            size: 16,
+            color: GlassColors.gold,
+          ),
+          label: Text(
+            'VIEW COVER',
+            style: GlassText.labelSM().copyWith(
+              color: GlassColors.gold,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+      if (widget.onOpenBoard != null)
+        TextButton.icon(
+          onPressed: widget.onOpenBoard,
+          icon: const Icon(
+            Icons.open_in_new_rounded,
+            size: 16,
+            color: GlassColors.gold,
+          ),
+          label: Text(
+            'OPEN BOARD',
+            style: GlassText.labelSM().copyWith(
+              color: GlassColors.gold,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+    ];
+
+    final deleteButton = widget.existingTask != null && _allowStructuralEditing
+        ? IconButton(
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              color: GlassColors.error,
+              size: 20,
+            ),
+            onPressed: () async {
+              await context.read<StateTasks>().deleteTask(
+                widget.board,
+                widget.existingTask!,
+              );
+              if (mounted) Navigator.pop(context);
+            },
+          )
+        : null;
+
+    final closeButton = !isDesktop || widget.existingTask == null
+        ? IconButton(
+            icon: const Icon(Icons.close_rounded, size: 24),
+            onPressed: () => Navigator.pop(context),
+            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+          )
+        : null;
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  statusBadge,
+                  const SizedBox(width: 12),
+                  _buildAutoSaveStatusIndicator(),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (deleteButton != null) deleteButton,
+                  if (closeButton != null) closeButton,
+                ],
+              ),
+            ],
+          ),
+          if (actionButtons.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: actionButtons
+                    .map((btn) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: btn,
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: GlassColors.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(ExecutiveRadius.m),
-                border: Border.all(
-                  color: GlassColors.hairlineStrong.withOpacity(0.55),
-                ),
-              ),
-              child: Text(
-                _status.toUpperCase(),
-                style: GlassText.labelSM().copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: GlassColors.primary,
-                ),
-              ),
-            ),
+            statusBadge,
             const SizedBox(width: 12),
             _buildAutoSaveStatusIndicator(),
           ],
         ),
         Row(
           children: [
-            if (hasCover && coverImage != null)
-              TextButton.icon(
-                onPressed: () {
-                  _setCoverExpanded(!_isCoverExpanded);
-                },
-                icon: Icon(
-                  _isCoverExpanded
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  size: 16,
-                  color: GlassColors.onSurfaceVariant,
-                ),
-                label: Text(
-                  _isCoverExpanded ? 'HIDE COVER' : 'SHOW COVER',
-                  style: GlassText.labelSM().copyWith(
-                    color: GlassColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            if (hasCover && coverImage != null)
-              TextButton.icon(
-                onPressed: () => _showFullImage(coverImage),
-                icon: const Icon(
-                  Icons.fullscreen_rounded,
-                  size: 16,
-                  color: GlassColors.gold,
-                ),
-                label: Text(
-                  'VIEW COVER',
-                  style: GlassText.labelSM().copyWith(
-                    color: GlassColors.gold,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            if (widget.onOpenBoard != null)
-              TextButton.icon(
-                onPressed: widget.onOpenBoard,
-                icon: const Icon(
-                  Icons.open_in_new_rounded,
-                  size: 16,
-                  color: GlassColors.gold,
-                ),
-                label: Text(
-                  'OPEN BOARD',
-                  style: GlassText.labelSM().copyWith(
-                    color: GlassColors.gold,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            if (widget.existingTask != null && _allowStructuralEditing)
-              IconButton(
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: GlassColors.error,
-                  size: 20,
-                ),
-                onPressed: () async {
-                  await context.read<StateTasks>().deleteTask(
-                    widget.board,
-                    widget.existingTask!,
-                  );
-                  if (mounted) Navigator.pop(context);
-                },
-              ),
-            if (!isDesktop || widget.existingTask == null)
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 24),
-                onPressed: () => Navigator.pop(context),
-                color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-              ),
+            ...actionButtons,
+            if (deleteButton != null) deleteButton,
+            if (closeButton != null) closeButton,
           ],
         ),
       ],

@@ -290,28 +290,14 @@ class GlassBottomBar extends StatelessWidget {
               return Expanded(
                 child: InkWell(
                   onTap: () => onItemSelected(index),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        item.icon,
-                        color: isActive 
-                            ? GlassColors.primary 
-                            : GlassColors.onSurfaceVariant.withOpacity(0.6),
-                        size: 24,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.label,
-                        style: GlassText.bodyMD().copyWith(
-                          fontSize: 10,
-                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                          color: isActive 
-                              ? GlassColors.primary 
-                              : GlassColors.onSurfaceVariant.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
+                  child: Center(
+                    child: Icon(
+                      item.icon,
+                      color: isActive
+                          ? GlassColors.primary
+                          : GlassColors.onSurfaceVariant.withOpacity(0.6),
+                      size: 26,
+                    ),
                   ),
                 ),
               );
