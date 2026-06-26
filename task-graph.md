@@ -5228,3 +5228,143 @@
 - **Target Files:** None
 - **Action:** `python3 runner.py analyze` (No issues found) + audit ว่าทั้งสองไฟล์มี background extraction/view/delete และ meetings ไม่แตะ recording takes
 - **Why:** ยืนยันความถูกต้อง; ไม่ deploy
+
+## Phase 197: Count Badges + Mobile UX (Icons-Only Nav, Projects Table Cards) — Local Only
+
+> **Architecture Mandate:** เพิ่มตัวเลขจำนวน meetings/docs ในคอลัมน์ workspace + ทำมือถือให้ใช้ง่าย โดย **เดสก์ท็อปต้องเหมือนเดิม 100%** (ทุกการแก้มือถือ gate ด้วย Responsive.isMobile / mobile-only widget)
+
+### Task 197.1: Meeting/Doc count badges in projects table
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
+- **Action:** ปุ่ม OPEN ของ DOCS/MEETINGS แสดง count ผ่าน context.select(meetingCountForBoard/documentCountForBoard) + `_CountBadge`; โชว์ทั้งเดสก์ท็อป+มือถือ
+- **Why:** ให้เห็นจำนวนคร่าว ๆ ในหน้า workspace
+
+### Task 197.2: Mobile bottom nav icons-only
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/common/glass_widgets.dart`
+- **Action:** `GlassBottomBar` render ไอคอนล้วน (เอา label ออก) — เป็น widget เฉพาะมือถือ เดสก์ท็อป (AetherSideNav) ไม่กระทบ
+- **Why:** ลดความรก (รวมถึงคำว่า Boards) ในเมนูมือถือ
+
+### Task 197.3: Projects table mobile card layout (desktop unchanged)
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
+- **Action:** `if (isMobile)` → `_ProjectMobileCard` (ชื่อ+dot+edit/delete / stage chip / members / ปุ่ม DOCS·MEETINGS+count, tap target ~44, เลื่อนแนวตั้ง); ซ่อน header บนมือถือ; เดสก์ท็อปคง Row Expanded(flex) เดิมเป๊ะ
+- **Why:** หน้าตารางโปรเจกต์เบี้ยว/ใช้ยากบนมือถือ
+
+### Task 197.4: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** `python3 runner.py analyze` (No issues found) + audit ว่า desktop branch (header + Row flex) ถูกเรียกเฉพาะ !isMobile
+- **Why:** ยืนยันเดสก์ท็อปไม่เปลี่ยน + ไม่มี compile error; ไม่ deploy
+
+## Phase 198: Mobile Header Overflow Fix, Clickable OPEN Buttons, Mobile Open-Board & Kanban Mobile Action Menu (Local Only)
+
+### Task 198.1: Fix boards header mobile overflow
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** mobile → trailing เป็นไอคอนล้วน (group_add + add) + title Flexible/ellipsis; desktop คงปุ่ม text เดิม
+- **Why:** header (Join workspace + New project) ล้น/ซ้อนบนมือถือ
+
+### Task 198.2: Desktop OPEN buttons look clickable (steering)
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
+- **Action:** `_OpenInlineButton` เป็น StatefulWidget มี border/bg + hover + click cursor (pill ชัดเจน) คง count badge
+- **Why:** ผู้ใช้ไม่รู้ว่าปุ่ม OPEN บนเดสก์ท็อปกดได้
+
+### Task 198.3: Open Board button on mobile project card
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
+- **Action:** `_ProjectMobileCard` เพิ่มปุ่ม OPEN BOARD (เต็มกว้าง, minHeight 44) → onOpenBoard; tap ชื่อก็เข้าได้
+- **Why:** เข้า Kanban จากหน้า workspace บนมือถือได้ง่าย
+
+### Task 198.4: Kanban mobile action icons → single popup menu
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/kanban/widgets/kanban_workspace_controls.dart`
+- **Action:** mobile branch รวม 3 ไอคอน (Add Phase/Bulk/New Task) เป็น PopupMenuButton เดียว; desktop คง _GhostButton 3 ปุ่มเดิม; ลบ param ที่ไม่ใช้ของ _ActionIconButton
+- **Why:** ปุ่มรก/ต้องเลื่อนบนมือถือ
+
+### Task 198.5: Static Verification
+- **Status:** [x] Done
+- **Action:** `python3 runner.py analyze` → No issues found; ไม่ deploy
+
+## Phase 199: Mobile Layout & UX Polish (Actions Revert, Filter Dropdown, Column Adjustments, and Mobile Headers)
+
+### Task 199.1: Restore separate Kanban mobile actions & clean compilation
+- [x] **Task 199.1**: Restore separate Kanban mobile actions & clean compilation
+    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
+    - *Logic/Target*: Restructure `_ActionIconButton` to include `onTap` and `color` parameters and restore the `GestureDetector` wrapper. Keep the separate icons for column settings, select mode, and add task in the mobile branch of `KanbanWorkspaceHeader`.
+    - *Why*: Revert consolidation of mobile actions and fix compilation errors.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.2: Group Kanban Filters into a Single Button/Dropdown
+- [x] **Task 199.2**: Group Kanban Filters into a Single Button/Dropdown
+    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
+    - *Logic/Target*: 
+      - Update `_showOperativeFilterMenu` in `my_ai_assistant/lib/ui/kanban/kanban_page.dart` to include "MY TASKS" as an option alongside "ALL OPERATIVES" and individual board members.
+      - Replace `_KanbanFilterToggleBar` in `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart` with a single filter button or dropdown displaying the label of the active selection (e.g. `FILTER: [Active Mode Label]`). When clicked, open the consolidated operative/filter menu.
+    - *Why*: Group all filter actions to clean up header estate.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.3: Relocate Board Avatars below Board Title
+- [x] **Task 199.3**: Relocate Board Avatars below Board Title
+    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
+    - *Logic/Target*:
+      - Remove `_BoardAvatarStack` from the controls list of `KanbanWorkspaceHeader`.
+      - Add optional `isMini` parameter to `_BoardAvatarStack` and `_AvatarFallback` to scale size to `24x24`.
+      - Modify `WorkspaceChromeHeader`'s `title` parameter in `KanbanWorkspaceHeader` to stack the title row and `_BoardAvatarStack(isMini: true)` inside a `Column`.
+    - *Why*: Cleaner header hierarchy and better utilization of space.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.4: Merge Team/Personal Indicator into Desktop Board OPEN Button
+- [x] **Task 199.4**: Merge Team/Personal Indicator into Desktop Board OPEN Button
+    - *File*: `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+    - *Logic/Target*:
+      - Add optional `labelText` parameter to `_OpenInlineButton`.
+      - Pass `'OPEN | TEAM'` or `'OPEN | PERSONAL'` for the board open button in project rows.
+      - Remove `STAGE` column from header list and row content layout list.
+      - Adjust `PROJECT` header/row flex from 4 to 6.
+      - Remove separate `Stage` chip from `_ProjectMobileCard` on mobile as well, and update the open board button to display `OPEN BOARD | TEAM` or `OPEN BOARD | PERSONAL`.
+    - *Why*: Optimize deskspace, avoid redundant columns, and keep layouts consistent.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.5: Fix Profile Screen Header Mobile Overflow
+- [x] **Task 199.5**: Fix Profile Screen Header Mobile Overflow
+    - *File*: `my_ai_assistant/lib/ui/profile/profile_page.dart`
+    - *Logic/Target*:
+      - In `_buildHeader`, add condition for mobile width (< 600px).
+      - Stack the user avatar and details column vertically inside a `Column` (centered avatar) instead of a `Row`.
+      - Scale name text size to `28` and profile icon width/height to `100` on mobile.
+    - *Why*: Prevent profile header components from spilling out of bounds.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.6: Fix Global Chat Header Mobile Overflow
+- [x] **Task 199.6**: Fix Global Chat Header Mobile Overflow
+    - *File*: `my_ai_assistant/lib/ui/chat/chat_page.dart`
+    - *Logic/Target*:
+      - Check `Responsive.isMobile(context)`. If true, render mobile header branch:
+        - Row 1: Title text (fontSize: 24) + menu icon button on the left, and icon-only RESET SESSION button on the right.
+        - Row 2: Status green dot + status description text (with `Expanded`/`Flexible` wrapping constraints).
+    - *Why*: Keep chat controls compact and accessible on mobile screen sizes.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.7: Fix Dashboard Workspace Row Overflow
+- [x] **Task 199.7**: Fix Dashboard Workspace Row Overflow
+    - *File*: `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+    - *Logic/Target*:
+      - Wrap the workspace name `Text` widget inside `Flexible` in the workspace row layout.
+      - Apply `overflow: TextOverflow.ellipsis` and `maxLines: 1`.
+      - Wrap board item name row contents inside the projects wrap layout.
+    - *Why*: Prevent long workspace or project names from pushing layouts offscreen.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 199.8: Fix Task Preview Modal Header Overflow
+- [x] **Task 199.8**: Fix Task Preview Modal Header Overflow
+    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+    - *Logic/Target*:
+      - Restructure `_buildHeader` to use a column layout on mobile width (< 600px).
+      - Row 1: Status badge + save indicator on left, delete + close buttons on right.
+      - Row 2: Wrap action buttons (SHOW COVER, VIEW COVER, OPEN BOARD) inside a horizontal scroll container (`SingleChildScrollView`).
+    - *Why*: Ensure task management controls remain fully visible and usable in portrait mobile views.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+

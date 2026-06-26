@@ -44,11 +44,14 @@ class BoardsWorkspaceHeader extends StatelessWidget {
       metaText: 'Project index',
       title: Row(
         children: [
-          Text(
-            selectedWorkspace?.name ?? 'Projects',
-            style: GlassText.headlineMD().copyWith(
-              fontWeight: FontWeight.w600,
-              color: GlassColors.onSurface,
+          Flexible(
+            child: Text(
+              selectedWorkspace?.name ?? 'Projects',
+              overflow: TextOverflow.ellipsis,
+              style: GlassText.headlineMD().copyWith(
+                fontWeight: FontWeight.w600,
+                color: GlassColors.onSurface,
+              ),
             ),
           ),
           if (selectedWorkspace != null) ...[
@@ -74,35 +77,67 @@ class BoardsWorkspaceHeader extends StatelessWidget {
           ],
         ],
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextButton.icon(
-            onPressed: onJoinWorkspace,
-            icon: const Icon(
-              Icons.group_add_rounded,
-              size: 14,
-              color: GlassColors.gold,
+      trailing: isMobile
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: onJoinWorkspace,
+                  tooltip: 'Join workspace',
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                  icon: const Icon(
+                    Icons.group_add_rounded,
+                    size: 20,
+                    color: GlassColors.gold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                FilledButton(
+                  onPressed: onCreateProject,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.all(10),
+                    minimumSize: const Size(40, 40),
+                    shape: const CircleBorder(),
+                  ),
+                  child: const Icon(Icons.add_rounded, size: 20),
+                ),
+              ],
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton.icon(
+                  onPressed: onJoinWorkspace,
+                  icon: const Icon(
+                    Icons.group_add_rounded,
+                    size: 14,
+                    color: GlassColors.gold,
+                  ),
+                  label: Text(
+                    'Join workspace',
+                    style: GlassText.bodyMD().copyWith(
+                      color: GlassColors.gold,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: onCreateProject,
+                  icon: const Icon(Icons.add_rounded, size: 14),
+                  label: Text(
+                    'New project',
+                    style: GlassText.bodyMD().copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            label: Text(
-              'Join workspace',
-              style: GlassText.bodyMD().copyWith(
-                color: GlassColors.gold,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: onCreateProject,
-            icon: const Icon(Icons.add_rounded, size: 14),
-            label: Text(
-              'New project',
-              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

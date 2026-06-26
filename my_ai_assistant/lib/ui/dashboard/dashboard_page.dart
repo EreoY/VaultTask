@@ -344,10 +344,14 @@ class _DashboardPageState extends State<DashboardPage> {
                               children: [
                                 Row(
                                   children: [
-                                    Text(
-                                      workspace.name,
-                                      style: GlassText.bodyMD().copyWith(
-                                        fontWeight: FontWeight.bold,
+                                    Flexible(
+                                      child: Text(
+                                        workspace.name,
+                                        style: GlassText.bodyMD().copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -401,6 +405,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                             horizontal: 10,
                                             vertical: 5,
                                           ),
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 160,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: GlassColors.onSurface
                                                 .withOpacity(0.04),
@@ -424,17 +431,21 @@ class _DashboardPageState extends State<DashboardPage> {
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
-                                              Text(
-                                                board.name,
-                                                style: GlassText.bodyMD()
-                                                    .copyWith(
-                                                      fontSize: 11,
-                                                      color: GlassColors
-                                                          .onSurface
-                                                          .withOpacity(0.9),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
+                                              Flexible(
+                                                child: Text(
+                                                  board.name,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                  style: GlassText.bodyMD()
+                                                      .copyWith(
+                                                        fontSize: 11,
+                                                        color: GlassColors
+                                                            .onSurface
+                                                            .withOpacity(0.9),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                ),
                                               ),
                                             ],
                                           ),

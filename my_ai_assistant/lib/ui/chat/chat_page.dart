@@ -4,6 +4,7 @@ import '../../models/chat_model.dart';
 import '../../state_managers/state_chat.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
+import '../common/responsive_layout.dart';
 import 'widgets/aether_chat_view.dart';
 
 class ChatPage extends StatefulWidget {
@@ -53,6 +54,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildHeader() {
+    final isMobile = Responsive.isMobile(context);
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         ExecutiveSpacing.containerPadding(context),
@@ -60,111 +63,179 @@ class _ChatPageState extends State<ChatPage> {
         ExecutiveSpacing.containerPadding(context),
         0,
       ),
-
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Global Chat',
-                    style: GlassText.headlineXL().copyWith(fontSize: 48),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: Icon(
-                      _showSidebar
-                          ? Icons.menu_open_rounded
-                          : Icons.menu_rounded,
-                      color: GlassColors.primary.withOpacity(0.7),
-                      size: 24,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showSidebar = !_showSidebar;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: GlassColors.success,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Ready to collaborate with your strategic workflow.',
-                    style: GlassText.bodyMD().copyWith(
-                      color: GlassColors.onSurfaceVariant.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    context.read<StateChat>().resetFullChat();
-                    GlassNotifications.show(context, 'SESSION RESET');
-                  },
-                  borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(
-                        ExecutiveRadius.circular,
-                      ),
-                      border: Border.all(
-                        color: GlassColors.outlineVariant.withOpacity(0.1),
-                      ),
-                    ),
-                    child: Row(
+      child: isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
                       children: [
-                        Icon(
-                          Icons.delete_sweep_rounded,
-                          size: 20,
+                        Text(
+                          'Global Chat',
+                          style: GlassText.headlineXL().copyWith(fontSize: 24),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(
+                            _showSidebar
+                                ? Icons.menu_open_rounded
+                                : Icons.menu_rounded,
+                            color: GlassColors.primary.withOpacity(0.7),
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showSidebar = !_showSidebar;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_sweep_rounded,
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        context.read<StateChat>().resetFullChat();
+                        GlassNotifications.show(context, 'SESSION RESET');
+                      },
+                      tooltip: 'RESET SESSION',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: GlassColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Ready to collaborate with your strategic workflow.',
+                        style: GlassText.bodyMD().copyWith(
                           color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Global Chat',
+                          style: GlassText.headlineXL().copyWith(fontSize: 48),
+                        ),
+                        const SizedBox(width: 16),
+                        IconButton(
+                          icon: Icon(
+                            _showSidebar
+                                ? Icons.menu_open_rounded
+                                : Icons.menu_rounded,
+                            color: GlassColors.primary.withOpacity(0.7),
+                            size: 24,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _showSidebar = !_showSidebar;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: GlassColors.success,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'RESET SESSION',
-                          style: GlassText.labelSM().copyWith(
-                            fontSize: 10,
-                            letterSpacing: 2.0,
-                            fontWeight: FontWeight.bold,
-                            color: GlassColors.onSurfaceVariant.withOpacity(
-                              0.6,
-                            ),
+                          'Ready to collaborate with your strategic workflow.',
+                          style: GlassText.bodyMD().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(0.6),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                Row(
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          context.read<StateChat>().resetFullChat();
+                          GlassNotifications.show(context, 'SESSION RESET');
+                        },
+                        borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(
+                              ExecutiveRadius.circular,
+                            ),
+                            border: Border.all(
+                              color: GlassColors.outlineVariant.withOpacity(0.1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_sweep_rounded,
+                                size: 20,
+                                color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'RESET SESSION',
+                                style: GlassText.labelSM().copyWith(
+                                  fontSize: 10,
+                                  letterSpacing: 2.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: GlassColors.onSurfaceVariant.withOpacity(
+                                    0.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 

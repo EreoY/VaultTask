@@ -80,37 +80,47 @@ class KanbanWorkspaceHeader extends StatelessWidget {
           ],
           metaText:
               '${board.type.toUpperCase()} PROJECT • ${board.columns.length} STRATEGIC PHASES',
-          title: Row(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ActionOutlineButton(
-                icon: Icons.arrow_back_ios_new_rounded,
-                onTap: onBack,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        board.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: GlassText.headlineLG().copyWith(
-                          fontSize: isTablet ? 30 : 36,
-                          fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  _ActionOutlineButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: onBack,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            board.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: GlassText.headlineLG().copyWith(
+                              fontSize: isTablet ? 30 : 36,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        _KanbanBoardMenu(
+                          board: board,
+                          isOverviewMode: isOverviewMode,
+                          onToggleOverview: onToggleOverview,
+                          onShowBoardInfo: onShowBoardInfo,
+                          onShowRenameBoard: onShowRenameBoard,
+                          onShowRoleManager: onShowRoleManager,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    _KanbanBoardMenu(
-                      board: board,
-                      isOverviewMode: isOverviewMode,
-                      onToggleOverview: onToggleOverview,
-                      onShowBoardInfo: onShowBoardInfo,
-                      onShowRenameBoard: onShowRenameBoard,
-                      onShowRoleManager: onShowRoleManager,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 58),
+                child: _BoardAvatarStack(board: board, isMini: true),
               ),
             ],
           ),
@@ -175,8 +185,6 @@ class KanbanWorkspaceHeader extends StatelessWidget {
                             onSetFilterMine: onSetFilterMine,
                             onTapSelectFilter: onTapSelectFilter,
                           ),
-                          const SizedBox(width: 12),
-                          _BoardAvatarStack(board: board),
                         ],
                       ),
                     ),
@@ -208,15 +216,15 @@ class KanbanWorkspaceHeader extends StatelessWidget {
                           icon: Icons.view_column_rounded,
                           onTap: onShowColumnSettings,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         _ActionIconButton(
                           icon: isSelectMode
                               ? Icons.checklist_rounded
                               : Icons.checklist_rtl_rounded,
-                          onTap: onToggleSelectMode,
                           color: isSelectMode ? GlassColors.gold : null,
+                          onTap: onToggleSelectMode,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         _ActionIconButton(
                           icon: Icons.add_rounded,
                           onTap: onShowAddTask,
@@ -518,39 +526,57 @@ class _KanbanFilterToggleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: GlassColors.onSurface.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: GlassColors.ghostBorder, width: 0.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ToggleItem(
-            label: 'ALL',
-            isSelected: allSelected,
-            icon: Icons.group_rounded,
-            isMobile: isMobile,
-            onTap: onSetFilterAll,
+    final String activeModeLabel;
+    if (allSelected) {
+      activeModeLabel = 'ALL';
+    } else if (mineSelected) {
+      activeModeLabel = 'MY TASKS';
+    } else {
+      activeModeLabel = selectFilterLabel;
+    }
+
+    return GestureDetector(
+      onTap: onTapSelectFilter,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 12 : 16,
+            vertical: 8,
           ),
-          _ToggleItem(
-            label: isMobile ? 'MINE' : 'MY TASKS',
-            isSelected: mineSelected,
-            icon: Icons.person_rounded,
-            isMobile: isMobile,
-            onTap: onSetFilterMine,
+          decoration: BoxDecoration(
+            color: GlassColors.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: GlassColors.ghostBorder, width: 0.5),
           ),
-          _ToggleItem(
-            label: selectFilterLabel,
-            isSelected: selectSelected,
-            icon: Icons.filter_list_rounded,
-            showDropdownArrow: true,
-            isMobile: isMobile,
-            onTap: onTapSelectFilter,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.filter_list_rounded,
+                size: isMobile ? 12 : 14,
+                color: GlassColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'FILTER: ${activeModeLabel.toUpperCase()}',
+                style: GlassText.labelSM().copyWith(
+                  color: GlassColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 9 : 10,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_drop_down_rounded,
+                size: isMobile ? 14 : 16,
+                color: GlassColors.primary,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -558,14 +584,19 @@ class _KanbanFilterToggleBar extends StatelessWidget {
 
 class _BoardAvatarStack extends StatelessWidget {
   final BoardModel board;
+  final bool isMini;
 
-  const _BoardAvatarStack({required this.board});
+  const _BoardAvatarStack({
+    required this.board,
+    this.isMini = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final boardState = context.watch<StateBoards>();
     final visibleMembers = board.members.take(3).toList();
     final remainingCount = board.members.length - visibleMembers.length;
+    final double size = isMini ? 24 : 32;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -576,10 +607,10 @@ class _BoardAvatarStack extends StatelessWidget {
           final name = profile?['name'] ?? 'Operative';
           final photo = profile?['photo'] ?? '';
           return Padding(
-            padding: const EdgeInsets.only(right: 6),
+            padding: EdgeInsets.only(right: isMini ? 4 : 6),
             child: Container(
-              width: 32,
-              height: 32,
+              width: size,
+              height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: color.withOpacity(0.15),
@@ -591,19 +622,19 @@ class _BoardAvatarStack extends StatelessWidget {
                         photo,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            _AvatarFallback(name: name, color: color),
+                            _AvatarFallback(name: name, color: color, isMini: isMini),
                       )
-                    : _AvatarFallback(name: name, color: color),
+                    : _AvatarFallback(name: name, color: color, isMini: isMini),
               ),
             ),
           );
         }),
         if (remainingCount > 0)
           Padding(
-            padding: const EdgeInsets.only(right: 6),
+            padding: EdgeInsets.only(right: isMini ? 4 : 6),
             child: Container(
-              width: 32,
-              height: 32,
+              width: size,
+              height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: GlassColors.onSurface.withOpacity(0.05),
@@ -613,7 +644,7 @@ class _BoardAvatarStack extends StatelessWidget {
                 child: Text(
                   '+$remainingCount',
                   style: GlassText.label().copyWith(
-                    fontSize: 10,
+                    fontSize: isMini ? 8 : 10,
                     color: GlassColors.onSurfaceVariant.withOpacity(0.5),
                   ),
                 ),
@@ -628,8 +659,13 @@ class _BoardAvatarStack extends StatelessWidget {
 class _AvatarFallback extends StatelessWidget {
   final String name;
   final Color color;
+  final bool isMini;
 
-  const _AvatarFallback({required this.name, required this.color});
+  const _AvatarFallback({
+    required this.name,
+    required this.color,
+    this.isMini = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -637,7 +673,7 @@ class _AvatarFallback extends StatelessWidget {
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : '?',
         style: TextStyle(
-          fontSize: 12,
+          fontSize: isMini ? 9 : 12,
           color: color,
           fontWeight: FontWeight.bold,
         ),
@@ -850,24 +886,37 @@ class _ActionIconButton extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? color;
 
-  const _ActionIconButton({required this.icon, this.onTap, this.color});
+  const _ActionIconButton({
+    required this.icon,
+    this.onTap,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-          border: Border.all(
-            color: (color ?? GlassColors.outlineVariant).withOpacity(0.3),
-          ),
+    final childWidget = Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+        border: Border.all(
+          color: GlassColors.outlineVariant.withOpacity(0.3),
         ),
-        child: Icon(icon, size: 16, color: color ?? GlassColors.onSurface),
+      ),
+      child: Icon(
+        icon,
+        size: 16,
+        color: color ?? GlassColors.onSurface,
       ),
     );
+
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: childWidget,
+      );
+    }
+    return childWidget;
   }
 }

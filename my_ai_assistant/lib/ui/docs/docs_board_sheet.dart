@@ -538,7 +538,9 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: 560,
+            width: MediaQuery.of(ctx).size.width < 600
+                ? MediaQuery.of(ctx).size.width - 48
+                : 560,
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(ctx).size.height * 0.7,
             ),
