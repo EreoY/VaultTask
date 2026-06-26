@@ -284,6 +284,20 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
           )
         : Icon(icon, size: 14, color: color);
 
+    final isMobile = Responsive.isMobile(context);
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withOpacity(0.12), width: 0.8),
+        ),
+        child: iconWidget,
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1128,6 +1142,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   }
 
   Widget _buildTopActions() {
+    final isMobile = Responsive.isMobile(context);
+
     return Row(
       children: [
         if (widget.onBack != null)
@@ -1137,11 +1153,16 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
           ),
         if (widget.onBack != null) const SizedBox(width: 10),
         if (widget.onOpenBoard != null)
-          TextButton.icon(
-            onPressed: widget.onOpenBoard,
-            icon: const Icon(Icons.open_in_new_rounded, size: 15),
-            label: const Text('Open board'),
-          ),
+          isMobile
+              ? IconButton(
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  onPressed: widget.onOpenBoard,
+                )
+              : TextButton.icon(
+                  onPressed: widget.onOpenBoard,
+                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                  label: const Text('Open board'),
+                ),
         const Spacer(),
         if (_autoSaveStatus != null) ...[
           _buildAutoSaveStatusIndicator(),
@@ -1517,14 +1538,17 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   Widget _buildTabBar() {
     return Padding(
       padding: const EdgeInsets.only(left: 0),
-      child: Row(
-        children: [
-          _docTab(_MeetingDocTab.summary, 'Summary'),
-          const SizedBox(width: 10),
-          _docTab(_MeetingDocTab.notes, 'Notes'),
-          const SizedBox(width: 10),
-          _docTab(_MeetingDocTab.transcript, 'Transcript'),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _docTab(_MeetingDocTab.summary, 'Summary'),
+            const SizedBox(width: 10),
+            _docTab(_MeetingDocTab.notes, 'Notes'),
+            const SizedBox(width: 10),
+            _docTab(_MeetingDocTab.transcript, 'Transcript'),
+          ],
+        ),
       ),
     );
   }
@@ -2070,62 +2094,61 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
   Widget _buildSttControls() {
     final isRecording = _sttService.isRecording;
+    final isMobile = Responsive.isMobile(context);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: GlassColors.surface.withOpacity(0.05),
-        border: Border.all(
-          color: GlassColors.outlineVariant.withOpacity(0.12),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-          if (!isRecording) ...[
-            _buildSourceToggle(
-              label: 'Microphone',
-              icon: Icons.mic,
-              value: _includeMic,
-              onChanged: (val) {
-                setState(() => _includeMic = val);
-              },
+    if (isMobile) {
+      final List<Widget> row1Children = [];
+      if (!isRecording) {
+        row1Children.add(
+          _buildSourceToggle(
+            label: 'Mic',
+            icon: Icons.mic,
+            value: _includeMic,
+            onChanged: (val) {
+              setState(() => _includeMic = val);
+            },
+          ),
+        );
+        row1Children.add(const SizedBox(width: 10));
+        row1Children.add(
+          _buildSourceToggle(
+            label: 'System',
+            icon: Icons.screen_share,
+            value: _includeSystem,
+            onChanged: (val) {
+              setState(() => _includeSystem = val);
+            },
+          ),
+        );
+      } else {
+        row1Children.add(const _PulsingRecordDot());
+        row1Children.add(const SizedBox(width: 8));
+        row1Children.add(
+          Text(
+            'Recording live...',
+            style: GlassText.bodyMD().copyWith(
+              color: GlassColors.gold,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
-            const SizedBox(width: 12),
-            _buildSourceToggle(
-              label: 'System Audio',
-              icon: Icons.screen_share,
-              value: _includeSystem,
-              onChanged: (val) {
-                setState(() => _includeSystem = val);
-              },
-            ),
-          ] else ...[
-            const _PulsingRecordDot(),
-            const SizedBox(width: 8),
-            Text(
-              'Recording live...',
-              style: GlassText.bodyMD().copyWith(
-                color: GlassColors.gold,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          const Spacer(),
-          if (!isRecording && _sttService.utterances.isNotEmpty) ...[
-            IconButton(
-              icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
-              tooltip: 'ล้างทรานสคริปต์หลัก',
-              onPressed: () => _showClearTranscriptConfirmDialog(context),
-            ),
-            const SizedBox(width: 8),
-          ],
-          if (!isRecording)
-            ElevatedButton.icon(
+          ),
+        );
+      }
+
+      row1Children.add(const Spacer());
+
+      if (!isRecording && _sttService.utterances.isNotEmpty) {
+        row1Children.add(
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+            tooltip: 'ล้างทรานสคริปต์หลัก',
+            onPressed: () => _showClearTranscriptConfirmDialog(context),
+          ),
+        );
+      }
+
+      final startStopButton = !isRecording
+          ? ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: GlassColors.gold,
                 foregroundColor: Colors.black,
@@ -2145,8 +2168,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                 );
               },
             )
-          else
-            ElevatedButton.icon(
+          : ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent.withOpacity(0.8),
                 foregroundColor: Colors.white,
@@ -2162,8 +2184,128 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                 _sttService.stopSession();
                 _saveMeeting();
               },
+            );
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: GlassColors.surface.withOpacity(0.05),
+          border: Border.all(
+            color: GlassColors.outlineVariant.withOpacity(0.12),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: row1Children,
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: startStopButton,
+            ),
+            if (!isRecording) _buildUploadTranscribeSection(),
           ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: GlassColors.surface.withOpacity(0.05),
+        border: Border.all(
+          color: GlassColors.outlineVariant.withOpacity(0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (!isRecording) ...[
+                _buildSourceToggle(
+                  label: 'Microphone',
+                  icon: Icons.mic,
+                  value: _includeMic,
+                  onChanged: (val) {
+                    setState(() => _includeMic = val);
+                  },
+                ),
+                const SizedBox(width: 12),
+                _buildSourceToggle(
+                  label: 'System Audio',
+                  icon: Icons.screen_share,
+                  value: _includeSystem,
+                  onChanged: (val) {
+                    setState(() => _includeSystem = val);
+                  },
+                ),
+              ] else ...[
+                const _PulsingRecordDot(),
+                const SizedBox(width: 8),
+                Text(
+                  'Recording live...',
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.gold,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (!isRecording && _sttService.utterances.isNotEmpty) ...[
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+                  tooltip: 'ล้างทรานสคริปต์หลัก',
+                  onPressed: () => _showClearTranscriptConfirmDialog(context),
+                ),
+                const SizedBox(width: 8),
+              ],
+              if (!isRecording)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GlassColors.gold,
+                    foregroundColor: Colors.black,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                  label: Text(
+                    'Start Live Transcription',
+                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    _sttService.startSession(
+                      backendBaseUrl: EnvConfig.backendUrl,
+                      includeMic: _includeMic,
+                      includeSystem: _includeSystem,
+                    );
+                  },
+                )
+              else
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent.withOpacity(0.8),
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  icon: const Icon(Icons.stop_rounded, size: 20),
+                  label: Text(
+                    'Stop Transcription',
+                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    _sttService.stopSession();
+                    _saveMeeting();
+                  },
+                ),
+            ],
           ),
           if (!isRecording) _buildUploadTranscribeSection(),
         ],
@@ -2173,6 +2315,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
   Widget _buildUploadTranscribeSection() {
     final busy = _isTranscribing;
+    final isMobile = Responsive.isMobile(context);
+
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Row(
@@ -2182,8 +2326,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
               foregroundColor: GlassColors.gold,
               side: BorderSide(color: GlassColors.gold.withOpacity(0.5)),
               shape: const StadiumBorder(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 12 : 16,
                 vertical: 10,
               ),
             ),
@@ -2203,7 +2347,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
               busy
                   ? (_transcribeStatus ?? 'Processing...')
                   : 'Upload audio/video',
-              style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+              style: GlassText.bodyMD().copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: isMobile ? 11 : 12,
+              ),
             ),
             onPressed: busy ? null : _handleUploadTranscribe,
           ),
@@ -2211,10 +2358,11 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
           Expanded(
             child: Text(
               'Transcribe an existing recording into this meeting.',
-              maxLines: 1,
+              maxLines: isMobile ? 2 : 1,
               overflow: TextOverflow.ellipsis,
               style: GlassText.secondary().copyWith(
                 color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                fontSize: isMobile ? 11 : 12,
               ),
             ),
           ),

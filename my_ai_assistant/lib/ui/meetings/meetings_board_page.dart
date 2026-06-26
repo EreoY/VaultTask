@@ -469,6 +469,12 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   }
 
   Widget _primaryAction({required String label, required VoidCallback onTap}) {
+    if (Responsive.isMobile(context)) {
+      return IconButton(
+        icon: const Icon(Icons.add_rounded),
+        onPressed: onTap,
+      );
+    }
     return FilledButton.icon(
       onPressed: onTap,
       icon: const Icon(Icons.add_rounded, size: 16),
