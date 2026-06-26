@@ -208,6 +208,20 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
           )
         : Icon(icon, size: 14, color: color);
 
+    final isMobile = Responsive.isMobile(context);
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withOpacity(0.12), width: 0.8),
+        ),
+        child: iconWidget,
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -831,6 +845,8 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
   }
 
   Widget _buildTopActions() {
+    final isMobile = Responsive.isMobile(context);
+
     return Row(
       children: [
         if (widget.onBack != null)
@@ -840,11 +856,16 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
           ),
         if (widget.onBack != null) const SizedBox(width: 10),
         if (widget.onOpenBoard != null)
-          TextButton.icon(
-            onPressed: widget.onOpenBoard,
-            icon: const Icon(Icons.open_in_new_rounded, size: 15),
-            label: const Text('Open board'),
-          ),
+          isMobile
+              ? IconButton(
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  onPressed: widget.onOpenBoard,
+                )
+              : TextButton.icon(
+                  onPressed: widget.onOpenBoard,
+                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                  label: const Text('Open board'),
+                ),
         const Spacer(),
         if (_autoSaveStatus != null) ...[
           _buildAutoSaveStatusIndicator(),
@@ -936,14 +957,17 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
   Widget _buildTabBar() {
     return Padding(
       padding: const EdgeInsets.only(left: 0),
-      child: Row(
-        children: [
-          _docTab(_DocsTab.summary, 'Summary'),
-          const SizedBox(width: 10),
-          _docTab(_DocsTab.notes, 'Notes'),
-          const SizedBox(width: 10),
-          _docTab(_DocsTab.attachments, 'Attachments'),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _docTab(_DocsTab.summary, 'Summary'),
+            const SizedBox(width: 10),
+            _docTab(_DocsTab.notes, 'Notes'),
+            const SizedBox(width: 10),
+            _docTab(_DocsTab.attachments, 'Attachments'),
+          ],
+        ),
       ),
     );
   }

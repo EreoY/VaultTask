@@ -5367,4 +5367,55 @@
     - *Why*: Ensure task management controls remain fully visible and usable in portrait mobile views.
     - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
 
+## Phase 200: Remaining 5 Mobile Layout Overflows Recovery (Local & Production Deployment)
+
+### Task 200.1: Hide autosave status text & compact Open Board button on mobile in document & meeting sheets
+- [x] **Task 200.1**: Hide autosave status text & compact Open Board button on mobile in document & meeting sheets
+    - *File*: `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+    - *Logic/Target*: 
+      - In `_buildAutoSaveStatusIndicator()`, if the screen is mobile, render only the icon (checkmark or progress spinner) without status labels.
+      - In `_buildTopActions()`, if the screen is mobile, replace the `"Open board"` `TextButton.icon` with a compact `IconButton`.
+    - *Why*: Prevent top action headers from overflowing horizontally on mobile sheets.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 200.2: Compact primary actions for New Document & New Meeting pages on mobile
+- [x] **Task 200.2**: Compact primary actions for New Document & New Meeting pages on mobile
+    - *File*: `my_ai_assistant/lib/ui/docs/docs_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+    - *Logic/Target*: Update `_primaryAction()` in both pages. If the screen is mobile, render only the plus `+` icon and reduce padding instead of showing full button text.
+    - *Why*: Prevent headers containing back button, title, and primary CTA button from overflowing on small mobile screens.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 200.3: Make sheet tab bars horizontally scrollable on mobile
+- [x] **Task 200.3**: Make sheet tab bars horizontally scrollable on mobile
+    - *File*: `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+    - *Logic/Target*: Wrap the tab bar `Row` in `_buildTabBar()` with `SingleChildScrollView` (horizontal scroll) to enable smooth scrolling and prevent overflow on narrow screens.
+    - *Why*: Tabs (Summary, Notes, Attachments) overflow by a small amount (~1.4px) on very narrow screens.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 200.4: Restructure Live Transcription (STT) controls to 2-row layout on mobile
+- [x] **Task 200.4**: Restructure Live Transcription (STT) controls to 2-row layout on mobile
+    - *File*: `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+    - *Logic/Target*: 
+      - Restructure `_buildSttControls()` on mobile to render 2 rows vertically (Column):
+        - Row 1: compact audio toggle buttons ("Mic", "System") and delete button.
+        - Row 2: full-width Live Transcription trigger button.
+    - *Why*: Microphone selection and trigger buttons exceed portrait screen width by ~238px.
+    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+
+### Task 200.5: Static Verification
+- [x] **Task 200.5**: Static Verification
+    - *File*: None
+    - *Logic/Target*: Run `flutter analyze` inside `my_ai_assistant` to confirm that all compilation/static issues are resolved.
+    - *Why*: Ensure no syntax errors or breaking changes are introduced.
+    - *Verification*: **[AUTONOMOUS]** Run `flutter analyze` and ensure zero errors.
+
+### Task 200.6: Deploy to Cloudflare Pages production
+- [ ] **Task 200.6**: Deploy to Cloudflare Pages production
+    - *File*: None
+    - *Logic/Target*: Build the production web bundle and deploy to Cloudflare Pages.
+    - *Why*: Deliver the verified layout improvements to the live site.
+    - *Verification*: **[AUTONOMOUS]** Verify the build exits with code 0.
+
+
+
 
