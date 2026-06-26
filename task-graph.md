@@ -5129,3 +5129,102 @@
 - **Target Files:** None
 - **Action:** รัน `python3 runner.py analyze` (No issues found) + audit ว่า docs_board_sheet ไม่มี import STT/audio/transcript และมี 3 แท็บพอดี (Summary/Notes/Attachments)
 - **Why:** ยืนยันความถูกต้องและคอนฟอร์มสเปก write-only
+
+## Phase 194: Docs Clickable Links, Chat Readability/Copy & Clickable Breadcrumb (Local Only)
+
+> **Architecture Mandate:** ปรับ UX 5 จุด (local only, ไม่ deploy): ลิงก์คลิกได้ใน block editor, ปุ่มเข้า Docs แบบ flush-left, แชทอ่านง่าย + ปุ่มคัดลอกข้อความบอท, breadcrumb/back กดได้จริง
+
+### Task 194.1: Clickable markdown/URL links in shared block editor
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** บล็อกที่ไม่ได้ focus + มี URL/`[label](url)` → render เป็น Text.rich ลิงก์กดได้ผ่าน url_launcher (TapGestureRecognizer), แตะที่ว่าง→focus เพื่อแก้; คง perf/focus/slash/drag เดิม
+- **Why:** ให้ Docs จดงาน+แปะลิงก์ที่มาข้อมูลแล้วกดเปิดได้
+
+### Task 194.2: Docs entry button (flush-left OPEN, remove UPLOAD/chips)
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** เอา UPLOAD + document chips ออกจากคอลัมน์ DOCS → เหลือ `_OpenInlineButton(onOpenDocs)` ชิดซ้ายเหมือน MEETINGS + hover
+- **Why:** ปุ่มเข้า Docs เดิมหายาก
+
+### Task 194.3: User chat bubble readability
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** ปรับ UserMessageBubble จาก primary โปร่งจาง → โทน surface คอนทราสต์ชัดอ่านง่าย
+- **Why:** bubble ฝั่งผู้ใช้อ่านยากมาก
+
+### Task 194.4: Copy button on bot messages
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** เพิ่ม `_BotCopyButton` ใน AssistantMessageBubble → Clipboard.setData ข้อความบอท
+- **Why:** คัดลอกคำตอบบอทไปใช้ต่อง่าย
+
+### Task 194.5: Clickable breadcrumb + clearer back button
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/workspace_chrome.dart` + pages (docs/meetings/boards/kanban)
+- **Action:** เพิ่ม `onTap` ใน WorkspaceCrumb + `_ClickableCrumb`/`WorkspaceBackButton`, wire navigation ย้อนกลับในแต่ละหน้า
+- **Why:** เข้าหลายชั้นแล้วงง ต้องการ breadcrumb/back กดได้จริง
+
+### Task 194.6: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** `python3 runner.py analyze` → No issues found (แก้ lint dart:typed_data ซ้ำซ้อนใน chat_bubbles.dart)
+- **Why:** ยืนยันความถูกต้อง; ไม่ deploy ตามคำสั่งผู้ใช้
+
+## Phase 195: File-to-Text Extraction for AI (Model Swap: PDF→Gemini, DOCX→client) — Local Only
+
+> **Architecture Mandate:** ให้ไฟล์แนบ PDF/DOCX ถูกแกะเป็น text ก่อนป้อนโมเดลหลัก (gemma) เพราะ gemma ไม่รองรับ PDF/Office:
+> - **PDF** → ส่งเข้า `google/gemini-3.1-flash-lite` (รองรับ PDF, ยืนยันแล้วบน OpenRouter) แกะเป็น text
+> - **DOCX** → แกะฝั่ง client (unzip word/document.xml → strip XML → text) ด้วย `archive`
+> - **รูป/อื่น ๆ** → คงโมเดลหลัก gemma เหมือนเดิม
+> - cache ผลลง `extractedText` ใน attachment (ทำครั้งเดียว, lazy ตอนกดสรุป)
+> - reuse Meeting + Docs summarize (มี dialog เลือกไฟล์อยู่แล้ว); Task = best-effort ถ้ามี hook ชัด
+
+### Task 195.1: Worker model allowlist override
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ใน `/api/ai/chat` เปลี่ยน hardcoded actualModel เป็น allowlist: default `google/gemma-4-26b-a4b-it`, อนุญาต `google/gemini-3.1-flash-lite` ถ้า body.model อยู่ใน allowlist
+- **Why:** เปิดให้ swap โมเดลเฉพาะงานแกะ PDF โดยงานอื่นไม่กระทบ
+- **Verification:** **[AUTONOMOUS]** ส่วนหนึ่งของ analyze + manual review
+
+### Task 195.2: Client extraction infra (PDF via gemini, DOCX via archive, shared router)
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/databases/api_cloudflare.dart`, `my_ai_assistant/lib/utils/docx_text.dart`, `my_ai_assistant/pubspec.yaml`
+- **Action:** `extractPdfText` (download R2 bytes→base64→/api/ai/chat model=gemini, file content part, prompt ดึง text ละเอียด), `extractDocxText` (archive unzip), shared `extractAttachmentText(attachment)` route by mime; add `archive` dep
+- **Why:** ตัวกรองไฟล์→text ที่ reuse ได้ทุกที่
+- **Verification:** **[AUTONOMOUS]** `python3 runner.py analyze`
+
+### Task 195.3: Wire extraction into Meeting + Docs summarize
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** ตอนกดสรุป ไฟล์ที่ติ๊กเลือก → lazy extractAttachmentText → cache extractedText → ใส่เนื้อหาเข้า prompt (แทนชื่อ/URL), แสดงสถานะกำลังแกะไฟล์
+- **Why:** ให้ AI สรุปจากเนื้อในไฟล์จริง
+
+### Task 195.4: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** `python3 runner.py analyze` → ต้อง No issues found; ไม่ deploy
+- **Why:** ยืนยันความถูกต้อง
+
+## Phase 196: Upload-Time File Extraction + View Extracted Text + Delete Attachment (Local Only)
+
+> **Architecture Mandate:** ย้ายการแกะ PDF/DOCX ไปทำตอน **อัปโหลด** (background, ครั้งเดียว, cache `extractedText`) แทนตอนกดสรุป (ประหยัด, เอเจนต์ดึงไปอ่านได้ทันที), เพิ่มปุ่ม **ดูเนื้อหาที่แกะ** และ **ลบไฟล์** ในแท็บ Attachments ทั้ง Docs + Meetings (เฉพาะไฟล์อัปโหลด ไม่แตะ recording takes)
+
+### Task 196.1: Upload-time background extraction (Docs + Meetings)
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/docs/docs_board_sheet.dart`, `lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่ม `_extractingAttachments` + `_extractAttachmentInBackground` (fire-and-forget หลังอัปโหลด, cache `extractedText`, `_scheduleAutoSave`) + `_scheduleLegacyExtraction` ตอนโหลดเอกสาร/ประชุมเก่า; meetings ข้าม type==recording
+- **Why:** อ่านไฟล์ครั้งเดียวตอนอัปโหลด reuse ได้ ประหยัด token
+- **Verification:** **[AUTONOMOUS]** `python3 runner.py analyze` → No issues found
+
+### Task 196.2: View extracted text + Delete attachment
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/docs/docs_board_sheet.dart`, `lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** แต่ละแถวไฟล์ pdf/docx เพิ่มปุ่มดูเนื้อหา (dialog: extracting/empty+ปุ่มแกะ/cached SelectableText) + ปุ่มลบ (remove by url+name + save); inline spinner ระหว่างแกะ
+- **Why:** ดูเนื้อหาที่ AI แกะไว้ได้ + ลบไฟล์ได้ (เดิมลบไม่ได้)
+- **Verification:** **[AUTONOMOUS]** `python3 runner.py analyze` → No issues found
+
+### Task 196.3: Static Verification & Audit
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** `python3 runner.py analyze` (No issues found) + audit ว่าทั้งสองไฟล์มี background extraction/view/delete และ meetings ไม่แตะ recording takes
+- **Why:** ยืนยันความถูกต้อง; ไม่ deploy

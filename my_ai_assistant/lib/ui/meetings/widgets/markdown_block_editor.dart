@@ -1,10 +1,61 @@
 import 'dart:ui' show lerpDouble;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/ime_safe_text_field.dart';
 import 'package:my_ai_assistant/ui/common/defer_pointer.dart';
+
+/// Matches a markdown link `[label](url)` OR a bare http(s) URL.
+final RegExp _kLinkRegex = RegExp(
+  r'\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)',
+);
+
+bool _textHasLink(String text) => _kLinkRegex.hasMatch(text);
+
+/// A single piece of a block's text: either plain text (url == null) or a
+/// clickable link with a display [text] and target [url].
+class _LinkSegment {
+  final String text;
+  final String? url;
+  const _LinkSegment(this.text, [this.url]);
+}
+
+/// Splits [text] into plain + link segments so we can render tappable links
+/// in non-focused blocks while keeping the raw markdown for editing.
+List<_LinkSegment> _parseLinkSegments(String text) {
+  final segments = <_LinkSegment>[];
+  var last = 0;
+  for (final m in _kLinkRegex.allMatches(text)) {
+    if (m.start > last) {
+      segments.add(_LinkSegment(text.substring(last, m.start)));
+    }
+    if (m.group(1) != null && m.group(2) != null) {
+      // [label](url)
+      segments.add(_LinkSegment(m.group(1)!, m.group(2)!));
+    } else if (m.group(3) != null) {
+      // bare url
+      segments.add(_LinkSegment(m.group(3)!, m.group(3)!));
+    }
+    last = m.end;
+  }
+  if (last < text.length) {
+    segments.add(_LinkSegment(text.substring(last)));
+  }
+  return segments;
+}
+
+/// A short, clean display label for a link chip: the markdown label when
+/// present, otherwise the URL's domain (without "www.").
+String _linkLabel(_LinkSegment seg) {
+  final url = seg.url ?? '';
+  if (seg.text != url && seg.text.trim().isNotEmpty) return seg.text;
+  final host = Uri.tryParse(url)?.host ?? '';
+  if (host.isEmpty) return 'ลิงก์';
+  return host.startsWith('www.') ? host.substring(4) : host;
+}
 
 class MarkdownBlock {
   final String id;
@@ -597,6 +648,13 @@ class _BlockRow extends StatefulWidget {
 
 class _BlockRowState extends State<_BlockRow> {
   bool _hover = false;
+  // When the block has links it renders as tappable rich text; tapping the
+  // non-link area sets this true to switch into the editable TextField.
+  bool _editing = false;
+
+  /// Tap recognizers created for clickable links. Recreated every build and
+  /// disposed here + in [dispose] to avoid leaks.
+  final List<TapGestureRecognizer> _linkRecognizers = [];
 
   @override
   void initState() {
@@ -616,15 +674,129 @@ class _BlockRowState extends State<_BlockRow> {
   @override
   void dispose() {
     widget.focusNode.removeListener(_onFocusChange);
+    _disposeRecognizers();
     super.dispose();
   }
 
   void _onFocusChange() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // Leaving the field returns the block to the read/link-render view.
+    if (!widget.focusNode.hasFocus && _editing) _editing = false;
+    setState(() {});
+  }
+
+  /// Switch a link-rendered block into edit mode, then focus once the
+  /// TextField is mounted (the FocusNode is only attachable after that).
+  void _enterEditMode() {
+    setState(() => _editing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.focusNode.requestFocus();
+    });
+  }
+
+  void _disposeRecognizers() {
+    for (final r in _linkRecognizers) {
+      r.dispose();
+    }
+    _linkRecognizers.clear();
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Silently ignore launch failures (e.g. unsupported scheme).
+    }
+  }
+
+  /// Renders the block text as tappable rich text (link portions open in the
+  /// browser, the rest re-focuses the editor for editing).
+  Widget _buildRichLinkView(TextStyle textStyle, MarkdownBlock block) {
+    final effectiveStyle = textStyle.copyWith(
+      decoration: (block.type == 'todo' && block.isChecked)
+          ? TextDecoration.lineThrough
+          : null,
+      color: (block.type == 'todo' && block.isChecked)
+          ? GlassColors.onSurfaceVariant.withOpacity(0.4)
+          : null,
+    );
+
+    final spans = <InlineSpan>[];
+    for (final seg in _parseLinkSegments(block.text)) {
+      if (seg.url == null) {
+        spans.add(TextSpan(text: seg.text, style: effectiveStyle));
+      } else {
+        // Compact link chip (icon + short label/domain). Tapping the chip
+        // opens the URL; tapping anywhere else in the row enters edit mode.
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Tooltip(
+                message: seg.url!,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => _openUrl(seg.url!),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: GlassColors.primary.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: GlassColors.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.link_rounded,
+                            size: 13,
+                            color: GlassColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _linkLabel(seg),
+                            style: GlassText.secondary().copyWith(
+                              color: GlassColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _enterEditMode,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text.rich(TextSpan(children: spans)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Recreate link recognizers fresh each build; dispose the previous batch.
+    _disposeRecognizers();
+
     final block = widget.block;
     final isFocused = widget.focusNode.hasFocus;
 
@@ -712,40 +884,43 @@ class _BlockRowState extends State<_BlockRow> {
         Expanded(
           child: CompositedTransformTarget(
             link: widget.layerLink,
-            child: Focus(
-              onKeyEvent: (node, event) => widget.onKeyEvent(node, event, widget.index),
-              child: ImeSafeTextField(
-                controller: widget.controller,
-                focusNode: widget.focusNode,
-                style: textStyle.copyWith(
-                  decoration: (block.type == 'todo' && block.isChecked)
-                      ? TextDecoration.lineThrough
-                      : null,
-                  color: (block.type == 'todo' && block.isChecked)
-                      ? GlassColors.onSurfaceVariant.withOpacity(0.4)
-                      : null,
-                ),
-                maxLines: null,
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  hintStyle: GlassText.bodyMD().copyWith(
-                    color: GlassColors.onSurfaceVariant.withOpacity(0.2),
+            child: (!isFocused && !_editing && _textHasLink(block.text))
+                ? _buildRichLinkView(textStyle, block)
+                : Focus(
+                    onKeyEvent: (node, event) =>
+                        widget.onKeyEvent(node, event, widget.index),
+                    child: ImeSafeTextField(
+                      controller: widget.controller,
+                      focusNode: widget.focusNode,
+                      style: textStyle.copyWith(
+                        decoration: (block.type == 'todo' && block.isChecked)
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: (block.type == 'todo' && block.isChecked)
+                            ? GlassColors.onSurfaceVariant.withOpacity(0.4)
+                            : null,
+                      ),
+                      maxLines: null,
+                      decoration: InputDecoration(
+                        hintText: hintText,
+                        hintStyle: GlassText.bodyMD().copyWith(
+                          color: GlassColors.onSurfaceVariant.withOpacity(0.2),
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        filled: false,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      ),
+                      onChanged: (val) {
+                        if (val == '/') {
+                          widget.onSlash(widget.index);
+                        }
+                      },
+                    ),
                   ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  filled: false,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                ),
-                onChanged: (val) {
-                  if (val == '/') {
-                    widget.onSlash(widget.index);
-                  }
-                },
-              ),
-            ),
           ),
         ),
       ],

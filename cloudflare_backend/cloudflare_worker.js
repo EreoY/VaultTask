@@ -1444,7 +1444,8 @@ export default {
           });
         }
 
-        const actualModel = "google/gemma-4-26b-a4b-it";
+        const ALLOWED_MODELS = ["google/gemma-4-26b-a4b-it", "google/gemini-3.1-flash-lite"];
+        const actualModel = (model && ALLOWED_MODELS.includes(model)) ? model : "google/gemma-4-26b-a4b-it";
         
         const requestBody = {
           model: actualModel,

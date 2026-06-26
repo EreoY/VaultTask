@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:provider/provider.dart';
 import '../../../models/chat_model.dart';
 import '../../../state_managers/state_boards.dart';
 import '../../theme/glass_theme.dart';
+import '../../common/glass_widgets.dart';
 import '../../../config/env_config.dart';
 
 // Modular Widgets
@@ -35,14 +36,16 @@ class UserMessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 24, left: 64),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
-          color: GlassColors.primary.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.05),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             bottomLeft: Radius.circular(24),
             topRight: Radius.circular(24),
             bottomRight: Radius.circular(8),
           ),
-          border: Border.all(color: GlassColors.primary.withOpacity(0.2)),
+          border: Border.all(color: GlassColors.ghostBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -50,8 +53,10 @@ class UserMessageBubble extends StatelessWidget {
             if (message.attachments.isNotEmpty) _buildAttachments(context),
             Text(
               message.text,
+              textAlign: TextAlign.left,
               style: GlassText.bodyMD().copyWith(
-                color: isDark ? Colors.white : Colors.black87,
+                color: GlassColors.onSurface,
+                height: 1.5,
               ),
             ),
           ],
@@ -297,7 +302,11 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
                 ),
                 border: Border.all(color: GlassColors.ghostBorder),
               ),
-              child: MarkdownBody(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MarkdownBody(
                 data: message.text,
                 selectable: true,
                 // GitHub-Flavored Markdown so tables / strikethrough / autolinks
@@ -397,6 +406,13 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
                     ),
                   ),
                 ),
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _BotCopyButton(text: message.text),
+                  ),
+                ],
               ),
             ),
           ),
@@ -568,6 +584,36 @@ class _CollapsibleDescriptionState extends State<CollapsibleDescription> {
           ),
         ],
       ],
+    );
+  }
+}
+
+
+/// Small, unobtrusive copy button shown in the footer of assistant bubbles.
+/// Copies the raw message text/markdown to the clipboard.
+class _BotCopyButton extends StatelessWidget {
+  final String text;
+  const _BotCopyButton({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Copy message',
+      child: InkWell(
+        onTap: () {
+          Clipboard.setData(ClipboardData(text: text));
+          GlassNotifications.show(context, 'Copied to clipboard');
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            Icons.copy_rounded,
+            size: 15,
+            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+          ),
+        ),
+      ),
     );
   }
 }

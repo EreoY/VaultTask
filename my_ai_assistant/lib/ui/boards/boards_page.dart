@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io' as io;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../../models/board_model.dart';
@@ -9,7 +6,6 @@ import '../../models/workspace_model.dart';
 import '../../state_managers/state_boards.dart';
 import '../../state_managers/state_meetings.dart';
 import '../../state_managers/state_documents.dart';
-import '../../databases/api_cloudflare.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
 import '../common/responsive_layout.dart';
@@ -96,14 +92,6 @@ class _BoardsPageState extends State<BoardsPage> {
                         BoardsDialogs.showDeleteBoardConfirm(context, board),
                     onManageMembers: (board) =>
                         BoardsDialogs.showManageMembersDialog(context, board),
-                    onUploadDocument: (board) =>
-                        _pickAndUploadDocument(context, board, boardsState),
-                    onDeleteDocument: (board, doc) =>
-                        BoardsDialogs.showDeleteDocumentConfirm(
-                          context,
-                          board,
-                          doc,
-                        ),
                   ),
                 ),
         ),
@@ -119,64 +107,5 @@ class _BoardsPageState extends State<BoardsPage> {
       builder: (context) =>
           BoardEditModal(isDark: widget.isDark, workspace: selectedWorkspace),
     );
-  }
-
-  Future<void> _pickAndUploadDocument(
-    BuildContext context,
-    BoardModel board,
-    StateBoards stateBoards,
-  ) async {
-    try {
-      FilePickerResult? result = await FilePicker.pickFiles();
-      if (result != null) {
-        final filename = result.files.single.name;
-        final bytes =
-            result.files.single.bytes ??
-            (kIsWeb
-                ? null
-                : await io.File(result.files.single.path!).readAsBytes());
-
-        if (bytes != null) {
-          if (context.mounted) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => const Center(
-                child: CircularProgressIndicator(color: GlassColors.primary),
-              ),
-            );
-          }
-
-          final uploadRes = await ApiCloudflare.uploadImage(
-            bytes,
-            filename,
-            path: 'documents',
-          );
-          final fileUrl = uploadRes['url'] as String;
-
-          final newDoc = {
-            'name': filename,
-            'url': fileUrl,
-            'uploadedAt': DateTime.now().millisecondsSinceEpoch,
-          };
-          final updatedDocs = List<Map<String, dynamic>>.from(board.documents)
-            ..add(newDoc);
-          await stateBoards.updateBoard(board.copyWith(documents: updatedDocs));
-
-          if (context.mounted) {
-            Navigator.pop(context);
-            GlassNotifications.show(
-              context,
-              'Uploaded "$filename" successfully!',
-            );
-          }
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        GlassNotifications.show(context, 'Failed to upload: $e', isError: true);
-      }
-    }
   }
 }

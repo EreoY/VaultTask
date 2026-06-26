@@ -108,14 +108,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    color: GlassColors.onSurfaceVariant.withOpacity(0.85),
-                    iconSize: 20,
-                    onPressed: _exitToWorkspace,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
+                  WorkspaceBackButton(onTap: _exitToWorkspace),
                   const SizedBox(width: 12),
                   Text(
                     'Meetings',
@@ -304,17 +297,29 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       padding: EdgeInsets.zero,
       gapAfterMeta: 0,
       crumbs: [
-        const WorkspaceCrumb(icon: Icons.home_rounded, label: 'Workspace HQ'),
+        WorkspaceCrumb(
+          icon: Icons.home_rounded,
+          label: 'Workspace HQ',
+          onTap: _exitToWorkspace,
+        ),
         WorkspaceCrumb(
           icon: Icons.calendar_today_rounded,
           label: 'Meetings',
           color: GlassColors.onSurfaceVariant.withOpacity(0.72),
+          onTap: _returnToMeetingsList,
         ),
         WorkspaceCrumb(label: widget.board.name),
       ],
       metaText: metaText,
       title: const SizedBox.shrink(),
     );
+  }
+
+  void _returnToMeetingsList() {
+    if (_isCreatingDraft) {
+      setState(() => _isCreatingDraft = false);
+    }
+    context.read<StateMeetings>().closeMeetingDetail();
   }
 
   Widget _pillToggle({

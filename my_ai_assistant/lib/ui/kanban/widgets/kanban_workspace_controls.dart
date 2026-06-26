@@ -71,9 +71,10 @@ class KanbanWorkspaceHeader extends StatelessWidget {
             16,
           ),
           crumbs: [
-            const WorkspaceCrumb(
+            WorkspaceCrumb(
               icon: Icons.home_rounded,
               label: 'Workspace HQ',
+              onTap: onBack,
             ),
             WorkspaceCrumb(label: board.name),
           ],

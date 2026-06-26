@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../models/board_model.dart';
 import '../../theme/glass_theme.dart';
 
 typedef MemberProfileResolver = Map<String, dynamic>? Function(String uid);
 typedef BoardAction = void Function(BoardModel board);
-typedef BoardDocumentAction =
-    void Function(BoardModel board, Map<String, dynamic> doc);
 
 class ProjectsTable extends StatelessWidget {
   final List<BoardModel> boards;
@@ -19,8 +16,6 @@ class ProjectsTable extends StatelessWidget {
   final BoardAction onEditBoard;
   final BoardAction onDeleteBoard;
   final BoardAction onManageMembers;
-  final BoardAction onUploadDocument;
-  final BoardDocumentAction onDeleteDocument;
   final VoidCallback onCreateProject;
 
   const ProjectsTable({
@@ -34,8 +29,6 @@ class ProjectsTable extends StatelessWidget {
     required this.onEditBoard,
     required this.onDeleteBoard,
     required this.onManageMembers,
-    required this.onUploadDocument,
-    required this.onDeleteDocument,
     required this.onCreateProject,
   });
 
@@ -68,8 +61,6 @@ class ProjectsTable extends StatelessWidget {
                 onEditBoard: onEditBoard,
                 onDeleteBoard: onDeleteBoard,
                 onManageMembers: onManageMembers,
-                onUploadDocument: onUploadDocument,
-                onDeleteDocument: onDeleteDocument,
               ),
             ),
             _NewProjectRow(onCreateProject: onCreateProject),
@@ -198,8 +189,6 @@ class _BoardRow extends StatelessWidget {
   final BoardAction onEditBoard;
   final BoardAction onDeleteBoard;
   final BoardAction onManageMembers;
-  final BoardAction onUploadDocument;
-  final BoardDocumentAction onDeleteDocument;
 
   const _BoardRow({
     required this.board,
@@ -210,8 +199,6 @@ class _BoardRow extends StatelessWidget {
     required this.onEditBoard,
     required this.onDeleteBoard,
     required this.onManageMembers,
-    required this.onUploadDocument,
-    required this.onDeleteDocument,
   });
 
   @override
@@ -308,28 +295,9 @@ class _BoardRow extends StatelessWidget {
             ),
             Expanded(
               flex: 4,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: board.documents
-                          .map(
-                            (doc) => _DocumentChip(
-                              board: board,
-                              doc: doc,
-                              onDeleteDocument: onDeleteDocument,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  _UploadDocButton(onTap: () => onUploadDocument(board)),
-                  const SizedBox(width: 4),
-                  _OpenInlineButton(onTap: () => onOpenDocs(board)),
-                ],
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _OpenInlineButton(onTap: () => onOpenDocs(board)),
               ),
             ),
             Expanded(
@@ -525,104 +493,6 @@ class _MemberAvatar extends StatelessWidget {
                 )
               : textChild,
         ),
-      ),
-    );
-  }
-}
-
-class _DocumentChip extends StatelessWidget {
-  final BoardModel board;
-  final Map<String, dynamic> doc;
-  final BoardDocumentAction onDeleteDocument;
-
-  const _DocumentChip({
-    required this.board,
-    required this.doc,
-    required this.onDeleteDocument,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final name = doc['name'] as String? ?? 'Document';
-    final url = doc['url'] as String? ?? '';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: GlassColors.surfaceBright.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: GlassColors.ghostBorder.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.insert_drive_file_outlined,
-            size: 10,
-            color: GlassColors.primary,
-          ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: InkWell(
-              onTap: () async {
-                if (url.isEmpty) return;
-                final uri = Uri.parse(url);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
-              },
-              child: Text(
-                name,
-                style: GlassText.bodyMD().copyWith(
-                  fontSize: 10,
-                  color: GlassColors.onSurface.withOpacity(0.9),
-                  decoration: TextDecoration.underline,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: () => onDeleteDocument(board, doc),
-            child: const Icon(
-              Icons.close_rounded,
-              size: 10,
-              color: GlassColors.error,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UploadDocButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _UploadDocButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: onTap,
-      icon: const Icon(
-        Icons.cloud_upload_outlined,
-        size: 12,
-        color: GlassColors.gold,
-      ),
-      label: Text(
-        'UPLOAD',
-        style: GlassText.labelSM().copyWith(
-          color: GlassColors.gold,
-          fontSize: 9,
-        ),
-      ),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

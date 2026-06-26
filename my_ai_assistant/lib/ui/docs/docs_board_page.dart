@@ -95,14 +95,7 @@ class _DocsBoardPageState extends State<DocsBoardPage> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    color: GlassColors.onSurfaceVariant.withOpacity(0.85),
-                    iconSize: 20,
-                    onPressed: _exitToWorkspace,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
+                  WorkspaceBackButton(onTap: _exitToWorkspace),
                   const SizedBox(width: 12),
                   Text(
                     'Documents',
@@ -253,17 +246,29 @@ class _DocsBoardPageState extends State<DocsBoardPage> {
       padding: EdgeInsets.zero,
       gapAfterMeta: 0,
       crumbs: [
-        const WorkspaceCrumb(icon: Icons.home_rounded, label: 'Workspace HQ'),
+        WorkspaceCrumb(
+          icon: Icons.home_rounded,
+          label: 'Workspace HQ',
+          onTap: _exitToWorkspace,
+        ),
         WorkspaceCrumb(
           icon: Icons.description_rounded,
           label: 'Documents',
           color: GlassColors.onSurfaceVariant.withOpacity(0.72),
+          onTap: _returnToDocsList,
         ),
         WorkspaceCrumb(label: widget.board.name),
       ],
       metaText: metaText,
       title: const SizedBox.shrink(),
     );
+  }
+
+  void _returnToDocsList() {
+    if (_isCreatingDraft) {
+      setState(() => _isCreatingDraft = false);
+    }
+    context.read<StateDocuments>().closeDocumentDetail();
   }
 
   Widget _primaryAction({required String label, required VoidCallback onTap}) {

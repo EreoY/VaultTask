@@ -9,6 +9,7 @@ import '../models/task_model.dart';
 import '../models/workspace_model.dart';
 import '../config/env_config.dart';
 import '../models/chat_model.dart';
+import '../utils/docx_text.dart';
 import 'package:google_generative_ai/google_generative_ai.dart'
     hide ChatSession;
 
@@ -666,6 +667,115 @@ class ApiCloudflare {
       debugPrint('Error summarizing meeting: $e');
     }
     return '';
+  }
+
+  // ─── FILE-TO-TEXT EXTRACTION ──────────────────────────
+  // gemma does not support PDF/Office inputs, so PDFs are routed to
+  // google/gemini-3.1-flash-lite to extract plain text; DOCX is parsed
+  // client-side. Extracted text feeds the main gemma summarizer.
+
+  /// Downloads a PDF from R2 and asks gemini-3.1-flash-lite to extract its
+  /// full text. Returns '' on any failure. Output truncated to 12000 chars.
+  static Future<String> extractPdfText(String fileUrl, String filename) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return '';
+    try {
+      // [Network] Fetch raw PDF bytes from storage.
+      final fileResp = await http.get(
+        Uri.parse(EnvConfig.sanitizeUrl(fileUrl)),
+      );
+      if (fileResp.statusCode != 200) {
+        debugPrint(
+          '[extractPdfText][Error] Failed to download PDF: ${fileResp.statusCode}',
+        );
+        return '';
+      }
+      final b64 = base64Encode(fileResp.bodyBytes);
+
+      final body = {
+        'uid': user.uid,
+        'model': 'google/gemini-3.1-flash-lite',
+        'max_tokens': 4000,
+        'messages': [
+          {
+            'role': 'user',
+            'content': [
+              {
+                'type': 'text',
+                'text':
+                    'ดึงเนื้อหาทั้งหมดในเอกสารนี้ออกมาเป็นข้อความ (plain text) อย่างละเอียดและครบถ้วน รักษาลำดับหัวข้อ/ตาราง/รายการให้มากที่สุด ตอบเฉพาะเนื้อหา ไม่ต้องมีคำอธิบายเพิ่ม'
+              },
+              {
+                'type': 'file',
+                'file': {
+                  'filename': filename,
+                  'file_data': 'data:application/pdf;base64,$b64',
+                }
+              }
+            ]
+          }
+        ],
+      };
+
+      final response = await http.post(
+        Uri.parse('$_base/api/ai/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        var text =
+            (data['result']?['choices']?[0]?['message']?['content'] ?? '')
+                .toString()
+                .trim();
+        if (text.length > 12000) {
+          text = text.substring(0, 12000);
+        }
+        return text;
+      }
+      debugPrint(
+        '[extractPdfText][Error] AI chat returned: ${response.statusCode}',
+      );
+    } catch (e) {
+      debugPrint('[extractPdfText][Error] $e');
+    }
+    return '';
+  }
+
+  /// Routes an attachment to the correct extractor based on its file type.
+  /// PDF -> gemini extraction; DOCX -> client-side zip parse; else ''.
+  static Future<String> extractAttachmentText(
+    Map<String, dynamic> attachment,
+  ) async {
+    try {
+      final name = (attachment['name'] ?? '').toString();
+      final url = (attachment['url'] ?? '').toString();
+      final mime = (attachment['mime'] ?? attachment['mimeType'] ?? '')
+          .toString()
+          .toLowerCase();
+      final lowerName = name.toLowerCase();
+
+      if (url.isEmpty) return '';
+
+      if (lowerName.endsWith('.pdf') || mime.contains('pdf')) {
+        return await extractPdfText(url, name);
+      }
+
+      if (lowerName.endsWith('.docx') ||
+          mime.contains(
+            'vnd.openxmlformats-officedocument.wordprocessingml.document',
+          )) {
+        final fileResp = await http.get(Uri.parse(EnvConfig.sanitizeUrl(url)));
+        if (fileResp.statusCode != 200) return '';
+        return DocxText.extractText(fileResp.bodyBytes);
+      }
+
+      return '';
+    } catch (e) {
+      debugPrint('[extractAttachmentText][Error] $e');
+      return '';
+    }
   }
 
   // ─── USERS ────────────────────────────────────────────

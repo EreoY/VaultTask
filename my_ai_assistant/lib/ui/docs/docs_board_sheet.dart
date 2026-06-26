@@ -65,7 +65,14 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
   bool _isSaving = false;
   bool _isUploading = false;
   bool _isSummarizing = false;
+  // Dynamic label shown on the summarize button. Switches to a
+  // "reading attachments" phase while file contents are extracted, then
+  // to the actual summarizing phase.
+  String _summarizingLabel = 'กำลังสรุปด้วย AI...';
   bool _draftInitialized = false;
+  // Attachment URLs currently being extracted to text (PDF/DOCX) in the
+  // background, used to show inline spinners and guard duplicate runs.
+  final Set<String> _extractingAttachments = {};
 
   Timer? _autoSaveTimer;
   bool _isAutoSaving = false;
@@ -292,6 +299,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
       _autoSaveStatus = null;
     });
     _isSuppressingAutoSave = false;
+    _scheduleLegacyExtraction();
   }
 
   void _startNewDocument() {
@@ -400,20 +408,187 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
         file.name,
         path: 'documents',
       );
+      final newAttachment = {
+        'name': file.name,
+        'url': uploadRes['url']?.toString() ?? '',
+        'mime': file.extension ?? '',
+      };
       setState(() {
-        _attachments = [
-          ..._attachments,
-          {
-            'name': file.name,
-            'url': uploadRes['url']?.toString() ?? '',
-            'mime': file.extension ?? '',
-          },
-        ];
+        _attachments = [..._attachments, newAttachment];
       });
       _scheduleAutoSave();
+      // Fire-and-forget: extract PDF/DOCX text in the background (cached
+      // once) so the summarizer finds it pre-extracted. UI is not blocked.
+      _extractAttachmentInBackground(newAttachment);
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  bool _isExtractableFile(Map<String, String> att) {
+    final name = (att['name'] ?? '').toLowerCase();
+    final url = (att['url'] ?? '').toLowerCase();
+    final mime = (att['mime'] ?? att['mimeType'] ?? '').toLowerCase();
+    return name.endsWith('.pdf') ||
+        name.endsWith('.docx') ||
+        url.endsWith('.pdf') ||
+        url.endsWith('.docx') ||
+        mime.contains('pdf') ||
+        mime.contains('wordprocessingml');
+  }
+
+  Future<void> _extractAttachmentInBackground(Map<String, String> att) async {
+    if ((att['extractedText'] ?? '').isNotEmpty) return;
+    if (!_isExtractableFile(att)) return;
+    final url = att['url'] ?? '';
+    if (url.isEmpty) return;
+    if (_extractingAttachments.contains(url)) return; // guard duplicate runs
+    if (!mounted) return;
+    setState(() => _extractingAttachments.add(url));
+    try {
+      debugPrint('[UI][Extract] Reading ${att['name']}...');
+      final t = await ApiCloudflare.extractAttachmentText(
+        Map<String, dynamic>.from(att),
+      );
+      if (t.isNotEmpty) att['extractedText'] = t;
+    } catch (e) {
+      debugPrint('[UI][Extract][Error] ${att['name']}: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _extractingAttachments.remove(url));
+        _scheduleAutoSave();
+      } else {
+        _extractingAttachments.remove(url);
+      }
+    }
+  }
+
+  // Lazily extract any PDF/DOCX attachments that don't yet have cached text
+  // (legacy files). Guarded against duplicate runs via _extractingAttachments.
+  void _scheduleLegacyExtraction() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final att in List<Map<String, String>>.from(_attachments)) {
+        if ((att['extractedText'] ?? '').isNotEmpty) continue;
+        if (!_isExtractableFile(att)) continue;
+        _extractAttachmentInBackground(att);
+      }
+    });
+  }
+
+  void _deleteAttachment(Map<String, String> att) {
+    final url = att['url'];
+    final name = att['name'];
+    setState(() {
+      _attachments = _attachments
+          .where((a) => !(a['url'] == url && a['name'] == name))
+          .toList();
+    });
+    _scheduleAutoSave();
+  }
+
+  void _showExtractedTextDialog(Map<String, String> att) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final url = att['url'] ?? '';
+        final extracting = _extractingAttachments.contains(url);
+        final text = (att['extractedText'] ?? '').toString();
+
+        Widget body;
+        if (extracting) {
+          body = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Text('กำลังแกะข้อความ...', style: GlassText.bodyMD()),
+            ],
+          );
+        } else if (text.isEmpty) {
+          body = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ยังไม่มีข้อความที่แกะได้',
+                style: GlassText.bodyMD().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _extractAttachmentInBackground(att);
+                },
+                icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                label: const Text('แกะเนื้อหาตอนนี้'),
+              ),
+            ],
+          );
+        } else {
+          body = SelectableText(text, style: GlassText.bodyMD());
+        }
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: 560,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+            ),
+            padding: const EdgeInsets.all(20),
+            decoration: GlassDecorations.solidSurface(
+              radius: 16,
+              hasShadow: true,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.article_outlined,
+                      size: 18,
+                      color: GlassColors.primary.withOpacity(0.85),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'เนื้อหาที่แกะได้',
+                        style: GlassText.bodyMD().copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                Text(
+                  att['name'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.55),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Flexible(child: SingleChildScrollView(child: body)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -904,10 +1079,66 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.open_in_new_rounded,
-                        size: 16,
-                        color: GlassColors.onSurfaceVariant.withOpacity(0.55),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_extractingAttachments.contains(
+                            attachment['url'],
+                          ))
+                            const Padding(
+                              padding: EdgeInsets.only(right: 4),
+                              child: SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                ),
+                              ),
+                            ),
+                          if (_isExtractableFile(attachment))
+                            IconButton(
+                              tooltip: 'ดูเนื้อหาที่แกะได้',
+                              icon: const Icon(Icons.article_outlined, size: 16),
+                              color: GlassColors.onSurfaceVariant.withOpacity(
+                                0.7,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(6),
+                              onPressed: () =>
+                                  _showExtractedTextDialog(attachment),
+                            ),
+                          IconButton(
+                            tooltip: 'เปิดไฟล์',
+                            icon: const Icon(
+                              Icons.open_in_new_rounded,
+                              size: 16,
+                            ),
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.55,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(),
+                            padding: const EdgeInsets.all(6),
+                            onPressed: () async {
+                              final url = attachment['url'];
+                              if (url == null || url.isEmpty) return;
+                              await launchUrl(Uri.parse(url));
+                            },
+                          ),
+                          IconButton(
+                            tooltip: 'ลบไฟล์แนบ',
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 16,
+                            ),
+                            color: GlassColors.error.withOpacity(0.8),
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(),
+                            padding: const EdgeInsets.all(6),
+                            onPressed: () => _deleteAttachment(attachment),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1064,7 +1295,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
               )
             : const Icon(Icons.psychology_rounded, size: 18),
         label: Text(
-          _isSummarizing ? 'กำลังสรุปด้วย AI...' : 'สรุปด้วย AI',
+          _isSummarizing ? _summarizingLabel : 'สรุปด้วย AI',
           style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
         ),
         onPressed: _isSummarizing ? null : _handleAiSummarize,
@@ -1210,20 +1441,66 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
         .where((entry) => entry.value)
         .map((entry) => _attachments[entry.key])
         .toList();
+
+    // [Process] Extract the ACTUAL text content of each selected file
+    // (PDF via gemini, DOCX client-side) so the AI summarizes the real
+    // document rather than just a name/URL reference. Cached per file.
+    if (selectedAttachments.isNotEmpty) {
+      setState(() {
+        _isSummarizing = true;
+        _summarizingLabel = 'กำลังอ่านไฟล์แนบ...';
+      });
+      bool extractedAny = false;
+      for (final attachment in selectedAttachments) {
+        final existing = (attachment['extractedText'] ?? '').toString();
+        if (existing.isNotEmpty) continue; // reuse cached extraction
+        try {
+          debugPrint('[UI][Extract] Reading ${attachment['name']}...');
+          final text = await ApiCloudflare.extractAttachmentText(attachment);
+          if (text.isNotEmpty) {
+            attachment['extractedText'] = text;
+            extractedAny = true;
+          }
+        } catch (e) {
+          debugPrint('[UI][Extract][Error] ${attachment['name']}: $e');
+        }
+      }
+      // Persist newly cached extracted text through the existing save path.
+      if (extractedAny && mounted) _scheduleAutoSave();
+    }
+
     if (selectedAttachments.isNotEmpty) {
       buffer.writeln('=== REFERENCE ATTACHMENTS ===');
       for (final attachment in selectedAttachments) {
         final name = attachment['name'] ?? 'Attachment';
         final url = attachment['url'] ?? '';
-        buffer.writeln('Reference attachment: $name (${url.isEmpty ? 'no link' : url})');
+        final extracted = (attachment['extractedText'] ?? '').toString();
+        if (extracted.isNotEmpty) {
+          // Feed the AI the real file contents.
+          buffer.writeln('=== FILE: $name ===');
+          buffer.writeln(extracted);
+          buffer.writeln();
+        } else {
+          // Fallback: unsupported/failed extraction -> name/URL reference.
+          buffer.writeln(
+            'Reference attachment: $name (${url.isEmpty ? 'no link' : url})',
+          );
+        }
       }
       buffer.writeln();
     }
 
     final combinedText = buffer.toString().trim();
-    if (combinedText.isEmpty) return;
+    if (combinedText.isEmpty) {
+      if (mounted) setState(() => _isSummarizing = false);
+      return;
+    }
 
-    setState(() => _isSummarizing = true);
+    if (!mounted) return;
+    setState(() {
+      _isSummarizing = true;
+      _summarizingLabel = 'กำลังสรุปด้วย AI...';
+    });
 
     try {
       final systemInstruction =
