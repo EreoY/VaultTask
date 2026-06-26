@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/board_model.dart';
+import '../models/document_model.dart';
 import '../models/meeting_model.dart';
 import '../models/task_model.dart';
 import '../models/workspace_model.dart';
@@ -343,6 +344,74 @@ class ApiCloudflare {
     }
   }
 
+  // ─── DOCUMENTS ────────────────────────────────────────
+
+  static Future<List<DocumentModel>> getDocumentsByBoard(
+    String boardId,
+  ) async {
+    final url = '$_base/api/documents?board_id=$boardId';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is! List) return [];
+      return data
+          .map((j) => DocumentModel.fromJson(j as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to get documents: ${response.body}');
+    }
+  }
+
+  static Future<String> insertDocument(DocumentModel document) async {
+    final id = document.id.isEmpty
+        ? '${DateTime.now().millisecondsSinceEpoch}'
+        : document.id;
+    final response = await http.post(
+      Uri.parse('$_base/api/documents'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': id,
+        'board_id': document.boardId,
+        'title': document.title,
+        'notes': document.notes,
+        'attachments': document.attachments,
+        'summary': document.summary,
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to insert document: ${response.body}');
+    }
+    return id;
+  }
+
+  static Future<void> updateDocument(DocumentModel document) async {
+    final response = await http.put(
+      Uri.parse('$_base/api/documents'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': document.id,
+        'board_id': document.boardId,
+        'title': document.title,
+        'notes': document.notes,
+        'attachments': document.attachments,
+        'summary': document.summary,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update document: ${response.body}');
+    }
+  }
+
+  static Future<void> deleteDocument(String id) async {
+    final response = await http.delete(
+      Uri.parse('$_base/api/documents?id=$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete document: ${response.body}');
+    }
+  }
+
   // Bulk Order Update
   static Future<void> updateTaskOrder(
     String boardId,
@@ -506,7 +575,7 @@ class ApiCloudflare {
             body: jsonEncode({
               'url': url,
               'language': language,
-              'meetingId': ?meetingId,
+              'meetingId': meetingId,
             }),
           )
           // Pre-recorded transcription of long media can take a while.
@@ -564,6 +633,37 @@ class ApiCloudflare {
       }
     } catch (e) {
       debugPrint('Error generating AI description: $e');
+    }
+    return '';
+  }
+
+  static Future<String> summarizeMeeting({required String prompt}) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return '';
+    try {
+      final body = {
+        'uid': user.uid,
+        'model': 'google/gemma-4-26b-a4b-it',
+        'messages': [
+          {'role': 'user', 'content': prompt}
+        ],
+        'max_tokens': 2000,
+      };
+
+      final response = await http.post(
+        Uri.parse('$_base/api/ai/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['result']?['choices']?[0]?['message']?['content'] ?? '')
+            .toString()
+            .trim();
+      }
+    } catch (e) {
+      debugPrint('Error summarizing meeting: $e');
     }
     return '';
   }

@@ -1,3 +1,8 @@
+# Phase 189: Diagnostics and Command Execution Bootstrap Setup
+We are in a simple command execution setup for bootstrapping/diagnostics. The goal is to verify terminal command execution and feedback loop via the Executor.
+
+---
+
 # Architecture: High-Fidelity Infrastructure & Scoped Operations
 
 ## 1. ID-First Intelligence Layer
@@ -219,6 +224,20 @@
 ## 37. Agent Configuration Files & Single Source of Truth
 - **`Consolidated Custom Agent Directory`**: โครงสร้างไฟล์คอนฟิกสำหรับ Subagents แต่ละตัว (backend_coder, executor, frontend_coder, planner, qa, worker) จะต้องถูกจัดเก็บไว้ภายใต้ห้องทำงานเฉพาะเจาะจง `.agents/agents/{agent_name}/agent.json` เท่านั้น เพื่อหลีกเลี่ยงความซ้ำซ้อน
 - **`Zero Duplicate Residue`**: ห้ามมีไฟล์คอนฟิกเอเจนต์นามสกุล `.json` วางตกค้างอยู่นอกโฟลเดอร์ในห้องพักโฟลว์ `.agents/agents/` โดยเด็ดขาด ทุกไฟล์ต้องผ่านการรวบรวม (Consolidated) และลบทิ้งเพื่อรักษาระเบียบและความสะอาดของระบบสถาปัตยกรรมตัวแทน (Sovereign Agents)
+
+## 38. Environment Variable Safety & Auto-routing Protocols
+- **`Web Domain Fail-Safe`**: เมื่อรันแอปพลิเคชันบนเว็บ (`kIsWeb`) ระบบจะทำการสแกน URL Hostname ปัจจุบัน (`Uri.base.host`) เพื่อระบุว่าเป็น Production สภาพแวดล้อมจริงหรือไม่ หากเข้าใช้งานจากโดเมนภายนอกอื่นที่ไม่ใช่ `localhost` หรือ `127.0.0.1` ระบบจะทำการบังคับปิดใช้งาน Local Backend และเชื่อมต่อเข้ากับ Production API Worker ปลายทางโดยอัตโนมัติ เพื่อป้องกันการอ้างอิงค่าผิดพลาดจากไฟล์ `.env` ที่ผ่านการบิ้วในเครื่องของนักพัฒนา
+- **`Deployment Verification`**: ระบบบิ้วสำหรับสภาพแวดล้อมโปรดักชันควรมีการสแกน/ตรวจสอบตัวแปรคอนฟิกใน `assets/env` เสมอ เพื่อรับรองความปลอดภัยก่อนการดีพลอยขึ้น Cloudflare Pages
+- **`Supabase and Realtime Sync Routing`**: ค่า `SUPABASE_URL` และ `SUPABASE_ANON_KEY` จะถูกโหลดผ่าน `EnvConfig` เพื่อเริ่มต้นการทำงานของ `Supabase` ใน `main.dart` เมื่อเชื่อมต่อ WebSocket ในระบบ Realtime Sync (Supabase Broadcast หรือ STT Stream Proxy `wss://<backend>/api/meetings/stream-stt`) ระบบจะสลับ URL ปลายทางไปตามการออโต้เราท์ของสภาพแวดล้อม (Local/Production) เพื่อรับประกันการเข้ากันได้และการรักษาความปลอดภัยของข้อมูล
+
+## 39. Multi-Take Audio Upload & Localized Progress Protocol
+- **`Localized Multi-Stage Spinners`**: กำหนดการแสดงสถานะคิวการทำงาน (Progress Stage) ใน UI อย่างชัดเจน โดยแบ่งแยกขั้นตอนการทำงานออกเป็นสองสถานะหลัก: คิวอัปโหลดเสียง ("อัปโหลดเสียง...") ซึ่งเป็นช่วงที่ทำการส่งข้อมูลมีเดียไปยัง Cloudflare R2 และขั้นตอนการแปลงข้อความ ("กำลังถอดความ...") ซึ่งเป็นช่วงที่ส่งต่อให้ระบบ Deepgram ทำการถอดความ เพื่อสร้างประสบการณ์การใช้งานที่เป็นมิตรและเข้าใจง่าย
+- **`Multi-Take Schema-less Storage`**: เพื่อให้สามารถจัดการไฟล์เสียงหลายไฟล์ (Multiple Takes) ภายใต้เซสชันเดียวกันได้โดยไม่ต้องทำการอัปเกรดฐานข้อมูล (No Migrations) ระบบจะประยุกต์ใช้คอลัมน์ `attachments` ที่มีอยู่แล้วในการจัดเก็บ โดยเพิ่มประเภทของข้อมูลเป็นแบบ `type: "recording"` ร่วมกับ UUID, URL ไฟล์สื่อ, ชื่อไฟล์ และเก็บ JSON String ของข้อความที่ถอดความได้ (Utterances) แยกไว้เป็นของเทคนั้นๆ โดยเฉพาะ
+- **`Transcript Portability & Actions`**: ผู้ใช้สามารถจัดการกับผลการถอดความของแต่ละเทคได้อย่างอิสระ ผ่านชุดคำสั่ง:
+  1. **New Document/Note**: สร้างการ์ดงานใหม่ (Kanban Task) หรือบันทึกใหม่บนบอร์ดโดยดึงเอาข้อความถอดความทั้งหมดไปเป็นรายละเอียด
+  2. **Append to Notes**: เพิ่มข้อความถอดความไปต่อท้ายเอกสารบันทึกการประชุม (`notes`) หรือการ์ดงานที่กำลังเลือกอยู่
+  3. **Delete Take**: ลบตัวบันทึกเทคนั้นออกจากรายการ `attachments` ของเซสชันการประชุม
+
 
 
 

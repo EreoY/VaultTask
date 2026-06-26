@@ -8,6 +8,7 @@ import '../../models/board_model.dart';
 import '../../models/workspace_model.dart';
 import '../../state_managers/state_boards.dart';
 import '../../state_managers/state_meetings.dart';
+import '../../state_managers/state_documents.dart';
 import '../../databases/api_cloudflare.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
@@ -84,6 +85,10 @@ class _BoardsPageState extends State<BoardsPage> {
                     onOpenMeetings: (board) {
                       context.read<StateMeetings>().openBoardHome(board.id);
                       boardsState.openBoardMeetings(board);
+                    },
+                    onOpenDocs: (board) {
+                      context.read<StateDocuments>().openBoardHome(board.id);
+                      boardsState.openBoardDocs(board);
                     },
                     onEditBoard: (board) =>
                         BoardsDialogs.showEditBoardDialog(context, board),

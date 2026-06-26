@@ -77,6 +77,23 @@ async function ensureSchema(db) {
       CREATE INDEX IF NOT EXISTS idx_team_meetings_board ON team_meetings(board_id)
     `).run();
 
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS team_documents (
+        id TEXT PRIMARY KEY,
+        board_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        notes TEXT DEFAULT '',
+        summary TEXT DEFAULT '',
+        attachments TEXT DEFAULT '[]',
+        updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_team_documents_board ON team_documents(board_id)
+    `).run();
+
     try {
       await db.prepare(`ALTER TABLE team_boards ADD COLUMN workspace_id TEXT DEFAULT ''`).run();
     } catch (e) {
@@ -1216,6 +1233,85 @@ export default {
         const id = url.searchParams.get("id");
         if (!id) return json({ error: "Missing id" }, 400);
         await env.DB.prepare(`DELETE FROM team_meetings WHERE id = ?`)
+          .bind(id)
+          .run();
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    // DOCUMENTS ──────────────────────────────
+    if (url.pathname === "/api/documents" && request.method === "GET") {
+      try {
+        const board_id = url.searchParams.get("board_id");
+        if (!board_id) return json({ error: "Missing board_id" }, 400);
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM team_documents WHERE board_id = ? ORDER BY created_at DESC`,
+        )
+          .bind(board_id)
+          .all();
+        return json(results);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/documents" && request.method === "POST") {
+      try {
+        const { id, board_id, title, notes, attachments, summary } =
+          await request.json();
+        if (!id || !board_id || !title)
+          return json({ error: "Missing required fields" }, 400);
+        const now = nowMs();
+        await env.DB.prepare(
+          `INSERT INTO team_documents (id, board_id, title, notes, summary, attachments, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        )
+          .bind(
+            id,
+            board_id,
+            title,
+            notes || "",
+            summary || "",
+            JSON.stringify(attachments || []),
+            now,
+          )
+          .run();
+        return json({ success: true, id }, 201);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/documents" && request.method === "PUT") {
+      try {
+        const { id, title, notes, attachments, summary } =
+          await request.json();
+        if (!id) return json({ error: "Missing id" }, 400);
+        await env.DB.prepare(
+          `UPDATE team_documents SET title=?, notes=?, summary=?, attachments=?, updated_at=? WHERE id=?`,
+        )
+          .bind(
+            title,
+            notes || "",
+            summary || "",
+            JSON.stringify(attachments || []),
+            nowMs(),
+            id,
+          )
+          .run();
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/documents" && request.method === "DELETE") {
+      try {
+        const id = url.searchParams.get("id");
+        if (!id) return json({ error: "Missing id" }, 400);
+        await env.DB.prepare(`DELETE FROM team_documents WHERE id = ?`)
           .bind(id)
           .run();
         return json({ success: true });

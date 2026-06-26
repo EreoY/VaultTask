@@ -253,7 +253,7 @@ class SttStreamService extends ChangeNotifier {
     Map<String, dynamic> deepgramJson, {
     bool replace = false,
   }) {
-    final parsed = _utterancesFromPrerecorded(deepgramJson);
+    final parsed = utterancesFromPrerecorded(deepgramJson);
     if (replace) {
       _utterances.clear();
     }
@@ -267,7 +267,7 @@ class SttStreamService extends ChangeNotifier {
   /// list of [SpeakerUtterance]. Timing is folded into [SpeakerUtterance.timestamp]
   /// via `base + start` so chronological order is preserved without any model
   /// change. Unit-testable in isolation.
-  List<SpeakerUtterance> _utterancesFromPrerecorded(
+  static List<SpeakerUtterance> utterancesFromPrerecorded(
     Map<String, dynamic> json, {
     DateTime? base,
   }) {

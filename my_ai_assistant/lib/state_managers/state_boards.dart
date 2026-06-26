@@ -8,7 +8,7 @@ import '../models/workspace_model.dart';
 import '../databases/db_personal_sqlite.dart';
 import '../databases/api_cloudflare.dart';
 
-enum BoardSurfaceMode { kanban, meetings }
+enum BoardSurfaceMode { kanban, meetings, docs }
 
 class StateBoards extends ChangeNotifier {
   static const _selectedBoardPrefKey = 'app_selected_board_id';
@@ -54,6 +54,13 @@ class StateBoards extends ChangeNotifier {
   void openBoardMeetings(BoardModel board) {
     _selectedBoard = board;
     _selectedBoardSurface = BoardSurfaceMode.meetings;
+    _persistSelectedBoardId(board.id);
+    notifyListeners();
+  }
+
+  void openBoardDocs(BoardModel board) {
+    _selectedBoard = board;
+    _selectedBoardSurface = BoardSurfaceMode.docs;
     _persistSelectedBoardId(board.id);
     notifyListeners();
   }

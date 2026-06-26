@@ -4,6 +4,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class EnvConfig {
   /// Toggle this to switch between local Wrangler backend and production.
   static bool get useLocalBackend {
+    if (kIsWeb) {
+      final host = Uri.base.host;
+      if (host != 'localhost' && host != '127.0.0.1') {
+        return false;
+      }
+    }
     final val = dotenv.env['USE_LOCAL_BACKEND'];
     if (val != null) {
       return val.toLowerCase() == 'true';

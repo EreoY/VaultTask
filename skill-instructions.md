@@ -1,3 +1,10 @@
+# Phase 189: Diagnostics Guidelines
+- Follow the Sovereign AI Operating Procedure.
+- Delegate command execution tasks appropriately (e.g., to the Executor).
+- Keep files clean and update progress in `task-graph.md` after each atomic task.
+
+---
+
 # 🚨 CRITICAL MANDATE: PRE-FLIGHT & ATOMIC PROTOCOL 🚨
 
 ## Rule 0: The Infrastructure Sentinel (Absolute)
@@ -50,6 +57,10 @@
 - **Anti-Bloat Mandate**: ห้ามเขียนโค้ดอัดรวมกันเกิน 600-700 บรรทัด เสนอการแยกไฟล์ (Extract Widget) ล่วงหน้าเสมอ
 - **Persistence First**: ทุกการลากวางหรือเปลี่ยนสถานะ ต้องบันทึกลง Database ทันที
 - **The Delta Mandate**: ใช้การอัปเดตแบบ Surgical (เจาะจงจุด) แทน Global Notify เสมอ
+
+## 7. Web Deployment & Environment Safety Protocols
+- **Release Environment Safety**: เมื่อเตรียมบิ้วสำหรับเว็บแอปพลิเคชันสำหรับนำไปใช้บนหน้าเว็บบน Cloudflare Pages จะต้องทำการตรวจสอบเสมอว่าไฟล์ `assets/env` ถูกอัปเดตให้มีสถานะเป็น Production (`USE_LOCAL_BACKEND=false`) หรือใช้ระบบตรวจจับและปรับสภาพแวดล้อมอัตโนมัติ (Web Domain Fail-Safe) ในตัวแอปเพื่อป้องกันระบบเชื่อมต่อไปยัง localhost:8787
+- **Supabase & WebSocket Validation**: ตรวจสอบการโหลดค่า `SUPABASE_URL` และ `SUPABASE_ANON_KEY` จากสภาพแวดล้อมที่ถูกต้อง และตรวจเช็ค WebSocket URLs (ทั้ง Supabase Realtime Broadcast และ Deepgram STT stream proxy `wss://<backend>/api/meetings/stream-stt`) ให้ทำงานสอดคล้องกับโหมดหลังบ้านที่ผู้ใช้เลือก (Local/Production) โดยต้องมีกลไกตรวจสอบและทำ reconnection เสมอเมื่อขาดการติดต่อ
 
 ## 🛡️ Sovereign Agent Initialization & Auto-Approved Command Protocol
 

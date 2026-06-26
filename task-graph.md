@@ -1,3 +1,23 @@
+## Phase 189: Diagnostics and Command Execution Bootstrap
+
+### Task 189.1: Verify the Environment
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`, `architecture.md`, `skill-instructions.md`
+- **Action:** Verify existence of the three anchor files.
+- **Why:** To bootstrap the Sovereign AI workflow.
+
+### Task 189.2: Execute Terminal Command
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** Execute `python3 -c "print('Hello from Executor')"`
+- **Why:** To verify terminal command execution capabilities.
+
+### Task 189.3: Check stdout
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** Check stdout of the python execution.
+- **Why:** To verify output feedback correctness.
+
 ## Phase 188: Bulk Board Member Selection UI Redesign
 
 > **Architecture Mandate:** ปรับปรุงระบบจัดการสมาชิกบอร์ด (Manage Board Members) เพื่อให้รองรับการเลือกและเพิ่มสมาชิกบอร์ดแบบทีละหลายคน (Bulk Selection) จากสมาชิกของพื้นที่ทำงาน (Workspace) แทนการเลือกทีละคนผ่าน Dropdown:
@@ -4996,4 +5016,116 @@
 - **Why:** à¸£à¸±à¸šà¸›à¸£à¸°à¸�à¸±à¸™à¸§à¹ˆà¸² argument 'dev' à¸ªà¸²à¸¡à¸²à¸£à¸–à¹€à¸£à¸µà¸¢à¸�à¹ƒà¸Šà¹‰ local setup à¹�à¸¥à¸° subprocess à¹„à¸”à¹‰à¸­à¸¢à¹ˆà¸²à¸‡à¸–à¸¹à¸�à¸•à¹‰à¸­à¸‡
 
 
+## Phase 189: แยกแสดงผลและลบทรานสคริปต์ (Transcript Separation & Deletion)
 
+- [x] Phase 189.1: เพิ่มตัวแปร `Set<String> _expandedTakeIds` ใน `meetings_board_sheet.dart`
+- [x] Phase 189.2: ปรับปรุง `_buildRecordingTakesList()` ให้แสดงผลทรานสคริปต์แบบแยกตาม Take ขยายเปิด/ปิดได้ และเพิ่มปุ่ม "ล้างข้อความถอดเสียง" ในเมนู Popup
+- [x] Phase 189.3: เพิ่มปุ่ม "ล้างข้อความทรานสคริปต์หลัก" ใน `_buildSttControls()` พร้อมกล่องข้อความยืนยันลบ และเรียก `_sttService.clearSession()`
+- [x] Phase 189.4: ตรวจสอบความถูกต้องและทดสอบ compile ด้วย QA
+
+## Phase 190: ปุ่มสรุปประชุมด้วย AI สำหรับเลขา HR ใน Summary Tab (AI Summarization for HR Secretary without Emojis)
+
+> **Architecture Mandate:** เพิ่มปุ่มและฟังก์ชันสรุปรายงานการประชุมด้วย AI ในแท็บ Summary ของหน้าจอประชุม (Meetings Board Sheet) โดยมีสเปกดังนี้:
+> 1. เพิ่มฟังก์ชัน `summarizeMeeting({required String prompt})` ใน `api_cloudflare.dart` เพื่อส่งคำขอสรุปประชุมไปยัง Cloudflare Worker Backend
+> 2. พัฒนาปุ่ม "สรุปการประชุมด้วย AI" ในแท็บ Summary (ใน `meetings_board_sheet.dart`) ซึ่งจะขึ้นสถานะโหลดและปิดการกดปุ่มชั่วคราวระหว่างส่งคำขอ
+> 3. สร้างกล่อง Dialog เพื่อให้เลขา HR เลือกแหล่งข้อมูลทรานสคริปต์ (เช่น เลือกดึงเสียงพูด หรือระบุ prompt ปรับแต่ง) พร้อมระบบควบคุม prompt ของระบบไม่ให้แสดงอิโมจิในผลลัพธ์การสรุป
+> 4. ตรวจสอบความถูกต้องและทดสอบ compile ด้วย `flutter analyze`
+
+- [x] Phase 190.1: [Backend] เพิ่มฟังก์ชัน `summarizeMeeting({required String prompt})` ใน `api_cloudflare.dart`
+- [x] Phase 190.2: [Frontend] เพิ่มตัวแปร `_isSummarizing` และแสดงปุ่ม "สรุปการประชุมด้วย AI" ในแท็บ Summary ใน `meetings_board_sheet.dart`
+- [x] Phase 190.3: [Frontend] พัฒนากล่อง Dialog เลือกแหล่งข้อมูล และ prompt คุมโทน HR พร้อมสั่งห้ามใช้อิโมจิใน `meetings_board_sheet.dart`
+- [x] Phase 190.4: [QA/Executor] ทดสอบ compile และรัน `flutter analyze`
+
+## Phase 191: Meeting Editor Performance, Slash-Hint Declutter & Supported-Markdown Conformance
+
+> **Architecture Mandate:** แก้อาการกระตุก (Jank) ในหน้าจอประชุมเมื่อมีเนื้อหาเยอะ, ลดความรกของ hint "/" ให้ขึ้นเฉพาะบรรทัดที่ focus, และบังคับให้ผลลัพธ์ Markdown (รวมถึงผลสรุปจาก AI) ตรงกับ subset ที่ Block Editor ของระบบรองรับ:
+> 1. เลิก rebuild ทั้งหน้าจอประชุมทุกครั้งที่กดคีย์ โดยให้ `_scheduleAutoSave()` เรียก setState เฉพาะเมื่อสถานะ auto-save เปลี่ยนจริง
+> 2. แยกแถวบล็อก (`_BlockRow`) ใน `MarkdownBlockEditor` เป็น StatefulWidget ของตัวเอง เพื่อให้ hover/focus rebuild เฉพาะบรรทัดเดียวแทนทั้งลิสต์ (เลิก setState `_focusedBlockId`/`_hoveredBlockId` ระดับ parent)
+> 3. แสดง hint "Type '/' for commands..." เฉพาะบรรทัดที่ถูก focus เท่านั้น
+> 4. ทำ parser ให้ฉลาดขึ้น (รับ `###`+, `#` ไม่เว้นวรรค, เลขลำดับ `1.`/`2.`, ลอก `**bold**`/`__`/`` `code` `` ออก, ข้าม `---`) และ normalize ผลสรุป AI ผ่าน parse→serialize ก่อนเก็บ พร้อมคุม prompt ให้ AI ส่งเฉพาะ markdown ที่รองรับ
+
+### Task 191.1: Register Phase 191 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 191
+- **Why:** เพื่อบันทึกแผนตามนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 191.2: Isolate Auto-Save Status setState to Stop Per-Keystroke Full Rebuild
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** แก้ `_scheduleAutoSave()` ให้เรียก `setState(() => _autoSaveStatus = 'Saving...')` เฉพาะเมื่อ `_autoSaveStatus != 'Saving...'` เท่านั้น
+- **Why:** ตัด rebuild ทั้ง sheet ทุกคีย์ระหว่างพิมพ์ ทำให้ลื่นเมื่อเนื้อหาเยอะ
+
+### Task 191.3: Extract _BlockRow StatefulWidget for Scoped Hover/Focus Rebuilds
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** แยกแถวบล็อกเป็น `_BlockRow` (StatefulWidget) ที่จัดการ hover/focus ของตัวเอง และเอา setState `_focusedBlockId` ออกจาก parent focus listener
+- **Why:** เลิก rebuild ทั้งลิสต์เมื่อ hover/focus → ลด jank แบบ O(n)
+
+### Task 191.4: Show Slash Hint Only on Focused Block
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** แสดง `hintText` เฉพาะเมื่อ block ถูก focus มิฉะนั้นเป็น null
+- **Why:** ลดความรกของ "Type '/' for commands..." ที่ขึ้นทุกบรรทัดว่าง
+
+### Task 191.5: Forgiving Markdown Parser + AI Output Normalization & Prompt Constraint
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่ม `_stripInline` + รองรับ `###`/`#ไม่เว้นวรรค`/เลขลำดับ/`---` ใน `parseMarkdownToBlocks`, normalize ผล AI ผ่าน parse→serialize ก่อนใส่ controller และเพิ่มกฎ markdown ใน prompt
+- **Why:** ให้ผลลัพธ์ตรงกับ subset ที่ระบบรองรับ ไม่โชว์อักขระ markdown ดิบ
+
+### Task 191.6: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `python3 runner.py analyze`
+- **Why:** ยืนยันความถูกต้องของโค้ดก่อนส่งมอบ
+
+## Phase 192: Markdown Export/Copy Button for Meeting Workspace
+
+> **Architecture Mandate:** เพิ่มความสามารถส่งออกเอกสารในหน้าจอประชุมเป็นไฟล์ `.md` เพื่อนำไปใช้งานต่อ — ดาวน์โหลดเป็นไฟล์บนเว็บผ่าน Blob/AnchorElement (conditional import `dart:html`) และคัดลอกลงคลิปบอร์ดเป็น fallback บนทุกแพลตฟอร์ม
+
+### Task 192.1: Create cross-platform web download helper
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/utils/web_download_stub.dart`, `my_ai_assistant/lib/utils/web_download_web.dart`
+- **Action:** สร้าง `downloadMarkdownFile(filename, content)` — web ใช้ `dart:html` Blob+anchor, stub เป็น no-op บน native
+- **Why:** ให้ผู้ใช้ดาวน์โหลดเอกสารเป็นไฟล์ `.md` ได้บนเว็บโดยไม่กระทบการ build บน native
+
+### Task 192.2: Add Export .md button and document builder to MeetingsBoardSheet
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่มปุ่ม Export .md ในหัว Meeting Workspace + `_buildMarkdownDocument()` (รวม title/Summary/Notes) + `_exportMarkdown()` (clipboard + web download)
+- **Why:** เพื่อให้คัดลอก/ส่งออกเนื้อหาเอกสารเป็น Markdown ไปใช้งานภายนอกได้
+
+### Task 192.3: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `python3 runner.py analyze` (No issues found)
+- **Why:** ยืนยันความถูกต้องของโค้ด
+
+## Phase 193: Project Docs Workspace (Write-Only Multi-Document Feature)
+
+> **Architecture Mandate:** เพิ่มฟีเจอร์ "Docs" ต่อโปรเจกต์ (board) เป็นพื้นที่เอกสารแบบเขียน/จดอย่างเดียว รองรับ **หลายเอกสารต่อโปรเจกต์** (list เหมือน Meetings) mirror โครงสร้าง Meetings แต่ตัดส่วนอัดเสียง/STT/transcript/เวลานัดออก:
+> - แท็บ: สรุป (Summary, AI) / โน้ต (Notes เขียนเอง) / ไฟล์แนบ (Attachments)
+> - ปุ่มสรุปด้วย AI ที่เลือกได้ว่าจะเอาไฟล์ไหน + รวมโน้ตไหม (เหมือน Meetings)
+> - ปุ่ม Export .md
+> - Entry: ปุ่ม OPEN ในคอลัมน์ DOCS ของตารางโปรเจกต์ → route เข้า DocsBoardPage ใน shell (BoardSurfaceMode.docs)
+
+### Task 193.1: Backend Data/Logic Layer (Model, State, Persistence, API, Worker, Schema)
+- **Status:** [x] Done
+- **Target Files:** `lib/models/document_model.dart`, `lib/state_managers/state_documents.dart`, `lib/databases/db_personal_sqlite.dart`, `lib/databases/api_cloudflare.dart`, `lib/state_managers/state_boards.dart`, `cloudflare_backend/cloudflare_worker.js`, `cloudflare_backend/d1_schema.sql`
+- **Action:** สร้าง DocumentModel + StateDocuments (mirror Meetings แบบตัด transcript/recording/startAt), เพิ่มตาราง `project_documents` (SQLite, bump version) + `team_documents` (D1) + endpoints `/api/documents` + เมธอด api_cloudflare + `BoardSurfaceMode.docs`/`openBoardDocs`
+- **Why:** ให้เอกสารเป็นข้อมูลแยกต่อ board และ persist ได้ทั้ง personal/team
+- **Verification:** **[AUTONOMOUS]** ส่วนหนึ่งของ `python3 runner.py analyze` → No issues found
+
+### Task 193.2: Frontend UI + Wiring (DocsBoardPage, DocsBoardSheet, Entry, Routing)
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/docs/docs_board_page.dart`, `lib/ui/docs/docs_board_sheet.dart`, `lib/main.dart`, `lib/ui/boards/boards_page.dart`, `lib/ui/boards/widgets/projects_table.dart`
+- **Action:** DocsBoardPage (list เอกสารใหม่สุดก่อน + New document) + DocsBoardSheet (3 แท็บ Summary/Notes/Attachments, สรุป AI เลือกไฟล์+โน้ต, Export .md, auto-save debounce) + provider/fetch/clear/surface-routing ใน main.dart + ปุ่ม DOCS OPEN ใน projects_table
+- **Why:** ให้ผู้ใช้เปิด/สร้าง/แก้เอกสารเขียนอย่างเดียวต่อโปรเจกต์ได้จาก HQ table
+- **Verification:** **[AUTONOMOUS]** ส่วนหนึ่งของ `python3 runner.py analyze` → No issues found
+
+### Task 193.3: Static Verification & Audit
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `python3 runner.py analyze` (No issues found) + audit ว่า docs_board_sheet ไม่มี import STT/audio/transcript และมี 3 แท็บพอดี (Summary/Notes/Attachments)
+- **Why:** ยืนยันความถูกต้องและคอนฟอร์มสเปก write-only

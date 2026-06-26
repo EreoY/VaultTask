@@ -15,6 +15,7 @@ class ProjectsTable extends StatelessWidget {
   final MemberProfileResolver resolveMemberProfile;
   final BoardAction onOpenBoard;
   final BoardAction onOpenMeetings;
+  final BoardAction onOpenDocs;
   final BoardAction onEditBoard;
   final BoardAction onDeleteBoard;
   final BoardAction onManageMembers;
@@ -29,6 +30,7 @@ class ProjectsTable extends StatelessWidget {
     required this.resolveMemberProfile,
     required this.onOpenBoard,
     required this.onOpenMeetings,
+    required this.onOpenDocs,
     required this.onEditBoard,
     required this.onDeleteBoard,
     required this.onManageMembers,
@@ -62,6 +64,7 @@ class ProjectsTable extends StatelessWidget {
                 resolveMemberProfile: resolveMemberProfile,
                 onOpenBoard: onOpenBoard,
                 onOpenMeetings: onOpenMeetings,
+                onOpenDocs: onOpenDocs,
                 onEditBoard: onEditBoard,
                 onDeleteBoard: onDeleteBoard,
                 onManageMembers: onManageMembers,
@@ -191,6 +194,7 @@ class _BoardRow extends StatelessWidget {
   final MemberProfileResolver resolveMemberProfile;
   final BoardAction onOpenBoard;
   final BoardAction onOpenMeetings;
+  final BoardAction onOpenDocs;
   final BoardAction onEditBoard;
   final BoardAction onDeleteBoard;
   final BoardAction onManageMembers;
@@ -202,6 +206,7 @@ class _BoardRow extends StatelessWidget {
     required this.resolveMemberProfile,
     required this.onOpenBoard,
     required this.onOpenMeetings,
+    required this.onOpenDocs,
     required this.onEditBoard,
     required this.onDeleteBoard,
     required this.onManageMembers,
@@ -322,6 +327,8 @@ class _BoardRow extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   _UploadDocButton(onTap: () => onUploadDocument(board)),
+                  const SizedBox(width: 4),
+                  _OpenInlineButton(onTap: () => onOpenDocs(board)),
                 ],
               ),
             ),

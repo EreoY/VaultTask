@@ -1,16 +1,21 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../databases/api_cloudflare.dart';
 import '../../models/board_model.dart';
 import '../../models/meeting_model.dart';
+import '../../models/task_model.dart';
 import '../../state_managers/state_meetings.dart';
+import '../../state_managers/state_tasks.dart';
 import '../common/ime_safe_text_field.dart';
 import '../common/responsive_layout.dart';
 import '../common/scroll_gutter.dart';
@@ -21,6 +26,8 @@ import 'widgets/markdown_block_editor.dart';
 import '../../services/stt_stream_service.dart';
 import '../../services/meeting_transcription_service.dart';
 import '../../config/env_config.dart';
+import '../../utils/web_download_stub.dart'
+    if (dart.library.html) '../../utils/web_download_web.dart';
 
 enum MeetingFilter { upcoming, all, past }
 
@@ -114,8 +121,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   bool _isSaving = false;
   bool _isUploading = false;
   bool _isTranscribing = false;
+  bool _isSummarizing = false;
   String? _transcribeStatus; // 'Uploading...', 'Transcribing...', etc.
   bool _draftInitialized = false;
+  final Set<String> _expandedTakeIds = {};
 
   Timer? _autoSaveTimer;
   bool _isAutoSaving = false;
@@ -145,9 +154,14 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   void _scheduleAutoSave() {
     if (_isSuppressingAutoSave) return;
     _autoSaveTimer?.cancel();
-    setState(() {
-      _autoSaveStatus = 'Saving...';
-    });
+    // Only rebuild the (heavy) sheet when the status actually changes.
+    // During a continuous typing burst the status is already 'Saving...',
+    // so we skip setState entirely — keeping typing smooth on large docs.
+    if (_autoSaveStatus != 'Saving...') {
+      setState(() {
+        _autoSaveStatus = 'Saving...';
+      });
+    }
     _autoSaveTimer = Timer(const Duration(milliseconds: 1500), () {
       _performAutoSave();
     });
@@ -825,6 +839,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                                     color: GlassColors.onSurface.withOpacity(0.95),
                                   ),
                                 ),
+                                const Spacer(),
+                                _buildExportMdButton(),
                               ],
                             ),
                             const SizedBox(height: 10),
@@ -1341,19 +1357,27 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   Widget _buildActiveTabContent() {
     switch (_activeTab) {
       case _MeetingDocTab.summary:
-        return MarkdownBlockEditor(
-          initialMarkdown: _descriptionController.text,
-          onChanged: (val) {
-            _descriptionController.text = val;
-            _scheduleAutoSave();
-          },
-          onDragStateChanged: (isDragging) {
-            setState(() {
-              _editorScrollPhysics = isDragging
-                  ? const NeverScrollableScrollPhysics()
-                  : null;
-            });
-          },
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSummaryAiControls(),
+            const SizedBox(height: 12),
+            MarkdownBlockEditor(
+              initialMarkdown: _descriptionController.text,
+              onChanged: (val) {
+                _descriptionController.text = val;
+                _scheduleAutoSave();
+              },
+              onDragStateChanged: (isDragging) {
+                setState(() {
+                  _editorScrollPhysics = isDragging
+                      ? const NeverScrollableScrollPhysics()
+                      : null;
+                });
+              },
+            ),
+          ],
         );
       case _MeetingDocTab.notes:
         return MarkdownBlockEditor(
@@ -1404,7 +1428,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
               ),
             ],
           ),
-          if (_attachments.isEmpty)
+          if (_attachments.where((a) => a['type'] != 'recording').isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
@@ -1415,7 +1439,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
               ),
             )
           else
-            ..._attachments.map((attachment) {
+            ..._attachments.where((a) => a['type'] != 'recording').map((attachment) {
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: InkWell(
@@ -1651,6 +1675,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSttControls(),
+        _buildRecordingTakesList(),
         if (errorMsg != null) ...[
           const SizedBox(height: 12),
           Container(
@@ -1715,6 +1740,103 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
     );
   }
 
+  void _showClearTranscriptConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Center(
+        child: Container(
+          width: 380,
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
+          decoration: GlassDecorations.solidSurface(
+            radius: 20,
+            hasShadow: true,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CLEAR TRANSCRIPT',
+                  style: GlassText.labelSM().copyWith(
+                    color: GlassColors.error,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'คุณต้องการล้างข้อมูลทรานสคริปต์สดทั้งหมดหรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+                  style: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: GlassColors.ghostBorder),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'ยกเลิก',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          _sttService.clearSession();
+                          if (_selectedMeeting != null) {
+                            setState(() {
+                              _selectedMeeting = _selectedMeeting!.copyWith(
+                                transcript: '',
+                              );
+                            });
+                            _scheduleAutoSave();
+                          }
+                          Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(
+                            color: GlassColors.error,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'ล้างข้อมูล',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSttControls() {
     final isRecording = _sttService.isRecording;
 
@@ -1763,6 +1885,14 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
             ),
           ],
           const Spacer(),
+          if (!isRecording && _sttService.utterances.isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+              tooltip: 'ล้างทรานสคริปต์หลัก',
+              onPressed: () => _showClearTranscriptConfirmDialog(context),
+            ),
+            const SizedBox(width: 8),
+          ],
           if (!isRecording)
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -1881,7 +2011,6 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
     try {
       final result = await MeetingTranscriptionService.pickAndTranscribe(
         meetingId: _selectedMeeting!.id,
-        sttService: _sttService,
         onProgress: (stage, {message}) {
           if (!mounted) return;
           setState(() => _transcribeStatus = message ?? _stageLabel(stage));
@@ -1893,32 +2022,16 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       // User cancelled the file picker.
       if (result == null) return;
 
-      // Utterances were already ingested into _sttService by the orchestration
-      // service. Because _onSttServiceChanged only auto-saves while recording,
-      // we MUST push the transcript + schedule autosave explicitly here.
-      setState(() {
-        _selectedMeeting = _selectedMeeting!.copyWith(
-          transcript: _sttService.getJsonTranscript(),
-        );
-        final url = result.mediaUrl;
-        if (url != null && url.isNotEmpty) {
+      if (result.takeMap != null) {
+        setState(() {
           _attachments = [
             ..._attachments,
-            {
-              'name': result.fileName ?? 'Recording',
-              'url': url,
-              'mime': result.mimeType ?? '',
-            },
+            result.takeMap!,
           ];
-        }
-        _activeTab = _MeetingDocTab.transcript;
-      });
-      _scheduleAutoSave();
-
-      GlassNotifications.show(
-        context,
-        'Added ${result.utterances.length} transcript segment(s).',
-      );
+          _activeTab = _MeetingDocTab.transcript;
+        });
+        _scheduleAutoSave();
+      }
     } catch (e) {
       debugPrint('[UI] Upload transcription failed: $e');
       if (mounted) {
@@ -1941,20 +2054,268 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   String _stageLabel(MeetingTranscriptionStage stage) {
     switch (stage) {
       case MeetingTranscriptionStage.picking:
-        return 'Selecting file...';
+        return 'เลือกไฟล์เสียง...';
       case MeetingTranscriptionStage.uploading:
-        return 'Uploading media...';
+        return 'อัปโหลดเสียง...';
       case MeetingTranscriptionStage.transcribing:
-        return 'Transcribing...';
+        return 'กำลังถอดความ...';
       case MeetingTranscriptionStage.ingesting:
-        return 'Adding to transcript...';
+        return 'กำลังบันทึกข้อมูล...';
       case MeetingTranscriptionStage.done:
-        return 'Done';
+        return 'เสร็จสิ้น';
       case MeetingTranscriptionStage.cancelled:
-        return 'Cancelled';
+        return 'ยกเลิก';
       case MeetingTranscriptionStage.error:
-        return 'Error';
+        return 'เกิดข้อผิดพลาด';
     }
+  }
+
+  Widget _buildRecordingTakesList() {
+    final recordingTakes = _attachments.where((a) => a['type'] == 'recording').toList();
+    if (recordingTakes.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          'ไฟล์บันทึกเสียง (${recordingTakes.length})',
+          style: GlassText.bodyMD().copyWith(
+            fontWeight: FontWeight.w700,
+            color: GlassColors.onSurface.withOpacity(0.85),
+          ),
+        ),
+        const SizedBox(height: 8),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: recordingTakes.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final take = recordingTakes[index];
+            final takeId = take['id'] ?? '';
+            final isExpanded = _expandedTakeIds.contains(takeId);
+            
+            List<SpeakerUtterance> utterances = [];
+            if (isExpanded && take['transcript'] != null) {
+              try {
+                final List<dynamic> parsed = jsonDecode(take['transcript']!);
+                for (final item in parsed) {
+                  if (item is Map) {
+                    utterances.add(SpeakerUtterance.fromJson(Map<String, dynamic>.from(item)));
+                  }
+                }
+              } catch (_) {}
+            }
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: GlassColors.surface.withOpacity(0.04),
+                border: Border.all(
+                  color: GlassColors.outlineVariant.withOpacity(0.08),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.audiotrack_rounded,
+                        color: GlassColors.primary.withOpacity(0.8),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          take['name'] ?? 'Recording Take',
+                          style: GlassText.bodyMD().copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: GlassColors.onSurface.withOpacity(0.9),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (take['url'] != null && take['url']!.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                          tooltip: 'เล่นเสียง',
+                          onPressed: () async {
+                            final uri = Uri.parse(take['url']!);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            } else {
+                              GlassNotifications.show(
+                                context,
+                                'ไม่สามารถเปิดลิงก์ไฟล์เสียงได้',
+                                isError: true,
+                              );
+                            }
+                          },
+                        ),
+                      IconButton(
+                        icon: Icon(
+                          isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                          size: 20,
+                        ),
+                        tooltip: 'ดูทรานสคริปต์',
+                        onPressed: () {
+                          setState(() {
+                            if (takeId.isNotEmpty) {
+                              if (_expandedTakeIds.contains(takeId)) {
+                                _expandedTakeIds.remove(takeId);
+                              } else {
+                                _expandedTakeIds.add(takeId);
+                              }
+                            }
+                          });
+                        },
+                      ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert_rounded, size: 20),
+                        onSelected: (action) async {
+                          if (action == 'create_task') {
+                            final buffer = StringBuffer();
+                            try {
+                              final List<dynamic> parsed = jsonDecode(take['transcript'] ?? '[]');
+                              for (final item in parsed) {
+                                if (item is Map) {
+                                  final u = SpeakerUtterance.fromJson(Map<String, dynamic>.from(item));
+                                  buffer.writeln('**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_');
+                                  buffer.writeln();
+                                }
+                              }
+                            } catch (e) {
+                              buffer.writeln('Error parsing transcript: $e');
+                            }
+                            final transcriptText = buffer.toString();
+                            
+                            final newTask = TaskModel(
+                              id: const Uuid().v4(),
+                              boardId: widget.board.id,
+                              title: 'บันทึกเสียง: ${take['name']}',
+                              description: transcriptText,
+                              dueDate: DateTime.now().add(const Duration(days: 7)),
+                              type: widget.board.type,
+                              status: widget.board.columns.firstOrNull ?? 'todo',
+                            );
+                            await Provider.of<StateTasks>(context, listen: false).addTask(widget.board, newTask);
+                            GlassNotifications.show(context, 'สร้างงานใหม่เรียบร้อยแล้ว');
+                          } else if (action == 'append_notes') {
+                            final buffer = StringBuffer();
+                            try {
+                              final List<dynamic> parsed = jsonDecode(take['transcript'] ?? '[]');
+                              for (final item in parsed) {
+                                if (item is Map) {
+                                  final u = SpeakerUtterance.fromJson(Map<String, dynamic>.from(item));
+                                  buffer.writeln('**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_');
+                                  buffer.writeln();
+                                }
+                              }
+                            } catch (e) {
+                              buffer.writeln('Error parsing transcript: $e');
+                            }
+                            final transcriptText = buffer.toString();
+
+                            _notesController.text = '${_notesController.text}\n\n### Transcript: ${take['name']}\n$transcriptText';
+                            _scheduleAutoSave();
+                            GlassNotifications.show(context, 'บันทึกความคืบหน้าเข้าบันทึกประชุมแล้ว');
+                          } else if (action == 'clear_take_transcript') {
+                            setState(() {
+                              take['transcript'] = '[]';
+                              if (takeId.isNotEmpty) {
+                                _expandedTakeIds.remove(takeId);
+                              }
+                            });
+                            _scheduleAutoSave();
+                            GlassNotifications.show(context, 'ล้างข้อมูลทรานสคริปต์ของ Take นี้สำเร็จ');
+                          } else if (action == 'delete') {
+                            setState(() {
+                              _attachments.removeWhere((a) => a['id'] == take['id']);
+                            });
+                            _scheduleAutoSave();
+                            GlassNotifications.show(context, 'ลบไฟล์อัดเสียงสำเร็จ');
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'create_task',
+                            child: Row(
+                              children: [
+                                Icon(Icons.add_task_rounded, size: 18),
+                                SizedBox(width: 8),
+                                Text('สร้างบันทึก/งานใหม่'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'append_notes',
+                            child: Row(
+                              children: [
+                                Icon(Icons.note_add_rounded, size: 18),
+                                SizedBox(width: 8),
+                                Text('เขียนลงบันทึกประชุม (Append)'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'clear_take_transcript',
+                            child: Row(
+                              children: [
+                                Icon(Icons.clear_all_rounded, size: 18),
+                                SizedBox(width: 8),
+                                Text('ล้างทรานสคริปต์ของ Take นี้'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                                SizedBox(width: 8),
+                                Text('ลบไฟล์อัดเสียงนี้', style: TextStyle(color: Colors.redAccent)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (isExpanded) ...[
+                    const Divider(height: 16, color: Colors.white10),
+                    if (utterances.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'ไม่มีข้อมูลทรานสคริปต์',
+                          style: GlassText.secondary().copyWith(
+                            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: utterances.map((u) => _buildUtteranceBlock(u, false)).toList(),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _buildSourceToggle({
@@ -2060,6 +2421,289 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
         ],
       ),
     );
+  }
+
+  Widget _buildExportMdButton() {
+    return Tooltip(
+      message: 'ส่งออก / คัดลอกเป็นไฟล์ .md',
+      child: TextButton.icon(
+        style: TextButton.styleFrom(
+          foregroundColor: GlassColors.onSurfaceVariant,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        icon: const Icon(Icons.download_rounded, size: 16),
+        label: Text(
+          'Export .md',
+          style: GlassText.secondary().copyWith(fontWeight: FontWeight.w600),
+        ),
+        onPressed: _exportMarkdown,
+      ),
+    );
+  }
+
+  String _buildMarkdownDocument() {
+    final title = _titleController.text.trim();
+    final summary = _descriptionController.text.trim();
+    final notes = _notesController.text.trim();
+    final buffer = StringBuffer();
+    buffer.writeln('# ${title.isEmpty ? 'Untitled' : title}');
+    if (summary.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('## Summary');
+      buffer.writeln();
+      buffer.writeln(summary);
+    }
+    if (notes.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('## Notes');
+      buffer.writeln();
+      buffer.writeln(notes);
+    }
+    return buffer.toString().trim();
+  }
+
+  Future<void> _exportMarkdown() async {
+    final content = _buildMarkdownDocument();
+    if (content.isEmpty) {
+      GlassNotifications.show(context, 'ยังไม่มีเนื้อหาให้ส่งออก', isError: true);
+      return;
+    }
+
+    final rawTitle = _titleController.text.trim();
+    final safe = rawTitle
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '')
+        .replaceAll(RegExp(r'\s+'), '_')
+        .trim();
+    final filename = '${safe.isEmpty ? 'document' : safe}.md';
+
+    // Always copy to clipboard; on web also trigger a file download.
+    await Clipboard.setData(ClipboardData(text: content));
+    await downloadMarkdownFile(filename, content);
+
+    if (!mounted) return;
+    GlassNotifications.show(
+      context,
+      kIsWeb ? 'ดาวน์โหลด .md และคัดลอกแล้ว' : 'คัดลอกเป็น Markdown แล้ว',
+    );
+  }
+
+  Widget _buildSummaryAiControls() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: GlassColors.gold,
+          side: BorderSide(color: GlassColors.gold.withOpacity(0.5)),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        ),
+        icon: _isSummarizing
+            ? SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.6,
+                  valueColor: AlwaysStoppedAnimation<Color>(GlassColors.gold),
+                ),
+              )
+            : const Icon(Icons.psychology_rounded, size: 18),
+        label: Text(
+          _isSummarizing ? 'กำลังสรุปการประชุม...' : 'สรุปการประชุมด้วย AI',
+          style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+        ),
+        onPressed: _isSummarizing ? null : _handleAiSummarize,
+      ),
+    );
+  }
+
+  Future<void> _handleAiSummarize() async {
+    if (_selectedMeeting == null) return;
+
+    final recordingTakes = _attachments.where((a) => a['type'] == 'recording').toList();
+
+    bool includeNotes = _notesController.text.isNotEmpty;
+    bool includeMainTranscript = _selectedMeeting!.transcript.isNotEmpty || _sttService.utterances.isNotEmpty;
+    
+    final Map<String, bool> includeTakes = {};
+    for (final take in recordingTakes) {
+      final id = take['id'];
+      if (id != null) {
+        final trans = take['transcript'];
+        if (trans != null && trans.isNotEmpty && trans != '[]') {
+          includeTakes[id] = true;
+        }
+      }
+    }
+
+    if (!includeNotes && !includeMainTranscript && includeTakes.isEmpty) {
+      GlassNotifications.show(
+        context,
+        'ไม่พบข้อมูล Notes หรือ Transcript สำหรับนำมาใช้สรุปการประชุม',
+        isError: true,
+      );
+      return;
+    }
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[900]?.withOpacity(0.95),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                'เลือกแหล่งข้อมูลสำหรับสรุปประชุม',
+                style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_notesController.text.isNotEmpty)
+                      CheckboxListTile(
+                        title: const Text('บันทึกข้อความ (Notes)', style: TextStyle(color: Colors.white)),
+                        value: includeNotes,
+                        activeColor: GlassColors.gold,
+                        onChanged: (val) => setDialogState(() => includeNotes = val ?? false),
+                      ),
+                    if (_selectedMeeting!.transcript.isNotEmpty || _sttService.utterances.isNotEmpty)
+                      CheckboxListTile(
+                        title: const Text('ทรานสคริปต์หลัก (Live Transcript)', style: TextStyle(color: Colors.white)),
+                        value: includeMainTranscript,
+                        activeColor: GlassColors.gold,
+                        onChanged: (val) => setDialogState(() => includeMainTranscript = val ?? false),
+                      ),
+                    if (includeTakes.isNotEmpty) ...[
+                      const Divider(color: Colors.white24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'ไฟล์บันทึกเสียง (Recording Takes)',
+                            style: GlassText.secondary().copyWith(color: Colors.white70, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      ...recordingTakes.where((t) => includeTakes.containsKey(t['id'])).map((take) {
+                        final takeId = take['id']!;
+                        return CheckboxListTile(
+                          title: Text(take['name'] ?? 'Recording Take', style: const TextStyle(color: Colors.white70)),
+                          value: includeTakes[takeId],
+                          activeColor: GlassColors.gold,
+                          onChanged: (val) => setDialogState(() => includeTakes[takeId] = val ?? false),
+                        );
+                      }),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text('ยกเลิก', style: GlassText.bodyMD().copyWith(color: Colors.white.withOpacity(0.5))),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final anySelected = includeNotes || includeMainTranscript || includeTakes.values.contains(true);
+                    if (!anySelected) {
+                      GlassNotifications.show(context, 'กรุณาเลือกแหล่งข้อมูลอย่างน้อย 1 แหล่ง', isError: true);
+                      return;
+                    }
+                    Navigator.pop(context, true);
+                  },
+                  style: TextButton.styleFrom(foregroundColor: GlassColors.gold),
+                  child: Text('เริ่มสรุปด้วย AI', style: GlassText.bodyMD().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    final buffer = StringBuffer();
+
+    if (includeNotes) {
+      buffer.writeln('=== MEETING NOTES ===');
+      buffer.writeln(_notesController.text);
+      buffer.writeln();
+    }
+
+    if (includeMainTranscript) {
+      buffer.writeln('=== MAIN TRANSCRIPT ===');
+      final mainText = _sttService.utterances.isNotEmpty 
+          ? _sttService.getFormattedTranscript() 
+          : _selectedMeeting!.transcript;
+      buffer.writeln(mainText);
+      buffer.writeln();
+    }
+
+    for (final take in recordingTakes) {
+      final takeId = take['id']!;
+      if (includeTakes[takeId] == true) {
+        buffer.writeln('=== TRANSCRIPT FOR TAKE: ${take['name']} ===');
+        try {
+          final List<dynamic> parsed = jsonDecode(take['transcript'] ?? '[]');
+          for (final item in parsed) {
+            if (item is Map) {
+              final u = SpeakerUtterance.fromJson(Map<String, dynamic>.from(item));
+              buffer.writeln('Speaker ${u.speaker}: ${u.text}');
+            }
+          }
+        } catch (e) {
+          buffer.writeln('(Error parsing transcript: $e)');
+        }
+        buffer.writeln();
+      }
+    }
+
+    final combinedText = buffer.toString().trim();
+    if (combinedText.isEmpty) return;
+
+    setState(() => _isSummarizing = true);
+
+    try {
+      final systemInstruction = 
+          'คุณคือผู้ช่วยเลขานุการ HR มืออาชีพที่มีหน้าที่สรุปการประชุม '
+          'กรุณาเขียนบันทึกสรุปการประชุมจากข้อมูลที่ได้รับให้ออกมาเป็นเอกสารทางการ (Official Meeting Minutes) ในรูปแบบ Markdown '
+          'ที่อ่านเข้าใจง่ายที่สุด แบ่งหัวข้อแยกประเด็นชัดเจนและสรุปประเด็นเป็นข้อๆ '
+          'โดยต้องครอบคลุม: หัวข้อการประชุม, วันเวลา (ถ้าระบุ), รายการผู้เข้าร่วม (ถ้ามี), ประเด็นสำคัญที่พูดคุย, มติหรือข้อตกลงร่วมกัน, และ Action Items (สิ่งที่ต้องทำต่อไปพร้อมคนรับผิดชอบและกำหนดส่ง) '
+          'ข้อกำหนดที่สำคัญที่สุด:\n'
+          '1. ห้ามใส่อิโมจิ (Emoji) หรือสติกเกอร์สัญลักษณ์พิเศษใดๆ ในเอกสารเด็ดขาด (No emojis allowed at all)\n'
+          '2. เขียนสรุปเป็นภาษาไทยอย่างเป็นทางการและกระชับ สละสลวย เข้าใจง่ายสำหรับผู้บริหารและเลขา HR\n'
+          '3. รูปแบบ Markdown ที่อนุญาตให้ใช้มีเพียง 4 แบบเท่านั้น: หัวข้อใหญ่ขึ้นต้นด้วย "# " (มีเว้นวรรค), หัวข้อย่อยขึ้นต้นด้วย "## " (มีเว้นวรรค), รายการขึ้นต้นด้วย "- " (มีเว้นวรรค), และรายการสิ่งที่ต้องทำขึ้นต้นด้วย "- [ ] " หรือ "- [x] "\n'
+          '4. ห้ามใช้ตัวหนา (**), ตัวเอียง (*), อินไลน์โค้ด (`), หัวข้อระดับ "###" ขึ้นไป, เลขลำดับ (1. 2. 3.), หรือเส้นคั่น (---) โดยเด็ดขาด เพราะระบบแสดงผลรองรับเฉพาะ 4 รูปแบบในข้อ 3 เท่านั้น';
+
+      final userPrompt = '$systemInstruction\\n\\nนี่คือข้อมูลการประชุม (Notes และ Transcript):\\n\\n$combinedText';
+
+      final summaryResult = await ApiCloudflare.summarizeMeeting(prompt: userPrompt);
+
+      if (summaryResult.isNotEmpty) {
+        // Normalize the AI output through the block parser/serializer so the
+        // stored summary contains ONLY the markdown subset the editor renders
+        // (strips stray **bold**, ###, numbered lists, ---, etc.).
+        final normalized =
+            serializeBlocksToMarkdown(parseMarkdownToBlocks(summaryResult));
+        setState(() {
+          _descriptionController.text = normalized;
+        });
+        _scheduleAutoSave();
+        GlassNotifications.show(context, 'สรุปการประชุมด้วย AI เรียบร้อยแล้ว');
+      } else {
+        GlassNotifications.show(context, 'ไม่สามารถสรุปข้อมูลได้ กรุณาลองใหม่อีกครั้ง', isError: true);
+      }
+    } catch (e) {
+      debugPrint('[UI] AI Summary failed: $e');
+      GlassNotifications.show(context, 'เกิดข้อผิดพลาดในการสรุปข้อมูล: $e', isError: true);
+    } finally {
+      setState(() => _isSummarizing = false);
+    }
   }
 }
 

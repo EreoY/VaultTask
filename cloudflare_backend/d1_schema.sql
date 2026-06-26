@@ -77,6 +77,19 @@ CREATE TABLE IF NOT EXISTS team_meetings (
   FOREIGN KEY(board_id) REFERENCES team_boards(id)
 );
 
+-- Team Documents (write-only docs that belong to a board)
+CREATE TABLE IF NOT EXISTS team_documents (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  notes TEXT DEFAULT '',
+  summary TEXT DEFAULT '',
+  attachments TEXT DEFAULT '[]',
+  updated_at INTEGER DEFAULT (strftime('%s','now')*1000),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(board_id) REFERENCES team_boards(id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_team_boards_owner ON team_boards(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_team_workspaces_owner ON team_workspaces(owner_uid);
@@ -84,6 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_team_tasks_board  ON team_tasks(board_id);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_due    ON team_tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_team_meetings_board ON team_meetings(board_id);
 CREATE INDEX IF NOT EXISTS idx_team_meetings_start ON team_meetings(start_at);
+CREATE INDEX IF NOT EXISTS idx_team_documents_board ON team_documents(board_id);
 
 -- Chat Sessions
 CREATE TABLE IF NOT EXISTS chat_sessions (

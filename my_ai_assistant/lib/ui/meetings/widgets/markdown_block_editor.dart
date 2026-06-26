@@ -34,29 +34,108 @@ class MarkdownBlock {
   }
 }
 
+/// Strip inline markdown emphasis that the block editor cannot render
+/// (bold/italic/inline-code). The editor uses plain TextFields, so leaving
+/// these markers in would show raw characters like `**bold**`.
+String _stripInline(String s) {
+  var r = s;
+  // **bold** and __bold__
+  r = r.replaceAllMapped(RegExp(r'\*\*(.+?)\*\*'), (m) => m.group(1)!);
+  r = r.replaceAllMapped(RegExp(r'__(.+?)__'), (m) => m.group(1)!);
+  // `inline code`
+  r = r.replaceAllMapped(RegExp(r'`([^`]+?)`'), (m) => m.group(1)!);
+  return r;
+}
+
+/// Forgiving parser: maps a broad range of AI-emitted markdown onto the
+/// limited subset the block editor supports (h1, h2, bullet, todo, paragraph).
 List<MarkdownBlock> parseMarkdownToBlocks(String markdown) {
   if (markdown.trim().isEmpty) {
     return [MarkdownBlock(id: const Uuid().v4(), type: 'paragraph', text: '')];
   }
+
   final lines = markdown.split('\n');
-  return lines.map((line) {
+  final blocks = <MarkdownBlock>[];
+
+  final headingRe = RegExp(r'^(#{1,6})\s*(.*)$');
+  final numberedRe = RegExp(r'^\s*\d+[.)]\s+(.*)$');
+
+  for (final raw in lines) {
     final id = const Uuid().v4();
-    if (line.startsWith('# ')) {
-      return MarkdownBlock(id: id, type: 'h1', text: line.substring(2));
-    } else if (line.startsWith('## ')) {
-      return MarkdownBlock(id: id, type: 'h2', text: line.substring(3));
-    } else if (line.startsWith('- [ ] ')) {
-      return MarkdownBlock(id: id, type: 'todo', text: line.substring(6), isChecked: false);
-    } else if (line.startsWith('- [x] ')) {
-      return MarkdownBlock(id: id, type: 'todo', text: line.substring(6), isChecked: true);
-    } else if (line.startsWith('- ')) {
-      return MarkdownBlock(id: id, type: 'bullet', text: line.substring(2));
-    } else if (line.startsWith('* ')) {
-      return MarkdownBlock(id: id, type: 'bullet', text: line.substring(2));
-    } else {
-      return MarkdownBlock(id: id, type: 'paragraph', text: line);
+    final trimmed = raw.trim();
+
+    // Horizontal rule -> skip (system has no divider block)
+    if (trimmed == '---' || trimmed == '***' || trimmed == '___') {
+      continue;
     }
-  }).toList();
+
+    // To-do (supports - / * and [ ] / [x] / [X])
+    final todoUnchecked = RegExp(r'^[-*]\s\[\s\]\s(.*)$').firstMatch(raw);
+    if (todoUnchecked != null) {
+      blocks.add(MarkdownBlock(
+        id: id,
+        type: 'todo',
+        text: _stripInline(todoUnchecked.group(1)!),
+        isChecked: false,
+      ));
+      continue;
+    }
+    final todoChecked = RegExp(r'^[-*]\s\[[xX]\]\s(.*)$').firstMatch(raw);
+    if (todoChecked != null) {
+      blocks.add(MarkdownBlock(
+        id: id,
+        type: 'todo',
+        text: _stripInline(todoChecked.group(1)!),
+        isChecked: true,
+      ));
+      continue;
+    }
+
+    // Headings: #, ##, ### ... with or without trailing space. # -> h1, rest -> h2
+    final heading = headingRe.firstMatch(raw);
+    if (heading != null) {
+      final hashes = heading.group(1)!.length;
+      blocks.add(MarkdownBlock(
+        id: id,
+        type: hashes == 1 ? 'h1' : 'h2',
+        text: _stripInline(heading.group(2)!),
+      ));
+      continue;
+    }
+
+    // Bullet
+    if (raw.startsWith('- ') || raw.startsWith('* ')) {
+      blocks.add(MarkdownBlock(
+        id: id,
+        type: 'bullet',
+        text: _stripInline(raw.substring(2)),
+      ));
+      continue;
+    }
+
+    // Numbered list -> bullet (system has no numbered block)
+    final numbered = numberedRe.firstMatch(raw);
+    if (numbered != null) {
+      blocks.add(MarkdownBlock(
+        id: id,
+        type: 'bullet',
+        text: _stripInline(numbered.group(1)!),
+      ));
+      continue;
+    }
+
+    // Paragraph
+    blocks.add(MarkdownBlock(
+      id: id,
+      type: 'paragraph',
+      text: _stripInline(raw),
+    ));
+  }
+
+  if (blocks.isEmpty) {
+    blocks.add(MarkdownBlock(id: const Uuid().v4(), type: 'paragraph', text: ''));
+  }
+  return blocks;
 }
 
 String serializeBlocksToMarkdown(List<MarkdownBlock> blocks) {
@@ -97,11 +176,9 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
   late List<MarkdownBlock> _blocks;
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
-
-  String? _hoveredBlockId;
-  String? _focusedBlockId;
-  int? _draggingIndex;
   final Map<String, LayerLink> _layerLinks = {};
+
+  int? _draggingIndex;
   OverlayEntry? _menuEntry;
 
   @override
@@ -140,7 +217,6 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
   void _syncControllers() {
     final activeIds = _blocks.map((b) => b.id).toSet();
 
-    // Dispose and remove deleted controllers & focus nodes
     _controllers.keys.where((id) => !activeIds.contains(id)).toList().forEach((id) {
       _controllers[id]?.dispose();
       _controllers.remove(id);
@@ -150,7 +226,6 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
       _focusNodes.remove(id);
     });
 
-    // Create new controllers & focus nodes if needed
     for (final block in _blocks) {
       if (!_controllers.containsKey(block.id)) {
         final controller = TextEditingController(text: block.text);
@@ -162,36 +237,25 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
         });
         _controllers[block.id] = controller;
       }
-      if (!_focusNodes.containsKey(block.id)) {
-        final focusNode = FocusNode();
-        focusNode.addListener(() {
-          if (focusNode.hasFocus) {
-            setState(() {
-              _focusedBlockId = block.id;
-            });
-          } else {
-            if (_focusedBlockId == block.id) {
-              setState(() {
-                _focusedBlockId = null;
-              });
-            }
-          }
-        });
-        _focusNodes[block.id] = focusNode;
-      }
+      // FocusNode is owned by the parent (stable per block id) but its
+      // hasFocus visual state is consumed locally inside each _BlockRow,
+      // so we do NOT attach a setState listener here (that caused full-list
+      // rebuilds on every focus change).
+      _focusNodes.putIfAbsent(block.id, () => FocusNode());
     }
   }
 
   void _notifyChanged() {
-    final md = serializeBlocksToMarkdown(_blocks);
-    widget.onChanged(md);
+    widget.onChanged(serializeBlocksToMarkdown(_blocks));
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event, int index) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (index < 0 || index >= _blocks.length) return KeyEventResult.ignored;
 
     final block = _blocks[index];
-    final controller = _controllers[block.id]!;
+    final controller = _controllers[block.id];
+    if (controller == null) return KeyEventResult.ignored;
 
     if (event.logicalKey == LogicalKeyboardKey.enter) {
       final selection = controller.selection;
@@ -292,8 +356,9 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
     return KeyEventResult.ignored;
   }
 
-  void _showMenu(BuildContext context, int index, {bool isFromPlus = false}) {
+  void _showMenu(int index, {bool isFromPlus = false}) {
     _hideMenu();
+    if (index < 0 || index >= _blocks.length) return;
 
     final block = _blocks[index];
     final blockLink = _layerLinks.putIfAbsent(block.id, () => LayerLink());
@@ -374,6 +439,7 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
           });
         } else {
           setState(() {
+            if (index < 0 || index >= _blocks.length) return;
             final currentBlock = _blocks[index];
             currentBlock.type = type;
 
@@ -431,249 +497,12 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
     );
   }
 
-  Widget _buildBlockRow(int index, MarkdownBlock block) {
-    final controller = _controllers[block.id];
-    final focusNode = _focusNodes[block.id];
-
-    if (controller == null || focusNode == null) return const SizedBox.shrink();
-
-    final isHovered = _hoveredBlockId == block.id;
-    final isFocused = focusNode.hasFocus;
-
-    TextStyle textStyle;
-    double topPadding = 4.0;
-    double bottomPadding = 4.0;
-    switch (block.type) {
-      case 'h1':
-        textStyle = GlassText.bodyLG().copyWith(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          height: 1.35,
-        );
-        topPadding = 16.0;
-        bottomPadding = 8.0;
-        break;
-      case 'h2':
-        textStyle = GlassText.bodyLG().copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          height: 1.35,
-        );
-        topPadding = 12.0;
-        bottomPadding = 6.0;
-        break;
-      case 'bullet':
-      case 'todo':
-      case 'paragraph':
-      default:
-        textStyle = GlassText.bodyMD().copyWith(
-          height: 1.55,
-        );
-        break;
-    }
-
-    final blockRowContent = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (block.type == 'bullet')
-          Container(
-            margin: const EdgeInsets.only(top: 8, right: 8, left: 4),
-            width: 5,
-            height: 5,
-            decoration: const BoxDecoration(
-              color: GlassColors.onSurfaceVariant,
-              shape: BoxShape.circle,
-            ),
-          )
-        else if (block.type == 'todo')
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                block.isChecked = !block.isChecked;
-                _notifyChanged();
-              });
-            },
-            child: Container(
-              margin: const EdgeInsets.only(right: 8, top: 4, left: 2),
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: block.isChecked
-                      ? GlassColors.success
-                      : GlassColors.outlineVariant.withOpacity(0.4),
-                  width: 1.5,
-                ),
-                color: block.isChecked
-                    ? GlassColors.success.withOpacity(0.2)
-                    : Colors.transparent,
-              ),
-              child: block.isChecked
-                  ? const Icon(
-                      Icons.check,
-                      size: 11,
-                      color: GlassColors.success,
-                    )
-                  : null,
-            ),
-          ),
-        Expanded(
-          child: CompositedTransformTarget(
-            link: _layerLinks.putIfAbsent(block.id, () => LayerLink()),
-            child: Focus(
-              onKeyEvent: (node, event) => _handleKeyEvent(node, event, index),
-              child: ImeSafeTextField(
-                controller: controller,
-                focusNode: focusNode,
-                style: textStyle.copyWith(
-                  decoration: (block.type == 'todo' && block.isChecked)
-                      ? TextDecoration.lineThrough
-                      : null,
-                  color: (block.type == 'todo' && block.isChecked)
-                      ? GlassColors.onSurfaceVariant.withOpacity(0.4)
-                      : null,
-                ),
-                maxLines: null,
-                decoration: InputDecoration(
-                  hintText: block.type == 'todo'
-                      ? 'To-do'
-                      : block.type == 'bullet'
-                          ? 'List item'
-                          : (block.type == 'h1'
-                              ? 'Heading 1'
-                              : (block.type == 'h2' ? 'Heading 2' : 'Type \'/\' for commands...')),
-                  hintStyle: GlassText.bodyMD().copyWith(
-                    color: GlassColors.onSurfaceVariant.withOpacity(0.2),
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  filled: false,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                ),
-                onChanged: (val) {
-                  if (val == '/') {
-                    _showMenu(context, index);
-                  }
-                },
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-
-    final isDraggingThis = _draggingIndex == index;
-    final showControls = isHovered || isFocused || isDraggingThis;
-
-    return MouseRegion(
-      key: ValueKey(block.id),
-      onEnter: (_) {
-        setState(() => _hoveredBlockId = block.id);
-      },
-      child: Container(
-        color: Colors.transparent, // Ensures entire row detects hover
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 0,
-            top: topPadding,
-            bottom: bottomPadding,
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // --- Block content (inside the card, occupying full width of row) ---
-              blockRowContent,
-              // --- Controls positioned outside the row bounds (negative offset) ---
-              Positioned(
-                left: -58,
-                top: 0,
-                bottom: 0,
-                child: DeferPointer(
-                  child: MouseRegion(
-                    hitTestBehavior: HitTestBehavior.translucent,
-                    onEnter: (_) {
-                      setState(() => _hoveredBlockId = block.id);
-                    },
-                    child: IgnorePointer(
-                      ignoring: !showControls,
-                      child: AnimatedOpacity(
-                        opacity: showControls ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 120),
-                        child: Container(
-                          width: 54,
-                          alignment: Alignment.centerRight,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Tooltip(
-                                message: 'Add / Convert Block',
-                                child: GestureDetector(
-                                  onTap: () => _showMenu(context, index, isFromPlus: true),
-                                  child: MouseRegion(
-                                    cursor: SystemMouseCursors.click,
-                                    child: Container(
-                                      width: 26,
-                                      height: 26,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.08),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.12),
-                                          width: 1.0,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.add,
-                                        size: 16,
-                                        color: GlassColors.onSurface,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Listener(
-                                onPointerDown: (_) {
-                                  widget.onDragStateChanged?.call(true);
-                                },
-                                onPointerUp: (_) {
-                                  widget.onDragStateChanged?.call(false);
-                                },
-                                onPointerCancel: (_) {
-                                  widget.onDragStateChanged?.call(false);
-                                },
-                                child: ReorderableDragStartListener(
-                                  index: index,
-                                  child: Tooltip(
-                                    message: 'Drag to reorder',
-                                    child: MouseRegion(
-                                      cursor: SystemMouseCursors.grab,
-                                      child: Icon(
-                                        Icons.drag_indicator_rounded,
-                                        size: 22,
-                                        color: GlassColors.onSurfaceVariant.withOpacity(0.85),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _toggleTodo(int index) {
+    if (index < 0 || index >= _blocks.length) return;
+    setState(() {
+      _blocks[index].isChecked = !_blocks[index].isChecked;
+      _notifyChanged();
+    });
   }
 
   @override
@@ -708,8 +537,316 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
       },
       itemBuilder: (context, index) {
         final block = _blocks[index];
-        return _buildBlockRow(index, block);
+        final controller = _controllers[block.id];
+        final focusNode = _focusNodes[block.id];
+        if (controller == null || focusNode == null) {
+          return SizedBox.shrink(key: ValueKey('empty_${block.id}'));
+        }
+        return _BlockRow(
+          key: ValueKey(block.id),
+          block: block,
+          index: index,
+          controller: controller,
+          focusNode: focusNode,
+          layerLink: _layerLinks.putIfAbsent(block.id, () => LayerLink()),
+          isDragging: _draggingIndex == index,
+          onKeyEvent: _handleKeyEvent,
+          onSlash: (i) => _showMenu(i),
+          onShowMenu: (i, {bool isFromPlus = false}) => _showMenu(i, isFromPlus: isFromPlus),
+          onToggleTodo: _toggleTodo,
+          onDragStateChanged: widget.onDragStateChanged,
+        );
       },
+    );
+  }
+}
+
+/// A single block row. Owns its own hover/focus visual state so that
+/// interacting with one row does NOT rebuild the entire list.
+class _BlockRow extends StatefulWidget {
+  final MarkdownBlock block;
+  final int index;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final LayerLink layerLink;
+  final bool isDragging;
+  final KeyEventResult Function(FocusNode, KeyEvent, int) onKeyEvent;
+  final void Function(int) onSlash;
+  final void Function(int, {bool isFromPlus}) onShowMenu;
+  final void Function(int) onToggleTodo;
+  final ValueChanged<bool>? onDragStateChanged;
+
+  const _BlockRow({
+    super.key,
+    required this.block,
+    required this.index,
+    required this.controller,
+    required this.focusNode,
+    required this.layerLink,
+    required this.isDragging,
+    required this.onKeyEvent,
+    required this.onSlash,
+    required this.onShowMenu,
+    required this.onToggleTodo,
+    this.onDragStateChanged,
+  });
+
+  @override
+  State<_BlockRow> createState() => _BlockRowState();
+}
+
+class _BlockRowState extends State<_BlockRow> {
+  bool _hover = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant _BlockRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      oldWidget.focusNode.removeListener(_onFocusChange);
+      widget.focusNode.addListener(_onFocusChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final block = widget.block;
+    final isFocused = widget.focusNode.hasFocus;
+
+    TextStyle textStyle;
+    double topPadding = 4.0;
+    double bottomPadding = 4.0;
+    switch (block.type) {
+      case 'h1':
+        textStyle = GlassText.bodyLG().copyWith(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          height: 1.35,
+        );
+        topPadding = 16.0;
+        bottomPadding = 8.0;
+        break;
+      case 'h2':
+        textStyle = GlassText.bodyLG().copyWith(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          height: 1.35,
+        );
+        topPadding = 12.0;
+        bottomPadding = 6.0;
+        break;
+      case 'bullet':
+      case 'todo':
+      case 'paragraph':
+      default:
+        textStyle = GlassText.bodyMD().copyWith(height: 1.55);
+        break;
+    }
+
+    // Only show the placeholder hint on the FOCUSED block to keep the
+    // document clean and readable when there is a lot of content.
+    final String? hintText = isFocused
+        ? (block.type == 'todo'
+            ? 'To-do'
+            : block.type == 'bullet'
+                ? 'List item'
+                : block.type == 'h1'
+                    ? 'Heading 1'
+                    : block.type == 'h2'
+                        ? 'Heading 2'
+                        : "Type '/' for commands...")
+        : null;
+
+    final blockRowContent = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (block.type == 'bullet')
+          Container(
+            margin: const EdgeInsets.only(top: 8, right: 8, left: 4),
+            width: 5,
+            height: 5,
+            decoration: const BoxDecoration(
+              color: GlassColors.onSurfaceVariant,
+              shape: BoxShape.circle,
+            ),
+          )
+        else if (block.type == 'todo')
+          GestureDetector(
+            onTap: () => widget.onToggleTodo(widget.index),
+            child: Container(
+              margin: const EdgeInsets.only(right: 8, top: 4, left: 2),
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: block.isChecked
+                      ? GlassColors.success
+                      : GlassColors.outlineVariant.withOpacity(0.4),
+                  width: 1.5,
+                ),
+                color: block.isChecked
+                    ? GlassColors.success.withOpacity(0.2)
+                    : Colors.transparent,
+              ),
+              child: block.isChecked
+                  ? const Icon(Icons.check, size: 11, color: GlassColors.success)
+                  : null,
+            ),
+          ),
+        Expanded(
+          child: CompositedTransformTarget(
+            link: widget.layerLink,
+            child: Focus(
+              onKeyEvent: (node, event) => widget.onKeyEvent(node, event, widget.index),
+              child: ImeSafeTextField(
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                style: textStyle.copyWith(
+                  decoration: (block.type == 'todo' && block.isChecked)
+                      ? TextDecoration.lineThrough
+                      : null,
+                  color: (block.type == 'todo' && block.isChecked)
+                      ? GlassColors.onSurfaceVariant.withOpacity(0.4)
+                      : null,
+                ),
+                maxLines: null,
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  hintStyle: GlassText.bodyMD().copyWith(
+                    color: GlassColors.onSurfaceVariant.withOpacity(0.2),
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  filled: false,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                ),
+                onChanged: (val) {
+                  if (val == '/') {
+                    widget.onSlash(widget.index);
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final showControls = _hover || isFocused || widget.isDragging;
+
+    return MouseRegion(
+      onEnter: (_) {
+        if (!_hover) setState(() => _hover = true);
+      },
+      onExit: (_) {
+        if (_hover) setState(() => _hover = false);
+      },
+      child: Container(
+        color: Colors.transparent,
+        child: Padding(
+          padding: EdgeInsets.only(top: topPadding, bottom: bottomPadding),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              blockRowContent,
+              Positioned(
+                left: -58,
+                top: 0,
+                bottom: 0,
+                child: DeferPointer(
+                  child: MouseRegion(
+                    hitTestBehavior: HitTestBehavior.translucent,
+                    onEnter: (_) {
+                      if (!_hover) setState(() => _hover = true);
+                    },
+                    child: IgnorePointer(
+                      ignoring: !showControls,
+                      child: AnimatedOpacity(
+                        opacity: showControls ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 120),
+                        child: Container(
+                          width: 54,
+                          alignment: Alignment.centerRight,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Tooltip(
+                                message: 'Add / Convert Block',
+                                child: GestureDetector(
+                                  onTap: () => widget.onShowMenu(widget.index, isFromPlus: true),
+                                  child: MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: Container(
+                                      width: 26,
+                                      height: 26,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.08),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.12),
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.add,
+                                        size: 16,
+                                        color: GlassColors.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Listener(
+                                onPointerDown: (_) => widget.onDragStateChanged?.call(true),
+                                onPointerUp: (_) => widget.onDragStateChanged?.call(false),
+                                onPointerCancel: (_) => widget.onDragStateChanged?.call(false),
+                                child: ReorderableDragStartListener(
+                                  index: widget.index,
+                                  child: Tooltip(
+                                    message: 'Drag to reorder',
+                                    child: MouseRegion(
+                                      cursor: SystemMouseCursors.grab,
+                                      child: Icon(
+                                        Icons.drag_indicator_rounded,
+                                        size: 22,
+                                        color: GlassColors.onSurfaceVariant.withOpacity(0.85),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

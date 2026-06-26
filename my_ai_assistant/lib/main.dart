@@ -17,6 +17,7 @@ import 'firebase_options.dart';
 import 'config/env_config.dart';
 import 'state_managers/state_boards.dart';
 import 'state_managers/state_meetings.dart';
+import 'state_managers/state_documents.dart';
 import 'state_managers/state_tasks.dart';
 import 'state_managers/state_chat.dart';
 import 'models/board_model.dart';
@@ -31,6 +32,7 @@ import 'ui/auth/login_page.dart';
 import 'ui/profile/profile_page.dart';
 import 'ui/boards/boards_page.dart';
 import 'ui/meetings/meetings_board_page.dart';
+import 'ui/docs/docs_board_page.dart';
 import 'ui/common/floating_assistant_shell.dart';
 import 'ui/common/responsive_layout.dart';
 
@@ -63,6 +65,7 @@ void main() async {
           update: (_, boards, tasks) => tasks!..updateStateBoards(boards),
         ),
         ChangeNotifierProvider(create: (_) => StateMeetings()),
+        ChangeNotifierProvider(create: (_) => StateDocuments()),
         ChangeNotifierProvider(create: (_) => StateChat()),
       ],
       child: const MainApp(),
@@ -281,6 +284,7 @@ class _AppShellState extends State<AppShell> {
         final selectedBoardId = context.read<StateBoards>().selectedBoard?.id;
         context.read<StateBoards>().setSelectedBoard(null);
         context.read<StateMeetings>().clearActiveBoard(selectedBoardId);
+        context.read<StateDocuments>().clearActiveBoard(selectedBoardId);
       }
     });
     if (index == 0) {
@@ -301,6 +305,11 @@ class _AppShellState extends State<AppShell> {
     final boardsState = context.read<StateBoards>();
     await boardsState.fetchAllBoards();
     await context.read<StateMeetings>().fetchAllMeetings(
+      boardsState.boards,
+      silent: true,
+    );
+    if (!mounted) return;
+    await context.read<StateDocuments>().fetchAllDocuments(
       boardsState.boards,
       silent: true,
     );
@@ -451,6 +460,12 @@ class _AppShellState extends State<AppShell> {
                                     key: ValueKey(
                                       'meetings_${selectedBoard.id}',
                                     ),
+                                    board: selectedBoard,
+                                  )
+                                : selectedBoardSurface ==
+                                      BoardSurfaceMode.docs
+                                ? DocsBoardPage(
+                                    key: ValueKey('docs_${selectedBoard.id}'),
                                     board: selectedBoard,
                                   )
                                 : KanbanPage(

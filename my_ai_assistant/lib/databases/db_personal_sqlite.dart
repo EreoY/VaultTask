@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/chat_model.dart';
 import '../models/board_model.dart';
+import '../models/document_model.dart';
 import '../models/meeting_model.dart';
 import '../models/task_model.dart';
 import '../models/workspace_model.dart';
@@ -27,7 +28,7 @@ class DbPersonalSqlite {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 13,
+      version: 14,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -91,6 +92,19 @@ CREATE TABLE personal_meetings (
   attachments TEXT DEFAULT '[]',
   transcript TEXT DEFAULT '',
   summary TEXT DEFAULT '',
+  updated_at INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(board_id) REFERENCES personal_boards(id)
+)
+''');
+    await db.execute('''
+CREATE TABLE project_documents (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  notes TEXT DEFAULT '',
+  summary TEXT DEFAULT '',
+  attachments TEXT DEFAULT '[]',
   updated_at INTEGER DEFAULT 0,
   created_at TEXT NOT NULL,
   FOREIGN KEY(board_id) REFERENCES personal_boards(id)
@@ -203,6 +217,23 @@ CREATE TABLE personal_meetings (
   attachments TEXT DEFAULT '[]',
   transcript TEXT DEFAULT '',
   summary TEXT DEFAULT '',
+  updated_at INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(board_id) REFERENCES personal_boards(id)
+)
+''');
+      } catch (_) {}
+    }
+    if (oldVersion < 14) {
+      try {
+        await db.execute('''
+CREATE TABLE IF NOT EXISTS project_documents (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  notes TEXT DEFAULT '',
+  summary TEXT DEFAULT '',
+  attachments TEXT DEFAULT '[]',
   updated_at INTEGER DEFAULT 0,
   created_at TEXT NOT NULL,
   FOREIGN KEY(board_id) REFERENCES personal_boards(id)
@@ -486,6 +517,62 @@ CREATE TABLE personal_meetings (
     if (kIsWeb) return;
     final db = await database;
     await db.delete('personal_meetings', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ─── DOCUMENTS ────────────────────────────────────────
+
+  Future<String> insertDocument(DocumentModel document) async {
+    if (kIsWeb) return document.id;
+    final db = await database;
+    final id = document.id.isEmpty
+        ? DateTime.now().millisecondsSinceEpoch.toString()
+        : document.id;
+    final map = {...document.toMap(), 'id': id};
+    await db.insert(
+      'project_documents',
+      map,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    return id;
+  }
+
+  Future<List<DocumentModel>> getDocumentsByBoard(String boardId) async {
+    if (kIsWeb) return [];
+    final db = await database;
+    final result = await db.query(
+      'project_documents',
+      where: 'board_id = ?',
+      whereArgs: [boardId],
+      orderBy: 'created_at DESC',
+    );
+    return result.map((m) => DocumentModel.fromMap(m)).toList();
+  }
+
+  Future<List<DocumentModel>> getAllDocuments() async {
+    if (kIsWeb) return [];
+    final db = await database;
+    final result = await db.query(
+      'project_documents',
+      orderBy: 'created_at DESC',
+    );
+    return result.map((m) => DocumentModel.fromMap(m)).toList();
+  }
+
+  Future<void> updateDocument(DocumentModel document) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.update(
+      'project_documents',
+      document.toMap(),
+      where: 'id = ?',
+      whereArgs: [document.id],
+    );
+  }
+
+  Future<void> deleteDocument(String id) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.delete('project_documents', where: 'id = ?', whereArgs: [id]);
   }
 
   // ─── CHAT SYSTEM ──────────────────────────────────────

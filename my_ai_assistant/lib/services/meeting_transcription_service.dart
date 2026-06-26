@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../config/env_config.dart';
 import '../databases/api_cloudflare.dart';
@@ -34,8 +36,7 @@ class MeetingTranscriptionException implements Exception {
 
 /// Result of a successful pick → transcribe → ingest cycle.
 class MeetingTranscriptionResult {
-  /// The newly parsed utterances produced by this file (already appended into
-  /// the supplied [SttStreamService]).
+  /// The newly parsed utterances produced by this file.
   final List<SpeakerUtterance> utterances;
 
   /// Public R2 URL of the uploaded media (URL mode only; null in bytes mode).
@@ -50,12 +51,15 @@ class MeetingTranscriptionResult {
   /// 'url' (large-file / production) or 'bytes' (small-file / local dev).
   final String mode;
 
+  final Map<String, String>? takeMap;
+
   MeetingTranscriptionResult({
     required this.utterances,
     required this.mode,
     this.mediaUrl,
     this.fileName,
     this.mimeType,
+    this.takeMap,
   });
 }
 
@@ -72,15 +76,13 @@ class MeetingTranscriptionService {
     'mp4', 'mov', 'webm', 'mkv', 'm4v', 'avi',
   ];
 
-  /// Pick a media file, upload/transcribe it (mode auto-selected), ingest the
-  /// result into [sttService], and return the newly added utterances.
+  /// Pick a media file, upload/transcribe it (mode auto-selected), and return the
+  /// parsed utterances and takeMap.
   ///
   /// Returns `null` when the user cancels the file picker.
   /// Throws [MeetingTranscriptionException] on any pipeline failure.
   static Future<MeetingTranscriptionResult?> pickAndTranscribe({
     required String meetingId,
-    required SttStreamService sttService,
-    bool replace = false,
     MeetingTranscriptionProgress? onProgress,
   }) async {
     try {
@@ -194,26 +196,30 @@ class MeetingTranscriptionService {
         }
       }
 
-      // 3) Ingest into the shared STT service (append or replace).
+      // 3) Parse utterances and construct the take map.
       onProgress?.call(MeetingTranscriptionStage.ingesting,
           message: 'Adding to transcript...');
-      final int before = sttService.utterances.length;
-      sttService.ingestPrerecordedResult(deepgramJson, replace: replace);
-      final List<SpeakerUtterance> all = sttService.utterances;
-      final List<SpeakerUtterance> added = replace
-          ? List<SpeakerUtterance>.from(all)
-          : (before <= all.length
-              ? List<SpeakerUtterance>.from(all.sublist(before))
-              : List<SpeakerUtterance>.from(all));
-      debugPrint('[Transcribe] Ingested ${added.length} utterance(s).');
+      final utterances = SttStreamService.utterancesFromPrerecorded(deepgramJson);
+
+      final takeMap = {
+        'id': const Uuid().v4(),
+        'type': 'recording',
+        'name': file.name,
+        'url': mediaUrl ?? '',
+        'mime': mime,
+        'transcript': jsonEncode(utterances.map((u) => u.toJson()).toList()),
+      };
+
+      debugPrint('[Transcribe] Parsed ${utterances.length} utterance(s).');
 
       onProgress?.call(MeetingTranscriptionStage.done);
       return MeetingTranscriptionResult(
-        utterances: added,
+        utterances: utterances,
         mode: mode,
         mediaUrl: mediaUrl,
         fileName: file.name,
         mimeType: mime,
+        takeMap: takeMap,
       );
     } on MeetingTranscriptionException catch (e) {
       debugPrint('[Transcribe][Error] $e');
