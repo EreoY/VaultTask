@@ -35,6 +35,7 @@ import 'ui/meetings/meetings_board_page.dart';
 import 'ui/docs/docs_board_page.dart';
 import 'ui/common/floating_assistant_shell.dart';
 import 'ui/common/responsive_layout.dart';
+import 'ui/common/dynamic_backdrop.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -325,11 +326,12 @@ class _AppShellState extends State<AppShell> {
     await prefs.setInt(_selectedTabPrefKey, _index);
   }
 
-  Widget _buildScreen(int index) {
+  Widget _buildScreen(int index, {bool isActive = true}) {
     switch (index) {
       case 0:
         return DashboardPage(
           isDark: false,
+          isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 1:
@@ -354,7 +356,7 @@ class _AppShellState extends State<AppShell> {
   List<Widget> _buildVisitedScreens() {
     return List<Widget>.generate(5, (index) {
       if (_visitedTabs.contains(index)) {
-        return _buildScreen(index);
+        return _buildScreen(index, isActive: _index == index);
       }
       return const SizedBox.shrink();
     });
@@ -415,39 +417,28 @@ class _AppShellState extends State<AppShell> {
               isDark: false,
             )
           : null,
-      body: Container(
-        decoration: BoxDecoration(gradient: GlassGradients.background()),
-        child: Row(
-          children: [
-            if (isDesktop)
-              AetherSideNav(
-                selectedIndex: _index,
-                onItemSelected: (index) =>
-                    _selectTab(index, clearBoard: index != 1),
-                isDark: false,
-              ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: RadialGradient(
-                            center: const Alignment(0.7, -0.6),
-                            radius: 1.2,
-                            colors: [
-                              GlassColors.primary.withOpacity(0.03),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SafeArea(
-                    top: !isDesktop,
-                    bottom: false,
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: IgnorePointer(
+              child: AetherDynamicBackdrop(),
+            ),
+          ),
+          Row(
+            children: [
+              if (isDesktop)
+                AetherSideNav(
+                  selectedIndex: _index,
+                  onItemSelected: (index) =>
+                      _selectTab(index, clearBoard: index != 1),
+                  isDark: false,
+                ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    SafeArea(
+                      top: !isDesktop,
+                      bottom: false,
                     child: selectedBoard != null
                         ? AnimatedSwitcher(
                             duration: const Duration(milliseconds: 220),
@@ -531,9 +522,10 @@ class _AppShellState extends State<AppShell> {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          ], // closes Row children
+        ), // closes Row
+      ], // closes outer Stack children
+    ), // closes outer Stack
+  ); // closes return Scaffold
   }
 }

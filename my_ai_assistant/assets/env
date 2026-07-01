@@ -3,7 +3,7 @@
 # Backend Selection
 # Toggle this to 'true' to use the local wrangler backend (http://localhost:8787).
 # Set to 'false' to route requests to the remote deployed production worker.
-USE_LOCAL_BACKEND=false
+USE_LOCAL_BACKEND=true
 
 # Cloudflare Worker URL Configurations
 LOCAL_BACKEND_URL_DEFAULT=http://localhost:8787

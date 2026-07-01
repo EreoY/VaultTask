@@ -74,37 +74,46 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = GlassContainer(
+    final cardContent = GlassContainer(
       isDark: isDark,
       radius: radius ?? ExecutiveRadius.l,
       padding: padding ?? EdgeInsets.all(ExecutiveSpacing.m),
-
       decoration: elevated 
         ? GlassDecorations.elevated(isDark: isDark, radius: radius ?? ExecutiveRadius.l)
         : null,
-      child: Stack(
+      child: child,
+    );
+
+    Widget content = cardContent;
+
+    if (hasAmbientGlow) {
+      content = Stack(
+        clipBehavior: Clip.none,
         children: [
-          if (hasAmbientGlow)
-            Positioned(
-              top: -40,
-              right: -40,
+          Positioned(
+            top: -45,
+            right: -45,
+            child: IgnorePointer(
               child: Container(
-                width: 120,
-                height: 120,
+                width: 130,
+                height: 130,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: GlassColors.primary.withOpacity(0.05),
-                ),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                  child: const SizedBox.shrink(),
+                  gradient: RadialGradient(
+                    colors: [
+                      GlassColors.primary.withOpacity(0.12),
+                      GlassColors.primary.withOpacity(0.04),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          child,
+          ),
+          cardContent,
         ],
-      ),
-    );
+      );
+    }
 
     if (onTap != null) {
       content = MouseRegion(
@@ -565,6 +574,96 @@ class RenderHitTestBoundOffset extends RenderProxyBox {
       return true;
     }
     return false;
+  }
+}
+
+class AetherStaggeredFadeIn extends StatefulWidget {
+  final Widget child;
+  final int index;
+  final bool isActive;
+  final Duration delayStep;
+
+  const AetherStaggeredFadeIn({
+    super.key,
+    required this.child,
+    required this.index,
+    required this.isActive,
+    this.delayStep = const Duration(milliseconds: 80),
+  });
+
+  @override
+  State<AetherStaggeredFadeIn> createState() => _AetherStaggeredFadeInState();
+}
+
+class _AetherStaggeredFadeInState extends State<AetherStaggeredFadeIn>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.04), // subtle slide up
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+
+    if (widget.isActive) {
+      _startAnimation();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AetherStaggeredFadeIn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _startAnimation();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _controller.reset();
+      _hasAnimated = false;
+    }
+  }
+
+  void _startAnimation() {
+    if (_hasAnimated) return;
+    _hasAnimated = true;
+    Future.delayed(widget.delayStep * widget.index, () {
+      if (mounted) {
+        _controller.forward(from: 0.0);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: widget.child,
+      ),
+    );
   }
 }
 

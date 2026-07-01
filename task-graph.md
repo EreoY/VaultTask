@@ -5228,3 +5228,408 @@
 - **Target Files:** None
 - **Action:** `python3 runner.py analyze` (No issues found) + audit ว่าทั้งสองไฟล์มี background extraction/view/delete และ meetings ไม่แตะ recording takes
 - **Why:** ยืนยันความถูกต้อง; ไม่ deploy
+
+## Phase 197: Dashboard Glassmorphism UI Redesign
+
+> **Architecture Mandate:** ปรับปรุงหน้า Dashboard ให้เป็นสไตล์ Glassmorphism สอดคล้องกับธีมมืดหลักของระบบ โดยลบสไตล์ Claymorphism เดิมออกและจัดรูปแบบใหม่ให้เรียบร้อยสวยงาม:
+> 1. แทนที่พื้นหลังโทนอุ่นและวงกลม Claymorphism ด้วยพื้นหลังโปร่งใส/มืด พร้อม ambient glowing orbs สีทอง ม่วง และฟ้า/เขียว แบบจางๆ ในส่วน background
+> 2. ปรับ Hero section ให้ครอบด้วย GlassCard, เปลี่ยน Tags และ Buttons เป็น Glassmorphism
+> 3. Refactor Workspace list ให้อยู่ใน DashboardBentoCard เพื่อความเป็นระเบียบและสอดคล้องกับ Bento Grid
+> 4. ตรวจสอบความถูกต้องและทดสอบ compile ด้วย QA
+
+### Task 197.1: Register Phase 197 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 197 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 197.2: Refactor Background Orbs and Theme in dashboard_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** เปลี่ยนพื้นหลังและ orbs เป็นสไตล์ glassmorphic glow
+- **Why:** ขจัด Claymorphism setup เดิมออกเพื่อให้เข้ากับ theme หลัก
+
+### Task 197.3: Convert Hero Panel, Buttons, Tags, and Chips to Glassmorphism
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ปรับใช้ GlassCard และ widget ตระกูล Glassmorphic ใน Hero Section
+- **Why:** ปรับแต่งคอนทราสต์และความสวยงาม of Hero Section ให้เป็นสไตล์ premium glass
+
+### Task 197.4: Wrap Workspace list in DashboardBentoCard
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ย้ายลิสต์ Workspace เข้าใน DashboardBentoCard พร้อมปุ่ม Join Workspace ที่มุมขวา
+- **Why:** ปรับ Layout dashboard ให้เป็น Bento Grid ที่เป็นสากลและสวยงาม
+
+### Task 197.5: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` หรือตรวจสอบด้วยตาเปล่าแบบละเอียด
+- **Why:** ตรวจจับ Compile Error และ Warning ต่างๆ
+
+## Phase 198: Collapsible Glassmorphic Sidebar
+
+> **Architecture Mandate:** ปรับปรุง sidebar (AetherSideNav) ให้สามารถพับเปิด/ปิดได้ (Collapsible Toggle) และใช้สไตล์ Glassmorphism อย่างสมบูรณ์:
+> 1. แปลง AetherSideNav เป็น StatefulWidget และเพิ่ม local state คุมการเปิดปิด `_isCollapsed`
+> 2. ออกแบบและใช้สไตล์ Glassmorphic (BackdropFilter blur + transparent background + frosted border)
+> 3. ทำปุ่ม Toggle (Icons.menu / Icons.menu_open) เพื่อพับหรือขยาย sidebar
+> 4. ปรับ Layout ในโหมดพับ (Width: 76) ให้แสดงเฉพาะไอคอนเมนูหลักและไอคอน Workspace ที่มาพร้อม Tooltip และรักษาสิทธิ์คลิกเปลี่ยนหน้าได้เหมือนเดิม
+> 5. รัน flutter analyze เพื่อตรวจสอบ compile เสมอ
+
+### Task 198.1: Register Phase 198 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 198 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 198.2: Convert AetherSideNav to StatefulWidget & Implement Glassmorphism Styling
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** แปลงเป็น StatefulWidget และเพิ่ม BackdropFilter และ border สไตล์ Glass
+- **Why:** เพื่อให้มี local state สำหรับการพับ และมีดีไซน์กระจกพรีเมียมตามข้อกำหนด
+
+### Task 198.3: Add Collapsible Toggle Controls & Collapsed Alternate Layouts
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ใส่ปุ่ม toggle และเพิ่มสภาวะเช็ก `_isCollapsed` เพื่อเรนเดอร์ Collapsed Nav & Workspace Items
+- **Why:** รองรับฟังก์ชันการพับเก็บ และแสดงผลปุ่มกดนำทางที่ชัดเจนในพิกัดขนาดเล็ก
+
+### Task 198.4: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบความถูกต้อง
+- **Why:** ยืนยันว่าโค้ดคอมไพล์ผ่าน 100% ปราศจาก Compile Error และ Warning
+
+## Phase 199: Sidebar Performance & Jank Optimization
+
+> **Architecture Mandate:** ปรับปรุงความลื่นไหล (Framerate) ของ Sidebar ระหว่างทำการพับ/กาง:
+> 1. ลดภาระการคำนวณเบลอของ BackdropFilter โดยปรับค่า sigmaX/sigmaY จาก 20.0 เหลือ 10.0
+> 2. ใช้ AnimatedSwitcher ครอบการสลับข้อมูลภายใน (Expanded และ Collapsed Layouts) เพื่อการเปลี่ยนรูปแบบที่ Fade นุ่มนวล ไม่สลับฉับพลัน
+> 3. รันการตรวจสอบ Static Analysis เพื่อการันตีความถูกต้องของโค้ด
+
+### Task 199.1: Register Phase 199 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานของ Phase 199 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 199.2: Optimize BackdropFilter and Implement AnimatedSwitcher in aether_side_nav.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ลดความเบลอของ BackdropFilter เหลือ 10.0 และนำ AnimatedSwitcher ครอบการแสดงผลภายใน
+- **Why:** แก้ไข jank และการร่วงของ FPS ในช่วงอนิเมชั่นพับ/กาง
+
+### Task 199.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** ยืนยันว่าโค้ดไม่มี Error/Warning หลังปรับปรุงประสิทธิภาพ
+
+## Phase 200: Windows Local Runner Script & Git Ignore Exclusion
+
+> **Architecture Mandate:** สร้าง Windows batch runner script สำหรับความสะดวกส่วนตัวของผู้ใช้ และเพิ่มสิทธิ์ยกเว้นในระบบการนำส่งโค้ด:
+> 1. อัปเดต .gitignore ป้องกันไม่ให้แชร์ไฟล์ run_local_windows.bat ขึ้น Git
+> 2. สร้าง run_local_windows.bat ให้รันระบบจำลอง D1, รัน backend wrangler และ frontend flutter web ใน 2 หน้าต่างแยกอัตโนมัติ
+
+### Task 200.1: Register Phase 200 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 200 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 200.2: Append run_local_windows.bat to .gitignore
+- **Status:** [x] Done
+- **Target Files:** `.gitignore`
+- **Action:** ใส่ชื่อไฟล์ run_local_windows.bat ท้ายไฟล์ .gitignore
+- **Why:** ป้องกันการพุชสคริปต์รันส่วนตัวขึ้นสู่ Git Repository
+
+### Task 200.3: Create run_local_windows.bat in root directory
+- **Status:** [x] Done
+- **Target Files:** `run_local_windows.bat`
+- **Action:** สร้างและเขียนคำสั่งรันระบบแบบมัลติวินโดว์ด้วย cmd /k
+- **Why:** เพื่อให้เกิดการรันแบบอัตโนมัติ 1-Click สำหรับการพัฒนาบน Windows
+
+## Phase 201: Sidebar Layout & Repaint Optimization (FPS Jank Fix)
+
+> **Architecture Mandate:** ป้องกันการคำนวณ Layout ซ้ำซ้อนและการวาดกราฟิกซ้ำของหน้าต่างข้างเคียงขณะพับ/กาง Sidebar:
+> 1. ปรับปรุง build ใน _AetherSideNavState ให้ใช้ OverflowBox ครอบโมดูลตัวกาง และใช้ SizedBox ขนาดคงที่ครอบตัวยุบ เพื่อจำกัดความกว้างไม่ให้เลย์เอาต์บีบตัวช่วงรันอนิเมชั่น
+> 2. ครอบด้วย RepaintBoundary ป้องกันการลามไปวาดภาพซ้ำของสกรีนรอบด้าน
+> 3. ตรวจสอบการรัน Static Analysis
+
+### Task 201.1: Register Phase 201 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 201 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 201.2: Refactor AetherSideNav build method with OverflowBox & RepaintBoundary
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ห่อหุ้ม child widgets ด้วย OverflowBox/SizedBox และห่อหุ้ม AnimatedSwitcher ด้วย RepaintBoundary
+- **Why:** ป้องกัน jank และการร่วงของ FPS ในช่วง toggle
+ 
+### Task 201.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อยืนยันความถูกต้องของโค้ด
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 202: Sidebar Visibility & Root Constraint Restoration
+
+> **Architecture Mandate:** ดึงวิดเจ็ต AnimatedContainer ที่กำหนดความกว้างคงที่/เคลื่อนไหวกลับขึ้นมาเป็น root นอกสุดของ AetherSideNav เพื่อกู้คืนการทำงานของ Layout Constraints ภายในแถบเครื่องมือ Row:
+> 1. ปรับเปลี่ยนลำดับ build ใน _AetherSideNavState ให้ AnimatedContainer ครอบ ClipRect และ BackdropFilter
+> 2. ประมวลผลและทดสอบความถูกต้องผ่าน Static Analysis
+
+### Task 202.1: Register Phase 202 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 202 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 202.2: Reposition AnimatedContainer to the root of aether_side_nav.dart build method
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** สลับตำแหน่ง AnimatedContainer ให้ครอบคลุม ClipRect, BackdropFilter และ Container
+- **Why:** คืนขอบเขตขนาดของ Sidebar ไม่ให้หดหายเหลือ 0.0 พิกเซลในระดับ parent Row
+
+### Task 202.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** รับประกันว่าคอมไพล์ผ่าน 100% ไม่มีปัญหา Error/Warning
+
+## Phase 203: Sidebar Layout Constraint Fix (Padding Relocation)
+
+> **Architecture Mandate:** แก้ไขความขัดแย้งเชิงพื้นที่ (Constraint Violation) ของ Sidebar โดยการย้าย Padding จากวิดเจ็ตระดับ Container ด้านบนเข้าสู่คลายวิดเจ็ตลูกภายใน:
+> 1. อัปเดต build ใน _AetherSideNavState ให้ Container มี padding = EdgeInsets.zero
+> 2. ห่อหุ้มโครงสร้าง Column ภายใน _buildCollapsedContent และ _buildExpandedContent ด้วย Padding
+> 3. รัน Static Analysis เพื่อตรวจสอบผลลัพธ์
+
+### Task 203.1: Register Phase 203 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 203 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 203.2: Relocate padding inside aether_side_nav.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** แก้ไข build, _buildCollapsedContent, และ _buildExpandedContent ให้ย้ายการจัดการ padding
+- **Why:** ขจัดอาการ Constraint Violation ที่เป็นสาเหตุทำให้ Sidebar หายไปจากการแสดงผล
+
+### Task 203.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 204: Sidebar Revert (Undo Jank Optimization)
+
+> **Architecture Mandate:** ย้อนคืนโค้ดของ Sidebar (AetherSideNav) กลับสู่โครงสร้างของ Phase 198 ที่เสถียรและแสดงผลได้ เพื่อแก้ปัญหาแถบนำทางหายไปอย่างเร่งด่วน:
+> 1. เขียนทับไฟล์ aether_side_nav.dart ด้วยโค้ดเสถียรดั้งเดิมของ Phase 198
+> 2. ตรวจสอบความสมบูรณ์และรัน Static Analysis
+
+### Task 204.1: Register Phase 204 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 204 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 204.2: Revert aether_side_nav.dart to Phase 198 stable codebase
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** เขียนรหัสโค้ด Phase 198 ทับลงในไฟล์
+- **Why:** เพื่อดึงการแสดงผลของแถบข้างและฟังก์ชันพับตัวเลือกเดิมกลับมาทันที
+
+### Task 204.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** รับประกันความเรียบร้อยของโค้ดหลังทำการย้อนกลับ
+
+## Phase 205: Dynamic Pulsing & Drifting Backdrop Orbs
+
+> **Architecture Mandate:** พัฒนาระบบ Glowing Orbs พื้นหลังที่ขยับขยาย ลอยละล่อง และกะพริบอย่างสวยงามและกินพลังงานประมวลผลต่ำ:
+> 1. สร้าง my_ai_assistant/lib/ui/common/dynamic_backdrop.dart บรรจุ Glowing Orbs 3 ดวง (น้ำเงินเรืองแสง, ทอง, ม่วง) เคลื่อนที่ด้วยไซน์เวฟ/โคไซน์เวฟ
+> 2. ปรับปรุง AppShell ใน main.dart ให้แสดงผล Dynamic Backdrop ตัวใหม่แทนที่ RadialGradient นิ่งของเดิม
+> 3. ทดสอบการคอมไพล์ผ่าน Static Analysis
+
+### Task 205.1: Register Phase 205 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 205 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 205.2: Create dynamic_backdrop.dart with Glowing Orbs
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart`
+- **Action:** สร้างโมดูล Dynamic Backdrop โดยประยุกต์ใช้ AnimatedBuilder และ RadialGradient ที่ soft-faded
+- **Why:** เพื่อเพิ่มความพรีเมียมและมิติการลอยกะพริบโดยใช้ทรัพยากรเครื่องต่ำสุด
+
+### Task 205.3: Update AppShell in main.dart to display dynamic_backdrop
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** เพิ่มตัวนำเข้า dynamic_backdrop.dart และแสดงผลแทนที่ static gradient Container ใน AppShell stack
+- **Why:** เพื่อให้ Glowing Orbs ลอยอยู่หลัง Sidebar และแผงกระจกของหน้างานหลัก
+
+### Task 205.4: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความสมบูรณ์
+- **Why:** ยืนยันว่าไม่เกิด Compile Error หรือ Warning ใดๆ
+
+## Phase 206: Dashboard Static Background Orb Removal
+
+> **Architecture Mandate:** กำจัดเลเยอร์พื้นหลังดวงไฟนิ่งในหน้า DashboardPage เพื่อปล่อยให้ Dynamic Backdrop ทำงานแสดงผลได้อย่างต่อเนื่องไร้จุดสะดุด:
+> 1. นำโครงสร้าง Positioned.fill ที่พ่นสีดวงไฟนิ่งใน dashboard_page.dart ออก
+> 2. คืนค่า SingleChildScrollView ตรงจาก build ใน _DashboardPageState
+> 3. วิเคราะห์ความถูกต้องทางไวยากรณ์ผ่าน Static Analysis
+
+### Task 206.1: Register Phase 206 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 206 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 206.2: Remove static background orbs from dashboard_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** นำ Stack และ Positioned.fill ของดวงไฟเก่านิ่งออก ปล่อยให้แสดงผลเป็นแบบโปร่งแสงใส 100%
+- **Why:** เพื่อให้ดวงไฟ Glowing Orbs ใหม่ที่ขยับกะพริบสามารถแสดงผลผ่านกระจกฝ้าหน้า Dashboard ได้สมบูรณ์
+
+### Task 206.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อความแน่ใจในความสมบูรณ์ของโค้ด
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 207: Backdrop Orb Opacity & Glow Optimization
+
+> **Architecture Mandate:** ปรับเพิ่มความเข้มข้นแสงสว่าง (Opacity) และขนาดของ Glowing Orbs บนโมดูล Dynamic Backdrop เพื่อเพิ่มความคมชัดและสวยงามพรีเมียมของสีสัน:
+> 1. อัปเดต dynamic_backdrop.dart โดยปรับเพิ่มขนาดรัศมีและช่วงความกว้าง Opacity Clamp ของดวงไฟแต่ละดวง
+> 2. ปรับแต่งช่วงจังหวะการไล่สี RadialGradient ใน _OrbWidget
+> 3. ตรวจเช็กความถูกต้องทางโครงสร้างภาษาด้วย Static Analysis
+
+### Task 207.1: Register Phase 207 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 207 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 207.2: Enhance orb opacity, size, and gradient stops in dynamic_backdrop.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart`
+- **Action:** ปรับเพิ่มค่าตัวคูณความกว้าง Opacity Clamp และขอบเขตขนาดดวงไฟ
+- **Why:** เพื่อให้เกิดมิติเรืองแสงที่สว่างสดใส คมชัดมองเห็นได้ง่ายในทุกความสว่างของหน้าจอ
+
+### Task 207.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อความแน่ใจในความสมบูรณ์ของโค้ด
+- **Why:** ยืนยันว่าไม่เกิด Compile Error หรือ Warning ใดๆ
+
+## Phase 208: Menu Page Slide & Fade transition
+
+> **Architecture Mandate:** ปรับเปลี่ยนระบบสลับแท็บจาก IndexedStack นิ่งๆ ให้ใช้งาน AnimatedSwitcher พร้อมเอฟเฟกต์ Slide & Fade (ลอยขึ้นและเลือนหาย) เพื่อสร้างประสบการณ์การเปลี่ยนที่ลื่นไหลตามหลัก UX ที่ดีเยี่ยม:
+> 1. อัปเดต AppShell ใน main.dart โดยสลับการใช้งาน IndexedStack เป็น AnimatedSwitcher คลุม KeyedSubtree ของ index หน้าจอ
+> 2. พัฒนา Slide & Fade TransitionBuilder โดยใช้ FadeTransition คู่กับ SlideTransition ความสูง 2.5%
+> 3. รัน Static Analysis เพื่อยืนยันความถูกต้อง
+
+### Task 208.1: Register Phase 208 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 208 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 208.2: Implement Slide & Fade tab switcher transition in main.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** แทนที่ IndexedStack ด้วย AnimatedSwitcher คลุม KeyedSubtree ของหน้าต่างย่อย และเขียนเมทอด TransitionBuilder
+- **Why:** เพื่อให้การสลับเมนูมีความพรีเมียม เลื่อนลอยสลับหน้าอย่างนุ่มนวลแบบแอปพลิเคชันยุคใหม่
+
+### Task 208.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบการคอมไพล์โค้ด
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 209: Revert Main Page Transition & Add Card Staggered Entrance Animation
+
+> **Architecture Mandate:** ยกเลิกการใช้อนิเมชั่นเปลี่ยนหน้าและดึง IndexedStack ตัวเก่ากลับมาเพื่อความรวดเร็ว แต่เปลี่ยนเป็นการทำ Staggered Fade-in (การค่อยๆ เลื่อนแสดงการ์ดสรุปงาน) ภายในแต่ละหน้าแทนเมื่อสลับเมนู:
+> 1. ย้อนคืนโค้ด main.dart โดยถอน AnimatedSwitcher ออกและใช้ IndexedStack ดั้งเดิม
+> 2. พัฒนาวิดเจ็ต AetherStaggeredFadeIn ใน glass_widgets.dart เพื่อควบคุมการค่อยๆ เฟดและขยับขึ้นเบาๆ ทีละการ์ด
+> 3. อัปเดต DashboardPage ให้รับค่า isActive และห่อหุ้ม 4 ส่วนการ์ดหลักด้วย AetherStaggeredFadeIn
+> 4. ตรวจเช็กไวยากรณ์ด้วย Static Analysis
+
+### Task 209.1: Register Phase 209 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 209 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 209.2: Revert main.dart page transition to IndexedStack
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** สลับ AnimatedSwitcher กลับเป็น IndexedStack และส่งค่า isActive ไปยัง DashboardPage
+- **Why:** เพื่อให้สลับหน้าเมนูหลักได้ฉับพลันทันทีตามเดิมโดยไม่สูญเสียตำแหน่ง Scroll
+
+### Task 209.3: Create AetherStaggeredFadeIn widget in glass_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** เขียนคลาส AetherStaggeredFadeIn เพื่อทำหน้าที่เป็น Entrance Animation แบบไล่ระดับเวลากำหนด
+- **Why:** เพื่อทำหน้าจอเฟดการ์ดแบบเป็นขั้นบันไดทีละดวงตามความต้องการของผู้ใช้
+
+### Task 209.4: Wrap DashboardPage cards with staggered fade-in animations
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** นำ AetherStaggeredFadeIn ไปประยุกต์ใช้ห่อหุ้มการ์ด 4 ส่วนย่อย
+- **Why:** เพื่อแสดงเอฟเฟกต์การค่อยๆ เลื่อนเฟดการ์ดสรุปผลงานขึ้นมาเป็นขั้นบันไดเมื่อเข้าหน้าบอร์ดงาน
+
+### Task 209.5: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบความสมบูรณ์
+- **Why:** รับประกันว่ารหัสโค้ดย้อนกลับและการ์ดใหม่เสถียร 100%
+
+## Phase 210: GlassCard Double Layer / Glow Optimization
+
+> **Architecture Mandate:** กำจัดเอฟเฟกต์การซ้อนทับ 2 ชั้นของ GlassCard โดยเปลี่ยนการใช้ BackdropFilter ซ้อนกันในระบบ Ambient Glow มาใช้งานการไล่โทนสีเวกเตอร์แทน:
+> 1. อัปเดต GlassCard ใน glass_widgets.dart โดยนำโครงสร้าง BackdropFilter ด้านในของ hasAmbientGlow ออก
+> 2. พัฒนาระบบเรืองแสงทดแทนด้วยวงกลมไล่ระดับสี RadialGradient เพื่อตัดการประมวลผลซ้อนทับบนเว็บและแก้ปัญหาภาพซ้อน 2 ชั้น
+> 3. ตรวจสอบความสมบูรณ์และรัน Static Analysis
+
+### Task 210.1: Register Phase 210 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 210 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 210.2: Optimize GlassCard ambient glow in glass_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** แทนที่ Nested BackdropFilter ด้วย RadialGradient Container ในการ์ดเรืองแสง
+- **Why:** ป้องกันปัญหาเลเยอร์ซ้อนกัน 2 ชั้นบน Web Browser และจูนความเร็วการเรนเดอร์ตอน fade เข้า
+
+### Task 210.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อความแน่ใจในความสมบูรณ์ของโค้ด
+- **Why:** ยืนยันว่าไม่เกิด Compile Error หรือ Warning ใดๆ
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
