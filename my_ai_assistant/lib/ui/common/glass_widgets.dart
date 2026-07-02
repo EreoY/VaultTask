@@ -150,34 +150,63 @@ class GlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color contentColor = isGold ? GlassColors.gold : GlassColors.primary;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Container(
-          width: width,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: GlassDecorations.button(isDark: isDark, isGold: isGold),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, color: contentColor, size: 18),
-                const SizedBox(width: 10),
-              ],
-              Text(
-                label.toUpperCase(),
-                style: GlassText.label(isDark).copyWith(
-                  color: contentColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+    bool isHovered = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        final Color displayColor = isHovered ? Colors.white : contentColor;
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: width,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: isHovered
+                    ? contentColor.withOpacity(0.18)
+                    : contentColor.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+                border: Border.all(
+                  color: isHovered
+                      ? contentColor.withOpacity(0.7)
+                      : contentColor.withOpacity(0.24),
+                  width: 1.0,
                 ),
+                boxShadow: isHovered
+                    ? [
+                        BoxShadow(
+                          color: contentColor.withOpacity(0.22),
+                          blurRadius: 14,
+                          spreadRadius: -2,
+                        )
+                      ]
+                    : [],
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: displayColor, size: 18),
+                    const SizedBox(width: 10),
+                  ],
+                  Text(
+                    label.toUpperCase(),
+                    style: GlassText.label(isDark).copyWith(
+                      color: displayColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 }

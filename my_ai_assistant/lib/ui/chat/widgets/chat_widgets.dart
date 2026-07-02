@@ -310,7 +310,7 @@ class ThinkingIndicator extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Jonny is working',
+                        'Saturn is working',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GlassText.body().copyWith(

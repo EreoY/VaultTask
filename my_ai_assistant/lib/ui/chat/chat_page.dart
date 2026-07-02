@@ -9,7 +9,13 @@ import 'widgets/aether_chat_view.dart';
 class ChatPage extends StatefulWidget {
   final bool isDark;
   final ValueChanged<int>? onNavigate;
-  const ChatPage({super.key, required this.isDark, this.onNavigate});
+  final bool isActive;
+  const ChatPage({
+    super.key,
+    required this.isDark,
+    this.onNavigate,
+    this.isActive = true,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -32,18 +38,26 @@ class _ChatPageState extends State<ChatPage> {
       builder: (context, chatState, _) {
         return Column(
           children: [
-            _buildHeader(),
+            AetherStaggeredFadeIn(
+              index: 0,
+              isActive: widget.isActive,
+              child: _buildHeader(),
+            ),
             Expanded(
-              child: Row(
-                children: [
-                  if (_showSidebar) _buildSidebar(chatState),
-                  Expanded(
-                    child: AetherChatView(
-                      isDark: widget.isDark,
-                      onNavigate: widget.onNavigate,
+              child: AetherStaggeredFadeIn(
+                index: 1,
+                isActive: widget.isActive,
+                child: Row(
+                  children: [
+                    if (_showSidebar) _buildSidebar(chatState),
+                    Expanded(
+                      child: AetherChatView(
+                        isDark: widget.isDark,
+                        onNavigate: widget.onNavigate,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

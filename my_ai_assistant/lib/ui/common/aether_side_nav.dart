@@ -10,6 +10,7 @@ import '../theme/glass_theme.dart';
 import 'glass_widgets.dart';
 import 'ime_safe_text_field.dart';
 import 'scroll_gutter.dart';
+import 'galaxy_touch_effect.dart';
 
 class AetherSideNav extends StatefulWidget {
   final int selectedIndex;
@@ -52,7 +53,8 @@ class _AetherSideNavState extends State<AetherSideNav> {
     return ClipRect(
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
-        child: AnimatedContainer(
+        child: GalaxyTouchEffect(
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: _isCollapsed ? 76 : 248,
           height: double.infinity,
@@ -516,6 +518,7 @@ class _AetherSideNavState extends State<AetherSideNav> {
                 ),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -824,7 +827,7 @@ class _AetherSideNavState extends State<AetherSideNav> {
   }
 }
 
-class _NavItem extends StatelessWidget {
+class _NavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isActive;
@@ -838,45 +841,70 @@ class _NavItem extends StatelessWidget {
   });
 
   @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final Color contentColor = widget.isActive
+        ? GlassColors.onSurface
+        : (_isHovered
+            ? GlassColors.onSurface.withOpacity(0.85)
+            : GlassColors.onSurfaceVariant.withOpacity(0.6));
+
+    BoxDecoration? decoration;
+    if (widget.isActive) {
+      decoration = BoxDecoration(
+        color: _isHovered ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(
+          color: GlassColors.hairlineStrong.withOpacity(_isHovered ? 0.75 : 0.55),
+        ),
+      );
+    } else if (_isHovered) {
+      decoration = BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.08),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: isActive
-              ? BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-                  border: Border.all(
-                    color: GlassColors.hairlineStrong.withOpacity(0.55),
-                  ),
-                )
-              : null,
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: isActive
-                    ? GlassColors.onSurface
-                    : GlassColors.onSurfaceVariant.withOpacity(0.6),
-                size: 18,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: GlassText.bodyMD().copyWith(
-                  fontSize: 14,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: isActive
-                      ? GlassColors.onSurface
-                      : GlassColors.onSurfaceVariant.withOpacity(0.6),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: decoration,
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  color: contentColor,
+                  size: 18,
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Text(
+                  widget.label,
+                  style: GlassText.bodyMD().copyWith(
+                    fontSize: 14,
+                    fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: contentColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -884,7 +912,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _CollapsedNavItem extends StatelessWidget {
+class _CollapsedNavItem extends StatefulWidget {
   final IconData icon;
   final String tooltip;
   final bool isActive;
@@ -898,32 +926,59 @@ class _CollapsedNavItem extends StatelessWidget {
   });
 
   @override
+  State<_CollapsedNavItem> createState() => _CollapsedNavItemState();
+}
+
+class _CollapsedNavItemState extends State<_CollapsedNavItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final Color contentColor = widget.isActive
+        ? GlassColors.onSurface
+        : (_isHovered
+            ? GlassColors.onSurface.withOpacity(0.85)
+            : GlassColors.onSurfaceVariant.withOpacity(0.6));
+
+    BoxDecoration? decoration;
+    if (widget.isActive) {
+      decoration = BoxDecoration(
+        color: _isHovered ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(
+          color: GlassColors.hairlineStrong.withOpacity(_isHovered ? 0.75 : 0.55),
+        ),
+      );
+    } else if (_isHovered) {
+      decoration = BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.08),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Tooltip(
-        message: tooltip,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(12),
-            decoration: isActive
-                ? BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-                    border: Border.all(
-                      color: GlassColors.hairlineStrong.withOpacity(0.55),
-                    ),
-                  )
-                : null,
-            child: Icon(
-              icon,
-              color: isActive
-                  ? GlassColors.onSurface
-                  : GlassColors.onSurfaceVariant.withOpacity(0.6),
-              size: 18,
+        message: widget.tooltip,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.all(12),
+              decoration: decoration,
+              child: Icon(
+                widget.icon,
+                color: contentColor,
+                size: 18,
+              ),
             ),
           ),
         ),
@@ -932,7 +987,7 @@ class _CollapsedNavItem extends StatelessWidget {
   }
 }
 
-class _CollapsedWorkspaceItem extends StatelessWidget {
+class _CollapsedWorkspaceItem extends StatefulWidget {
   final WorkspaceModel workspace;
   final bool isSelected;
   final VoidCallback onTap;
@@ -944,34 +999,61 @@ class _CollapsedWorkspaceItem extends StatelessWidget {
   });
 
   @override
+  State<_CollapsedWorkspaceItem> createState() => _CollapsedWorkspaceItemState();
+}
+
+class _CollapsedWorkspaceItemState extends State<_CollapsedWorkspaceItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    BoxDecoration? decoration;
+    if (widget.isSelected) {
+      decoration = BoxDecoration(
+        color: GlassColors.primary.withOpacity(_isHovered ? 0.14 : 0.08),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(
+          color: GlassColors.primary.withOpacity(_isHovered ? 0.35 : 0.24),
+        ),
+      );
+    } else if (_isHovered) {
+      decoration = BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.08),
+        ),
+      );
+    }
+
+    final Color iconColor = widget.isSelected
+        ? GlassColors.primary
+        : (_isHovered
+            ? GlassColors.onSurface.withOpacity(0.75)
+            : GlassColors.onSurfaceVariant.withOpacity(0.5));
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Tooltip(
-        message: workspace.name,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(10),
-            decoration: isSelected
-                ? BoxDecoration(
-                    color: GlassColors.primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-                    border: Border.all(
-                      color: GlassColors.primary.withOpacity(0.24),
-                    ),
-                  )
-                : null,
-            child: Icon(
-              workspace.type == 'personal'
-                  ? Icons.person_rounded
-                  : Icons.group_rounded,
-              size: 16,
-              color: isSelected
-                  ? GlassColors.primary
-                  : GlassColors.onSurfaceVariant.withOpacity(0.5),
+        message: widget.workspace.name,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.all(10),
+              decoration: decoration,
+              child: Icon(
+                widget.workspace.type == 'personal'
+                    ? Icons.person_rounded
+                    : Icons.group_rounded,
+                size: 16,
+                color: iconColor,
+              ),
             ),
           ),
         ),

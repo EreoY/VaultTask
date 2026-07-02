@@ -65,29 +65,29 @@ class _AetherDynamicBackdropState extends State<AetherDynamicBackdrop>
                 ),
               ),
             ),
-            // Orb 1 (Muted Blue)
+            // Orb 1 (Electric Cyan)
             Align(
               alignment: Alignment(x1, y1),
               child: _OrbWidget(
-                color: const Color(0xFF60A5FA), // Soft Blue
+                color: const Color(0xFF00E5FF), // Electric Cyan
                 size: size1,
                 opacity: opacity1,
               ),
             ),
-            // Orb 2 (Gold)
+            // Orb 2 (Gold Core)
             Align(
               alignment: Alignment(x2, y2),
               child: _OrbWidget(
-                color: GlassColors.gold, // Muted Gold
+                color: GlassColors.gold, // Warm Gold
                 size: size2,
                 opacity: opacity2,
               ),
             ),
-            // Orb 3 (Purple)
+            // Orb 3 (Fuchsia Pink)
             Align(
               alignment: Alignment(x3, y3),
               child: _OrbWidget(
-                color: const Color(0xFFA78BFA), // Soft Purple
+                color: const Color(0xFFEA4C89), // Fuchsia Pink
                 size: size3,
                 opacity: opacity3,
               ),

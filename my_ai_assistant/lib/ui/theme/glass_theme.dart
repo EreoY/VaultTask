@@ -5,36 +5,36 @@ import 'package:google_fonts/google_fonts.dart';
 /// Adapted from React/Tailwind reference design.
 
 class GlassColors {
-  // Abyssal Minimal Palette
-  static const Color background = Color(0xFF0F1418);
-  static const Color surface = Color(0xFF181C20);
-  static const Color surfaceBright = Color(0xFF24292E);
-  static const Color surfaceContainer = Color(0xFF14181C);
-  static const Color surfaceHighest = Color(0xFF2C3136);
-  static const Color primary = Color(0xFFD7E5ED);
-  static const Color onPrimary = Color(0xFF202C33);
-  static const Color secondary = Color(0xFFC0CBD4);
-  static const Color tertiary = Color(0xFFD2DDE6);
-  static const Color gold = Color(0xFFCC9E67); // Muted Gold from DESIGN.md
-  static const Color hairline = Color(0xFF2A2F34);
-  static const Color hairlineStrong = Color(0xFF3A4046);
-  static const Color muted = Color(0xFF8D949A);
+  // Abyssal Minimal Galaxy Palette
+  static const Color background = Color(0xFF080614); // Deep space dark
+  static const Color surface = Color(0xFF120E2E); // Dark nebula purple/indigo
+  static const Color surfaceBright = Color(0xFF1B1541);
+  static const Color surfaceContainer = Color(0xFF0E0B25);
+  static const Color surfaceHighest = Color(0xFF251E52);
+  static const Color primary = Color(0xFFB8A2F2); // Nebula light purple
+  static const Color onPrimary = Color(0xFF0D0A24);
+  static const Color secondary = Color(0xFF00E5FF); // Electric cyan
+  static const Color tertiary = Color(0xFFEA4C89); // Fuchsia pink
+  static const Color gold = Color(0xFFFFD580); // Bright warm gold
+  static const Color hairline = Color(0xFF26203D);
+  static const Color hairlineStrong = Color(0xFF38305A);
+  static const Color muted = Color(0xFF8D84A3);
 
-  static const Color onSurface = Color(0xFFDFE3E9);
-  static const Color onSurfaceVariant = Color(0xFFC3C7CA);
-  static const Color outline = Color(0xFF8D9194);
-  static const Color outlineVariant = Color(0xFF43474A);
+  static const Color onSurface = Color(0xFFF1EEFA); // Soft lilac white
+  static const Color onSurfaceVariant = Color(0xFFC3BCDB); // Soft purple-grey
+  static const Color outline = Color(0xFF8D84A3);
+  static const Color outlineVariant = Color(0xFF3D355C);
 
   static const Color success = Color(0xFF34D399);
   static const Color error = Color(0xFFFFB4AB);
 
   // Exact Glass Tokens from Reference
   static Color glassSurface = const Color(
-    0xFF23323B,
-  ).withOpacity(0.4); // rgba(35, 50, 59, 0.4)
+    0xFF151035,
+  ).withOpacity(0.4); // Frosted violet glass
   static Color ghostBorder = const Color(
-    0xFFB0C2CB,
-  ).withOpacity(0.1); // rgba(176, 194, 203, 0.1)
+    0xFFB8A2F2,
+  ).withOpacity(0.12); // Glowy violet border
 
   static Color glassBorder() => ghostBorder;
   static Color glassTint() => primary.withOpacity(0.05);
@@ -100,7 +100,7 @@ class GlassGradients {
   static LinearGradient background() => const LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [GlassColors.background, Color(0xFF0A0F13)],
+    colors: [GlassColors.background, Color(0xFF110B29)], // Dark space gradient
   );
 }
 

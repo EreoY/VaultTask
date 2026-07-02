@@ -13,6 +13,7 @@ import '../common/responsive_layout.dart';
 import '../common/glass_widgets.dart';
 import '../kanban/widgets/task_edit_modal.dart';
 import 'widgets/dashboard_widgets.dart';
+import 'widgets/galaxy_scroll_animation.dart';
 
 class DashboardPage extends StatefulWidget {
   final bool isDark;
@@ -32,16 +33,32 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _milestonesLimit = 3;
   int _activityLimit = 10;
+  late ScrollController _scrollController;
+  double _scrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      if (mounted) {
+        setState(() {
+          _scrollOffset = _scrollController.offset;
+        });
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final boardsState = context.read<StateBoards>();
       await boardsState.fetchAllBoards();
       if (!mounted) return;
       await context.read<StateTasks>().fetchAllTasks(boardsState.boards);
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _openTask(BuildContext context, BoardModel board, TaskModel task) {
@@ -89,22 +106,26 @@ class _DashboardPageState extends State<DashboardPage> {
         .map((item) => item.comment.id)
         .toList();
 
+    final galaxyHeight = isDesktop ? 400.0 : 460.0;
+
     return SingleChildScrollView(
+          controller: _scrollController,
           padding: EdgeInsets.all(ExecutiveSpacing.containerPadding(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AetherStaggeredFadeIn(
-                index: 0,
-                isActive: widget.isActive,
-                child: _buildGlassHeroSection(
+              GalaxyScrollAnimation(
+                height: galaxyHeight,
+                child: _buildHeroOverlayContent(
+                  context,
+                  isDesktop,
                   workspaces.length,
                   boards.length,
                   tasksState.unreadCommentsCount,
                   milestoneItems.length,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
               _buildHeader(workspaces.length, tasksState.unreadCommentsCount),
               SizedBox(height: isDesktop ? 24 : 20),
 
@@ -171,108 +192,139 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildGlassHeroSection(
+  Widget _buildHeroOverlayContent(
+    BuildContext context,
+    bool isDesktop,
     int workspaceCount,
     int boardCount,
     int unreadCount,
     int milestoneCount,
   ) {
-    return GlassCard(
-      isDark: false,
-      radius: 28,
-      padding: const EdgeInsets.all(24),
-      hasAmbientGlow: true,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 64 : 24,
+        vertical: 32,
+      ),
+      alignment: isDesktop ? Alignment.centerLeft : Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 580),
+        child: Column(
+          crossAxisAlignment: isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Minimal elegant dashboard title
+            Text(
+              'WORKSPACE',
+              style: GlassText.headlineLG().copyWith(
+                fontSize: isDesktop ? 44 : 32,
+                height: 1.0,
+                letterSpacing: 8.0,
+                color: Colors.white,
+                fontWeight: FontWeight.w100, // Ultra thin elegant look
+              ),
+            ),
+            const SizedBox(height: 10),
+            
+            // Minimal subtitle
+            Text(
+              'Welcome back. Manage your projects, boards, and team updates.',
+              textAlign: isDesktop ? TextAlign.left : TextAlign.center,
+              style: GlassText.bodyLG().copyWith(
+                color: Colors.white.withOpacity(0.55),
+                fontSize: isDesktop ? 13 : 12,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Clean action buttons
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
               children: [
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _buildGlassTag('Glassmorphism active', Icons.auto_awesome_rounded),
-                    _buildGlassTag('Live dashboard', Icons.dashboard_rounded),
-                  ],
+                _buildMinimalGlassButton(
+                  label: 'Boards',
+                  icon: Icons.grid_view_rounded,
+                  accent: const Color(0xFFE19B6B),
+                  onPressed: () => widget.onNavigate?.call(1),
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  'A premium dashboard with frosted surfaces and ambient depth.',
-                  style: GlassText.headlineLG().copyWith(
-                    fontSize: 34,
-                    height: 1.15,
-                    letterSpacing: -0.8,
-                    color: GlassColors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 760),
-                  child: Text(
-                    'Designed with high-fidelity glassmorphism, combining soft backdrops, subtle outlines, and glowing coordinates to keep your workspace clear and focused.',
-                    style: GlassText.bodyLG().copyWith(
-                      color: GlassColors.onSurfaceVariant.withOpacity(0.7),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _buildGlassButton(
-                      label: 'Open Boards',
-                      icon: Icons.grid_view_rounded,
-                      accent: const Color(0xFFE19B6B),
-                      onPressed: () => widget.onNavigate?.call(1),
-                    ),
-                    _buildGlassButton(
-                      label: 'Open Chat',
-                      icon: Icons.chat_bubble_outline_rounded,
-                      accent: const Color(0xFFB8A2F2),
-                      onPressed: () => widget.onNavigate?.call(3),
-                    ),
-                  ],
+                _buildMinimalGlassButton(
+                  label: 'Chat',
+                  icon: Icons.chat_bubble_outline_rounded,
+                  accent: const Color(0xFFB8A2F2),
+                  onPressed: () => widget.onNavigate?.call(3),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.end,
-            children: [
-              _buildMetricChip(
-                icon: Icons.workspaces_rounded,
-                label: 'Workspaces',
-                value: workspaceCount.toString(),
-                accent: const Color(0xFFE19B6B),
-              ),
-              _buildMetricChip(
-                icon: Icons.view_kanban_rounded,
-                label: 'Boards',
-                value: boardCount.toString(),
-                accent: const Color(0xFFB8A2F2),
-              ),
-              _buildMetricChip(
-                icon: Icons.alarm_rounded,
-                label: 'Pending',
-                value: milestoneCount.toString(),
-                accent: const Color(0xFFF0B96C),
-              ),
-              _buildMetricChip(
-                icon: Icons.notifications_none_rounded,
-                label: 'Unread',
-                value: unreadCount.toString(),
-                accent: const Color(0xFFE67E7E),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildMinimalGlassButton({
+    required String label,
+    required IconData icon,
+    required Color accent,
+    VoidCallback? onPressed,
+  }) {
+    bool isHovered = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isHovered 
+                    ? accent.withOpacity(0.12)
+                    : Colors.white.withOpacity(0.02),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isHovered 
+                      ? accent.withOpacity(0.6)
+                      : Colors.white.withOpacity(0.12),
+                ),
+                boxShadow: isHovered
+                    ? [
+                        BoxShadow(
+                          color: accent.withOpacity(0.2),
+                          blurRadius: 10,
+                          spreadRadius: -1,
+                        )
+                      ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon, 
+                    size: 14, 
+                    color: isHovered ? Colors.white : accent.withOpacity(0.85),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label.toUpperCase(),
+                    style: GlassText.labelSM().copyWith(
+                      color: isHovered ? Colors.white : Colors.white.withOpacity(0.9),
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
     );
   }
 
@@ -307,35 +359,62 @@ class _DashboardPageState extends State<DashboardPage> {
     required Color accent,
     VoidCallback? onPressed,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: accent.withOpacity(0.24)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: accent),
-              const SizedBox(width: 10),
-              Text(
-                label.toUpperCase(),
-                style: GlassText.labelSM().copyWith(
-                  color: GlassColors.onSurface,
-                  fontSize: 12,
-                  letterSpacing: 1.0,
-                  fontWeight: FontWeight.bold,
+    bool isHovered = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                color: isHovered 
+                    ? accent.withOpacity(0.15)
+                    : accent.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isHovered 
+                      ? accent.withOpacity(0.6)
+                      : accent.withOpacity(0.24),
                 ),
+                boxShadow: isHovered
+                    ? [
+                        BoxShadow(
+                          color: accent.withOpacity(0.2),
+                          blurRadius: 12,
+                          spreadRadius: -2,
+                        )
+                      ]
+                    : [],
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon, 
+                    size: 18, 
+                    color: isHovered ? Colors.white : accent,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    label.toUpperCase(),
+                    style: GlassText.labelSM().copyWith(
+                      color: isHovered ? Colors.white : GlassColors.onSurface,
+                      fontSize: 12,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
@@ -1020,31 +1099,61 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildGhostButton(String label, IconData icon, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: GlassColors.gold.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-          border: Border.all(color: GlassColors.gold.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: GlassColors.gold),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: GlassText.labelSM().copyWith(
-                color: GlassColors.gold,
-                fontSize: 9,
-                letterSpacing: 1.0,
+    bool isHovered = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isHovered 
+                    ? GlassColors.gold.withOpacity(0.22)
+                    : GlassColors.gold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+                border: Border.all(
+                  color: isHovered 
+                      ? GlassColors.gold
+                      : GlassColors.gold.withOpacity(0.3),
+                ),
+                boxShadow: isHovered
+                    ? [
+                        BoxShadow(
+                          color: GlassColors.gold.withOpacity(0.2),
+                          blurRadius: 10,
+                          spreadRadius: -1,
+                        )
+                      ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon, 
+                    size: 14, 
+                    color: isHovered ? Colors.white : GlassColors.gold,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: GlassText.labelSM().copyWith(
+                      color: isHovered ? Colors.white : GlassColors.gold,
+                      fontSize: 9,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 

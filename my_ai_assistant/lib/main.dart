@@ -335,19 +335,27 @@ class _AppShellState extends State<AppShell> {
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 1:
-        return const BoardsPage(isDark: false);
+        return BoardsPage(
+          isDark: false,
+          isActive: isActive,
+        );
       case 2:
         return CalendarPage(
           isDark: false,
+          isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 3:
         return ChatPage(
           isDark: false,
+          isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 4:
-        return const ProfilePage(isDark: false);
+        return ProfilePage(
+          isDark: false,
+          isActive: isActive,
+        );
       default:
         return const SizedBox.shrink();
     }

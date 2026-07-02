@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/glass_theme.dart';
+import '../common/glass_widgets.dart';
 
 class ProfilePage extends StatelessWidget {
   final bool isDark;
-  const ProfilePage({super.key, required this.isDark});
+  final bool isActive;
+  const ProfilePage({super.key, required this.isDark, this.isActive = true});
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +17,17 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(user),
+          AetherStaggeredFadeIn(
+            index: 0,
+            isActive: isActive,
+            child: _buildHeader(user),
+          ),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
-          _buildSettingsSection(isDark),
+          AetherStaggeredFadeIn(
+            index: 1,
+            isActive: isActive,
+            child: _buildSettingsSection(isDark),
+          ),
         ],
       ),
     );
@@ -113,7 +123,7 @@ class ProfilePage extends StatelessWidget {
             ),
             _buildSettingCard(
               'AI MODEL',
-              'Jonny Neural Engine 4.0',
+              'Saturn Neural Engine 4.0',
               Icons.auto_awesome_rounded,
               isDark,
             ),
