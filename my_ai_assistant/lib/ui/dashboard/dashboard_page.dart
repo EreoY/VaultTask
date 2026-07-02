@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../common/ime_safe_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
