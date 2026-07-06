@@ -445,10 +445,19 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
     final mime = (att['mime'] ?? att['mimeType'] ?? '').toLowerCase();
     return name.endsWith('.pdf') ||
         name.endsWith('.docx') ||
+        name.endsWith('.png') ||
+        name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
         url.endsWith('.pdf') ||
         url.endsWith('.docx') ||
+        url.endsWith('.png') ||
+        url.endsWith('.jpg') ||
+        url.endsWith('.jpeg') ||
         mime.contains('pdf') ||
-        mime.contains('wordprocessingml');
+        mime.contains('wordprocessingml') ||
+        mime.contains('png') ||
+        mime.contains('jpeg') ||
+        mime.contains('jpg');
   }
 
   Future<void> _extractAttachmentInBackground(Map<String, String> att) async {

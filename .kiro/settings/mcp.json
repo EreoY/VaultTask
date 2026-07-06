@@ -2,7 +2,21 @@
   "mcpServers": {
     "gitnexus": {
       "command": "gitnexus",
-      "args": ["mcp"],
+      "args": [
+        "mcp"
+      ],
+      "timeout": 120000,
+      "autoApprove": [
+        "query",
+        "impact",
+        "context"
+      ]
+    },
+    "dart": {
+      "command": "dart",
+      "args": [
+        "mcp-server"
+      ],
       "timeout": 120000
     }
   }

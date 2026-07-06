@@ -94,7 +94,7 @@ class _ProjectsTableHeader extends StatelessWidget {
       child: Row(
         children: const [
           _HeaderCell(
-            flex: 6,
+            flex: 3,
             icon: Icons.text_fields_rounded,
             label: 'PROJECT',
           ),
@@ -104,7 +104,12 @@ class _ProjectsTableHeader extends StatelessWidget {
             label: 'MEMBERS',
           ),
           _HeaderCell(
-            flex: 4,
+            flex: 3,
+            icon: Icons.dashboard_customize_rounded,
+            label: 'KANBAN',
+          ),
+          _HeaderCell(
+            flex: 2,
             icon: Icons.insert_drive_file_outlined,
             label: 'DOCS',
           ),
@@ -244,7 +249,7 @@ class _BoardRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              flex: 6,
+              flex: 3,
               child: Row(
                 children: [
                   Container(
@@ -273,11 +278,6 @@ class _BoardRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _OpenInlineButton(
-                    onTap: () => onOpenBoard(board),
-                    labelText: isTeam ? 'OPEN | TEAM' : 'OPEN | PERSONAL',
-                  ),
                 ],
               ),
             ),
@@ -290,7 +290,17 @@ class _BoardRow extends StatelessWidget {
               ),
             ),
             Expanded(
-              flex: 4,
+              flex: 3,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _OpenInlineButton(
+                  onTap: () => onOpenBoard(board),
+                  labelText: isTeam ? 'OPEN | TEAM' : 'OPEN | PERSONAL',
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: _OpenInlineButton(
