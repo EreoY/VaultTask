@@ -185,7 +185,8 @@ class BentoProjectCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _BentoActionButton(
-                    label: tasksCount > 0 ? '$tasksCount Tasks' : 'Board',
+                    label: 'Board',
+                    count: tasksCount,
                     icon: Icons.dashboard_rounded,
                     onTap: () => onOpenBoard(board),
                   ),
@@ -193,7 +194,8 @@ class BentoProjectCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _BentoActionButton(
-                    label: docsCount > 0 ? '$docsCount Docs' : 'Docs',
+                    label: 'Docs',
+                    count: docsCount,
                     icon: Icons.insert_drive_file_outlined,
                     onTap: () => onOpenDocs(board),
                   ),
@@ -201,7 +203,8 @@ class BentoProjectCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _BentoActionButton(
-                    label: meetingsCount > 0 ? '$meetingsCount Meetings' : 'Meetings',
+                    label: 'Meetings',
+                    count: meetingsCount,
                     icon: Icons.mic_rounded,
                     onTap: () => onOpenMeetings(board),
                   ),
@@ -212,26 +215,6 @@ class BentoProjectCard extends StatelessWidget {
         ),
       ),
     ),
-      if (totalCount > 0)
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: GlassColors.primary,
-            ),
-            child: Text(
-              '$totalCount',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -241,11 +224,13 @@ class _BentoActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final int count;
 
   const _BentoActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
+    this.count = 0,
   });
 
   @override
@@ -255,38 +240,64 @@ class _BentoActionButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 15, color: GlassColors.deepBlack),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  style: GlassText.bodyMD().copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: GlassColors.deepBlack,
-                    fontSize: 12,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 15, color: GlassColors.deepBlack),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: GlassText.bodyMD().copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: GlassColors.deepBlack,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: GlassColors.primary,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );

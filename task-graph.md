@@ -1,3 +1,44 @@
+## Phase 217: Separate Top-Right Circular Count Badges for Bento Card Module Buttons [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Separate Module Count Badges on Bento Card Buttons**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`, update `_BentoActionButton` to display an individual top-right circular count badge (`BoxShape.circle` or rounded badge container with white border) for each module button (`Board`, `Docs`, `Meetings`).
+>    - Pass explicit `count` parameters (`tasksCount`, `docsCount`, `meetingsCount`) to each button and revert button text labels to clean titles ('Board', 'Docs', 'Meetings').
+>    - Render top-right count badges conditionally when `count > 0`.
+>    - Remove redundant card-level combined `totalCount` badge from top-right of card header.
+> 2. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 217.1: Update `_BentoActionButton` in `bento_project_card.dart` to render individual top-right circular count badges for Board (`tasksCount`), Docs (`docsCount`), and Meetings (`meetingsCount`).
+- [x] Task 217.2: Remove card-level total count badge and restore clean action button text labels in `bento_project_card.dart`.
+- [x] Task 217.3: Perform static analysis (`flutter analyze`).
+
+### Task 217.1: Update _BentoActionButton for individual top-right circular count badges
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Add `int count` parameter to `_BentoActionButton`. Wrap button layout in `Stack(clipBehavior: Clip.none)` and position a circular count badge (`GlassColors.primary` background, white text, subtle border) at top-right (`top: -4`, `right: -4`) when `count > 0`.
+- **Why:** Satisfy explicit user feedback that task, document, and meeting counts must be shown separately on each respective module button.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Individual count badges display at top-right of Board, Docs, and Meetings buttons.
+
+### Task 217.2: Remove card-level total count badge and restore clean action button text labels
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Revert button labels from interpolated strings (`$tasksCount Tasks`) to clean labels (`Board`, `Docs`, `Meetings`). Remove redundant card-level top-right `totalCount` badge from `BentoProjectCard`.
+- **Why:** Prevent text overflow/clutter in button labels and eliminate redundant combined count badge.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Labels restored and card-level total badge removed.
+
+### Task 217.3: Perform static analysis (flutter analyze)
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to verify zero syntax or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
 ## Phase 216: Bento Card Top-Right Count Badge, Workspace Title Wrap & Workspace Switcher Icon Positioning [x] Completed
 
 - **Status:** [x] Completed
