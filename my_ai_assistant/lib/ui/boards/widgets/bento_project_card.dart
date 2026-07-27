@@ -46,14 +46,18 @@ class BentoProjectCard extends StatelessWidget {
     final tasksCount = context.watch<StateTasks>().tasksForBoard(board.id).length;
     final docsCount = context.watch<StateDocuments>().documentCountForBoard(board.id);
     final meetingsCount = context.watch<StateMeetings>().meetingCountForBoard(board.id);
+    final totalCount = tasksCount + docsCount + meetingsCount;
 
     final cardColor = pastelPalette[index % pastelPalette.length];
     final isTeam = board.type == 'team';
     final dotColor = Color(board.color == 0 ? 0xFF0D40A5 : board.color);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(ExecutiveRadius.xl), // 24px
         boxShadow: [
@@ -207,6 +211,28 @@ class BentoProjectCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
+      if (totalCount > 0)
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: GlassColors.primary,
+            ),
+            child: Text(
+              '$totalCount',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

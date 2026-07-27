@@ -1,3 +1,45 @@
+## Phase 216: Bento Card Top-Right Count Badge, Workspace Title Wrap & Workspace Switcher Icon Positioning [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Top-Right Circular Count Badge on Cards)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`, wrap card content in a `Stack` (with `clipBehavior: Clip.none`) and position a circular count badge (`BoxShape.circle`) at `top: 8`, `right: 8` displaying total resource count (`tasksCount + docsCount + meetingsCount`).
+> 2. **Issue B (Full Workspace Title with No Ellipsis)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, remove `overflow: TextOverflow.ellipsis` from the Workspace Title `Text` widget. Set `maxLines: null` and `softWrap: true` so long workspace titles wrap naturally onto new lines without truncation.
+> 3. **Issue C (Workspace Switcher Icon Placed BEFORE Workspace Title)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, position the workspace switcher dropdown button/icon BEFORE (in front of) the workspace title text in the `Row`: `Row(crossAxisAlignment: CrossAxisAlignment.center, children: [SwitcherIcon/Button, SizedBox(width: 8), WorkspaceTitleText])`. Ensure workspace selection functionality is triggered when tapped on both desktop and mobile.
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 216.1: Add top-right circular count badge on Bento project cards in `bento_project_card.dart`.
+- [x] Task 216.2: Update `boards_workspace_header.dart` to allow multi-line workspace title wrapping without ellipsis (`maxLines: null`, `softWrap: true`) and place workspace switcher icon BEFORE workspace title.
+- [x] Task 216.3: Perform static analysis (`flutter analyze`).
+
+### Task 216.1: Add top-right circular count badge on Bento project cards in `bento_project_card.dart`
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Wrap project card structure in a `Stack` (with `clipBehavior: Clip.none`). Add a `Positioned(top: 8, right: 8, child: Container(decoration: BoxDecoration(shape: BoxShape.circle, ...), child: Text('$totalCount')))` circular badge showing combined task, document, and meeting count for easy visibility.
+- **Why:** Provide immediate visual feedback on total resources within each project card at a glance.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Circular count badge rendered at top-right of Bento project card.
+
+### Task 216.2: Update `boards_workspace_header.dart` for full multi-line title and switcher icon positioning
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Remove `overflow: TextOverflow.ellipsis` from Workspace Title text widget and set `maxLines: null` and `softWrap: true`. Re-order Workspace Title row so that the workspace switcher icon/button is positioned BEFORE the workspace title text (`Row(children: [SwitcherIcon, SizedBox(width: 8), WorkspaceTitleText])`). Enable workspace selector dropdown modal trigger across mobile and desktop header clicks.
+- **Why:** Satisfy user requirement for non-truncated workspace names and intuitive workspace switcher icon placement ahead of title text.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Title wraps fully and switcher icon is placed in front of title.
+
+### Task 216.3: Perform static analysis (`flutter analyze`)
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation, syntax, or layout warnings/errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
 ## Phase 215: Meetings Page Back Button & Workspace Card Count Badges [x] Completed
 
 - **Status:** [x] Completed

@@ -131,7 +131,13 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                     color: Colors.transparent, // expand tap area
                     child: Row(
                       children: [
-                        Expanded(
+                        Icon(
+                          isMobile ? Icons.keyboard_arrow_down_rounded : Icons.swap_horiz_rounded,
+                          color: GlassColors.deepBlack.withOpacity(0.7),
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
                           child: Text(
                             selectedWorkspace?.name ?? 'Projects Hub',
                             style: GlassText.headlineMD().copyWith(
@@ -140,18 +146,10 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                               fontSize: isMobile ? 20 : 26,
                               height: 1.2,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                            maxLines: null,
                           ),
                         ),
-                        if (isMobile) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: GlassColors.deepBlack.withOpacity(0.7),
-                            size: 24,
-                          ),
-                        ],
                       ],
                     ),
                   ),
