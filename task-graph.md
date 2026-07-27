@@ -1,3 +1,43 @@
+## Phase 215: Meetings Page Back Button & Workspace Card Count Badges [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (`WorkspaceBackButton` in `MeetingsBoardPage`)**:
+>    - Add `WorkspaceBackButton` to `MeetingsBoardPage` (`meetings_board_page.dart`) returning users to Workspace overview (`BoardsPage`).
+> 2. **Issue B (Workspace Card Count Badges)**:
+>    - Add Task, Doc, and Meeting count badges (`Board (X)`, `Docs (Y)`, `Meetings (Z)`) to project cards in `bento_project_card.dart`.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 215.1: Add `WorkspaceBackButton` to `MeetingsBoardPage` (`meetings_board_page.dart`) returning users to Workspace overview.
+- [x] Task 215.2: Add Task, Doc, and Meeting count badges (`Board (X)`, `Docs (Y)`, `Meetings (Z)`) to project cards in `bento_project_card.dart`.
+- [x] Task 215.3: Perform static analysis (`flutter analyze`).
+
+### Task 215.1: Add WorkspaceBackButton to MeetingsBoardPage returning users to Workspace overview
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** Add `WorkspaceBackButton` to top bar of `MeetingsBoardPage` so users can navigate back to workspace overview.
+- **Why:** Provide consistent back navigation across workspace sub-pages.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `WorkspaceBackButton` added and functional.
+
+### Task 215.2: Add Task, Doc, and Meeting count badges to project cards in bento_project_card.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Display count badges (`Board (X)`, `Docs (Y)`, `Meetings (Z)`) on project cards in `bento_project_card.dart`.
+- **Why:** Give users immediate visibility into resource counts per project card.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Count badges added and verified.
+
+### Task 215.3: Perform static analysis (flutter analyze)
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with 0 errors.
+
+
 ## Phase 214: Single Back Button, Translucent Cards & Task-Matched AI Summarize Modal [x] Completed
 
 - **Status:** [x] Completed

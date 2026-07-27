@@ -104,6 +104,13 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
           _buildNavBar(metaText: 'Board meetings'),
           const SizedBox(height: 14),
 
+          Row(
+            children: [
+              WorkspaceBackButton(onTap: _exitToWorkspace),
+            ],
+          ),
+          const SizedBox(height: 14),
+
           // Bento Meeting Hero Banner
           BentoMeetingHeroHeader(
             board: widget.board,

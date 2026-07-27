@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../models/board_model.dart';
 import '../../theme/glass_theme.dart';
+import 'package:provider/provider.dart';
+import '../../../state_managers/state_tasks.dart';
+import '../../../state_managers/state_documents.dart';
+import '../../../state_managers/state_meetings.dart';
 
 typedef MemberProfileResolver = Map<String, dynamic>? Function(String uid);
 typedef BoardAction = void Function(BoardModel board);
@@ -39,6 +43,10 @@ class BentoProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tasksCount = context.watch<StateTasks>().tasksForBoard(board.id).length;
+    final docsCount = context.watch<StateDocuments>().documentCountForBoard(board.id);
+    final meetingsCount = context.watch<StateMeetings>().meetingCountForBoard(board.id);
+
     final cardColor = pastelPalette[index % pastelPalette.length];
     final isTeam = board.type == 'team';
     final dotColor = Color(board.color == 0 ? 0xFF0D40A5 : board.color);
@@ -173,7 +181,7 @@ class BentoProjectCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _BentoActionButton(
-                    label: 'Board',
+                    label: tasksCount > 0 ? '$tasksCount Tasks' : 'Board',
                     icon: Icons.dashboard_rounded,
                     onTap: () => onOpenBoard(board),
                   ),
@@ -181,7 +189,7 @@ class BentoProjectCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _BentoActionButton(
-                    label: 'Docs',
+                    label: docsCount > 0 ? '$docsCount Docs' : 'Docs',
                     icon: Icons.insert_drive_file_outlined,
                     onTap: () => onOpenDocs(board),
                   ),
@@ -189,7 +197,7 @@ class BentoProjectCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _BentoActionButton(
-                    label: 'Meetings',
+                    label: meetingsCount > 0 ? '$meetingsCount Meetings' : 'Meetings',
                     icon: Icons.mic_rounded,
                     onTap: () => onOpenMeetings(board),
                   ),
