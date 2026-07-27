@@ -632,7 +632,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
       decoration: widget.embeddedInPage
           ? null
           : BoxDecoration(
-              color: const Color(0x80161926),
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -721,7 +721,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
                       const SizedBox(height: 20),
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0x801E2235),
+                          color: GlassColors.surface.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(
                             ExecutiveRadius.l,
                           ),
@@ -807,16 +807,6 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
 
     return Row(
       children: [
-        if (widget.onBack != null || Navigator.of(context).canPop()) ...[
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, size: 16),
-            onPressed: () => widget.onBack != null ? widget.onBack!() : Navigator.of(context).pop(),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-          ),
-          const SizedBox(width: 8),
-        ],
         Icon(
           Icons.home_rounded,
           size: 12,

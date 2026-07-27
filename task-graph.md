@@ -1,3 +1,56 @@
+## Phase 214: Single Back Button, Translucent Cards & Task-Matched AI Summarize Modal [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Single Clean Back Button at Top Left)**:
+>    - Remove redundant `IconButton` (`Icons.arrow_back_rounded`) from `_buildNavBar()` in `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`.
+>    - Remove redundant `IconButton` (`Icons.arrow_back_rounded`) from `_buildBreadcrumb()` in `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart` and `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`.
+>    - Ensure exactly ONE clean Back Button (`_roundIconButton` in sheet top actions or `WorkspaceBackButton` in list surface) is rendered at the top left per page/modal.
+> 2. **Issue B (Clean Translucent Glass Card Background Fills)**:
+>    - Convert blocky solid/dark container card background fills (`Color(0x801E2235)`, `Color(0x80161926)`, and opaque `GlassColors.surface` / `Colors.white` without opacity) to translucent glass fills (`GlassColors.surface.withOpacity(0.05)` / `Colors.transparent`) in `meetings_board_sheet.dart`, `docs_board_sheet.dart`, and `bento_meeting_widgets.dart`.
+> 3. **Issue C (Match AiSummarizeSheet Background Color & Opacity)**:
+>    - Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart` (`GlassColors.surface`).
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 214.1: Remove duplicate Back Buttons in `meetings_board_page.dart`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart` ensuring exactly one Back button per page.
+- [x] Task 214.2: Change blocky dark card container fills to subtle translucent glass fills (`GlassColors.surface.withOpacity(0.05)`) in `meetings_board_sheet.dart`, `docs_board_sheet.dart`, and `bento_meeting_widgets.dart`.
+- [x] Task 214.3: Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart` (`GlassColors.surface`).
+- [x] Task 214.4: Perform static analysis (`flutter analyze`).
+
+### Task 214.1: Remove duplicate Back Buttons in `meetings_board_page.dart`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart`
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Remove extra `IconButton` in `_buildNavBar()` in `meetings_board_page.dart` duplicate breadcrumb back navigation and `_roundIconButton` back button in `MeetingsBoardSheet`. Remove duplicate `IconButton` in `_buildBreadcrumb()` in `meetings_board_sheet.dart` and `docs_board_sheet.dart`. Ensure each page surface and modal sheet renders exactly ONE clean top-left Back button.
+- **Why:** Resolve user's report of duplicate back buttons (`<-`) displaying simultaneously in top bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Duplicate Back Buttons removed ensuring exactly one Back button per page.
+
+### Task 214.2: Change blocky dark card container fills to subtle translucent glass fills
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`
+- **Action:** Replace hardcoded blocky dark/solid background fills with subtle translucent glass container fills (`GlassColors.surface.withOpacity(0.05)` / `Colors.transparent` with glass border `GlassColors.ghostBorder`).
+- **Why:** Resolve user's issue with blocky/jarring solid card background colors by implementing clean translucent glass aesthetics.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Card container fills updated to subtle translucent glass fills (`GlassColors.surface.withOpacity(0.05)`).
+
+### Task 214.3: Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart`
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart` (`GlassColors.surface`).
+- **Why:** Maintain uniform modal sheet theme styling across the app.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `AiSummarizeSheet` background color and opacity matched to `task_edit_modal.dart` (`GlassColors.surface`).
+
+### Task 214.4: Perform static analysis (`flutter analyze`)
+- **Status:** [x] Completed
+- **Target Files:** Modified files
+- **Action:** Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with project standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
 ## Phase 213: Pure Solid White Light Mode Backdrop & Gradient Glow Removal [x] Completed
 
 - **Status:** [x] Completed

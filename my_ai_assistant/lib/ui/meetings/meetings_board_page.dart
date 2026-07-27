@@ -279,13 +279,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   Widget _buildNavBar({required String metaText}) {
     return Row(
       children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, size: 20),
-          onPressed: _exitToWorkspace,
-          padding: const EdgeInsets.only(right: 12),
-          constraints: const BoxConstraints(),
-          color: GlassColors.onSurfaceVariant.withOpacity(0.8),
-        ),
         Expanded(
           child: WorkspaceChromeHeader(
             padding: EdgeInsets.zero,
