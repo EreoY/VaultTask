@@ -622,7 +622,9 @@
 - **Action:** `python3 runner.py analyze` → No issues found (แก้ lint dart:typed_data ซ้ำซ้อนใน chat_bubbles.dart)
 - **Why:** ยืนยันความถูกต้อง; ไม่ deploy ตามคำสั่งผู้ใช้
 
-## Phase 195: File-to-Text Extraction for AI (Model Swap: PDF→Gemini, DOCX→client) — Local Only
+## Phase 195: File-to-Text Extraction for AI (Model Swap: PDF→Gemini, DOCX→client) — Local Only [x] Completed
+
+- **Status:** [x] Completed
 
 > **Architecture Mandate:** ให้ไฟล์แนบ PDF/DOCX ถูกแกะเป็น text ก่อนป้อนโมเดลหลัก (gemma) เพราะ gemma ไม่รองรับ PDF/Office:
 > - **PDF** → ส่งเข้า `google/gemini-3.1-flash-lite` (รองรับ PDF, ยืนยันแล้วบน OpenRouter) แกะเป็น text
@@ -657,7 +659,16 @@
 - **Action:** `python3 runner.py analyze` → ต้อง No issues found; ไม่ deploy
 - **Why:** ยืนยันความถูกต้อง
 
-## Phase 196: Upload-Time File Extraction + View Extracted Text + Delete Attachment (Local Only)
+### Task 195.5: QA Verification & Final Check
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** QA verification with 0 errors and full pass on `flutter analyze`
+- **Why:** ยืนยันความถูกต้องของคุณสมบัติและซอร์สโค้ดทั้งหมดใน Phase 195
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` 0 errors
+
+## Phase 196: Upload-Time File Extraction + View Extracted Text + Delete Attachment (Local Only) [x] Completed
+
+- **Status:** [x] Completed
 
 > **Architecture Mandate:** ย้ายการแกะ PDF/DOCX ไปทำตอน **อัปโหลด** (background, ครั้งเดียว, cache `extractedText`) แทนตอนกดสรุป (ประหยัด, เอเจนต์ดึงไปอ่านได้ทันที), เพิ่มปุ่ม **ดูเนื้อหาที่แกะ** และ **ลบไฟล์** ในแท็บ Attachments ทั้ง Docs + Meetings (เฉพาะไฟล์อัปโหลด ไม่แตะ recording takes)
 

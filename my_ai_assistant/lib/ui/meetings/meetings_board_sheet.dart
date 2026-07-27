@@ -23,6 +23,8 @@ import '../common/glass_widgets.dart';
 import 'package:my_ai_assistant/ui/common/defer_pointer.dart';
 import '../theme/glass_theme.dart';
 import 'widgets/markdown_block_editor.dart';
+
+import 'widgets/ai_summarize_sheet.dart';
 import '../../services/stt_stream_service.dart';
 import '../../services/meeting_transcription_service.dart';
 import '../../config/env_config.dart';
@@ -118,6 +120,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   DateTime _startAt = DateTime.now().add(const Duration(hours: 1));
   List<String> _roleTags = [];
   List<Map<String, String>> _attachments = [];
+  
   bool _isSaving = false;
   bool _isUploading = false;
   bool _isTranscribing = false;
@@ -185,7 +188,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
     });
     try {
       final base = MeetingModel(
-        id: _selectedMeeting?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id:
+            _selectedMeeting?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         boardId: widget.board.id,
         title: title,
         description: _descriptionController.text.trim(),
@@ -303,10 +308,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: color.withOpacity(0.12),
-          width: 0.8,
-        ),
+        border: Border.all(color: color.withOpacity(0.12), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -992,9 +994,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                         icon: Icons.access_time_rounded,
                         label: 'Created',
                         child: Text(
-                          DateFormat(
-                            'MMM d, yyyy h:mm a',
-                          ).format(_selectedMeeting?.createdAt ?? DateTime.now()),
+                          DateFormat('MMM d, yyyy h:mm a').format(
+                            _selectedMeeting?.createdAt ?? DateTime.now(),
+                          ),
                           style: GlassText.bodyLG().copyWith(
                             color: GlassColors.onSurface.withOpacity(0.92),
                           ),
@@ -1009,7 +1011,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+                          borderRadius: BorderRadius.circular(
+                            ExecutiveRadius.l,
+                          ),
                           border: Border.all(
                             color: GlassColors.ghostBorder,
                             width: 1.0,
@@ -1027,14 +1031,17 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                                 Icon(
                                   Icons.description_outlined,
                                   size: 16,
-                                  color: GlassColors.onSurfaceVariant.withOpacity(0.85),
+                                  color: GlassColors.onSurfaceVariant
+                                      .withOpacity(0.85),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Meeting Workspace',
                                   style: GlassText.bodyMD().copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: GlassColors.onSurface.withOpacity(0.95),
+                                    color: GlassColors.onSurface.withOpacity(
+                                      0.95,
+                                    ),
                                   ),
                                 ),
                                 const Spacer(),
@@ -1043,7 +1050,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                             ),
                             const SizedBox(height: 10),
                             Divider(
-                              color: GlassColors.outlineVariant.withOpacity(0.12),
+                              color: GlassColors.outlineVariant.withOpacity(
+                                0.12,
+                              ),
                               height: 1,
                               thickness: 1,
                             ),
@@ -1298,7 +1307,12 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       children: [
         ..._roleTags.map((tag) {
           return Container(
-            padding: const EdgeInsets.only(left: 10, right: 6, top: 4, bottom: 4),
+            padding: const EdgeInsets.only(
+              left: 10,
+              right: 6,
+              top: 4,
+              bottom: 4,
+            ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
@@ -1319,7 +1333,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      _roleTags = _roleTags.where((item) => item != tag).toList();
+                      _roleTags = _roleTags
+                          .where((item) => item != tag)
+                          .toList();
                     });
                     _scheduleAutoSave();
                   },
@@ -1409,7 +1425,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close_rounded, size: 20),
-                            color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ],
@@ -1419,7 +1437,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                         Text(
                           'Suggested Roles',
                           style: GlassText.bodyMD().copyWith(
-                            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.5,
+                            ),
                             fontSize: 12,
                           ),
                         ),
@@ -1447,16 +1467,22 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                               },
                               showCheckmark: false,
                               backgroundColor: Colors.transparent,
-                              selectedColor: GlassColors.primary.withOpacity(0.08),
+                              selectedColor: GlassColors.primary.withOpacity(
+                                0.08,
+                              ),
                               side: BorderSide(
                                 color: selected
                                     ? GlassColors.primary.withOpacity(0.18)
-                                    : GlassColors.outlineVariant.withOpacity(0.12),
+                                    : GlassColors.outlineVariant.withOpacity(
+                                        0.12,
+                                      ),
                               ),
                               labelStyle: GlassText.bodyMD().copyWith(
                                 color: selected
                                     ? GlassColors.primary.withOpacity(0.9)
-                                    : GlassColors.onSurfaceVariant.withOpacity(0.68),
+                                    : GlassColors.onSurfaceVariant.withOpacity(
+                                        0.68,
+                                      ),
                               ),
                             );
                           }).toList(),
@@ -1489,7 +1515,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                                 decoration: InputDecoration(
                                   hintText: 'Add a role tag',
                                   hintStyle: GlassText.bodyMD().copyWith(
-                                    color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                                    color: GlassColors.onSurfaceVariant
+                                        .withOpacity(0.3),
                                   ),
                                   filled: false,
                                   border: InputBorder.none,
@@ -1500,9 +1527,11 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                                     vertical: 8,
                                   ),
                                 ),
-                                 onSubmitted: (_) {
-                                  final newTag = _roleInputController.text.trim();
-                                  if (newTag.isNotEmpty && !_roleTags.contains(newTag)) {
+                                onSubmitted: (_) {
+                                  final newTag = _roleInputController.text
+                                      .trim();
+                                  if (newTag.isNotEmpty &&
+                                      !_roleTags.contains(newTag)) {
                                     setState(() {
                                       _roleTags = [..._roleTags, newTag];
                                     });
@@ -1517,7 +1546,8 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                             TextButton(
                               onPressed: () {
                                 final newTag = _roleInputController.text.trim();
-                                if (newTag.isNotEmpty && !_roleTags.contains(newTag)) {
+                                if (newTag.isNotEmpty &&
+                                    !_roleTags.contains(newTag)) {
                                   setState(() {
                                     _roleTags = [..._roleTags, newTag];
                                   });
@@ -1647,7 +1677,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
               ),
             )
           else
-            ..._attachments.where((a) => a['type'] != 'recording').map((attachment) {
+            ..._attachments.where((a) => a['type'] != 'recording').map((
+              attachment,
+            ) {
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: InkWell(
@@ -1714,7 +1746,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                           if (_isExtractableFile(attachment))
                             IconButton(
                               tooltip: 'ดูเนื้อหาที่แกะได้',
-                              icon: const Icon(Icons.article_outlined, size: 16),
+                              icon: const Icon(
+                                Icons.article_outlined,
+                                size: 16,
+                              ),
                               color: GlassColors.onSurfaceVariant.withOpacity(
                                 0.7,
                               ),
@@ -1951,12 +1986,18 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: Colors.redAccent,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     errorMsg,
-                    style: GlassText.secondary().copyWith(color: Colors.redAccent),
+                    style: GlassText.secondary().copyWith(
+                      color: Colors.redAccent,
+                    ),
                   ),
                 ),
               ],
@@ -2052,7 +2093,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                         child: Text(
                           'ยกเลิก',
                           style: GlassText.labelSM().copyWith(
-                            color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.6,
+                            ),
                           ),
                         ),
                       ),
@@ -2149,7 +2192,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       if (!isRecording && _sttService.utterances.isNotEmpty) {
         row1Children.add(
           IconButton(
-            icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+            icon: const Icon(
+              Icons.delete_sweep_rounded,
+              color: Colors.redAccent,
+            ),
             tooltip: 'ล้างทรานสคริปต์หลัก',
             onPressed: () => _showClearTranscriptConfirmDialog(context),
           ),
@@ -2162,7 +2208,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                 backgroundColor: GlassColors.gold,
                 foregroundColor: Colors.black,
                 shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.play_arrow_rounded, size: 20),
               label: Text(
@@ -2182,7 +2231,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                 backgroundColor: Colors.redAccent.withOpacity(0.8),
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.stop_rounded, size: 20),
               label: Text(
@@ -2208,14 +2260,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: row1Children,
-            ),
+            Row(children: row1Children),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: startStopButton,
-            ),
+            SizedBox(width: double.infinity, child: startStopButton),
             if (!isRecording) _buildUploadTranscribeSection(),
           ],
         ),
@@ -2227,9 +2274,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: GlassColors.surface.withOpacity(0.05),
-        border: Border.all(
-          color: GlassColors.outlineVariant.withOpacity(0.12),
-        ),
+        border: Border.all(color: GlassColors.outlineVariant.withOpacity(0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2269,7 +2314,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
               const Spacer(),
               if (!isRecording && _sttService.utterances.isNotEmpty) ...[
                 IconButton(
-                  icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+                  icon: const Icon(
+                    Icons.delete_sweep_rounded,
+                    color: Colors.redAccent,
+                  ),
                   tooltip: 'ล้างทรานสคริปต์หลัก',
                   onPressed: () => _showClearTranscriptConfirmDialog(context),
                 ),
@@ -2281,12 +2329,17 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                     backgroundColor: GlassColors.gold,
                     foregroundColor: Colors.black,
                     shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
                   label: Text(
                     'Start Live Transcription',
-                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+                    style: GlassText.bodyMD().copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: () {
                     _sttService.startSession(
@@ -2302,12 +2355,17 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                     backgroundColor: Colors.redAccent.withOpacity(0.8),
                     foregroundColor: Colors.white,
                     shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   icon: const Icon(Icons.stop_rounded, size: 20),
                   label: Text(
                     'Stop Transcription',
-                    style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold),
+                    style: GlassText.bodyMD().copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: () {
                     _sttService.stopSession();
@@ -2412,10 +2470,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
       if (result.takeMap != null) {
         setState(() {
-          _attachments = [
-            ..._attachments,
-            result.takeMap!,
-          ];
+          _attachments = [..._attachments, result.takeMap!];
           _activeTab = _MeetingDocTab.transcript;
         });
         _scheduleAutoSave();
@@ -2459,7 +2514,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   }
 
   Widget _buildRecordingTakesList() {
-    final recordingTakes = _attachments.where((a) => a['type'] == 'recording').toList();
+    final recordingTakes = _attachments
+        .where((a) => a['type'] == 'recording')
+        .toList();
     if (recordingTakes.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -2483,14 +2540,18 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
             final take = recordingTakes[index];
             final takeId = take['id'] ?? '';
             final isExpanded = _expandedTakeIds.contains(takeId);
-            
+
             List<SpeakerUtterance> utterances = [];
             if (isExpanded && take['transcript'] != null) {
               try {
                 final List<dynamic> parsed = jsonDecode(take['transcript']!);
                 for (final item in parsed) {
                   if (item is Map) {
-                    utterances.add(SpeakerUtterance.fromJson(Map<String, dynamic>.from(item)));
+                    utterances.add(
+                      SpeakerUtterance.fromJson(
+                        Map<String, dynamic>.from(item),
+                      ),
+                    );
                   }
                 }
               } catch (_) {}
@@ -2547,7 +2608,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                         ),
                       IconButton(
                         icon: Icon(
-                          isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                          isExpanded
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
                           size: 20,
                         ),
                         tooltip: 'ดูทรานสคริปต์',
@@ -2566,41 +2629,34 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.more_vert_rounded, size: 20),
                         onSelected: (action) async {
-                          if (action == 'create_task') {
-                            final buffer = StringBuffer();
-                            try {
-                              final List<dynamic> parsed = jsonDecode(take['transcript'] ?? '[]');
-                              for (final item in parsed) {
-                                if (item is Map) {
-                                  final u = SpeakerUtterance.fromJson(Map<String, dynamic>.from(item));
-                                  buffer.writeln('**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_');
-                                  buffer.writeln();
-                                }
-                              }
-                            } catch (e) {
-                              buffer.writeln('Error parsing transcript: $e');
+                          if (action == 'download_audio') {
+                            if (take['url'] != null &&
+                                take['url']!.isNotEmpty) {
+                              await launchUrl(
+                                Uri.parse(take['url']!),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } else {
+                              GlassNotifications.show(
+                                context,
+                                'ไม่มีลิงก์สำหรับดาวน์โหลด',
+                                isError: true,
+                              );
                             }
-                            final transcriptText = buffer.toString();
-                            
-                            final newTask = TaskModel(
-                              id: const Uuid().v4(),
-                              boardId: widget.board.id,
-                              title: 'บันทึกเสียง: ${take['name']}',
-                              description: transcriptText,
-                              dueDate: DateTime.now().add(const Duration(days: 7)),
-                              type: widget.board.type,
-                              status: widget.board.columns.firstOrNull ?? 'todo',
-                            );
-                            await Provider.of<StateTasks>(context, listen: false).addTask(widget.board, newTask);
-                            GlassNotifications.show(context, 'สร้างงานใหม่เรียบร้อยแล้ว');
-                          } else if (action == 'append_notes') {
+                          } else if (action == 'create_task') {
                             final buffer = StringBuffer();
                             try {
-                              final List<dynamic> parsed = jsonDecode(take['transcript'] ?? '[]');
+                              final List<dynamic> parsed = jsonDecode(
+                                take['transcript'] ?? '[]',
+                              );
                               for (final item in parsed) {
                                 if (item is Map) {
-                                  final u = SpeakerUtterance.fromJson(Map<String, dynamic>.from(item));
-                                  buffer.writeln('**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_');
+                                  final u = SpeakerUtterance.fromJson(
+                                    Map<String, dynamic>.from(item),
+                                  );
+                                  buffer.writeln(
+                                    '**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_',
+                                  );
                                   buffer.writeln();
                                 }
                               }
@@ -2609,9 +2665,55 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                             }
                             final transcriptText = buffer.toString();
 
-                            _notesController.text = '${_notesController.text}\n\n### Transcript: ${take['name']}\n$transcriptText';
+                            final newTask = TaskModel(
+                              id: const Uuid().v4(),
+                              boardId: widget.board.id,
+                              title: 'บันทึกเสียง: ${take['name']}',
+                              description: transcriptText,
+                              dueDate: DateTime.now().add(
+                                const Duration(days: 7),
+                              ),
+                              type: widget.board.type,
+                              status:
+                                  widget.board.columns.firstOrNull ?? 'todo',
+                            );
+                            await Provider.of<StateTasks>(
+                              context,
+                              listen: false,
+                            ).addTask(widget.board, newTask);
+                            GlassNotifications.show(
+                              context,
+                              'สร้างงานใหม่เรียบร้อยแล้ว',
+                            );
+                          } else if (action == 'append_notes') {
+                            final buffer = StringBuffer();
+                            try {
+                              final List<dynamic> parsed = jsonDecode(
+                                take['transcript'] ?? '[]',
+                              );
+                              for (final item in parsed) {
+                                if (item is Map) {
+                                  final u = SpeakerUtterance.fromJson(
+                                    Map<String, dynamic>.from(item),
+                                  );
+                                  buffer.writeln(
+                                    '**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_',
+                                  );
+                                  buffer.writeln();
+                                }
+                              }
+                            } catch (e) {
+                              buffer.writeln('Error parsing transcript: $e');
+                            }
+                            final transcriptText = buffer.toString();
+
+                            _notesController.text =
+                                '${_notesController.text}\n\n### Transcript: ${take['name']}\n$transcriptText';
                             _scheduleAutoSave();
-                            GlassNotifications.show(context, 'บันทึกความคืบหน้าเข้าบันทึกประชุมแล้ว');
+                            GlassNotifications.show(
+                              context,
+                              'บันทึกความคืบหน้าเข้าบันทึกประชุมแล้ว',
+                            );
                           } else if (action == 'clear_take_transcript') {
                             setState(() {
                               take['transcript'] = '[]';
@@ -2620,58 +2722,84 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                               }
                             });
                             _scheduleAutoSave();
-                            GlassNotifications.show(context, 'ล้างข้อมูลทรานสคริปต์ของ Take นี้สำเร็จ');
+                            GlassNotifications.show(
+                              context,
+                              'ล้างข้อมูลทรานสคริปต์ของ Take นี้สำเร็จ',
+                            );
                           } else if (action == 'delete') {
                             setState(() {
-                              _attachments.removeWhere((a) => a['id'] == take['id']);
+                              _attachments.removeWhere(
+                                (a) => a['id'] == take['id'],
+                              );
                             });
                             _scheduleAutoSave();
-                            GlassNotifications.show(context, 'ลบไฟล์อัดเสียงสำเร็จ');
+                            GlassNotifications.show(
+                              context,
+                              'ลบไฟล์อัดเสียงสำเร็จ',
+                            );
                           }
                         },
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                          const PopupMenuItem<String>(
-                            value: 'create_task',
-                            child: Row(
-                              children: [
-                                Icon(Icons.add_task_rounded, size: 18),
-                                SizedBox(width: 8),
-                                Text('สร้างบันทึก/งานใหม่'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'append_notes',
-                            child: Row(
-                              children: [
-                                Icon(Icons.note_add_rounded, size: 18),
-                                SizedBox(width: 8),
-                                Text('เขียนลงบันทึกประชุม (Append)'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'clear_take_transcript',
-                            child: Row(
-                              children: [
-                                Icon(Icons.clear_all_rounded, size: 18),
-                                SizedBox(width: 8),
-                                Text('ล้างทรานสคริปต์ของ Take นี้'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem<String>(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
-                                SizedBox(width: 8),
-                                Text('ลบไฟล์อัดเสียงนี้', style: TextStyle(color: Colors.redAccent)),
-                              ],
-                            ),
-                          ),
-                        ],
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'download_audio',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.download_rounded, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('ดาวน์โหลดไฟล์เสียง'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'create_task',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.add_task_rounded, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('สร้างบันทึก/งานใหม่'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'append_notes',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.note_add_rounded, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('เขียนลงบันทึกประชุม (Append)'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'clear_take_transcript',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.clear_all_rounded, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('ล้างทรานสคริปต์ของ Take นี้'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(),
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Colors.redAccent,
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'ลบไฟล์อัดเสียงนี้',
+                                      style: TextStyle(color: Colors.redAccent),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                       ),
                     ],
                   ),
@@ -2683,7 +2811,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                         child: Text(
                           'ไม่มีข้อมูลทรานสคริปต์',
                           style: GlassText.secondary().copyWith(
-                            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+                            color: GlassColors.onSurfaceVariant.withOpacity(
+                              0.5,
+                            ),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -2693,7 +2823,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                         padding: const EdgeInsets.only(top: 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: utterances.map((u) => _buildUtteranceBlock(u, false)).toList(),
+                          children: utterances
+                              .map((u) => _buildUtteranceBlock(u, false))
+                              .toList(),
                         ),
                       ),
                   ],
@@ -2719,9 +2851,13 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: value ? GlassColors.gold.withOpacity(0.15) : Colors.transparent,
+          color: value
+              ? GlassColors.gold.withOpacity(0.15)
+              : Colors.transparent,
           border: Border.all(
-            color: value ? GlassColors.gold.withOpacity(0.5) : GlassColors.outlineVariant.withOpacity(0.12),
+            color: value
+                ? GlassColors.gold.withOpacity(0.5)
+                : GlassColors.outlineVariant.withOpacity(0.12),
           ),
         ),
         child: Row(
@@ -2730,7 +2866,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
             Icon(
               icon,
               size: 16,
-              color: value ? GlassColors.gold : GlassColors.onSurfaceVariant.withOpacity(0.6),
+              color: value
+                  ? GlassColors.gold
+                  : GlassColors.onSurfaceVariant.withOpacity(0.6),
             ),
             const SizedBox(width: 6),
             Text(
@@ -2800,7 +2938,9 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
             child: Text(
               utterance.text,
               style: GlassText.bodyMD().copyWith(
-                color: isInterim ? GlassColors.onSurfaceVariant.withOpacity(0.5) : GlassColors.onSurface,
+                color: isInterim
+                    ? GlassColors.onSurfaceVariant.withOpacity(0.5)
+                    : GlassColors.onSurface,
                 fontStyle: isInterim ? FontStyle.italic : null,
                 height: 1.5,
               ),
@@ -2855,7 +2995,11 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   Future<void> _exportMarkdown() async {
     final content = _buildMarkdownDocument();
     if (content.isEmpty) {
-      GlassNotifications.show(context, 'ยังไม่มีเนื้อหาให้ส่งออก', isError: true);
+      GlassNotifications.show(
+        context,
+        'ยังไม่มีเนื้อหาให้ส่งออก',
+        isError: true,
+      );
       return;
     }
 
@@ -2909,254 +3053,41 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
   Future<void> _handleAiSummarize() async {
     if (_selectedMeeting == null) return;
 
-    final recordingTakes = _attachments.where((a) => a['type'] == 'recording').toList();
+    final recordingTakes = _attachments
+        .where((a) => a['type'] == 'recording')
+        .toList();
+    final fileAttachments = _attachments
+        .where((a) => a['type'] != 'recording')
+        .toList();
 
-    bool includeNotes = _notesController.text.isNotEmpty;
-    bool includeMainTranscript = _selectedMeeting!.transcript.isNotEmpty || _sttService.utterances.isNotEmpty;
-    
-    final Map<String, bool> includeTakes = {};
-    for (final take in recordingTakes) {
-      final id = take['id'];
-      if (id != null) {
-        final trans = take['transcript'];
-        if (trans != null && trans.isNotEmpty && trans != '[]') {
-          includeTakes[id] = true;
-        }
-      }
-    }
-
-    // Uploaded document attachments (PDF/DOCX) that can be extracted to text.
-    final fileAttachments =
-        _attachments.where((a) => a['type'] != 'recording').toList();
-    final Map<int, bool> includeFiles = {};
-    for (var i = 0; i < fileAttachments.length; i++) {
-      final name = (fileAttachments[i]['name'] ?? '').toLowerCase();
-      final url = (fileAttachments[i]['url'] ?? '').toLowerCase();
-      if (name.endsWith('.pdf') ||
-          name.endsWith('.docx') ||
-          url.endsWith('.pdf') ||
-          url.endsWith('.docx')) {
-        includeFiles[i] = true;
-      }
-    }
-
-    if (!includeNotes &&
-        !includeMainTranscript &&
-        includeTakes.isEmpty &&
-        includeFiles.isEmpty) {
-      GlassNotifications.show(
-        context,
-        'ไม่พบข้อมูล Notes หรือ Transcript สำหรับนำมาใช้สรุปการประชุม',
-        isError: true,
-      );
-      return;
-    }
-
-    final bool? confirm = await showDialog<bool>(
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: Colors.grey[900]?.withOpacity(0.95),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(
-                'เลือกแหล่งข้อมูลสำหรับสรุปประชุม',
-                style: GlassText.bodyMD().copyWith(fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_notesController.text.isNotEmpty)
-                      CheckboxListTile(
-                        title: const Text('บันทึกข้อความ (Notes)', style: TextStyle(color: Colors.white)),
-                        value: includeNotes,
-                        activeColor: GlassColors.gold,
-                        onChanged: (val) => setDialogState(() => includeNotes = val ?? false),
-                      ),
-                    if (_selectedMeeting!.transcript.isNotEmpty || _sttService.utterances.isNotEmpty)
-                      CheckboxListTile(
-                        title: const Text('ทรานสคริปต์หลัก (Live Transcript)', style: TextStyle(color: Colors.white)),
-                        value: includeMainTranscript,
-                        activeColor: GlassColors.gold,
-                        onChanged: (val) => setDialogState(() => includeMainTranscript = val ?? false),
-                      ),
-                    if (includeTakes.isNotEmpty) ...[
-                      const Divider(color: Colors.white24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'ไฟล์บันทึกเสียง (Recording Takes)',
-                            style: GlassText.secondary().copyWith(color: Colors.white70, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      ...recordingTakes.where((t) => includeTakes.containsKey(t['id'])).map((take) {
-                        final takeId = take['id']!;
-                        return CheckboxListTile(
-                          title: Text(take['name'] ?? 'Recording Take', style: const TextStyle(color: Colors.white70)),
-                          value: includeTakes[takeId],
-                          activeColor: GlassColors.gold,
-                          onChanged: (val) => setDialogState(() => includeTakes[takeId] = val ?? false),
-                        );
-                      }),
-                    ],
-                    if (includeFiles.isNotEmpty) ...[
-                      const Divider(color: Colors.white24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'ไฟล์เอกสาร (PDF / DOCX)',
-                            style: GlassText.secondary().copyWith(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      ...includeFiles.keys.map((i) {
-                        return CheckboxListTile(
-                          title: Text(
-                            fileAttachments[i]['name'] ?? 'Document',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          value: includeFiles[i],
-                          activeColor: GlassColors.gold,
-                          onChanged: (val) => setDialogState(
-                              () => includeFiles[i] = val ?? false),
-                        );
-                      }),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text('ยกเลิก', style: GlassText.bodyMD().copyWith(color: Colors.white.withOpacity(0.5))),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final anySelected = includeNotes ||
-                        includeMainTranscript ||
-                        includeTakes.values.contains(true) ||
-                        includeFiles.values.contains(true);
-                    if (!anySelected) {
-                      GlassNotifications.show(context, 'กรุณาเลือกแหล่งข้อมูลอย่างน้อย 1 แหล่ง', isError: true);
-                      return;
-                    }
-                    Navigator.pop(context, true);
-                  },
-                  style: TextButton.styleFrom(foregroundColor: GlassColors.gold),
-                  child: Text('เริ่มสรุปด้วย AI', style: GlassText.bodyMD().copyWith(color: GlassColors.gold, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AiSummarizeSheet(
+        isMeeting: true,
+        notesText: _notesController.text,
+        mainTranscriptText: _sttService.utterances.isNotEmpty
+            ? _sttService.getFormattedTranscript()
+            : _selectedMeeting!.transcript,
+        recordingTakes: recordingTakes,
+        fileAttachments: fileAttachments
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(),
+        targetId: 'meeting_${_selectedMeeting!.id}',
+        initialSummary: _descriptionController.text,
+      ),
     );
 
-    if (confirm != true) return;
+    if (result != null && mounted) {
+      final summary = result['summary'] as String?;
 
-    final buffer = StringBuffer();
-
-    if (includeNotes) {
-      buffer.writeln('=== MEETING NOTES ===');
-      buffer.writeln(_notesController.text);
-      buffer.writeln();
-    }
-
-    if (includeMainTranscript) {
-      buffer.writeln('=== MAIN TRANSCRIPT ===');
-      final mainText = _sttService.utterances.isNotEmpty 
-          ? _sttService.getFormattedTranscript() 
-          : _selectedMeeting!.transcript;
-      buffer.writeln(mainText);
-      buffer.writeln();
-    }
-
-    for (final take in recordingTakes) {
-      final takeId = take['id']!;
-      if (includeTakes[takeId] == true) {
-        buffer.writeln('=== TRANSCRIPT FOR TAKE: ${take['name']} ===');
-        try {
-          final List<dynamic> parsed = jsonDecode(take['transcript'] ?? '[]');
-          for (final item in parsed) {
-            if (item is Map) {
-              final u = SpeakerUtterance.fromJson(Map<String, dynamic>.from(item));
-              buffer.writeln('Speaker ${u.speaker}: ${u.text}');
-            }
-          }
-        } catch (e) {
-          buffer.writeln('(Error parsing transcript: $e)');
-        }
-        buffer.writeln();
-      }
-    }
-
-    setState(() => _isSummarizing = true);
-
-    try {
-      // Extract selected PDF/DOCX attachments to text (lazy + cached).
-      for (final i in includeFiles.keys) {
-        if (includeFiles[i] != true) continue;
-        final att = fileAttachments[i];
-        var fileText = att['extractedText'] ?? '';
-        if (fileText.isEmpty) {
-          fileText = await ApiCloudflare.extractAttachmentText(
-            Map<String, dynamic>.from(att),
-          );
-          if (fileText.isNotEmpty) att['extractedText'] = fileText;
-        }
-        if (fileText.isNotEmpty) {
-          buffer.writeln('=== FILE: ${att['name'] ?? 'document'} ===');
-          buffer.writeln(fileText);
-          buffer.writeln();
-        }
-      }
-
-      final combinedText = buffer.toString().trim();
-      if (combinedText.isEmpty) return;
-
-      final systemInstruction = 
-          'คุณคือผู้ช่วยเลขานุการ HR มืออาชีพที่มีหน้าที่สรุปการประชุม '
-          'กรุณาเขียนบันทึกสรุปการประชุมจากข้อมูลที่ได้รับให้ออกมาเป็นเอกสารทางการ (Official Meeting Minutes) ในรูปแบบ Markdown '
-          'ที่อ่านเข้าใจง่ายที่สุด แบ่งหัวข้อแยกประเด็นชัดเจนและสรุปประเด็นเป็นข้อๆ '
-          'โดยต้องครอบคลุม: หัวข้อการประชุม, วันเวลา (ถ้าระบุ), รายการผู้เข้าร่วม (ถ้ามี), ประเด็นสำคัญที่พูดคุย, มติหรือข้อตกลงร่วมกัน, และ Action Items (สิ่งที่ต้องทำต่อไปพร้อมคนรับผิดชอบและกำหนดส่ง) '
-          'ข้อกำหนดที่สำคัญที่สุด:\n'
-          '1. ห้ามใส่อิโมจิ (Emoji) หรือสติกเกอร์สัญลักษณ์พิเศษใดๆ ในเอกสารเด็ดขาด (No emojis allowed at all)\n'
-          '2. เขียนสรุปเป็นภาษาไทยอย่างเป็นทางการและกระชับ สละสลวย เข้าใจง่ายสำหรับผู้บริหารและเลขา HR\n'
-          '3. รูปแบบ Markdown ที่อนุญาตให้ใช้มีเพียง 4 แบบเท่านั้น: หัวข้อใหญ่ขึ้นต้นด้วย "# " (มีเว้นวรรค), หัวข้อย่อยขึ้นต้นด้วย "## " (มีเว้นวรรค), รายการขึ้นต้นด้วย "- " (มีเว้นวรรค), และรายการสิ่งที่ต้องทำขึ้นต้นด้วย "- [ ] " หรือ "- [x] "\n'
-          '4. ห้ามใช้ตัวหนา (**), ตัวเอียง (*), อินไลน์โค้ด (`), หัวข้อระดับ "###" ขึ้นไป, เลขลำดับ (1. 2. 3.), หรือเส้นคั่น (---) โดยเด็ดขาด เพราะระบบแสดงผลรองรับเฉพาะ 4 รูปแบบในข้อ 3 เท่านั้น';
-
-      final userPrompt = '$systemInstruction\\n\\nนี่คือข้อมูลการประชุม (Notes และ Transcript):\\n\\n$combinedText';
-
-      final summaryResult = await ApiCloudflare.summarizeMeeting(prompt: userPrompt);
-
-      if (summaryResult.isNotEmpty) {
-        // Normalize the AI output through the block parser/serializer so the
-        // stored summary contains ONLY the markdown subset the editor renders
-        // (strips stray **bold**, ###, numbered lists, ---, etc.).
-        final normalized =
-            serializeBlocksToMarkdown(parseMarkdownToBlocks(summaryResult));
+      if (summary != null && summary.isNotEmpty) {
         setState(() {
-          _descriptionController.text = normalized;
+          _descriptionController.text = summary;
         });
         _scheduleAutoSave();
-        GlassNotifications.show(context, 'สรุปการประชุมด้วย AI เรียบร้อยแล้ว');
-      } else {
-        GlassNotifications.show(context, 'ไม่สามารถสรุปข้อมูลได้ กรุณาลองใหม่อีกครั้ง', isError: true);
       }
-    } catch (e) {
-      debugPrint('[UI] AI Summary failed: $e');
-      GlassNotifications.show(context, 'เกิดข้อผิดพลาดในการสรุปข้อมูล: $e', isError: true);
-    } finally {
-      setState(() => _isSummarizing = false);
     }
   }
 }
@@ -3203,7 +3134,7 @@ class __PulsingRecordDotState extends State<_PulsingRecordDot>
                 color: Colors.redAccent.withOpacity(0.4 * _controller.value),
                 blurRadius: 6,
                 spreadRadius: 2,
-              )
+              ),
             ],
           ),
         );
@@ -3211,4 +3142,3 @@ class __PulsingRecordDotState extends State<_PulsingRecordDot>
     );
   }
 }
-

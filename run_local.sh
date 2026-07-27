@@ -26,10 +26,18 @@ pkill -f "wrangler dev" 2>/dev/null || true
 pkill -f "miniflare" 2>/dev/null || true
 sleep 1
 
+# Auto-clean temporary build & crash logs to prevent 'no space left on device' errors
+rm -rf cloudflare_backend/.wrangler/tmp/* 2>/dev/null || true
+rm -rf my_ai_assistant/*.log 2>/dev/null || true
+rm -rf /tmp/flutter_tools.* 2>/dev/null || true
+
 cd cloudflare_backend
 
-# Free up ports 8787, 8788, 8789 to avoid port collisions
-for port in 8787 8788 8789; do
+# Stop any Docker containers publishing port 8080
+docker stop $(docker ps -q --filter "publish=8080") 2>/dev/null || true
+
+# Free up ports 8080, 8787, 8788, 8789 to avoid port collisions
+for port in 8080 8787 8788 8789; do
   STALE_PID=$(lsof -t -i:$port 2>/dev/null || /usr/bin/lsof -t -i:$port 2>/dev/null || true)
   if [ ! -z "$STALE_PID" ]; then
     echo "Found conflicting process $STALE_PID on port $port. Freeing up port..."

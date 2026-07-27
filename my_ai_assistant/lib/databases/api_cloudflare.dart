@@ -638,17 +638,21 @@ class ApiCloudflare {
     return '';
   }
 
-  static Future<String> summarizeMeeting({required String prompt}) async {
+  static Future<String> summarizeMeeting({
+    required String prompt,
+    List<Map<String, dynamic>>? messages,
+  }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return '';
     try {
       final body = {
         'uid': user.uid,
         'model': 'google/gemma-4-26b-a4b-it',
-        'messages': [
+        'messages': messages ?? [
           {'role': 'user', 'content': prompt}
         ],
         'max_tokens': 2000,
+        'tools': [],
       };
 
       final response = await http.post(
@@ -1062,8 +1066,18 @@ class ApiCloudflare {
     }
   }
 
-  static Future<List<ChatMessage>> getChatMessages(String sessionId) async {
-    final url = '$_base/api/chat/messages?session_id=$sessionId';
+  static Future<List<ChatMessage>> getChatMessages(
+    String sessionId, {
+    String taskId = '',
+  }) async {
+    String url = '$_base/api/chat/messages';
+    if (sessionId.isNotEmpty) {
+      url += '?session_id=$sessionId';
+    } else if (taskId.isNotEmpty) {
+      url += '?task_id=$taskId';
+    } else {
+      return [];
+    }
     final response = await http.get(Uri.parse(url), headers: _headers);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

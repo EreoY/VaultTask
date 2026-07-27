@@ -164,12 +164,12 @@ List<MarkdownBlock> parseMarkdownToBlocks(String markdown) {
       continue;
     }
 
-    // Numbered list -> bullet (system has no numbered block)
+    // Numbered list
     final numbered = numberedRe.firstMatch(raw);
     if (numbered != null) {
       blocks.add(MarkdownBlock(
         id: id,
-        type: 'bullet',
+        type: 'numbered',
         text: _stripInline(numbered.group(1)!),
       ));
       continue;
@@ -190,7 +190,11 @@ List<MarkdownBlock> parseMarkdownToBlocks(String markdown) {
 }
 
 String serializeBlocksToMarkdown(List<MarkdownBlock> blocks) {
+  int numberedIndex = 1;
   return blocks.map((block) {
+    if (block.type != 'numbered') {
+      numberedIndex = 1;
+    }
     switch (block.type) {
       case 'h1':
         return '# ${block.text}';
@@ -198,6 +202,10 @@ String serializeBlocksToMarkdown(List<MarkdownBlock> blocks) {
         return '## ${block.text}';
       case 'bullet':
         return '- ${block.text}';
+      case 'numbered':
+        final prefix = '$numberedIndex. ';
+        numberedIndex++;
+        return '$prefix${block.text}';
       case 'todo':
         return block.isChecked ? '- [x] ${block.text}' : '- [ ] ${block.text}';
       case 'paragraph':
@@ -205,6 +213,43 @@ String serializeBlocksToMarkdown(List<MarkdownBlock> blocks) {
         return block.text;
     }
   }).join('\n');
+}
+
+String preserveCheckedItems(String oldMarkdown, String newMarkdown) {
+  if (oldMarkdown.isEmpty || newMarkdown.isEmpty) return newMarkdown;
+
+  final oldBlocks = parseMarkdownToBlocks(oldMarkdown);
+  final newBlocks = parseMarkdownToBlocks(newMarkdown);
+
+  // Collect normalized text of checked items in old Markdown
+  final checkedTexts = <String>{};
+  for (final b in oldBlocks) {
+    if (b.type == 'todo' && b.isChecked) {
+      final norm = b.text.trim().toLowerCase();
+      if (norm.isNotEmpty) checkedTexts.add(norm);
+    }
+  }
+
+  if (checkedTexts.isEmpty) return newMarkdown;
+
+  // Match and preserve isChecked state in new Markdown blocks
+  var modified = false;
+  for (var i = 0; i < newBlocks.length; i++) {
+    final b = newBlocks[i];
+    if (b.type == 'todo' && !b.isChecked) {
+      final norm = b.text.trim().toLowerCase();
+      final matches = checkedTexts.any((ct) =>
+          ct == norm ||
+          (norm.length > 5 && ct.contains(norm)) ||
+          (ct.length > 5 && norm.contains(ct)));
+      if (matches) {
+        newBlocks[i] = b.copyWith(isChecked: true);
+        modified = true;
+      }
+    }
+  }
+
+  return modified ? serializeBlocksToMarkdown(newBlocks) : newMarkdown;
 }
 
 class MarkdownBlockEditor extends StatefulWidget {
@@ -324,7 +369,7 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
 
           final newBlock = MarkdownBlock(
             id: const Uuid().v4(),
-            type: (block.type == 'todo' || block.type == 'bullet') ? block.type : 'paragraph',
+            type: (block.type == 'todo' || block.type == 'bullet' || block.type == 'numbered') ? block.type : 'paragraph',
             text: textAfter,
             isChecked: false,
           );
@@ -441,6 +486,7 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
                         _menuItem(index, 'h1', Icons.title_rounded, 'Heading 1', isFromPlus),
                         _menuItem(index, 'h2', Icons.subtitles_rounded, 'Heading 2', isFromPlus),
                         _menuItem(index, 'bullet', Icons.list_rounded, 'Bullet List', isFromPlus),
+                        _menuItem(index, 'numbered', Icons.format_list_numbered_rounded, 'Numbered List', isFromPlus),
                         _menuItem(index, 'todo', Icons.check_box_outlined, 'To-do List', isFromPlus),
                         const Divider(height: 8, thickness: 1, indent: 8, endIndent: 8),
                         _menuItem(index, 'insert_below', Icons.add_circle_outline, 'Insert Below', isFromPlus),
@@ -588,6 +634,17 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
       },
       itemBuilder: (context, index) {
         final block = _blocks[index];
+        int? numberedIndex;
+        if (block.type == 'numbered') {
+          numberedIndex = 1;
+          for (int i = index - 1; i >= 0; i--) {
+            if (_blocks[i].type == 'numbered') {
+              numberedIndex = numberedIndex! + 1;
+            } else {
+              break;
+            }
+          }
+        }
         final controller = _controllers[block.id];
         final focusNode = _focusNodes[block.id];
         if (controller == null || focusNode == null) {
@@ -597,6 +654,7 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
           key: ValueKey(block.id),
           block: block,
           index: index,
+          numberedIndex: numberedIndex,
           controller: controller,
           focusNode: focusNode,
           layerLink: _layerLinks.putIfAbsent(block.id, () => LayerLink()),
@@ -617,6 +675,7 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
 class _BlockRow extends StatefulWidget {
   final MarkdownBlock block;
   final int index;
+  final int? numberedIndex;
   final TextEditingController controller;
   final FocusNode focusNode;
   final LayerLink layerLink;
@@ -631,6 +690,7 @@ class _BlockRow extends StatefulWidget {
     super.key,
     required this.block,
     required this.index,
+    this.numberedIndex,
     required this.controller,
     required this.focusNode,
     required this.layerLink,
@@ -855,6 +915,17 @@ class _BlockRowState extends State<_BlockRow> {
             decoration: const BoxDecoration(
               color: GlassColors.onSurfaceVariant,
               shape: BoxShape.circle,
+            ),
+          )
+        else if (block.type == 'numbered')
+          Container(
+            margin: const EdgeInsets.only(right: 8, top: 4, left: 4),
+            child: Text(
+              '${widget.numberedIndex}.',
+              style: GlassText.bodyMD().copyWith(
+                fontWeight: FontWeight.w600,
+                color: GlassColors.onSurfaceVariant,
+              ),
             ),
           )
         else if (block.type == 'todo')

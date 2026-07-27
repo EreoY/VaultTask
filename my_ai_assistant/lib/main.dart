@@ -5,13 +5,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:async';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'utils/db_init.dart';
 
 import 'firebase_options.dart';
 import 'config/env_config.dart';
@@ -39,9 +37,8 @@ import 'ui/common/responsive_layout.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+  if (!kIsWeb) {
+    initDesktopDb();
   }
 
   try {
@@ -174,7 +171,7 @@ class _StartupGuardState extends State<StartupGuard> {
               OutlinedButton(
                 onPressed: () {
                   if (kIsWeb) {
-                    html.window.location.reload();
+                    // html.window.location.reload();
                   }
                 },
                 style: OutlinedButton.styleFrom(
@@ -220,7 +217,7 @@ class _StartupGuardState extends State<StartupGuard> {
               ElevatedButton(
                 onPressed: () {
                   if (kIsWeb) {
-                    html.window.location.reload();
+                    // html.window.location.reload();
                   }
                 },
                 child: const Text('RETRY'),
@@ -253,7 +250,7 @@ class _AppShellState extends State<AppShell> {
   static const _selectedTabPrefKey = 'app_selected_tab_index';
   int _index = 0;
   final Set<int> _visitedTabs = {0};
-  StreamSubscription<html.Event>? _windowFocusSub;
+  // StreamSubscription<html.Event>? _windowFocusSub;
   bool _isRestoringShellState = true;
 
   @override
@@ -263,16 +260,16 @@ class _AppShellState extends State<AppShell> {
       await _restoreShellState();
     });
     if (kIsWeb) {
-      _windowFocusSub = html.window.onFocus.listen((_) {
-        if (!mounted) return;
-        context.read<StateTasks>().refreshReadComments();
-      });
+      // _windowFocusSub = html.window.onFocus.listen((_) {
+      //   if (!mounted) return;
+      //   context.read<StateTasks>().refreshReadComments();
+      // });
     }
   }
 
   @override
   void dispose() {
-    _windowFocusSub?.cancel();
+    // _windowFocusSub?.cancel();
     super.dispose();
   }
 
