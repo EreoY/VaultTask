@@ -341,7 +341,7 @@ class _CalendarPageState extends State<CalendarPage> {
       height: isMobile ? 100 : 120,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 48,
-        vertical: 16,
+        vertical: 6,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -380,7 +380,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(ExecutiveRadius.m),
                       border: Border.all(

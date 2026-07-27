@@ -36,9 +36,7 @@ class UserMessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 24, left: 64),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.05),
+          color: const Color(0xFF1E2235),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             bottomLeft: Radius.circular(24),
@@ -291,9 +289,7 @@ class _AssistantMessageBubbleState extends State<AssistantMessageBubble> {
               margin: const EdgeInsets.only(bottom: 16, right: 48),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.03)
-                    : Colors.grey.withOpacity(0.05),
+                color: const Color(0xFF25293A),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24),
                   bottomLeft: Radius.circular(8),

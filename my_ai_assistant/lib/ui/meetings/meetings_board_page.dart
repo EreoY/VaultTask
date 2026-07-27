@@ -138,7 +138,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
                     child: Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFF161926),
                         borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
                         border: Border.all(color: GlassColors.outlineVariant),
                       ),
@@ -277,10 +277,20 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   }
 
   Widget _buildNavBar({required String metaText}) {
-    return WorkspaceChromeHeader(
-      padding: EdgeInsets.zero,
-      gapAfterMeta: 0,
-      crumbs: [
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, size: 20),
+          onPressed: _exitToWorkspace,
+          padding: const EdgeInsets.only(right: 12),
+          constraints: const BoxConstraints(),
+          color: GlassColors.onSurfaceVariant.withOpacity(0.8),
+        ),
+        Expanded(
+          child: WorkspaceChromeHeader(
+            padding: EdgeInsets.zero,
+            gapAfterMeta: 0,
+            crumbs: [
         WorkspaceCrumb(
           icon: Icons.home_rounded,
           label: 'Workspace HQ',
@@ -296,7 +306,10 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       ],
       metaText: metaText,
       title: const SizedBox.shrink(),
-    );
+    ),
+  ),
+  ],
+);
   }
 
   void _returnToMeetingsList() {

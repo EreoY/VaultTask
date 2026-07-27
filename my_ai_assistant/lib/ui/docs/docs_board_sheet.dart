@@ -631,7 +631,17 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
           : MediaQuery.of(context).size.height * 0.92,
       decoration: widget.embeddedInPage
           ? null
-          : GlassDecorations.solidSurface(radius: 20, hasShadow: true),
+          : BoxDecoration(
+              color: const Color(0xFF161926),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
       child: _buildEditorPane(),
     );
 
@@ -711,7 +721,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
                       const SizedBox(height: 20),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
+                          color: const Color(0xFF1E2235),
                           borderRadius: BorderRadius.circular(
                             ExecutiveRadius.l,
                           ),
@@ -797,6 +807,16 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
 
     return Row(
       children: [
+        if (widget.onBack != null || Navigator.of(context).canPop()) ...[
+          IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, size: 16),
+            onPressed: () => widget.onBack != null ? widget.onBack!() : Navigator.of(context).pop(),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            color: GlassColors.onSurfaceVariant.withOpacity(0.5),
+          ),
+          const SizedBox(width: 8),
+        ],
         Icon(
           Icons.home_rounded,
           size: 12,

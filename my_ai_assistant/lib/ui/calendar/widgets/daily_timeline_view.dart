@@ -110,12 +110,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
 
     return Column(
       children: [
-        VerticalPillDateSelector(
-          selectedDate: widget.date,
-          onDateSelected: (newDate) {
-            widget.onDateSelected?.call(newDate);
-          },
-        ),
         _buildTimelineHeader(upcomingTasks),
         Expanded(
           child: ListView.builder(

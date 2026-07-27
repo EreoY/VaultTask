@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../models/workspace_model.dart';
+import '../../../state_managers/state_boards.dart';
 import '../../common/bouncy_soft_button.dart';
 import '../../common/responsive_layout.dart';
 import '../../theme/glass_theme.dart';
@@ -122,18 +124,36 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // Row 2: Workspace Name & Subtitle
-                SizedBox(
-                  width: maxTextWidth,
-                  child: Text(
-                    selectedWorkspace?.name ?? 'Projects Hub',
-                    style: GlassText.headlineMD().copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: GlassColors.deepBlack,
-                      fontSize: isMobile ? 20 : 26,
-                      height: 1.2,
+                GestureDetector(
+                  onTap: isMobile ? () => _showWorkspaceSelector(context) : null,
+                  child: Container(
+                    width: maxTextWidth,
+                    color: Colors.transparent, // expand tap area
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            selectedWorkspace?.name ?? 'Projects Hub',
+                            style: GlassText.headlineMD().copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: GlassColors.deepBlack,
+                              fontSize: isMobile ? 20 : 26,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isMobile) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: GlassColors.deepBlack.withOpacity(0.7),
+                            size: 24,
+                          ),
+                        ],
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -207,6 +227,85 @@ class BoardsWorkspaceHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showWorkspaceSelector(BuildContext context) {
+    final boardsState = context.read<StateBoards>();
+    final workspaces = boardsState.workspaces;
+    if (workspaces.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            color: GlassColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: GlassColors.outlineVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Select Workspace',
+                    style: GlassText.headlineMD().copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: workspaces.length,
+                  itemBuilder: (context, index) {
+                    final ws = workspaces[index];
+                    final isSelected = ws.id == selectedWorkspace?.id;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                      leading: Icon(
+                        ws.type == 'personal'
+                            ? Icons.person_outline_rounded
+                            : Icons.group_outlined,
+                        color: isSelected ? GlassColors.primary : GlassColors.onSurfaceVariant,
+                      ),
+                      title: Text(
+                        ws.name,
+                        style: GlassText.bodyMD().copyWith(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? GlassColors.primary : GlassColors.onSurface,
+                        ),
+                      ),
+                      onTap: () {
+                        boardsState.setSelectedWorkspace(ws);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -12,6 +12,7 @@ import '../common/responsive_layout.dart';
 import 'widgets/board_edit_modal.dart';
 import 'widgets/boards_dialogs.dart';
 import 'widgets/boards_workspace_header.dart';
+import 'widgets/boards_workspace_tabs.dart';
 import 'widgets/projects_table.dart';
 
 class BoardsPage extends StatefulWidget {
@@ -66,6 +67,18 @@ class _BoardsPageState extends State<BoardsPage> {
                   },
           ),
         ),
+        if (isMobile) ...[
+          const SizedBox(height: 16),
+          AetherStaggeredFadeIn(
+            index: 1,
+            isActive: widget.isActive,
+            child: BoardsWorkspaceTabs(
+              workspaces: boardsState.workspaces,
+              selectedWorkspaceId: selectedWorkspace?.id,
+              onSelectWorkspace: (ws) => boardsState.setSelectedWorkspace(ws),
+            ),
+          ),
+        ],
         const SizedBox(height: 8),
         Expanded(
           child: AetherStaggeredFadeIn(
