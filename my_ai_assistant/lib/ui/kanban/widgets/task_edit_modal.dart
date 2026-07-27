@@ -626,7 +626,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                             const SizedBox(height: 32),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E2235),
+                                color: const Color(0x801E2235),
                                 borderRadius: BorderRadius.circular(ExecutiveRadius.l),
                                 border: Border.all(
                                   color: GlassColors.ghostBorder,
@@ -675,7 +675,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                   flex: 5,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF161926),
+                      color: const Color(0x80161926),
                       borderRadius: const BorderRadius.only(
                         topRight: Radius.circular(32),
                         bottomRight: Radius.circular(32),
@@ -777,7 +777,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                       const SizedBox(height: 24),
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E2235),
+                          color: const Color(0x801E2235),
                           borderRadius: BorderRadius.circular(ExecutiveRadius.l),
                           border: Border.all(
                             color: GlassColors.ghostBorder,

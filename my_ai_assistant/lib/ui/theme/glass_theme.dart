@@ -97,10 +97,13 @@ class ExecutiveRadius {
 }
 
 class GlassGradients {
-  static LinearGradient background() => const LinearGradient(
+  static LinearGradient background([bool isDark = false]) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [GlassColors.background, Color(0xFFF0F1F5)],
+    colors: [
+      isDark ? const Color(0xFF0F121C) : GlassColors.background,
+      isDark ? const Color(0xFF0F121C) : GlassColors.background,
+    ],
   );
 }
 

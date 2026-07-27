@@ -83,7 +83,7 @@ class _AiSummarizeSheetState extends State<AiSummarizeSheet> {
               hintText: 'ชื่อเสสชัน...',
               hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
               filled: true,
-              fillColor: const Color(0xFF161926),
+              fillColor: const Color(0x80161926),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -411,7 +411,7 @@ $_summaryOutput
           maxHeight: MediaQuery.of(context).size.height * 0.88,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E2235),
+          color: const Color(0x801E2235),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -635,7 +635,7 @@ $_summaryOutput
               hintText: 'คำสั่งเพิ่มเติมล่วงหน้า...',
               hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
               filled: true,
-              fillColor: const Color(0xFF161926),
+              fillColor: const Color(0x80161926),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -728,7 +728,7 @@ $_summaryOutput
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF161926),
+                        color: const Color(0x80161926),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white12),
                       ),
@@ -766,7 +766,7 @@ $_summaryOutput
                       decoration: BoxDecoration(
                         color: isUser
                             ? GlassColors.primary.withOpacity(0.2)
-                            : const Color(0xFF161926),
+                            : const Color(0x80161926),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isUser
@@ -806,7 +806,7 @@ $_summaryOutput
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E2235),
+            color: const Color(0x801E2235),
             border: Border(top: BorderSide(color: Colors.white12)),
           ),
           child: Row(

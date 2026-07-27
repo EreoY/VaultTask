@@ -138,7 +138,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
                     child: Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF161926),
+                        color: const Color(0x80161926),
                         borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
                         border: Border.all(color: GlassColors.outlineVariant),
                       ),

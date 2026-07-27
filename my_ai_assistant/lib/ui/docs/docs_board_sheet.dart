@@ -632,7 +632,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
       decoration: widget.embeddedInPage
           ? null
           : BoxDecoration(
-              color: const Color(0xFF161926),
+              color: const Color(0x80161926),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -721,7 +721,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
                       const SizedBox(height: 20),
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E2235),
+                          color: const Color(0x801E2235),
                           borderRadius: BorderRadius.circular(
                             ExecutiveRadius.l,
                           ),
