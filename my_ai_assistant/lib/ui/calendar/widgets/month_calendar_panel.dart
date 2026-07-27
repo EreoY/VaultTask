@@ -634,7 +634,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
     );
 
     return Dialog(
-      backgroundColor: const Color(0xFF11161B),
+      backgroundColor: GlassColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ExecutiveRadius.l),
         side: BorderSide(color: GlassColors.ghostBorder),

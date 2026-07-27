@@ -90,26 +90,6 @@ class GlassCard extends StatelessWidget {
       content = Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            top: -45,
-            right: -45,
-            child: IgnorePointer(
-              child: Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      GlassColors.primary.withOpacity(0.12),
-                      GlassColors.primary.withOpacity(0.04),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
           cardContent,
         ],
       );

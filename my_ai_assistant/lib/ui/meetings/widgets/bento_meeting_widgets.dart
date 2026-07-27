@@ -343,7 +343,7 @@ class BentoMeetingCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: EdgeInsets.all(isMobile ? 14 : 18),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E2235),
+          color: GlassColors.surface,
           borderRadius: BorderRadius.circular(ExecutiveRadius.xl), // 24px
           border: Border.all(color: GlassColors.outlineVariant),
           boxShadow: [

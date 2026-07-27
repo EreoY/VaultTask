@@ -7,7 +7,7 @@ class AetherDynamicBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isDark ? const Color(0xFF0F121C) : const Color(0xFF131726),
+      color: isDark ? const Color(0xFF0F121C) : const Color(0xFFF8F9FA),
     );
   }
 }

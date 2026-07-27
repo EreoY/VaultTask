@@ -91,18 +91,9 @@ class _AetherChatViewState extends State<AetherChatView> {
           top: -100,
           right: -100,
           child: IgnorePointer(
-            child: Container(
+            child: SizedBox(
               width: widget.isFloating ? 400 : 800,
               height: widget.isFloating ? 400 : 800,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    GlassColors.primary.withOpacity(0.02),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
             ),
           ),
         ),

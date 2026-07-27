@@ -2010,7 +2010,7 @@ class _TaskEditModalState extends State<TaskEditModal> {
                   Expanded(
                     child: PopupMenuButton<String>(
                       tooltip: 'เลือกเสสชัน',
-                      color: const Color(0xFF1E1E2C),
+                      color: GlassColors.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(ExecutiveRadius.m),
                         side: BorderSide(
