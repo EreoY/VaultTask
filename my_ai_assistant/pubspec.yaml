@@ -83,6 +83,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/env
+    - assets/images/
+    - assets/images/calendarV2.png
+    - assets/images/speaker.png
+    - assets/images/chat.png
+    - assets/images/profile.png
+    - assets/images/workspace.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

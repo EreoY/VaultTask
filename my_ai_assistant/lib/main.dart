@@ -22,7 +22,7 @@ import 'state_managers/state_tasks.dart';
 import 'state_managers/state_chat.dart';
 import 'models/board_model.dart';
 import 'ui/theme/glass_theme.dart';
-import 'ui/common/glass_widgets.dart';
+import 'ui/common/floating_bottom_nav_bar.dart';
 import 'ui/common/aether_side_nav.dart';
 import 'ui/chat/chat_page.dart';
 import 'ui/dashboard/dashboard_page.dart';
@@ -397,31 +397,9 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       backgroundColor: GlassColors.background,
       bottomNavigationBar: !isDesktop && selectedBoard == null
-          ? GlassBottomBar(
+          ? FloatingBottomNavBar(
               selectedIndex: _index,
               onItemSelected: (index) => _selectTab(index),
-              items: const [
-                GlassBottomBarItem(
-                  icon: Icons.dashboard_outlined,
-                  label: 'Dashboard',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.grid_view_rounded,
-                  label: 'Boards',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.calendar_today_outlined,
-                  label: 'Calendar',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Chat',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Profile',
-                ),
-              ],
               isDark: false,
             )
           : null,

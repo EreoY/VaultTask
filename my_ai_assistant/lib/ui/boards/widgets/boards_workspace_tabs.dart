@@ -22,17 +22,9 @@ class BoardsWorkspaceTabs extends StatelessWidget {
     final isMobile = Responsive.isMobile(context);
 
     return Container(
-      height: 36,
+      height: 42,
       margin: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: GlassColors.outlineVariant.withOpacity(0.15),
-            width: 1,
-          ),
-        ),
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -42,47 +34,69 @@ class BoardsWorkspaceTabs extends StatelessWidget {
           final workspace = workspaces[index];
           final isSelected = selectedWorkspaceId == workspace.id;
 
-          return GestureDetector(
-            onTap: () => onSelectWorkspace(workspace),
-            child: Container(
-              margin: const EdgeInsets.only(right: 24),
-              padding: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isSelected
-                        ? GlassColors.primary
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    workspace.type == 'personal'
-                        ? Icons.person_outline_rounded
-                        : Icons.group_outlined,
-                    size: 14,
-                    color: isSelected
-                        ? GlassColors.primary
-                        : GlassColors.onSurfaceVariant.withOpacity(0.5),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    workspace.name,
-                    style: GlassText.bodyMD().copyWith(
-                      fontSize: 13,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? GlassColors.onSurface
-                          : GlassColors.onSurfaceVariant.withOpacity(0.6),
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => onSelectWorkspace(workspace),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? GlassColors.deepBlack : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? GlassColors.deepBlack
+                            : GlassColors.outlineVariant,
+                        width: 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: GlassColors.deepBlack.withOpacity(0.12),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          workspace.type == 'personal'
+                              ? Icons.person_outline_rounded
+                              : Icons.group_outlined,
+                          size: 15,
+                          color: isSelected
+                              ? Colors.white
+                              : GlassColors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          workspace.name,
+                          style: GlassText.bodyMD().copyWith(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : GlassColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           );
@@ -91,3 +105,4 @@ class BoardsWorkspaceTabs extends StatelessWidget {
     );
   }
 }
+

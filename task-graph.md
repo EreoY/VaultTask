@@ -1,3 +1,521 @@
+## Phase 211: Meetings Page Bento UI Redesign & Mobile Text Optimization
+
+### Task 211.1: Register Phase 211 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 211 tasks for redesigning the Meetings surface into Bento UI with Quick Jump Chips, Collapsible Text Toggles, and Bento Card Summaries.
+- **Why:** Provide a premium Bento UI aesthetic for Meetings while eliminating mobile long-text scroll fatigue.
+
+### Task 211.2: Build bento_meeting_widgets.dart Component Suite
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`
+- **Action:** Create `bento_meeting_widgets.dart` with `BentoMeetingHeroHeader`, `BentoMeetingQuickChips`, `BentoMeetingSummaryCard`, `BentoMeetingActionItemsCard`, and `BentoCollapsibleText`.
+- **Why:** Modularize Bento UI widgets for Meetings page according to Anti-Bloat Mandates.
+
+### Task 211.3: Refactor meetings_board_page.dart & meetings_board_sheet.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** Integrate Bento UI components, quick section jump tabs, and collapsible text read-more controls into meetings list and detail surfaces.
+- **Why:** Deliver cohesive Bento UI matching Dashboard with mobile long-text UX optimization.
+
+### Task 211.4: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** Perform syntax check and code structure audit for all modified files.
+- **Why:** Ensure clean execution across mobile, tablet, and desktop viewports.
+
+## Phase 210: Desktop Date Strip Dynamic Day Expansion & Month Header Integration
+
+### Task 210.1: Register Phase 210 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 210 tasks for adding Month & Year Header bar and dynamic day filler calculation for wide desktop viewports in `bento_box_widgets.dart`.
+- **Why:** Eliminate huge gaps on desktop viewports by dynamically populating more days and displaying Month context.
+
+### Task 210.2: Implement Month Header & Dynamic Day Count Calculation in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Add Month/Year title row above date strip, calculate dynamic day count based on viewport width (`count = (netWidth / itemWidth)`), and render consecutive date capsules neatly.
+- **Why:** Prevent capsules from separating across large desktop screen widths.
+
+### Task 210.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution across mobile, tablet, and desktop viewports.
+
+## Phase 209: Dashboard Weekly Date Strip Dynamic Full-Width Stretch
+
+### Task 209.1: Register Phase 209 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 209 tasks for making `BentoWeeklyDateStrip` dynamically stretch across the entire available dashboard width from left (20px) to right (screenWidth - 20px).
+- **Why:** Guarantee 100% full-width coverage touching the right edge of dashboard cards.
+
+### Task 209.2: Implement Dynamic Width & MainAxisAlignment.spaceBetween in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Calculate `availableWidth = screenWidth - 40`, calculate dynamic `itemWidth = (availableWidth - (gap * 5)) / 6`, and arrange date capsules using `MainAxisAlignment.spaceBetween`.
+- **Why:** Ensure date capsules stretch completely across the dashboard from left margin to right margin without leaving empty gaps.
+
+### Task 209.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or responsive layout breaking.
+
+## Phase 208: Weekly Date Strip Full-Bleed Edge-to-Edge Layout
+
+### Task 208.1: Register Phase 208 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 208 tasks for updating `BentoWeeklyDateStrip` to full-bleed edge-to-edge right boundary scroll layout in `bento_box_widgets.dart`.
+- **Why:** Allow date strip capsules to scroll all the way to the right screen edge.
+
+### Task 208.2: Refactor BentoWeeklyDateStrip for Full-Bleed Scrolling in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Move horizontal padding from outer container into `SingleChildScrollView.padding` (`EdgeInsets.only(left: 20, right: 20)`).
+- **Why:** Ensure scrolling capsules flow seamlessly to the right boundary of the viewport.
+
+### Task 208.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Validate syntax and layout rendering in `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or visual regression.
+
+## Phase 207: Move Weekly Date Strip Outside Hero Card
+
+### Task 207.1: Register Phase 207 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 207 tasks for moving the weekly date strip outside `BentoHeroCard` and placing it below the card in `dashboard_page.dart`.
+- **Why:** To follow user's UI layout clarification.
+
+### Task 207.2: Extract BentoWeeklyDateStrip Standalone Widget in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Remove date strip from inside `BentoHeroCard` and extract standalone `BentoWeeklyDateStrip` widget.
+- **Why:** Decouple date strip from inside card background.
+
+### Task 207.3: Position BentoWeeklyDateStrip Below Hero Card in dashboard_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Place `BentoWeeklyDateStrip` between `BentoHeroCard` and `BentoPlanGrid`.
+- **Why:** Display weekly date capsules cleanly outside the hero card.
+
+### Task 207.4: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Validate syntax and layout rendering for both modified files.
+- **Why:** Ensure zero errors or visual regressions.
+
+## Phase 206: Dashboard Hero Card Weekly Date Strip Integration
+
+### Task 206.1: Register Phase 206 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 206 tasks for adding weekly date strip capsule widget in `bento_box_widgets.dart`.
+- **Why:** Display interactive/aesthetic 6-day date capsules on the Daily Challenge hero card matching image.png reference.
+
+### Task 206.2: Build _buildWeeklyDateStrip Widget in BentoHeroCard
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Add `_buildWeeklyDateStrip` with capsule layout, indicator dots, day labels, day numbers, and active/today highlighting.
+- **Why:** Match the date widget aesthetic requested by user from image.png.
+
+### Task 206.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or responsive layout breaking.
+
+## Phase 205: Dashboard Bento Card Color Palette Update
+
+### Task 205.1: Register Phase 205 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 205 tasks for updating Bento card color tokens in `glass_theme.dart`.
+- **Why:** To update card colors to new requested hex values (#B3A0FF, #FFBE5A, #A9CBFF, #FD9FFF).
+
+### Task 205.2: Update Bento Color Tokens in glass_theme.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** Update `bentoLavender`, `bentoOrange`, `bentoBlue`, and `bentoPink` color constants.
+- **Why:** Apply user's custom hex color palette across all dashboard Bento cards.
+
+### Task 205.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** Perform syntax check and code structure audit for `glass_theme.dart`.
+- **Why:** Ensure clean execution without syntax errors or color token breaking changes.
+
+## Phase 204: Dashboard Bento Card Description Shortening and Mobile Line Constraint
+
+### Task 204.1: Register Phase 204 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 204 tasks for shortening description texts in "Message with AI" and "Profile & Sync" cards in `bento_box_widgets.dart`.
+- **Why:** Prevent description text from extending behind 3D graphics on small screens.
+
+### Task 204.2: Update Card Description Strings in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Shorten description for "Message with AI" to `'Chat with AI anytime'` and "Profile & Sync" to `'Sync avatars & team roles'`.
+- **Why:** Keep card text concise and clean on mobile displays.
+
+### Task 204.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Validate syntax and layout logic in `bento_box_widgets.dart`.
+- **Why:** Guarantee zero errors or visual regressions.
+
+## Phase 203: Mobile Dashboard Bento Card 3D Image Overlap and Overflow Fix
+
+### Task 203.1: Register Phase 203 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 203 tasks for fixing text overlap and 3D image overflow in "Message with AI" and "Profile & Sync" cards on mobile screens in `bento_box_widgets.dart`.
+- **Why:** To fulfill Sovereign Protocol V2 infrastructure real-time tracking mandates.
+
+### Task 203.2: Refactor _buildBentoCard in bento_box_widgets.dart for Mobile Text Margin and Image Positioning
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Add text padding / constrained width for card content and adjust 3D graphic image sizing (`imageSize`), relative positioning (`rightOffset`, `bottomOffset`, `topOffset`), and clipping/container constraints on mobile screens.
+- **Why:** Prevent 3D graphic images from overlapping card text and spilling out of card bounds on small mobile viewports.
+
+### Task 203.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or visual regression.
+
+## Phase 202: Workspace Header Fine-Tuning, Rename Button Restore & Workspace Tabs Removal
+
+### Task 202.1: Register Phase 202 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 202 สำหรับการนำปุ่ม Rename Workspace กลับคืนมา, ลบส่วนประกอบ Workspace Tabs (ตามภาพ image.png), ปรับขยับรูป 3D เข้าด้านใน และแก้ปัญหาข้อความล้นปุ่มบนมือถือ
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 202.2: Restore Rename Workspace Button in BoardsWorkspaceHeader & boards_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** เพิ่มปุ่มดินสอ Rename Workspace คืนใน Header และผูก Callback จาก boards_page.dart
+- **Why:** เพื่อเปิดให้ผู้ใช้สามารถเปลี่ยนชื่อ Workspace ได้ตามเดิม
+
+### Task 202.3: Remove BoardsWorkspaceTabs Component from boards_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** ลบส่วนเรียกใช้ BoardsWorkspaceTabs ออกจาก boards_page.dart ตามภาพ image.png
+- **Why:** เพื่อลบแถบแคปซูลรายการ Workspace ที่ไม่จำเป็นออกตามความต้องการของผู้ใช้
+
+### Task 202.4: Adjust 3D Image Offset & Fix Mobile Button Text Overflow
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/common/bouncy_soft_button.dart`
+- **Action:** ปรับตำแหน่ง Positioned(right: isMobile ? 24 : 48) เพื่อขยับรูป workspace.png เข้าด้านใน และใช้ FittedBox/Responsive Font Size ในปุ่ม Join Workspace & New Project ป้องกันข้อความล้นปุ่มบนมือถือ
+- **Why:** เพื่อให้การแสดงผลบนสมาร์ตโฟนประณีตและสวยงามสมบูรณ์แบบ
+
+### Task 202.5: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย `dart analyze`
+- **Why:** ยืนยันความถูกต้องและความสมบูรณ์ของโค้ด
+
+## Phase 201: Workspace Hero Bento 3D Graphic Integration & Rename Button Removal
+
+### Task 201.1: Register Phase 201 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 201 สำหรับการใส่รูปภาพ workspace.png แบบ 3D ใน Bento Hero Banner และลบปุ่ม Rename Workspace
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 201.2: Copy Asset workspace.png & Update pubspec.yaml
+- **Status:** [x] Done
+- **Target Files:** `picture/workspace.png`, `my_ai_assistant/assets/images/workspace.png`, `my_ai_assistant/pubspec.yaml`
+- **Action:** คัดลอกไฟล์รูปภาพไปยังไดเรกทอรี assets และยืนยันการลงทะเบียนใน pubspec.yaml
+- **Why:** เพื่อให้โปรเจกต์ Flutter สามารถเรียกใช้รูปภาพได้
+
+### Task 201.3: Update BoardsWorkspaceHeader with 3D Graphic & Remove Rename Button
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** ลบปุ่ม Rename Workspace ออก และเพิ่ม 3D Image popping out บน Bento Hero Header พร้อม Responsive Text Width Layout
+- **Why:** เพื่อให้ดีไซน์หน้า Workspace โดดเด่น สวยงามระดับ พรีเมียม ตรงตามความต้องการของผู้ใช้งาน
+
+### Task 201.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย `dart analyze`
+- **Why:** ยืนยันความถูกต้องและความสมบูรณ์ของโค้ด
+
+## Phase 200: Workspace Redesign for Bento UI & Soft Pastel Aesthetics Harmonization
+
+### Task 200.1: Register Phase 200 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 200 สำหรับการปรับปรุงดีไซน์ Workspace ให้เข้ากับ Bento UI Pastel Palette ของ Dashboard
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 200.2: Redesign BoardsWorkspaceHeader to Bento Hero Banner
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** แปลง Header ให้เป็น Bento Hero Card สี Lavender Soft Pastel พร้อม 3D Accent Graphic/Stats Badge และ Bouncy Soft Buttons
+- **Why:** เพื่อให้ส่วนบนสุดของหน้า Workspace สดใส สวยงาม มีมิติและเข้าธีม Bento UI
+
+### Task 200.3: Redesign BoardsWorkspaceTabs to Soft Pastel Segmented Chips
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_tabs.dart`
+- **Action:** แปลง Workspace Tabs ให้เป็น Soft Pastel Pill Segment Filter พร้อมเอฟเฟกต์สีพาสเทลเมื่อเลือก
+- **Why:** เพื่อแทนที่เส้นขีดขอบธรรมดาด้วยดีไซน์ Bento Chip สไตล์พรีเมียม
+
+### Task 200.4: Redesign ProjectsTable & Extract Bento Cards Widgets
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`, `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** ปรับดีไซน์ Project List/Grid เป็น Bento Card System ที่หมุนเวียนสี Soft Pastel (`bentoLavender`, `bentoOrange`, `bentoBlue`, `bentoPink`), ขอบมน 24px, Pill Status Badges, Member Stack Avatars และ Soft Action Pills ทั้งบน Mobile และ Desktop
+- **Why:** เพื่อให้สอดคล้องกับ Dashboard ธีม Bento UI Soft Pastel และปฏิบัติตาม Anti-Bloat Mandate (<600 บรรทัด)
+
+### Task 200.5: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย `flutter analyze`
+- **Why:** ยืนยันความถูกต้องและความสมบูรณ์ของโค้ด
+
+## Phase 199: Dashboard Bento Palette Harmonization & Mobile Create Project Button Upgrade
+
+### Task 199.1: Register Phase 199 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 199 สำหรับการคุมโทนสีปุ่มให้เข้ากับ Dashboard Bento Palette
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 199.2: Expand Dashboard Bento Color Palette in bouncy_soft_button.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/bouncy_soft_button.dart`
+- **Action:** เพิ่มตัวเลือกโทนสี Bento (Lavender, Orange, Blue, Pink, Dark) ให้กับ BouncySoftButton
+- **Why:** เพื่อให้โทนสีของปุ่มมีความสอดคล้องกับหน้า Dashboard อย่างสมบูรณ์แบบ
+
+### Task 199.3: Upgrade _MobileNewProjectButton in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** เปลี่ยนปุ่ม Create New Project บนมือถือให้เป็น BouncySoftButton สไตล์ Lavender/Dark ทรงแคปซูลใหญ่
+- **Why:** เพื่อให้ปุ่มสร้างโปรเจกต์ใหม่บนมือถือดูน่ารัก โดดเด่น และเด้งนุ่มนวลเวลาแตะสัมผัส
+
+### Task 199.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 198: Bouncy Soft Button Component & Theme Integration
+
+### Task 198.1: Register Phase 198 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 198 สำหรับการสร้าง BouncySoftButton ตามดีไซน์ HTML/CSS
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 198.2: Create BouncySoftButton Component in bouncy_soft_button.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/bouncy_soft_button.dart`
+- **Action:** สร้าง BouncySoftButton รองรับ 3 โทนสี (Purple, Orange, Executive Dark) พร้อมเอฟเฟกต์หดตัว scale(0.95) และเงาสีฟุ้ง
+- **Why:** มอบประสบการณ์การกดที่น่ารัก นุ่มนวล และตอบสนองสัมผัสได้อย่างดีเยี่ยม
+
+### Task 198.3: Integrate Bouncy Button Styling in glass_theme.dart & Boards Header
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** อัปเดต ThemeData ปุ่ม และนำ BouncySoftButton ไปใช้ในหน้า Workspace Header
+- **Why:** ให้ปุ่มทั่วทั้งแอปพลิเคชันมีสไตล์สอดคล้องกันอย่างสวยงาม
+
+### Task 198.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 197: Poppins Font Integration & Image-Matched Floating Bottom Nav Bar
+
+### Task 197.1: Register Phase 197 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 197 สำหรับการเปลี่ยนฟอนต์เป็น Poppins และดีไซน์ Bottom Nav Bar แบบ image.png
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 197.2: Integrate Poppins Font Family in glass_theme.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** ปรับเปลี่ยนฟอนต์จาก Inter เป็น GoogleFonts.poppins ในระบบ GlassText และ GlassAppTheme
+- **Why:** เพื่อให้การแสดงผลข้อความในแอปพลิเคชันนุ่มนวล ทันสมัย และอ่านง่ายขึ้น
+
+### Task 197.3: Redesign FloatingBottomNavBar in floating_bottom_nav_bar.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** สร้าง Active White Circle Badge ไอคอนสีดำสนิท บนแถบแคปซูลสีดำเข้มลอยตัว ตรงตามภาพ image.png 100%
+- **Why:** เพื่อให้เมนูด้านล่างบนมือถือมีดีไซน์โดดเด่น สวยงามระดับ พรีเมียม
+
+### Task 197.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 196: Revert Mobile Workspace to Clean White Executive Cards
+
+### Task 196.1: Register Phase 196 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 196 สำหรับการย้อนกลับโค้ดการ์ด Workspace บนมือถือเป็นเวอร์ชันสีขาวสะอาดตา
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 196.2: Revert _MobileBoardCard to Clean White Design in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** ปรับสีการ์ดเป็นสีขาวสะอาด (Colors.white) คืนจุด Dot สัญลักษณ์สีโปรเจกต์ และปรับปุ่มทางลัดล่างให้เป็นสไตล์ Clean White
+- **Why:** เพื่อให้การ์ดแสดงผลเรียบหรู คมชัด สบายตาและใช้งานง่ายบนมือถือ
+
+### Task 196.3: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 195: Bento Pastel Color Palette Integration for Mobile Workspace
+
+### Task 195.1: Register Phase 195 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 195 สำหรับการแมปสี Bento Pastel Palette เข้ากับการ์ด Workspace บนมือถือ
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 195.2: Integrate Bento Color Palette in _MobileBoardCard in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** สร้างกลไกแมปสีพาสเทล Bento (Lavender, Orange, Blue, Pink, Mint) ให้กับการ์ดแต่ละใบ พร้อมปรับป้ายแท็กและ Action Bar ให้เข้าคู่กัน
+- **Why:** เพื่อให้ดีไซน์หน้า Workspace สดใส สวยงาม มีชีวิตชีวา และสอดคล้องกับหน้า Dashboard
+
+### Task 195.3: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 194: Mobile-First Workspace Redesign & Executive Card Layout
+
+### Task 194.1: Register Phase 194 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 194 สำหรับการปรับแต่งหน้า Workspace บนมือถือ
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 194.2: Implement Mobile Board Cards in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** สร้าง _MobileBoardCard สำหรับมุมมองมือถือ พร้อมปุ่มทางลัดขนาดใหญ่ (Board, Docs, Meetings) และเมนูจัดการที่สัมผัสได้ง่าย
+- **Why:** เพื่อเปลี่ยนจากตาราง Desktop 6 คอลัมน์ที่แน่นยัด เป็นการ์ดที่ใช้งานง่าย สวยงาม เข้ากับ Theme
+
+### Task 194.3: Optimize BoardsWorkspaceHeader & Tabs for Mobile
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_tabs.dart`
+- **Action:** ปรับ Header และ Workspace Tabs ให้รองรับการกดด้วยนิ้วสัมผัสบนจอโทรศัพท์
+- **Why:** เพิ่มความเรียบลื่นในการสลับ Workspace และจัดการโครงการ
+
+### Task 194.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 193: Bento Grid Height Expansion & 3D Offset Optimization
+
+### Task 193.1: Register Phase 193 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 193 สำหรับการขยายความสูงของการ์ด Bento Box และการปรับออฟเซ็ตภาพ 3D
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 193.2: Expand Card Heights & Set Safe 3D Top Offsets in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ขยายความสูงของการ์ดฝั่งซ้ายและขวา ปรับ topOffset ของ chat.png และ profile.png ให้ลอยอยู่ต่ำกว่าป้ายแท็กขวาบนอย่างเด็ดขาด
+- **Why:** ป้องกันไม่ให้ภาพ 3D เบียดทับป้ายแท็กขวาบน และเพิ่มพื้นที่หายใจให้กับการ์ด
+
+### Task 193.3: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 192: Profile Asset Integration & Team Sync Card Redesign
+
+### Task 192.1: Register Phase 192 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 192 สำหรับการคัดลอก profile.png และอัปเดตการ์ด Team Sync
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 192.2: Copy profile.png to Assets & Update pubspec.yaml
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/assets/images/profile.png`, `my_ai_assistant/pubspec.yaml`
+- **Action:** คัดลอก profile.png ไปยัง assets/images/ และลงทะเบียน asset ใน pubspec.yaml
+- **Why:** เพื่อให้แอปพลิเคชันเรียกใช้รูปภาพ profile 3D ได้ถูกต้อง
+
+### Task 192.3: Update Team Sync Card with Profile Asset, Title, and Description
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ใส่ profile.png ในการ์ดสีชมพู พร้อมอัปเดต Title และ Description ให้อ่านง่ายและสวยงามสมดุล
+- **Why:** เพื่อเปลี่ยนการ์ด Team Sync ให้สวยงามน่าใช้ระดับพรีเมียม
+
+### Task 192.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความเสถียรและความถูกต้องของโค้ด
+
+## Phase 191: Dashboard Bento Box Visual Re-alignment & Aesthetic Balance
+
+### Task 191.1: Register Phase 191 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 191 สำหรับการจัดระเบียบตำแหน่ง 3D Graphic และ Layout ของ Bento Cards
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 191.2: Redesign Bento Hero & Plan Grid Image Layouts
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ปรับตำแหน่งภาพ 3D ปฏิทินให้อยู่ในกรอบอย่างสวยงาม, ย้ายภาพลำโพง 3D ขึ้นตรงกลางการ์ด Meeting และย้ายบอลลูนแชท 3D หลบป้าย AI Chat
+- **Why:** เพื่อให้การ์ดดูพรีเมียม สมดุล ไร้การทับซ้อนของข้อความและป้ายแท็ก 100%
+
+### Task 191.3: Verify Code Syntax and Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** เพื่อยืนยันว่าการแก้ไขสมบูรณ์แบบโดยไม่มีข้อผิดพลาดทางเทคนิค
+
+## Phase 190: Dashboard Bento Box Responsive Layout & Card Description Enhancements
+
+### Task 190.1: Register Phase 190 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 190 ในการปรับปรุง Responsive UI และเพิ่ม Description ใน Bento Cards
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 190.2: Make BentoHeroCard Responsive and Add Card Description
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** คำนวณขนาดภาพ 3D สเกลตามหน้าจอ mobile และเพิ่มพารามิเตอร์ description ให้กับการ์ด
+- **Why:** ป้องกันไม่ให้รูปภาพ calendarV2.png ทับข้อความ และเพิ่มรายละเอียดให้กับการ์ด
+
+### Task 190.3: Make BentoPlanGrid Responsive and Add Descriptions to Bento Cards
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ปรับขนาดรูปภาพในการ์ด BentoPlanGrid ให้ย่อขนาดอัตโนมัติเมื่ออยู่บนจอแคบ พร้อมเพิ่ม Description ให้ครบทุกการ์ด
+- **Why:** เพื่อให้ข้อความโดดเด่น อ่านง่าย 100% บนทุกขนาดหน้าจอ
+
+### Task 190.4: Verify Responsive UI and Build Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องของ Dart Code
+- **Why:** เพื่อยืนยันว่าการแก้ไข Responsive UI และการเพิ่ม Description สมบูรณ์แบบ
+
 ## Phase 189: Diagnostics and Command Execution Bootstrap
 
 ### Task 189.1: Verify the Environment
