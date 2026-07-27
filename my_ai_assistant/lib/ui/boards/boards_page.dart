@@ -12,12 +12,16 @@ import '../common/responsive_layout.dart';
 import 'widgets/board_edit_modal.dart';
 import 'widgets/boards_dialogs.dart';
 import 'widgets/boards_workspace_header.dart';
-import 'widgets/boards_workspace_tabs.dart';
 import 'widgets/projects_table.dart';
 
 class BoardsPage extends StatefulWidget {
   final bool isDark;
-  const BoardsPage({super.key, required this.isDark});
+  final bool isActive;
+  const BoardsPage({
+    super.key,
+    required this.isDark,
+    this.isActive = true,
+  });
 
   @override
   State<BoardsPage> createState() => _BoardsPageState();
@@ -38,62 +42,65 @@ class _BoardsPageState extends State<BoardsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        BoardsWorkspaceHeader(
-          selectedWorkspace: selectedWorkspace,
-          onJoinWorkspace: () => BoardsDialogs.showJoinWorkspaceDialog(context),
-          onCreateProject: () => _openCreateProjectSheet(selectedWorkspace),
-          onRenameWorkspace: selectedWorkspace == null
-              ? null
-              : () => BoardsDialogs.showRenameWorkspaceDialog(
-                  context,
-                  selectedWorkspace,
-                ),
-          onCopyWorkspaceId: selectedWorkspace == null
-              ? null
-              : () {
-                  Clipboard.setData(ClipboardData(text: selectedWorkspace.id));
-                  GlassNotifications.show(
+        AetherStaggeredFadeIn(
+          index: 0,
+          isActive: widget.isActive,
+          child: BoardsWorkspaceHeader(
+            selectedWorkspace: selectedWorkspace,
+            onJoinWorkspace: () => BoardsDialogs.showJoinWorkspaceDialog(context),
+            onCreateProject: () => _openCreateProjectSheet(selectedWorkspace),
+            onRenameWorkspace: selectedWorkspace == null
+                ? null
+                : () => BoardsDialogs.showRenameWorkspaceDialog(
                     context,
-                    'Workspace ID copied to clipboard',
-                  );
-                },
-        ),
-        BoardsWorkspaceTabs(
-          workspaces: boardsState.workspaces,
-          selectedWorkspaceId: boardsState.selectedWorkspace?.id,
-          onSelectWorkspace: boardsState.setSelectedWorkspace,
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: boardsState.isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: GlassColors.primary),
-                )
-              : SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ProjectsTable(
-                    boards: boards,
-                    isMobile: isMobile,
-                    onCreateProject: () =>
-                        _openCreateProjectSheet(selectedWorkspace),
-                    resolveMemberProfile: boardsState.getMemberProfile,
-                    onOpenBoard: boardsState.setSelectedBoard,
-                    onOpenMeetings: (board) {
-                      context.read<StateMeetings>().openBoardHome(board.id);
-                      boardsState.openBoardMeetings(board);
-                    },
-                    onOpenDocs: (board) {
-                      context.read<StateDocuments>().openBoardHome(board.id);
-                      boardsState.openBoardDocs(board);
-                    },
-                    onEditBoard: (board) =>
-                        BoardsDialogs.showEditBoardDialog(context, board),
-                    onDeleteBoard: (board) =>
-                        BoardsDialogs.showDeleteBoardConfirm(context, board),
-                    onManageMembers: (board) =>
-                        BoardsDialogs.showManageMembersDialog(context, board),
+                    selectedWorkspace,
                   ),
-                ),
+            onCopyWorkspaceId: selectedWorkspace == null
+                ? null
+                : () {
+                    Clipboard.setData(ClipboardData(text: selectedWorkspace.id));
+                    GlassNotifications.show(
+                      context,
+                      'Workspace ID copied to clipboard',
+                    );
+                  },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: AetherStaggeredFadeIn(
+            index: 2,
+            isActive: widget.isActive,
+            child: boardsState.isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: GlassColors.primary),
+                  )
+                : SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ProjectsTable(
+                      boards: boards,
+                      isMobile: isMobile,
+                      onCreateProject: () =>
+                          _openCreateProjectSheet(selectedWorkspace),
+                      resolveMemberProfile: boardsState.getMemberProfile,
+                      onOpenBoard: boardsState.setSelectedBoard,
+                      onOpenMeetings: (board) {
+                        context.read<StateMeetings>().openBoardHome(board.id);
+                        boardsState.openBoardMeetings(board);
+                      },
+                      onOpenDocs: (board) {
+                        context.read<StateDocuments>().openBoardHome(board.id);
+                        boardsState.openBoardDocs(board);
+                      },
+                      onEditBoard: (board) =>
+                          BoardsDialogs.showEditBoardDialog(context, board),
+                      onDeleteBoard: (board) =>
+                          BoardsDialogs.showDeleteBoardConfirm(context, board),
+                      onManageMembers: (board) =>
+                          BoardsDialogs.showManageMembersDialog(context, board),
+                    ),
+                  ),
+          ),
         ),
       ],
     );

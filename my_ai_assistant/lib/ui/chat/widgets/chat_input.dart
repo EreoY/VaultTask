@@ -87,7 +87,7 @@ class AetherChatInput extends StatelessWidget {
                     maxLines: 5,
                     minLines: 1,
                     decoration: InputDecoration(
-                      hintText: 'Message Jonny...',
+                      hintText: 'Message Saturn...',
                       hintStyle: GlassText.body().copyWith(
                         color: GlassColors.onSurfaceVariant.withOpacity(0.5),
                         fontSize: 16,

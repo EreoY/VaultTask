@@ -12,6 +12,8 @@ import '../common/workspace_chrome.dart';
 import '../theme/glass_theme.dart';
 import 'meetings_board_sheet.dart';
 
+import 'widgets/bento_meeting_widgets.dart';
+
 enum _MeetingsTimeFilter { all, upcoming, past }
 
 class MeetingsBoardPage extends StatefulWidget {
@@ -27,6 +29,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   _MeetingsTimeFilter _timeFilter = _MeetingsTimeFilter.all;
   String? _selectedRole;
   bool _isCreatingDraft = false;
+  String _activeQuickSection = 'all';
 
   List<String> get _boardRolePresets {
     final roles = <String>{};
@@ -87,8 +90,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   Widget _buildListSurface(BuildContext context, List<MeetingModel> meetings) {
     final isMobile = Responsive.isMobile(context);
     final filtered = _applyFilters(meetings);
-    final grouped = _groupMeetings(filtered);
-    final roleOptions = _roleOptions(meetings);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -101,89 +102,72 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildNavBar(metaText: 'Board meetings'),
-          const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  WorkspaceBackButton(onTap: _exitToWorkspace),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Meetings',
-                    style: GlassText.headlineLG().copyWith(
-                      fontSize: isMobile ? 34 : 42,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              if (!isMobile) ...[
-                _segmentedToggle(),
-                const SizedBox(width: 16),
-              ],
-              _primaryAction(label: 'New meeting', onTap: _openCreateDraft),
-            ],
+          const SizedBox(height: 14),
+
+          // Bento Meeting Hero Banner
+          BentoMeetingHeroHeader(
+            board: widget.board,
+            totalMeetings: meetings.length,
+            onCreateMeeting: _openCreateDraft,
           ),
-          if (isMobile) ...[
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: _segmentedToggle(),
-              ),
-            ),
-          ],
-          if (roleOptions.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _roleSelector(null, 'All roles'),
-                  const SizedBox(width: 8),
-                  ...roleOptions.expand(
-                    (role) => [
-                      _roleSelector(role, role),
-                      const SizedBox(width: 8),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 26),
+
+          const SizedBox(height: 14),
+
+          // Bento Quick Jump & Filter Section Chips
+          BentoMeetingQuickChips(
+            activeSection: _activeQuickSection,
+            onSectionChanged: (secId) {
+              setState(() {
+                _activeQuickSection = secId;
+                if (secId == 'all') {
+                  _timeFilter = _MeetingsTimeFilter.all;
+                } else if (secId == 'summary') {
+                  _timeFilter = _MeetingsTimeFilter.past;
+                } else if (secId == 'actions') {
+                  _timeFilter = _MeetingsTimeFilter.upcoming;
+                }
+              });
+            },
+          ),
+
+          const SizedBox(height: 14),
+
           Expanded(
-            child: grouped.isEmpty
+            child: filtered.isEmpty
                 ? Center(
-                    child: Text(
-                      'No meetings in this view',
-                      style: GlassText.bodyMD().copyWith(
-                        color: GlassColors.onSurfaceVariant.withOpacity(0.45),
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
+                        border: Border.all(color: GlassColors.outlineVariant),
+                      ),
+                      child: Text(
+                        'No meetings in this view',
+                        style: GlassText.secondary(),
                       ),
                     ),
                   )
                 : ScrollbarGutterFrame(
-                    child: ListView.separated(
+                    child: ListView.builder(
                       padding: ScrollbarGutter.reserveRight(EdgeInsets.zero),
-                      itemCount: grouped.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 28),
+                      itemCount: filtered.length,
                       itemBuilder: (context, index) {
-                        final group = grouped[index];
-                        return _MeetingSection(
-                          label: group.label,
-                          meetings: group.meetings,
-                          onTapMeeting: (meeting) {
+                        final meeting = filtered[index];
+                        return BentoMeetingCard(
+                          meeting: meeting,
+                          onTap: () {
                             context.read<StateMeetings>().openMeetingDetail(
                               widget.board.id,
                               meeting.id,
                             );
                           },
-                          boardName: widget.board.name,
+                          onDelete: () async {
+                            await context.read<StateMeetings>().deleteMeeting(
+                              widget.board,
+                              meeting.id,
+                            );
+                          },
                         );
                       },
                     ),

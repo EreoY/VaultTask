@@ -17,8 +17,8 @@ bindings = [
 tag = "v1"
 new_sqlite_classes = ["BoardHub"]
 
-[ai]
-binding = "AI"
+# [ai]
+# binding = "AI"
 
 [[r2_buckets]]
 binding = "ASSETS"

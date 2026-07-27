@@ -72,3 +72,7 @@ CLAUDE.md
 # Dependencies
 node_modules/
 .cache/
+
+# Local utility scripts (Windows batch)
+run_local_windows.bat
+
