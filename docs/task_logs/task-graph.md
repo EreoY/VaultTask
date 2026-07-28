@@ -1,6 +1,51 @@
-## Phase 226: AI System Prompt Strict Checklist Scope & Prefix Placement Rules [x] Completed
+## Phase 227: Grouped Action Items with Sequential Numbered Categories [x] Completed
 
 - **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **AI Prompt System Instruction Rules (`ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update prompt instructions in `_handleSummarize` (meeting and document modes) and `_handleRefine` to support **Grouped Action Items**:
+>      - **Rule 4 Update**: Allow `## Action Items` section to be organized into numbered category headers (`1. กลุ่มหัวข้อแรก`, `2. กลุ่มหัวข้อถัดไป`, `3. ...`).
+>      - Under each numbered category header, allow sub-checklist items (`- [ ] งานที่ 1`, `- [ ] งานที่ 2`).
+>      - Sequential group numbers MUST count strictly in order (`1.`, `2.`, `3.`) without skips or resets within the Action Items section.
+>      - **Rule 8 Update**: Sub-checklist items must start at the beginning of their own line (`- [ ] ข้อความ` or indented `  - [ ] ข้อความ`) under the numbered category header, and must not be combined on the same line as the category title.
+> 2. **Markdown Block Editor Parser & Serializer Audit (`markdown_block_editor.dart`)**:
+>    - **Check `parseMarkdownToBlocks()`**: Verify `todoUnchecked` and `todoChecked` regexes handle indented or non-indented checklist items (`- [ ]` / `- [x]`) under numbered category headers (`1. กลุ่มหัวข้อ`). Confirm `1. กลุ่ม...` parses as `type: 'numbered'` and sub-checklists parse as `type: 'todo'`.
+>    - **Check `preserveCheckedItems()`**: Confirm matching logic normalizes text and preserves `isChecked: true` states across AI summary refinements even when items are grouped under numbered headers.
+>    - **Fix `serializeBlocksToMarkdown()`**: Fix `serializeBlocksToMarkdown()` so `numberedIndex` does NOT reset when encountering `todo` or `bullet` blocks, and only resets upon major section breaks (`h1`, `h2`, `paragraph`).
+>    - **Fix `_BlockRow` Numbered Prefix Indexing**: In `MarkdownBlockEditor.build()`, update the backwards lookup loop for `block.type == 'numbered'` so it skips over intervening `todo` and `bullet` blocks to calculate the correct sequential index (`1.`, `2.`, `3.`) relative to the current section.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 227.1: Update system prompt instructions in `ai_summarize_sheet.dart` (`_handleSummarize` meeting/document prompts & `_handleRefine` prompt) for Grouped Action Items with sequential numbered categories (`1.`, `2.`, `3.`) and sub-checklists (`- [ ]`).
+- [x] Task 227.2: Audit and fix `markdown_block_editor.dart` (`serializeBlocksToMarkdown()` and `_BlockRow` index calculation) so intervening `todo`/`bullet` blocks do not reset numbered category indexes (`1.`, `2.`), ensuring correct rendering, serialization, and checked state preservation (`preserveCheckedItems`).
+- [x] Task 227.3: Perform static analysis (`flutter analyze`).
+
+### Task 227.1: Update system prompt instructions in ai_summarize_sheet.dart for Grouped Action Items
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update Rule 4 and Rule 8 in `_handleSummarize` (meeting and document prompts) and `_handleRefine` to permit numbered category headers (`1. กลุ่มหัวข้อแรก`, `2. กลุ่มหัวข้อถัดไป`) under `## Action Items` with sub-checklists (`- [ ]`), requiring sequential ordering (`1.`, `2.`, `3.`).
+- **Why:** Provide flexibility for AI to organize action items into numbered category groups as requested by prompt directive.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prompt explicitly specifies grouped action items format with sequential numbers.
+
+### Task 227.2: Audit and fix markdown_block_editor.dart for Grouped Action Items support
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Audit `parseMarkdownToBlocks()` and `preserveCheckedItems()`. Update `serializeBlocksToMarkdown()` and `_BlockRow` index calculation so intervening `todo` and `bullet` blocks do not reset `numberedIndex`, allowing sequential numbered headers (`1.`, `2.`, `3.`) to increment correctly when separated by todo items.
+- **Why:** Prevent UI and serialized Markdown from resetting category numbers back to `1.` after every checklist item.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Numbered headers increment correctly (`1.`, `2.`, `3.`) in both editor rendering and serialized Markdown string, with checkbox states preserved.
+
+### Task 227.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and ensure no lint warnings or syntax errors.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` returns zero errors.
+
+## Phase 226: AI System Prompt Strict Checklist Scope & Prefix Placement Rules [x] Completed
 
 > **Architecture Mandate:**
 > 1. **AI Prompt Rules - Checklist Scope Rule (Rule A)**:
