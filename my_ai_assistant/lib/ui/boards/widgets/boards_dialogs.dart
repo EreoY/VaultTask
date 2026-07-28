@@ -97,7 +97,8 @@ class BoardsDialogs {
     BuildContext context,
     WorkspaceModel workspace,
   ) {
-    final controller = TextEditingController(text: workspace.name);
+    final nameController = TextEditingController(text: workspace.name);
+    final descriptionController = TextEditingController(text: workspace.description ?? '');
     showDialog(
       context: context,
       builder: (dialogContext) => _ModalShell(
@@ -106,13 +107,30 @@ class BoardsDialogs {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _kicker('RENAME WORKSPACE', GlassColors.primary),
+            _kicker('EDIT WORKSPACE', GlassColors.primary),
             const SizedBox(height: 24),
             ImeSafeTextField(
-              controller: controller,
+              controller: nameController,
               autofocus: true,
               style: GlassText.bodyLG(),
               decoration: InputDecoration(
+                hintText: 'Workspace Name',
+                filled: true,
+                fillColor: GlassColors.primary.withOpacity(0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ImeSafeTextField(
+              controller: descriptionController,
+              maxLines: 3,
+              style: GlassText.bodyLG(),
+              decoration: InputDecoration(
+                hintText: 'คำอธิบายเวิร์คสเปรซ',
                 filled: true,
                 fillColor: GlassColors.primary.withOpacity(0.05),
                 border: OutlineInputBorder(
@@ -134,29 +152,32 @@ class BoardsDialogs {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _accentAction(
-                    label: 'RENAME',
+                    label: 'SAVE',
                     color: GlassColors.gold,
                     onPressed: () async {
-                      final newName = controller.text.trim();
-                      if (newName.isEmpty || newName == workspace.name) return;
+                      final newName = nameController.text.trim();
+                      final newDescription = descriptionController.text.trim();
+                      if (newName.isEmpty) return;
+                      if (newName == workspace.name && newDescription == (workspace.description ?? '')) return;
                       final boardsState = context.read<StateBoards>();
                       try {
-                        await boardsState.updateWorkspaceName(
+                        await boardsState.updateWorkspaceDetails(
                           workspace,
                           newName,
+                          newDescription,
                         );
                         if (dialogContext.mounted) Navigator.pop(dialogContext);
                         if (context.mounted) {
                           GlassNotifications.show(
                             context,
-                            'Workspace renamed successfully!',
+                            'Workspace updated successfully!',
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
                           GlassNotifications.show(
                             context,
-                            'Failed to rename workspace: $e',
+                            'Failed to update workspace: $e',
                             isError: true,
                           );
                         }

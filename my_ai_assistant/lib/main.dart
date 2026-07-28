@@ -431,18 +431,7 @@ class _AppShellState extends State<AppShell> {
       extendBody: true,
       extendBodyBehindAppBar: true,
       backgroundColor: GlassColors.background,
-      bottomNavigationBar: !isDesktop && selectedBoard == null
-          ? AnimatedSlide(
-              offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.5),
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              child: FloatingBottomNavBar(
-                selectedIndex: _index,
-                onItemSelected: (index) => _selectTab(index),
-                isDark: false,
-              ),
-            )
-          : null,
+      bottomNavigationBar: null,
       body: NotificationListener<UserScrollNotification>(
         onNotification: (notification) {
           if (notification.direction == ScrollDirection.reverse) {
@@ -558,8 +547,24 @@ class _AppShellState extends State<AppShell> {
               ),
             ),
           ], // closes Row children
-        ), // closes Row
-      ], // closes outer Stack children
+          ), // closes Row
+          if (!isDesktop && selectedBoard == null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AnimatedSlide(
+                offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.5),
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: FloatingBottomNavBar(
+                  selectedIndex: _index,
+                  onItemSelected: (index) => _selectTab(index),
+                  isDark: false,
+                ),
+              ),
+            ),
+        ], // closes outer Stack children
     ), // closes outer Stack
       ), // closes NotificationListener
   ), // closes Scaffold
