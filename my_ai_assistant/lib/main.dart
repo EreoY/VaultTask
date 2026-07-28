@@ -96,6 +96,7 @@ class MainApp extends StatelessWidget {
       scrollBehavior: AppScrollBehavior(),
       theme: GlassAppTheme.dark().copyWith(
         primaryColor: GlassColors.primary,
+        canvasColor: GlassColors.background,
         scaffoldBackgroundColor: GlassColors.background,
         colorScheme: ColorScheme.fromSeed(
           seedColor: GlassColors.primary,
@@ -428,6 +429,7 @@ class _AppShellState extends State<AppShell> {
       ),
       child: Scaffold(
       extendBody: true,
+      extendBodyBehindAppBar: true,
       backgroundColor: GlassColors.background,
       bottomNavigationBar: !isDesktop && selectedBoard == null
           ? AnimatedSlide(

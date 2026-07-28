@@ -984,6 +984,7 @@ class ApiCloudflare {
         'id': workspace.id,
         'owner_uid': workspace.ownerUid,
         'name': workspace.name,
+        'description': workspace.description ?? '',
         'members': workspace.members,
       }),
     );
@@ -1000,6 +1001,20 @@ class ApiCloudflare {
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to delete workspace: ${response.body}');
+    }
+  }
+
+  static Future<void> updateWorkspaceDescription(String workspaceId, String description) async {
+    final response = await http.put(
+      Uri.parse('$_base/api/workspaces_description'),
+      headers: _headers,
+      body: jsonEncode({
+        'id': workspaceId,
+        'description': description,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update workspace description: ${response.body}');
     }
   }
 

@@ -1,3 +1,150 @@
+## Phase 241: Seamless 100% Android 3-Button Bottom Navigation Transparency & Web Manifest Display Override [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Flutter Scaffold Canvas Extension (`main.dart`)**:
+>    - In `my_ai_assistant/lib/main.dart` `AppShell`:
+>    - Set `extendBody: true` AND `extendBodyBehindAppBar: true` on `Scaffold` so Flutter body canvas extends all the way down behind the 3 Android system navigation buttons.
+> 2. **MaterialApp Canvas & Surface Background Theme (`main.dart`)**:
+>    - In `my_ai_assistant/lib/main.dart` `MaterialApp` `theme`:
+>    - Ensure `canvasColor: GlassColors.background` and `scaffoldBackgroundColor: GlassColors.background` are explicitly set in `theme: GlassAppTheme.dark().copyWith(...)` so default canvas backdrop is `#F8F9FA`.
+> 3. **Web Manifest Display Override (`web/manifest.json`)**:
+>    - In `my_ai_assistant/web/manifest.json`:
+>    - Add `"display_override": ["standalone", "minimal-ui"]` to ensure standalone PWA display mode without legacy window bar paddings.
+> 4. **Web Canvas Element Background Styling (`web/index.html`)**:
+>    - In `my_ai_assistant/web/index.html`:
+>    - Update CSS rule in `<head>` to:
+>      `<style>html, body, flutter-view, flt-glass-pane { background-color: #F8F9FA !important; }</style>`
+>      so Flutter engine elements (`flutter-view` & `flt-glass-pane`) don't render a solid/white background behind bottom navigation area.
+> 5. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure 0 compilation errors or static warnings.
+
+- [x] Task 241.1: Update `Scaffold` in `AppShell` (`main.dart`) with `extendBodyBehindAppBar: true` and `extendBody: true`, and update `MaterialApp` theme with `canvasColor: GlassColors.background`.
+- [x] Task 241.2: Update `web/manifest.json` to include `"display_override": ["standalone", "minimal-ui"]`.
+- [x] Task 241.3: Update `web/index.html` CSS rule to `html, body, flutter-view, flt-glass-pane { background-color: #F8F9FA !important; }`.
+- [x] Task 241.4: Perform static analysis (`flutter analyze`).
+
+### Task 241.1: Update Scaffold in AppShell and MaterialApp theme in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Set `extendBodyBehindAppBar: true` alongside `extendBody: true` on `AppShell` `Scaffold`. Update `MaterialApp` theme with `canvasColor: GlassColors.background`.
+- **Why:** Allow body layout to draw under system navigation bar and ensure uniform `#F8F9FA` canvas background.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `Scaffold` extends body behind app bar/navigation bar and MaterialApp theme canvas matches background.
+
+### Task 241.2: Update web/manifest.json with display_override
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/manifest.json`
+- **Action:** Add `"display_override": ["standalone", "minimal-ui"]` to `manifest.json`.
+- **Why:** Ensure proper PWA standalone rendering on Android web view without extra window edge bars.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `manifest.json` contains `"display_override"`.
+
+### Task 241.3: Update web/index.html CSS styling
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/index.html`
+- **Action:** Update `<style>` block in `<head>` to `html, body, flutter-view, flt-glass-pane { background-color: #F8F9FA !important; }`.
+- **Why:** Guarantee `<flutter-view>` container element is transparent/matches `#F8F9FA` background.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `index.html` includes `flutter-view` in CSS rule.
+
+### Task 241.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/web/manifest.json`, `my_ai_assistant/web/index.html`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 240: Workspace Description D1 Database Persistence & Default 1-Sentence English Strings [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Cloudflare D1 Schema & Worker Endpoints (`cloudflare_worker.js`)**:
+>    - In `cloudflare_backend/cloudflare_worker.js`:
+>    - Add `ALTER TABLE team_workspaces ADD COLUMN description TEXT DEFAULT ''` in `ensureSchema(db)` try/catch block.
+>    - Update `POST /api/workspaces` endpoint to parse `description` from request body JSON, insert `description` into `team_workspaces`, and set `description = excluded.description` on conflict.
+>    - Add `PUT /api/workspaces` endpoint to update workspace `name`, `description`, and `members`.
+> 2. **Cloudflare D1 Dart Client Sync (`api_cloudflare.dart`)**:
+>    - In `my_ai_assistant/lib/databases/api_cloudflare.dart`:
+>    - Update `insertWorkspace(WorkspaceModel workspace)` to include `'description': workspace.description ?? ''` in its JSON payload.
+>    - Add static `updateWorkspace(WorkspaceModel workspace)` method sending PUT/POST payload with workspace details including `description`.
+> 3. **SQLite Local Database Schema Migration (`db_personal_sqlite.dart`)**:
+>    - In `my_ai_assistant/lib/databases/db_personal_sqlite.dart`:
+>    - Update `CREATE TABLE personal_workspaces` definition to include `description TEXT DEFAULT ''`.
+>    - Increment version to 15 in `_initDB` and add `if (oldVersion < 15) { await db.execute('ALTER TABLE personal_workspaces ADD COLUMN description TEXT DEFAULT ""'); }` in `_upgradeDB`.
+> 4. **State Management & English Default Descriptions (`state_boards.dart`)**:
+>    - In `my_ai_assistant/lib/state_managers/state_boards.dart`:
+>    - Set 1-sentence concise default English description strings:
+>      - Personal Workspace default: `"Personal space for tasks, notes, and productivity."`
+>      - Team Workspace default: `"Strategic workspace for team collaboration, tasks, and documentation."`
+>    - In `addWorkspace()`, assign default English description based on workspace `type`.
+>    - In `fetchAllBoards()`, when loading workspaces, if `description` is null/empty, auto-backfill with default English string based on workspace `type` and sync/persist to Cloudflare D1 / SQLite database.
+>    - Update workspace update logic in `state_boards.dart` to call `ApiCloudflare.insertWorkspace` / `DbPersonalSqlite.instance.updateWorkspace` to persist `description`.
+> 5. **Workspace Header UI Fallback (`boards_workspace_header.dart`)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`:
+>    - Render `selectedWorkspace?.description` when non-null and non-empty.
+>    - Fallback to 1-sentence concise English description based on workspace `type` (`'Personal space for tasks, notes, and productivity.'` vs `'Strategic workspace for team collaboration, tasks, and documentation.'`).
+> 6. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 240.1: Update `cloudflare_worker.js` schema (`description` column) and update `POST /api/workspaces` & `PUT /api/workspaces` endpoints to save `description` in D1 DB.
+- [x] Task 240.2: Update `api_cloudflare.dart` (`insertWorkspace` & `updateWorkspace`) to send `description` in JSON body payload.
+- [x] Task 240.3: Update `db_personal_sqlite.dart` (`personal_workspaces` schema migration to version 15) to include `description`.
+- [x] Task 240.4: Update `state_boards.dart` to set 1-sentence concise default English descriptions, auto-backfill empty descriptions on load, and save `description` to Cloudflare D1 DB / SQLite when created or updated.
+- [x] Task 240.5: Update `boards_workspace_header.dart` fallback description text to 1-sentence English default strings based on workspace type.
+- [x] Task 240.6: Perform static analysis (`flutter analyze`).
+
+### Task 240.1: Update cloudflare_worker.js schema and workspace endpoints
+- **Status:** [x] Completed
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** Add `ALTER TABLE team_workspaces ADD COLUMN description TEXT DEFAULT ''` in `ensureSchema(db)`. Update `POST /api/workspaces` and `PUT /api/workspaces` to handle `description`.
+- **Why:** Enable Cloudflare D1 database to store workspace description text.
+- **Owner:** BackendCoder
+- **Verification:** **[AUTONOMOUS]** Cloudflare Worker workspace endpoints accept and persist `description` field.
+
+### Task 240.2: Update api_cloudflare.dart to sync description to Cloudflare D1
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/databases/api_cloudflare.dart`
+- **Action:** Include `description` in `ApiCloudflare.insertWorkspace` payload and add `updateWorkspace` helper method.
+- **Why:** Allow Flutter client to send workspace description to backend Cloudflare D1 DB.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `ApiCloudflare` includes `description` in workspace HTTP requests.
+
+### Task 240.3: Update db_personal_sqlite.dart to migrate personal_workspaces schema to version 15
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/databases/db_personal_sqlite.dart`
+- **Action:** Add `description TEXT DEFAULT ''` to `CREATE TABLE personal_workspaces` and add migration step in `_upgradeDB` for version 15.
+- **Why:** Enable local SQLite database to store workspace description for personal workspaces.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Local SQLite schema supports `description` column on version 15.
+
+### Task 240.4: Update state_boards.dart with default English descriptions and D1 DB sync
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/state_managers/state_boards.dart`
+- **Action:** Set 1-sentence default English descriptions (`"Personal space for tasks, notes, and productivity."` for personal, `"Strategic workspace for team collaboration, tasks, and documentation."` for team). Auto-backfill empty descriptions on fetch and persist to DB. Update workspace update logic to sync `description` to D1 DB / SQLite.
+- **Why:** Guarantee every workspace in state and DB has a 1-sentence English description.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Default and custom descriptions are persisted to Cloudflare D1 DB / SQLite on workspace creation, load, and update.
+
+### Task 240.5: Update boards_workspace_header.dart fallback descriptions
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Update fallback description logic to use concise 1-sentence English strings matched to workspace type.
+- **Why:** Render beautiful 1-sentence English descriptions in workspace header UI.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Workspace header displays clean 1-sentence English description.
+
+### Task 240.6: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/databases/api_cloudflare.dart`, `my_ai_assistant/lib/state_managers/state_boards.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
 ## Phase 239: Android 3-Button System Navigation Bar Translucency & Canvas Background Fix [x] Completed
 
 - **Status:** [x] Completed
