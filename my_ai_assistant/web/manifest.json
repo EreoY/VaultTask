@@ -3,7 +3,7 @@
     "short_name": "my_ai_assistant",
     "start_url": ".",
     "display": "standalone",
-    "display_override": ["standalone", "minimal-ui"],
+    "display_override": ["fullscreen", "standalone", "minimal-ui"],
     "background_color": "#F8F9FA",
     "theme_color": "#F8F9FA",
     "description": "A new Flutter project.",

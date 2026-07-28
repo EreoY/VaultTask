@@ -108,7 +108,29 @@ class ProfilePage extends StatelessWidget {
       children: [
         avatarWidget,
         const SizedBox(width: 64),
-        Expanded(child: detailsWidget),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user?.displayName ??
+                    user?.email?.split('@').first.toUpperCase() ??
+                    'COMMANDER',
+                style: GlassText.headlineXL().copyWith(fontSize: 48),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                user?.email?.toUpperCase() ?? 'STRATEGIC OPERATOR',
+                style: GlassText.labelSM().copyWith(
+                  color: GlassColors.onSurfaceVariant.withOpacity(0.6),
+                  letterSpacing: 2.0,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildGhostButton('EDIT PROFILE'),
+            ],
+          ),
+        ),
       ],
     );
   }

@@ -1,3 +1,68 @@
+## Phase 243: Restructure Floating Bottom Navigation Bar to 5 Tabs (Home, Workspace, AI Chat, Calendar, Profile) [ ] In Progress
+
+- **Status:** [ ] In Progress
+
+> **Architecture Mandate:**
+> 1. **5-Tab Index Mapping (`main.dart`)**:
+>    - In `my_ai_assistant/lib/main.dart` `AppShell._buildScreen(int index)`:
+>      - Index 0: `DashboardPage` (Home)
+>      - Index 1: `BoardsPage` (Workspace)
+>      - Index 2: `ChatPage` (AI Chat)
+>      - Index 3: `CalendarPage` (Calendar)
+>      - Index 4: `ProfilePage` (Profile)
+> 2. **5-Item Capsule Navigation Bar (`floating_bottom_nav_bar.dart`)**:
+>    - In `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`:
+>      - Render 5 items inside the pill navigation bar:
+>        - Item 0: Home icon (`Icons.grid_view_rounded`, activeIcon: `Icons.grid_view_rounded`, label: 'Home')
+>        - Item 1: Workspace icon (`Icons.space_dashboard_rounded`, activeIcon: `Icons.space_dashboard_rounded`, label: 'Workspace')
+>        - Item 2: AI Chat icon (`Icons.chat_bubble_outline_rounded`, activeIcon: `Icons.chat_bubble_rounded`, label: 'AI Chat')
+>        - Item 3: Calendar icon (`Icons.calendar_today_rounded`, activeIcon: `Icons.calendar_today_rounded`, label: 'Calendar')
+>        - Item 4: Profile icon (`Icons.person_outline_rounded`, activeIcon: `Icons.person_rounded`, label: 'Profile')
+> 3. **Desktop Side Nav & Internal Callbacks Synchronization (`aether_side_nav.dart` & `dashboard_page.dart`)**:
+>    - Update `AetherSideNav` navigation items in `aether_side_nav.dart` to match Index 2 = Chat and Index 3 = Calendar.
+>    - Update `onNavigate` callbacks in `dashboard_page.dart` to navigate to index 4 for Profile, index 2 for Chat, index 3 for Calendar, and index 1 for Workspace.
+> 4. **No Remote Deployment / Local Build Only**:
+>    - Strictly maintain local build and testing without deploying to Cloudflare production per user directive ("อย่าเพิ่งพุชของจริงไปนะ ผมอยากเทสก่อน").
+> 5. **Static Analysis Verification**:
+>    - Run `flutter analyze` to ensure 0 errors or warnings.
+
+- [ ] Task 243.1: Update `AppShell._buildScreen(int index)` in `main.dart` to map 5 screens (Index 0: DashboardPage, Index 1: BoardsPage, Index 2: ChatPage, Index 3: CalendarPage, Index 4: ProfilePage).
+- [ ] Task 243.2: Update `FloatingBottomNavBar` in `floating_bottom_nav_bar.dart` to render 5 navigation items with specified icons (Icons.grid_view_rounded, Icons.space_dashboard_rounded, Icons.chat_bubble_outline_rounded, Icons.calendar_today_rounded, Icons.person_outline_rounded).
+- [ ] Task 243.3: Sync `aether_side_nav.dart` and `dashboard_page.dart` navigation callbacks (`onNavigate`) with new 5-tab indices.
+- [ ] Task 243.4: Perform static analysis (`flutter analyze`).
+
+### Task 243.1: Update AppShell screen mapping in main.dart
+- **Status:** [ ] In Progress
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Update `_buildScreen(int index)` in `_AppShellState` so Index 0 = `DashboardPage`, Index 1 = `BoardsPage`, Index 2 = `ChatPage`, Index 3 = `CalendarPage`, Index 4 = `ProfilePage`.
+- **Why:** Align `AppShell` screen stack with the 5 bottom navigation tabs.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Screen matching index 0..4 displays correctly upon tab selection.
+
+### Task 243.2: Update FloatingBottomNavBar items and icons in floating_bottom_nav_bar.dart
+- **Status:** [ ] In Progress
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Update `FloatingBottomNavBar` children list to render 5 items with `Icons.grid_view_rounded`, `Icons.space_dashboard_rounded`, `Icons.chat_bubble_outline_rounded`, `Icons.calendar_today_rounded`, and `Icons.person_outline_rounded`.
+- **Why:** Display the 5 specified tabs and icons on the floating capsule navigation bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Floating bottom nav bar renders 5 icons and toggles selection properly.
+
+### Task 243.3: Sync AetherSideNav and DashboardPage callbacks with 5-tab indices
+- **Status:** [ ] In Progress
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Update `AetherSideNav` menu items so Chat is Index 2 and Calendar is Index 3. Update `dashboard_page.dart` `onNavigate` calls for Profile (Index 4), Chat (Index 2), Calendar (Index 3), and Workspace (Index 1).
+- **Why:** Ensure desktop side navigation and dashboard quick actions navigate to correct tab indices.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Side nav items and dashboard card taps navigate to expected screens.
+
+### Task 243.4: Perform static analysis
+- **Status:** [ ] In Progress
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`, `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and verify syntax correctness.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
 ## Phase 242: Workspace Description Editing in Edit Modal & Android System Bar Edge-to-Edge Floating Nav Bar Fix [x] Completed
 
 - **Status:** [x] Completed

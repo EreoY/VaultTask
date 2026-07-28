@@ -43,24 +43,30 @@ class FloatingBottomNavBar extends StatelessWidget {
           children: [
             _buildNavItem(
               index: 0,
-              icon: Icons.home_outlined,
+              icon: Icons.home_rounded,
               activeIcon: Icons.home_rounded,
               label: 'Home',
             ),
             _buildNavItem(
               index: 1,
-              icon: Icons.grid_view_rounded,
-              activeIcon: Icons.grid_view_rounded,
-              label: 'Boards',
+              icon: Icons.space_dashboard_rounded,
+              activeIcon: Icons.space_dashboard_rounded,
+              label: 'Workspace',
             ),
             _buildNavItem(
               index: 2,
-              icon: Icons.bar_chart_rounded,
-              activeIcon: Icons.bar_chart_rounded,
-              label: 'Calendar',
+              icon: Icons.chat_bubble_outline_rounded,
+              activeIcon: Icons.chat_bubble_rounded,
+              label: 'Chat',
             ),
             _buildNavItem(
               index: 3,
+              icon: Icons.calendar_today_rounded,
+              activeIcon: Icons.calendar_today_rounded,
+              label: 'Calendar',
+            ),
+            _buildNavItem(
+              index: 4,
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
               label: 'Profile',
