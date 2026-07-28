@@ -1,3 +1,46 @@
+## Phase 225: Checklist Exemption from Numbered List Conversion (> 3 Items Rule) [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **AI Summarizer Prompt Rules Update (`ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update Rule 4 in prompt instructions for `_handleSummarize` (both meeting and document modes) and `_handleRefine`:
+>      - Explicitly state that Action Items / checklist items (`- [ ]` / `- [x]`) are EXEMPT from the "more than 3 items -> numbered list" rule and MUST always remain as pure checkboxes (`- [ ]` / `- [x]`) regardless of item count.
+> 2. **Markdown Block Parser Checklist Numbered Prefix Handling (`markdown_block_editor.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, update `parseMarkdownToBlocks()` regexes for `todoUnchecked` and `todoChecked`:
+>      - Change regex pattern to match numbered prefixes before brackets (e.g., `^\s*(?:[-*]|\d+[.)])\s*\[\s\]\s*(.*)$` and `^\s*(?:[-*]|\d+[.)])\s*\[[xX]\]\s*(.*)$`).
+>      - This guarantees any line formatted like `1. [ ] item` or `1) [x] item` is correctly parsed as `type: 'todo'` and serialized as `- [ ] item` or `- [x] item`.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 225.1: Update prompt instructions in `ai_summarize_sheet.dart` to explicitly exempt Action Items / checklist items (`- [ ]` / `- [x]`) from the > 3 items numbered list rule.
+- [x] Task 225.2: Update `parseMarkdownToBlocks` regex in `markdown_block_editor.dart` to recognize numbered checkbox items (`1. [ ]`, `2. [x]`) as `type: 'todo'`.
+- [x] Task 225.3: Perform static analysis (`flutter analyze`).
+
+### Task 225.1: Update prompt instructions in ai_summarize_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update Rule 4 in system prompt strings in `_handleSummarize` (lines 292-293) and `_handleRefine` (line 369) to state: "4. กฎการใช้รายการย่อย: หากมีย่อย ให้ใช้รายการ "- " ได้สูงสุดแค่ 3 ข้อเท่านั้น หากมีย่อยมากกว่า 3 ข้อขึ้นไป ให้ใช้รายการลำดับตัวเลข ("1. ", "2. ", "3. "...) แทน (ข้อยกเว้น: รายการ Action Items หรือเช็กลิสต์ ให้ใช้ "- [ ] " หรือ "- [x] " เป็นเช็กลิสต์เสมอ ไม่ว่าจะมียี่สิบหรือกี่ข้อก็ตาม ห้ามเปลี่ยนเป็นรายการลำดับตัวเลขเด็ดขาด)".
+- **Why:** Resolve bug where AI converts Action Items into numbered lists (`1. `, `2. `) when count > 3.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** AI prompt explicitly instructs LLM to keep Action Items as checkboxes regardless of count.
+
+### Task 225.2: Update parseMarkdownToBlocks regex in markdown_block_editor.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Modify `todoUnchecked` and `todoChecked` regex in `parseMarkdownToBlocks` to allow optional digits/number prefixes (e.g. `^\s*(?:[-*]|\d+[.)])\s*\[\s\]\s*(.*)$` and `^\s*(?:[-*]|\d+[.)])\s*\[[xX]\]\s*(.*)$`).
+- **Why:** Ensure any fallback or legacy numbered checkboxes (e.g. `1. [ ] Item`) are parsed as `type: 'todo'` rather than being misclassified by `numberedRe` as `type: 'numbered'`.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Numbered todo items parse as `todo` blocks and serialize back to pure `- [ ]` checkboxes.
+
+### Task 225.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure code quality and adherence to guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
 ## Phase 224: AI Summary Unchecked Checkbox Contrast & Session Stale State Synchronization [x] Completed
 
 - **Status:** [x] Completed

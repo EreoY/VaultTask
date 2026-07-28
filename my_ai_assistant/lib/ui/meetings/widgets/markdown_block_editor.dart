@@ -121,7 +121,7 @@ List<MarkdownBlock> parseMarkdownToBlocks(String markdown) {
     }
 
     // To-do (supports - / * and [ ] / [x] / [X])
-    final todoUnchecked = RegExp(r'^[-*]\s\[\s\]\s(.*)$').firstMatch(raw);
+    final todoUnchecked = RegExp(r'^\s*(?:[-*]|\d+[.)])\s*\[\s\]\s*(.*)$').firstMatch(raw);
     if (todoUnchecked != null) {
       blocks.add(MarkdownBlock(
         id: id,
@@ -131,7 +131,7 @@ List<MarkdownBlock> parseMarkdownToBlocks(String markdown) {
       ));
       continue;
     }
-    final todoChecked = RegExp(r'^[-*]\s\[[xX]\]\s(.*)$').firstMatch(raw);
+    final todoChecked = RegExp(r'^\s*(?:[-*]|\d+[.)])\s*\[[xX]\]\s*(.*)$').firstMatch(raw);
     if (todoChecked != null) {
       blocks.add(MarkdownBlock(
         id: id,
