@@ -154,19 +154,6 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  width: maxTextWidth,
-                  child: Text(
-                    'Organize team boards, docs, and meetings in a unified space.',
-                    style: GlassText.secondary().copyWith(
-                      color: GlassColors.deepBlack.withOpacity(0.75),
-                      fontSize: isMobile ? 12 : 13,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
                 const SizedBox(height: 16),
 
                 // Row 3: Action Buttons (Join & New Project)
