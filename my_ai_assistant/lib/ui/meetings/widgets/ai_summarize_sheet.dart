@@ -16,6 +16,7 @@ class AiSummarizeSheet extends StatefulWidget {
   final List<Map<String, dynamic>> fileAttachments;
   final String targetId;
   final String? initialSummary;
+  final ValueChanged<String>? onSummaryChanged;
 
   const AiSummarizeSheet({
     super.key,
@@ -26,6 +27,7 @@ class AiSummarizeSheet extends StatefulWidget {
     required this.fileAttachments,
     required this.targetId,
     this.initialSummary,
+    this.onSummaryChanged,
   });
 
   @override
@@ -173,7 +175,11 @@ class _AiSummarizeSheetState extends State<AiSummarizeSheet> {
       setState(() {
         _chatMessages = msgs;
         final newestAiMsg = msgs.where((m) => !m.isUser).firstOrNull;
-        _summaryOutput = newestAiMsg?.text ?? (widget.initialSummary ?? '');
+        String finalSummary = newestAiMsg?.text ?? (widget.initialSummary ?? '');
+        if (newestAiMsg != null && widget.initialSummary != null && widget.initialSummary!.contains('- [x]')) {
+          finalSummary = preserveCheckedItems(newestAiMsg.text, widget.initialSummary!);
+        }
+        _summaryOutput = finalSummary;
       });
       if (_outputTabIndex == 1) {
         _scrollToBottom();
@@ -736,13 +742,22 @@ $_summaryOutput
                         initialMarkdown: _summaryOutput,
                         onChanged: (val) {
                           _summaryOutput = val;
-                          if (_chatMessages.isNotEmpty) {
+                          widget.onSummaryChanged?.call(_summaryOutput);
+                          if (_sessions.isNotEmpty) {
+                            final sessionId = _sessions[_activeSessionIndex].id;
                             final newestAiIndex = _chatMessages.indexWhere((m) => !m.isUser);
                             if (newestAiIndex != -1) {
                               final updatedMsg = _chatMessages[newestAiIndex].copyWith(text: val);
                               _chatMessages[newestAiIndex] = updatedMsg;
-                              final sessionId = _sessions[_activeSessionIndex].id;
                               ApiCloudflare.insertChatMessage(updatedMsg, sessionId);
+                            } else {
+                              final aiMsg = ChatMessage(
+                                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                text: val,
+                                isUser: false,
+                              );
+                              _chatMessages.insert(0, aiMsg);
+                              ApiCloudflare.insertChatMessage(aiMsg, sessionId);
                             }
                           }
                           _syncCurrentSession();

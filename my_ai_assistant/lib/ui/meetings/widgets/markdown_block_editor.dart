@@ -940,12 +940,12 @@ class _BlockRowState extends State<_BlockRow> {
                 border: Border.all(
                   color: block.isChecked
                       ? GlassColors.success
-                      : GlassColors.outlineVariant.withOpacity(0.4),
+                      : GlassColors.onSurfaceVariant.withOpacity(0.7),
                   width: 1.5,
                 ),
                 color: block.isChecked
                     ? GlassColors.success.withOpacity(0.2)
-                    : Colors.transparent,
+                    : GlassColors.onSurfaceVariant.withOpacity(0.06),
               ),
               child: block.isChecked
                   ? const Icon(Icons.check, size: 11, color: GlassColors.success)
