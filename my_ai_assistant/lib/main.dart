@@ -410,7 +410,15 @@ class _AppShellState extends State<AppShell> {
         tasksLoading ||
         meetingsLoading;
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
       extendBody: true,
       backgroundColor: GlassColors.background,
       bottomNavigationBar: !isDesktop && selectedBoard == null
@@ -529,6 +537,7 @@ class _AppShellState extends State<AppShell> {
         ), // closes Row
       ], // closes outer Stack children
     ), // closes outer Stack
-  ); // closes return Scaffold
+  ), // closes Scaffold
+  ); // closes AnnotatedRegion
   }
 }
