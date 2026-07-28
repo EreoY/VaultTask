@@ -959,3 +959,24 @@
 - **Why:** Maintain codebase health and compliance with Sovereign guidelines.
 - **Owner:** QA / Planner
 - **Verification:** **[AUTONOMOUS]** Flutter analyze passes with 0 issues.
+
+## Phase 247: Purge Live Raw Transcript Container Box from Meeting Sheet [x] Completed
+
+- [x] Task 247.1: Completely remove live raw transcript container widget from `meetings_board_sheet.dart` (lines ~2282-2317).
+- [x] Task 247.2: Perform static analysis (`flutter analyze`).
+
+### Task 247.1: Completely remove live raw transcript container widget from meetings_board_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** Remove the live raw transcript container widget block.
+- **Why:** Cleanup of unused UI components per user request.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Widget is removed and UI remains stable.
+
+### Task 247.2: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** Run `flutter analyze` and confirm zero errors.
+- **Why:** Maintain codebase health.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Flutter analyze passes with 0 issues.

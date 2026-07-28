@@ -1985,9 +1985,6 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
       );
     }
 
-    final utterances = _sttService.utterances;
-    final interim = _sttService.interimUtterance;
-    final isRecording = _sttService.isRecording;
     final errorMsg = _sttService.errorMessage;
 
     return Column(
@@ -2024,43 +2021,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
             ),
           ),
         ],
-        const SizedBox(height: 16),
-        if (utterances.isEmpty && interim == null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: GlassColors.outlineVariant.withOpacity(0.12),
-              ),
-            ),
-            child: Text(
-              'No transcript yet. Press "Start Live Transcription" to begin recording.',
-              style: GlassText.bodyMD().copyWith(
-                color: GlassColors.onSurfaceVariant.withOpacity(0.45),
-              ),
-            ),
-          )
-        else
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: GlassColors.surface.withOpacity(0.03),
-              border: Border.all(
-                color: GlassColors.outlineVariant.withOpacity(0.12),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...utterances.map((u) => _buildUtteranceBlock(u, false)),
-                if (interim != null) _buildUtteranceBlock(interim, true),
-              ],
-            ),
-          ),
+
       ],
     );
   }
