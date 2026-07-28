@@ -368,12 +368,16 @@ class StateBoards extends ChangeNotifier {
     }
   }
 
-  Future<void> updateWorkspaceName(
+  Future<void> updateWorkspaceDetails(
     WorkspaceModel workspace,
     String newName,
+    String newDescription,
   ) async {
     try {
-      final updated = workspace.copyWith(name: newName);
+      final updated = workspace.copyWith(
+        name: newName,
+        description: newDescription,
+      );
       if (workspace.type == 'personal') {
         if (!kIsWeb) {
           await DbPersonalSqlite.instance.updateWorkspace(updated);
@@ -390,7 +394,7 @@ class StateBoards extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      debugPrint('Error updating workspace name: $e');
+      debugPrint('Error updating workspace details: $e');
       rethrow;
     }
   }
