@@ -87,7 +87,7 @@ class AetherChatInput extends StatelessWidget {
                     maxLines: 5,
                     minLines: 1,
                     decoration: InputDecoration(
-                      hintText: 'ข้อความ...',
+                      hintText: 'Chat...',
                       hintStyle: GlassText.body().copyWith(
                         color: GlassColors.onSurfaceVariant.withOpacity(0.5),
                         fontSize: 12,
@@ -110,10 +110,12 @@ class AetherChatInput extends StatelessWidget {
           Text(
             'AI MAY PROVIDE INACCURATE INFORMATION. VERIFY IMPORTANT DATA.',
             style: GlassText.label().copyWith(
-              fontSize: 9,
+              fontSize: 11,
               color: GlassColors.onSurfaceVariant.withOpacity(0.4),
               letterSpacing: 1.5,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
