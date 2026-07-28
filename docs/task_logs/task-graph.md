@@ -1,3 +1,45 @@
+## Phase 226: AI System Prompt Strict Checklist Scope & Prefix Placement Rules [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **AI Prompt Rules - Checklist Scope Rule (Rule A)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update prompt instructions in `_handleSummarize` (meeting and document modes) and `_handleRefine`:
+>    - Add explicit Rule 7: Checklists (`- [ ]` / `- [x]`) are strictly allowed ONLY under the `## Action Items` section. All other sections (Summary, Topics, Key Points) MUST NOT contain checkboxes.
+> 2. **AI Prompt Rules - Checklist Prefix Placement Rule (Rule B)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update prompt instructions in `_handleSummarize` and `_handleRefine`:
+>    - Add explicit Rule 8: Checklists MUST ALWAYS sit at the VERY FRONT (beginning) of the line (`- [ ] <task_text>` or `- [x] <task_text>`). Checkboxes must NEVER be placed in the middle or at the end of a sentence, nor appended after numbered or bullet points.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 226.1: Update prompt instructions in `ai_summarize_sheet.dart` (`_handleSummarize` meeting/document prompts & `_handleRefine` prompt) to enforce Rule A (Checklists allowed ONLY under `## Action Items` section).
+- [x] Task 226.2: Update prompt instructions in `ai_summarize_sheet.dart` (`_handleSummarize` meeting/document prompts & `_handleRefine` prompt) to enforce Rule B (Checklists MUST sit at VERY FRONT of the line `- [ ] <task_text>`, NEVER middle/end/numbered line).
+- [x] Task 226.3: Perform static analysis (`flutter analyze`).
+
+### Task 226.1: Update prompt instructions in ai_summarize_sheet.dart to enforce Rule A (Checklists ONLY under ## Action Items)
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add Rule 7 to system instruction strings in `_handleSummarize` and `_handleRefine`: "7. กฎตำแหน่งของเช็กลิสต์: สัญลักษณ์เช็กลิสต์ (- [ ] หรือ - [x] ) อนุญาตให้มีได้เฉพาะในหัวข้อ Action Items (## Action Items) เท่านั้น หัวข้ออื่นทั้งหมด (เช่น สรุปประเด็น, รายละเอียดการประชุม, ประเด็นสำคัญ) ห้ามใส่เช็กลิสต์เด็ดขาด".
+- **Why:** Prevent AI from putting checkboxes in non-action item sections (Summary, Topics, Key Points).
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prompt explicitly restricts checkboxes to the Action Items section.
+
+### Task 226.2: Update prompt instructions in ai_summarize_sheet.dart to enforce Rule B (Checklists MUST sit at VERY FRONT of line)
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add Rule 8 to system instruction strings in `_handleSummarize` and `_handleRefine`: "8. กฎการวางสัญลักษณ์เช็กลิสต์: สัญลักษณ์เช็กลิสต์ต้องอยู่ด้านหน้าสุดของบรรทัดเท่านั้น เช่น '- [ ] ข้อความ' ห้ามนำเช็กลิสต์ไปวางตรงกลางข้อความ ต่อท้ายข้อความ หรือต่อท้ายรายการลำดับตัวเลขเด็ดขาด".
+- **Why:** Prevent AI from placing checkboxes at middle/end of sentences or numbered lines, ensuring Markdown parser can parse todo items reliably.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prompt explicitly instructs AI to place checkboxes exclusively at line beginnings.
+
+### Task 226.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Execute `flutter analyze` and confirm zero errors.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passes with 0 issues.
+
 ## Phase 225: Checklist Exemption from Numbered List Conversion (> 3 Items Rule) [x] Completed
 
 - **Status:** [x] Completed
