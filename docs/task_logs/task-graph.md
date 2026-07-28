@@ -1,3 +1,85 @@
+## Phase 229: Mobile System Status Bar Theme Color Fix [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Configure SystemChrome System UI Overlay Style (`main.dart`)**:
+>    - In `my_ai_assistant/lib/main.dart`, configure `SystemChrome.setSystemUIOverlayStyle` with transparent status bar (`statusBarColor: Colors.transparent`) and matching icon brightness (`statusBarIconBrightness: Brightness.dark` / `statusBarBrightness: Brightness.light`).
+> 2. **Update MaterialApp Theme Definition Seed Color (`main.dart`)**:
+>    - Update `MaterialApp` theme definition in `main.dart` with seed color `GlassColors.primary` (`#1E1E24`) to eliminate default Flutter blue (`#2196F3`).
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or lint errors across the application.
+
+- [x] Task 229.1: Configure `SystemChrome.setSystemUIOverlayStyle` in `main.dart` with transparent status bar and matching icon brightness.
+- [x] Task 229.2: Update `MaterialApp` theme definition with seed color `GlassColors.primary` in `main.dart` to eliminate default Flutter blue (`#2196F3`).
+- [x] Task 229.3: Perform static analysis (`flutter analyze`).
+
+### Task 229.1: Configure SystemChrome.setSystemUIOverlayStyle in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Configure `SystemChrome.setSystemUIOverlayStyle` in `main.dart` with `statusBarColor: Colors.transparent` and matching icon brightness.
+- **Why:** Fix mobile status bar background color artifacts on startup and runtime.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Status bar background is transparent with correct icon contrast.
+
+### Task 229.2: Update MaterialApp theme definition seed color in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Set `ColorScheme.fromSeed(seedColor: GlassColors.primary)` in `MaterialApp` theme in `main.dart`.
+- **Why:** Replace default Flutter blue seed color (`#2196F3`) with `GlassColors.primary` (`#1E1E24`).
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Default blue theme tint replaced with monochrome design system primary color.
+
+### Task 229.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 228: Desktop Sidebar Nested Kanban Sub-Expansion Removal [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Sidebar Workspace Nested Board Sub-Expansion Removal (`aether_side_nav.dart`)**:
+>    - In `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, locate the expanded workspace mapping loop (`workspaces.map((workspace) { ... })`).
+>    - Remove the conditional nested board sub-expansion list (`if (isSelected) ...[ ...boards.where((b) => b.workspaceId == workspace.id).map((board) { ... }) ]`).
+>    - Ensure clicking a workspace row triggers `stateBoards.setSelectedWorkspace(workspace)`, `stateBoards.setSelectedBoard(null)`, and `widget.onItemSelected(1)` to cleanly open the Workspace Overview (`BoardsPage`) displaying module Bento cards (Board, Docs, Meetings).
+> 2. **Unused State Clean-Up**:
+>    - Clean up unused board selections (`boards`, `selectedBoardId`) from `_AetherSideNavState.build()` if no longer needed by sidebar rendering.
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or lint errors across the application.
+
+- [x] Task 228.1: Remove nested sub-expansion list of Kanban boards in `aether_side_nav.dart`.
+- [x] Task 228.2: Clean up unused board selection state getters in `aether_side_nav.dart`.
+- [x] Task 228.3: Perform static analysis (`flutter analyze`).
+
+### Task 228.1: Remove nested Kanban boards sub-expansion list under workspaces in aether_side_nav.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** Remove lines 361-436 in `aether_side_nav.dart` containing `if (isSelected) ...[ const SizedBox(height: 4), ...boards.where((b) => b.workspaceId == workspace.id).map((board) { ... }) ]`.
+- **Why:** Resolve user request ("ตอนที่เรากดไปที่เวิร์คสเปรชไหนแล้วมันจะทำการโชว์ว่ามีกี่บอร์ดถูกไหมเอาออกเลยเพราะตอนนี้พอกดไปที่บอกนั่นแล้วมันจะไปคันบันเลยคือตอนนี้เรามีหลายระบบมากไม่ได้เน้นแค่คันบันเฉยๆเเล้ว") by keeping sidebar navigation focused on workspace level selection.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Workspace entries render cleanly as top-level sidebar items without nested sub-boards, navigating directly to Workspace Overview (`BoardsPage`) on click.
+
+### Task 228.2: Clean up unused board selection state getters in aether_side_nav.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** Remove `boards` and `selectedBoardId` declarations from `_AetherSideNavState.build()` if no longer referenced.
+- **Why:** Maintain clean, efficient state selectors without unnecessary context rebuilds.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Code compiles without unused variable warnings.
+
+### Task 228.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
 ## Phase 227: Grouped Action Items with Sequential Numbered Categories [x] Completed
 
 - **Status:** [x] Completed

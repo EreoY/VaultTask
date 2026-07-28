@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../state_managers/state_boards.dart';
-import '../../models/board_model.dart';
+
 import '../../models/workspace_model.dart';
 import '../boards/widgets/board_edit_modal.dart';
 import '../theme/glass_theme.dart';
@@ -40,14 +40,8 @@ class _AetherSideNavState extends State<AetherSideNav> {
     final workspaces = context.select<StateBoards, List<WorkspaceModel>>(
       (state) => state.workspaces,
     );
-    final boards = context.select<StateBoards, List<BoardModel>>(
-      (state) => state.boards,
-    );
     final selectedWorkspaceId = context.select<StateBoards, String?>(
       (state) => state.selectedWorkspace?.id,
-    );
-    final selectedBoardId = context.select<StateBoards, String?>(
-      (state) => state.selectedBoard?.id,
     );
 
     return ClipRect(
@@ -358,82 +352,6 @@ class _AetherSideNavState extends State<AetherSideNav> {
                                           ),
                                         ),
                                       ),
-                                      if (isSelected) ...[
-                                        const SizedBox(height: 4),
-                                        ...boards
-                                            .where((b) => b.workspaceId == workspace.id)
-                                            .map((board) {
-                                              final isBoardSelected =
-                                                  selectedBoardId == board.id &&
-                                                  widget.selectedIndex == 1;
-
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                  left: 20,
-                                                  bottom: 2,
-                                                ),
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    stateBoards.setSelectedWorkspace(
-                                                      workspace,
-                                                    );
-                                                    stateBoards.setSelectedBoard(board);
-                                                    widget.onItemSelected(1);
-                                                  },
-                                                  borderRadius: BorderRadius.circular(
-                                                    ExecutiveRadius.s,
-                                                  ),
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
-                                                    child: Row(
-                                                      children: [
-                                                        Container(
-                                                          width: 6,
-                                                          height: 6,
-                                                          decoration: BoxDecoration(
-                                                            shape: BoxShape.circle,
-                                                            color: Color(
-                                                              board.color == 0
-                                                                  ? 0xFF0D40A5
-                                                                  : board.color,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 8),
-                                                        Expanded(
-                                                          child: Text(
-                                                            board.name,
-                                                            style: GlassText.bodyMD()
-                                                                .copyWith(
-                                                                  fontSize: 12,
-                                                                  fontWeight:
-                                                                      isBoardSelected
-                                                                      ? FontWeight.w600
-                                                                      : FontWeight.w400,
-                                                                  color: isBoardSelected
-                                                                      ? GlassColors
-                                                                            .onSurface
-                                                                      : GlassColors
-                                                                            .onSurfaceVariant
-                                                                            .withOpacity(
-                                                                              0.7,
-                                                                            ),
-                                                                ),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                      ],
                                       const SizedBox(height: 8),
                                     ],
                                   );
