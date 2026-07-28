@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../../models/board_model.dart';
 import '../../common/bouncy_soft_button.dart';

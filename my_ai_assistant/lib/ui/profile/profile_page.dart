@@ -20,7 +20,7 @@ class ProfilePage extends StatelessWidget {
           AetherStaggeredFadeIn(
             index: 0,
             isActive: isActive,
-            child: _buildHeader(user),
+            child: _buildHeader(context, user),
           ),
           SizedBox(height: ExecutiveSpacing.sectionGap(context)),
           AetherStaggeredFadeIn(

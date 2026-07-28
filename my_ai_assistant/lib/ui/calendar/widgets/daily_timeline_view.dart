@@ -12,7 +12,6 @@ import '../../kanban/widgets/task_edit_modal.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/responsive_layout.dart';
 import 'task_type_icon.dart';
-import 'vertical_pill_date_selector.dart';
 
 class DailyTimelineView extends StatefulWidget {
   final DateTime date;

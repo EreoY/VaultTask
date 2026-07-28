@@ -4,7 +4,6 @@ import '../../models/chat_model.dart';
 import '../../state_managers/state_chat.dart';
 import '../theme/glass_theme.dart';
 import '../common/glass_widgets.dart';
-import '../common/responsive_layout.dart';
 import 'widgets/aether_chat_view.dart';
 
 class ChatPage extends StatefulWidget {

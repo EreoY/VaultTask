@@ -28,7 +28,7 @@ class DbPersonalSqlite {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 15,
+      version: 16,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -109,6 +109,18 @@ CREATE TABLE project_documents (
   updated_at INTEGER DEFAULT 0,
   created_at TEXT NOT NULL,
   FOREIGN KEY(board_id) REFERENCES personal_boards(id)
+)
+''');
+    await db.execute('''
+CREATE TABLE meeting_interval_cards (
+  id TEXT PRIMARY KEY,
+  meeting_id TEXT NOT NULL,
+  audio_id TEXT,
+  start_seconds INTEGER DEFAULT 0,
+  end_seconds INTEGER DEFAULT 0,
+  raw_transcript TEXT DEFAULT '',
+  interval_summary TEXT DEFAULT '',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 ''');
     await _createChatTables(db);
@@ -248,6 +260,22 @@ CREATE TABLE IF NOT EXISTS project_documents (
         await db.execute(
           'ALTER TABLE personal_workspaces ADD COLUMN description TEXT DEFAULT ""',
         );
+      } catch (_) {}
+    }
+    if (oldVersion < 16) {
+      try {
+        await db.execute('''
+CREATE TABLE meeting_interval_cards (
+  id TEXT PRIMARY KEY,
+  meeting_id TEXT NOT NULL,
+  audio_id TEXT,
+  start_seconds INTEGER DEFAULT 0,
+  end_seconds INTEGER DEFAULT 0,
+  raw_transcript TEXT DEFAULT '',
+  interval_summary TEXT DEFAULT '',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+''');
       } catch (_) {}
     }
   }
@@ -526,6 +554,27 @@ CREATE TABLE IF NOT EXISTS project_documents (
     if (kIsWeb) return;
     final db = await database;
     await db.delete('personal_meetings', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> insertIntervalCard(Map<String, dynamic> card) async {
+    if (kIsWeb) return;
+    final db = await database;
+    await db.insert(
+      'meeting_interval_cards',
+      card,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getIntervalCardsForMeeting(String meetingId) async {
+    if (kIsWeb) return [];
+    final db = await database;
+    return await db.query(
+      'meeting_interval_cards',
+      where: 'meeting_id = ?',
+      whereArgs: [meetingId],
+      orderBy: 'start_seconds ASC',
+    );
   }
 
   // ─── DOCUMENTS ────────────────────────────────────────

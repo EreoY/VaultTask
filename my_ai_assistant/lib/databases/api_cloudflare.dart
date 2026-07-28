@@ -1211,6 +1211,31 @@ class ApiCloudflare {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> fetchIntervalCards(String meetingId) async {
+    final url = '$_base/api/meetings/interval_cards?meeting_id=$meetingId';
+    final response = await http.get(Uri.parse(url), headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return List<Map<String, dynamic>>.from(data);
+      }
+      return [];
+    } else {
+      throw Exception('Failed to fetch interval cards: ${response.body}');
+    }
+  }
+
+  static Future<void> insertIntervalCard(Map<String, dynamic> cardData) async {
+    final response = await http.post(
+      Uri.parse('$_base/api/meetings/interval_cards'),
+      headers: _headers,
+      body: jsonEncode(cardData),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to insert interval card: ${response.body}');
+    }
+  }
+
   static Future<void> markCommentsAsRead(
     String uid,
     List<String> commentIds,
