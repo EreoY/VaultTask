@@ -77,7 +77,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
                 onProfilePressed: () {
                   // Navigate to profile
-                  widget.onNavigate?.call(3);
+                  widget.onNavigate?.call(4);
                 },
               ),
 
@@ -112,10 +112,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   widget.onNavigate?.call(1); // Open Meeting Board Page
                 },
                 onTopRightTap: () {
-                  widget.onNavigate?.call(3); // Open Chat menu
+                  widget.onNavigate?.call(2); // Open Chat menu
                 },
                 onBottomRightTap: () {
-                  widget.onNavigate?.call(2); // Open Calendar / Sync
+                  widget.onNavigate?.call(3); // Open Calendar / Sync
                 },
               ),
 

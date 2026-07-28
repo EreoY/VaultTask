@@ -363,13 +363,13 @@ class _AppShellState extends State<AppShell> {
           isActive: isActive,
         );
       case 2:
-        return CalendarPage(
+        return ChatPage(
           isDark: false,
           isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 3:
-        return ChatPage(
+        return CalendarPage(
           isDark: false,
           isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
