@@ -97,7 +97,7 @@ class _AiSummarizeSheetState extends State<AiSummarizeSheet> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('บันทึก', style: TextStyle(color: GlassColors.gold)),
+              child: const Text('บันทึก', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -425,7 +425,7 @@ $_summaryOutput
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: GlassColors.gold, size: 24),
+                    Icon(Icons.auto_awesome, color: Colors.white, size: 24),
                     const SizedBox(width: 12),
                     Text(
                       'AI Summarizer',
@@ -471,11 +471,11 @@ $_summaryOutput
           if (index == _sessions.length) {
             return Center(
               child: ActionChip(
-                backgroundColor: GlassColors.gold.withOpacity(0.1),
-                side: BorderSide(color: GlassColors.gold.withOpacity(0.5)),
+                backgroundColor: Colors.white.withOpacity(0.08),
+                side: const BorderSide(color: Colors.white24),
                 label: const Text(
                   '+ เสสชันใหม่',
-                  style: TextStyle(color: GlassColors.gold),
+                  style: TextStyle(color: Colors.white),
                 ),
                 onPressed: () async {
                   final uid = AuthService().currentUser?.uid ?? 'temp';
@@ -522,7 +522,7 @@ $_summaryOutput
                 ],
               ),
               selected: isActive,
-              selectedColor: GlassColors.gold,
+              selectedColor: Colors.white,
               labelStyle: TextStyle(
                 color: isActive ? Colors.black : Colors.white,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
@@ -565,7 +565,7 @@ $_summaryOutput
                 style: TextStyle(color: Colors.white),
               ),
               value: _includeNotes,
-              activeColor: GlassColors.gold,
+              activeColor: Colors.white,
               checkColor: Colors.black,
               onChanged: (val) => setState(() => _includeNotes = val ?? false),
             ),
@@ -576,7 +576,7 @@ $_summaryOutput
                 style: TextStyle(color: Colors.white),
               ),
               value: _includeMainTranscript,
-              activeColor: GlassColors.gold,
+              activeColor: Colors.white,
               checkColor: Colors.black,
               onChanged: (val) =>
                   setState(() => _includeMainTranscript = val ?? false),
@@ -596,7 +596,7 @@ $_summaryOutput
                     style: const TextStyle(color: Colors.white),
                   ),
                   value: _includeTakes[take['id']],
-                  activeColor: GlassColors.gold,
+                  activeColor: Colors.white,
                   checkColor: Colors.black,
                   onChanged: (val) =>
                       setState(() => _includeTakes[take['id']!] = val ?? false),
@@ -611,7 +611,7 @@ $_summaryOutput
                 style: const TextStyle(color: Colors.white),
               ),
               value: _includeFiles[i],
-              activeColor: GlassColors.gold,
+              activeColor: Colors.white,
               checkColor: Colors.black,
               onChanged: (val) =>
                   setState(() => _includeFiles[i] = val ?? false),
@@ -667,8 +667,8 @@ $_summaryOutput
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: GlassColors.gold,
-                disabledBackgroundColor: GlassColors.gold.withOpacity(0.5),
+                backgroundColor: Colors.white,
+                disabledBackgroundColor: Colors.white.withOpacity(0.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -691,9 +691,9 @@ $_summaryOutput
                 child: SegmentedButton<int>(
                   style: SegmentedButton.styleFrom(
                     backgroundColor: Colors.white.withOpacity(0.05),
-                    selectedBackgroundColor: GlassColors.gold.withOpacity(0.2),
+                    selectedBackgroundColor: Colors.white.withOpacity(0.15),
                     foregroundColor: Colors.white70,
-                    selectedForegroundColor: GlassColors.gold,
+                    selectedForegroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white12),
                   ),
                   segments: [
@@ -781,7 +781,7 @@ $_summaryOutput
                             isUser ? Icons.person : Icons.auto_awesome,
                             color: isUser
                                 ? GlassColors.primary
-                                : GlassColors.gold,
+                                : Colors.white,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
@@ -800,7 +800,7 @@ $_summaryOutput
         if (_isSummarizing)
           const Padding(
             padding: EdgeInsets.all(8.0),
-            child: LinearProgressIndicator(color: GlassColors.gold),
+            child: const LinearProgressIndicator(color: Colors.white),
           ),
         // Refinement Chat Bar
         Container(
@@ -842,14 +842,14 @@ $_summaryOutput
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: GlassColors.gold,
+                          color: Colors.white,
                         ),
                       ),
                     )
                   : IconButton(
                       icon: const Icon(
                         Icons.send_rounded,
-                        color: GlassColors.gold,
+                        color: Colors.white,
                       ),
                       onPressed: _handleRefine,
                     ),

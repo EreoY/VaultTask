@@ -392,6 +392,7 @@ class _AppShellState extends State<AppShell> {
         meetingsLoading;
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: GlassColors.background,
       bottomNavigationBar: !isDesktop && selectedBoard == null
           ? FloatingBottomNavBar(

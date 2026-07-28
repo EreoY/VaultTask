@@ -18,9 +18,11 @@ class FloatingBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+    return Container(
+      color: Colors.transparent,
+      child: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
@@ -65,7 +67,7 @@ class FloatingBottomNavBar extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildNavItem({

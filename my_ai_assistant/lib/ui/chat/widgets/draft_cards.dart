@@ -23,7 +23,7 @@ class ProposalDraftCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: GlassColors.glassSurface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: GlassColors.gold.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -76,20 +76,20 @@ class ProposalDraftCard extends StatelessWidget {
   Widget _buildDraftHeader(ProposalDraft draft) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      color: GlassColors.gold.withOpacity(0.05),
+      color: Colors.white.withOpacity(0.05),
       child: Row(
         children: [
-          const Icon(Icons.auto_awesome, size: 16, color: GlassColors.gold),
+          const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
           const SizedBox(width: 12),
           Text(
             draft.originalCall.name.replaceAll('_', ' ').toUpperCase(),
-            style: GlassText.labelSM().copyWith(color: GlassColors.gold, letterSpacing: 2),
+            style: GlassText.labelSM().copyWith(color: Colors.white, letterSpacing: 2),
           ),
           const Spacer(),
           if (draft.selectedBoard != null)
             Text(
               draft.selectedBoard!.name.toUpperCase(),
-              style: GlassText.labelSM().copyWith(color: GlassColors.gold.withOpacity(0.5), fontSize: 10),
+              style: GlassText.labelSM().copyWith(color: Colors.white.withOpacity(0.5), fontSize: 10),
             ),
         ],
       ),
@@ -98,7 +98,7 @@ class ProposalDraftCard extends StatelessWidget {
 
   Widget _buildInteractiveTaskItem(BuildContext context, StateChat state, ProposalDraft draft, int idx, TaskDraftItem task, bool isDark) {
     final isDeletion = task.originalAction == 'delete_team_task';
-    final accentColor = isDeletion ? GlassColors.error : GlassColors.gold;
+    final accentColor = isDeletion ? GlassColors.error : Colors.white;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -135,7 +135,7 @@ class ProposalDraftCard extends StatelessWidget {
                     onChanged: (v) => state.updateDraftIsCompleted(idx, v ?? false),
                     activeColor: GlassColors.success,
                     checkColor: Colors.white,
-                    side: BorderSide(color: GlassColors.gold.withOpacity(0.5), width: 1.5),
+                    side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
                 ),
@@ -291,16 +291,16 @@ class ProposalDraftCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: enabled ? GlassColors.gold.withOpacity(0.05) : Colors.white.withOpacity(0.02),
+          color: enabled ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.02),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: GlassColors.gold.withOpacity(0.3)),
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: enabled ? GlassColors.gold : GlassColors.gold.withOpacity(0.3)),
+            Icon(icon, size: 12, color: enabled ? Colors.white : Colors.white.withOpacity(0.3)),
             const SizedBox(width: 8),
-            Text(label, style: GlassText.labelSM().copyWith(fontSize: 9, color: enabled ? GlassColors.gold : GlassColors.gold.withOpacity(0.3), fontWeight: FontWeight.bold)),
+            Text(label, style: GlassText.labelSM().copyWith(fontSize: 9, color: enabled ? Colors.white : Colors.white.withOpacity(0.3), fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -480,7 +480,7 @@ class ConfirmedActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color cardColor = GlassColors.gold;
+    Color cardColor = Colors.white;
     String headerText;
     IconData headerIcon;
 
@@ -507,7 +507,7 @@ class ConfirmedActionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: GlassColors.glassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: GlassColors.gold.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -581,7 +581,7 @@ class DraftActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final goldColor = GlassColors.gold;
+    final goldColor = Colors.white;
     
     return InkWell(
       onTap: onTap,

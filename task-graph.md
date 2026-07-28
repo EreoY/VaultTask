@@ -1,3 +1,97 @@
+## Phase 219: Eliminate Solid White Background Strip Behind FloatingBottomNavBar [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Enable Scaffold `extendBody: true` in `AppShell` (`lib/main.dart`)**:
+>    - Set `extendBody: true` on the root `Scaffold` in `AppShell` (`lib/main.dart`).
+>    - This ensures the `Scaffold`'s `body` (including `AetherDynamicBackdrop`, background colors, page grids/lists) extends continuously to the bottom edge of the screen underneath the `bottomNavigationBar`, eliminating the dedicated off-white/white slot background.
+> 2. **Ensure Outer Wrapper Transparency in `FloatingBottomNavBar` (`lib/ui/common/floating_bottom_nav_bar.dart`)**:
+>    - Ensure `FloatingBottomNavBar` outer container is set to `Colors.transparent` and does not introduce any canvas or solid color fill around the dark capsule container (`Color(0xFF0F121C)`).
+> 3. **Verify Page Padding & Static Analysis**:
+>    - Confirm that page scroll views (`DashboardPage`, `BoardsPage`, `CalendarPage`, `ChatPage`, `ProfilePage`) have sufficient bottom padding (e.g. 80-100px) so content is not obstructed by the floating navigation bar.
+>    - Execute `flutter analyze` to verify zero syntax or static analysis errors.
+
+- [x] Task 219.1: Enable `extendBody: true` on `Scaffold` in `main.dart` so page backdrop extends to screen bottom under `bottomNavigationBar`.
+- [x] Task 219.2: Set outer wrapper `color: Colors.transparent` in `floating_bottom_nav_bar.dart` so only dark capsule floats over background.
+- [x] Task 219.3: Perform static analysis (`flutter analyze`).
+
+### Task 219.1: Enable extendBody: true on Scaffold in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Set `extendBody: true` in `AppShell` `Scaffold` inside `my_ai_assistant/lib/main.dart`.
+- **Why:** Resolve user's issue where an unwanted solid white strip was rendered behind the floating navigation bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Floating bottom navigation bar renders with transparent background floating directly over page background without white rectangular bar.
+
+### Task 219.2: Set outer wrapper color: Colors.transparent in floating_bottom_nav_bar.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Ensure `FloatingBottomNavBar` outer container is set to `Colors.transparent` so only dark capsule floats over background.
+- **Why:** Ensure outer wrapper introduces no canvas or solid color fill around dark capsule container.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Outer wrapper is transparent.
+
+### Task 219.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+
+
+## Phase 218: Gold Color Purge & High-Contrast Black & White Monochrome [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Purge All Gold Accents and Text in `AiSummarizeSheet` (`ai_summarize_sheet.dart`)**:
+>    - Replace `GlassColors.gold` header sparkle icon (`Icons.auto_awesome`) with `Colors.white`.
+>    - Replace `GlassColors.gold` in Rename Session dialog save button with `Colors.white`.
+>    - Replace faint gold fill/border/text in `+ เสสชันใหม่` ActionChip (`backgroundColor: GlassColors.gold.withOpacity(0.1)`, `side: BorderSide(color: GlassColors.gold.withOpacity(0.5))`, `style: TextStyle(color: GlassColors.gold)`) with clean translucent white container (`backgroundColor: Colors.white.withOpacity(0.08)`, `side: BorderSide(color: Colors.white24)`, `style: TextStyle(color: Colors.white)`).
+>    - Replace active session ChoiceChip `selectedColor: GlassColors.gold` with high-contrast white badge (`Colors.white` background with `Colors.black` text).
+>    - Replace `GlassColors.gold` in source selection CheckboxListTile widgets with `Colors.white` active fill and `Colors.black` check mark.
+>    - Replace `GlassColors.gold` in "สร้างสรุป" action button with `Colors.white` background and `Colors.black` text/icon.
+>    - Replace `GlassColors.gold` in `SegmentedButton` tab selector ("📄 เอกสารสรุป" & "💬 ประวัติแชท") with `selectedBackgroundColor: Colors.white.withOpacity(0.15)` and `selectedForegroundColor: Colors.white`.
+>    - Replace `GlassColors.gold` in AI chat message bubble icon (`Icons.auto_awesome`), linear/circular progress indicators, and refinement send button (`Icons.send_rounded`) with `Colors.white`.
+> 2. **Purge Gold Accents from Chat Proposal & Draft Cards (`draft_cards.dart`)**:
+>    - Replace `GlassColors.gold` borders, icons, badge labels, and action buttons in proposal draft cards with crisp high-contrast monochrome elements (`Colors.white`, `Colors.white.withOpacity(0.12)`, `Colors.white38`).
+> 3. **Verify `MarkdownBlockEditor` & Chat Bubbles**:
+>    - Confirm zero residual gold colors in `markdown_block_editor.dart` and `chat_bubbles.dart`, maintaining maximum contrast and legibility.
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 218.1: Purge all 18 `GlassColors.gold` references from `ai_summarize_sheet.dart` and convert all session chips, sub-tabs, checkboxes, buttons, icons, and progress indicators to clean high-contrast monochrome styling (`Colors.white`, `Colors.black`, `Colors.white24`).
+- [x] Task 218.2: Purge gold accents and borders from AI proposal/draft cards in `draft_cards.dart`.
+- [x] Task 218.3: Perform static analysis (`flutter analyze`).
+
+### Task 218.1: Purge all GlassColors.gold references from ai_summarize_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Replace all 18 occurrences of `GlassColors.gold` with crisp high-contrast monochrome white/black colors. Convert active session chips to white fills with black text, `+ เสสชันใหม่` button to white text with subtle border, sub-tab SegmentedButton selection to white foreground/translucent white background, checkboxes to white active fill, "สร้างสรุป" button to solid white with black text, and send/sparkle icons to white.
+- **Why:** Resolve user's explicit request ("ไม่เอาสีทองเราเอาแค่สีขาวดำพอให้มันอ่านง่ายทำมาให้หน่อยพอดีหน้าแชทของมีทติ้งมันเป็นแบบนี้ไปแล้วอะ") to improve legibility.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** All gold colors purged from `AiSummarizeSheet` and replaced with high-contrast monochrome elements.
+
+### Task 218.2: Purge gold accents and borders from AI proposal/draft cards in draft_cards.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/draft_cards.dart`
+- **Action:** Replace `GlassColors.gold` borders, badges, icons, and buttons in draft proposal cards with high-contrast monochrome white/grey styling (`Colors.white`, `Colors.white.withOpacity(0.12)`, `Colors.white38`).
+- **Why:** Maintain design consistency across all meeting AI summary and chat UI components.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Proposal and draft cards styled with crisp monochrome accents.
+
+### Task 218.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation, syntax, or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
 ## Phase 217: Separate Top-Right Circular Count Badges for Bento Card Module Buttons [x] Completed
 
 - **Status:** [x] Completed
@@ -7268,41 +7362,4 @@ Older phases moved to `docs/task-graph-archive/` to keep this file lean.
 
 > **Architecture Mandate:** กำจัดเอฟเฟกต์การซ้อนทับ 2 ชั้นของ GlassCard โดยเปลี่ยนการใช้ BackdropFilter ซ้อนกันในระบบ Ambient Glow มาใช้งานการไล่โทนสีเวกเตอร์แทน:
 > 1. อัปเดต GlassCard ใน glass_widgets.dart โดยนำโครงสร้าง BackdropFilter ด้านในของ hasAmbientGlow ออก
-> 2. พัฒนาระบบเรืองแสงทดแทนด้วยวงกลมไล่ระดับสี RadialGradient เพื่อตัดการประมวลผลซ้อนทับบนเว็บและแก้ปัญหาภาพซ้อน 2 ชั้น
-> 3. ตรวจสอบความสมบูรณ์และรัน Static Analysis
-
-### Task 210.1: Register Phase 210 Scope in task-graph.md
-- **Status:** [x] Done
-- **Target Files:** `task-graph.md`
-- **Action:** ลงทะเบียนขอบเขตงาน Phase 210 ใน task-graph.md
-- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
-
-### Task 210.2: Optimize GlassCard ambient glow in glass_widgets.dart
-- **Status:** [x] Done
-- **Target Files:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
-- **Action:** แทนที่ Nested BackdropFilter ด้วย RadialGradient Container ในการ์ดเรืองแสง
-- **Why:** ป้องกันปัญหาเลเยอร์ซ้อนกัน 2 ชั้นบน Web Browser และจูนความเร็วการเรนเดอร์ตอน fade เข้า
-
-### Task 210.3: Verify changes with Static Analysis
-- **Status:** [x] Done
-- **Target Files:** None
-- **Action:** รัน `flutter analyze --no-pub` เพื่อความแน่ใจในความสมบูรณ์ของโค้ด
-- **Why:** ยืนยันว่าไม่เกิด Compile Error หรือ Warning ใดๆ
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+> 2. พัฒนาระบบเรืองแสงทดแทนด้วยวงกลมไล่ระดับสี Rad
