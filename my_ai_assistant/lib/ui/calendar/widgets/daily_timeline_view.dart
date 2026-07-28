@@ -118,7 +118,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
               left: isMobile ? 16 : 48,
               right: isMobile ? 16 : 48,
               top: isMobile ? 16 : 32,
-              bottom: isMobile ? 100 : 32,
+              bottom: 110,
             ),
             itemCount: 24,
             itemBuilder: (context, hour) {

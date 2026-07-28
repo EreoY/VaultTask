@@ -886,7 +886,7 @@ $_summaryOutput
                 'นำไปใช้',
                 style: GlassText.bodyLG().copyWith(
                   fontWeight: FontWeight.bold,
-                  color: GlassColors.onSurface,
+                  color: GlassColors.onPrimary,
                 ),
               ),
             ),

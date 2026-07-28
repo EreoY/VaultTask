@@ -90,6 +90,7 @@ class _BoardsPageState extends State<BoardsPage> {
                   )
                 : SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 110),
                     child: ProjectsTable(
                       boards: boards,
                       isMobile: isMobile,

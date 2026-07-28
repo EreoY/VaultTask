@@ -544,7 +544,7 @@ class _CalendarPageState extends State<CalendarPage> {
         isMobile ? 16 : 48,
         0,
         isMobile ? 16 : 48,
-        isMobile ? 16 : 48,
+        110,
       ),
       child: isMobile
           ? Column(
