@@ -156,18 +156,16 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (selectedWorkspace?.description != null && selectedWorkspace!.description!.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  selectedWorkspace!.description!,
-                                  style: GlassText.bodyMD().copyWith(
-                                    color: GlassColors.onSurfaceVariant,
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                              const SizedBox(height: 4),
+                              Text(
+                                (selectedWorkspace?.description?.trim().isNotEmpty == true) ? selectedWorkspace!.description! : 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
+                                style: GlassText.bodyMD().copyWith(
+                                  color: GlassColors.onSurfaceVariant,
+                                  fontSize: 12,
                                 ),
-                              ],
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
                         ),

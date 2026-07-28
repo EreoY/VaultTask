@@ -142,6 +142,7 @@ class StateBoards extends ChangeNotifier {
         final personalDefault = WorkspaceModel(
           id: 'default_personal',
           name: 'Default Personal Workspace',
+          description: 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
           type: 'personal',
           ownerUid: uid ?? '',
           members: [],
@@ -158,6 +159,7 @@ class StateBoards extends ChangeNotifier {
         final teamDefault = WorkspaceModel(
           id: 'default_team_$uid',
           name: 'Default Team Workspace',
+          description: 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
           type: 'team',
           ownerUid: uid,
           members: [uid],
@@ -294,6 +296,7 @@ class StateBoards extends ChangeNotifier {
       final workspace = WorkspaceModel(
         id: id,
         name: name,
+        description: 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
         type: type,
         ownerUid: uid,
         members: type == 'team' ? [uid] : [],
