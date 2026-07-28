@@ -10,6 +10,7 @@ class BentoMeetingHeroHeader extends StatelessWidget {
   final int totalMeetings;
   final VoidCallback? onCreateMeeting;
   final VoidCallback? onSearchPressed;
+  final VoidCallback? onBack;
 
   const BentoMeetingHeroHeader({
     super.key,
@@ -17,6 +18,7 @@ class BentoMeetingHeroHeader extends StatelessWidget {
     required this.totalMeetings,
     this.onCreateMeeting,
     this.onSearchPressed,
+    this.onBack,
   });
 
   @override
@@ -44,27 +46,42 @@ class BentoMeetingHeroHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.groups_rounded, size: 14, color: GlassColors.deepBlack),
-                    const SizedBox(width: 6),
-                    Text(
-                      'MEETING HUB • ${board.name.toUpperCase()}',
-                      style: GlassText.labelSM().copyWith(
-                        color: GlassColors.deepBlack,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onBack != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded, color: GlassColors.deepBlack),
+                        onPressed: onBack,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ),
-                  ],
-                ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.groups_rounded, size: 14, color: GlassColors.deepBlack),
+                        const SizedBox(width: 6),
+                        Text(
+                          'MEETING HUB • ${board.name.toUpperCase()}',
+                          style: GlassText.labelSM().copyWith(
+                            color: GlassColors.deepBlack,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -1,3 +1,21 @@
+## Phase 249: Hub Card Back Icon, Remove Meetings Bar & Date Header Font Size [ ] Not Started
+
+- **Status:** [ ] Not Started
+
+> **Architecture Mandate:**
+> 1. **Hub Card Back Icon & Removal (`meetings_board_page.dart`)**:
+>    - Embed `Icons.arrow_back_rounded` in `BentoMeetingHeroHeader`.
+>    - Remove `_buildNavBar` and "Board meetings" label.
+> 2. **Date Header Font Size (`meetings_board_page.dart`)**:
+>    - Reduce Date Group Header font size to 13px subtle style.
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze`.
+
+- [ ] Task 249.1: Embed Back Arrow Icon in `BentoMeetingHeroHeader`.
+- [ ] Task 249.2: Remove navbar and meeting bar in `meetings_board_page.dart`.
+- [ ] Task 249.3: Reduce Date Group Header font size.
+- [ ] Task 249.4: Perform static analysis.
+
 ## Phase 248: Meeting List Date Grouping, Descending Date Sorting & Cloudflare Pages Deployment [x] Completed
 
 - **Status:** [x] Completed

@@ -8,7 +8,7 @@ import '../../state_managers/state_boards.dart';
 import '../../state_managers/state_meetings.dart';
 import '../common/responsive_layout.dart';
 import '../common/scroll_gutter.dart';
-import '../common/workspace_chrome.dart';
+
 import '../theme/glass_theme.dart';
 import 'meetings_board_sheet.dart';
 
@@ -102,21 +102,13 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildNavBar(metaText: 'Board meetings'),
-          const SizedBox(height: 14),
-
-          Row(
-            children: [
-              WorkspaceBackButton(onTap: _exitToWorkspace),
-            ],
-          ),
-          const SizedBox(height: 14),
 
           // Bento Meeting Hero Banner
           BentoMeetingHeroHeader(
             board: widget.board,
             totalMeetings: meetings.length,
             onCreateMeeting: _openCreateDraft,
+            onBack: _exitToWorkspace,
           ),
 
           const SizedBox(height: 14),
@@ -182,10 +174,10 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
                                   const SizedBox(width: 8),
                                   Text(
                                     group.label,
-                                    style: GlassText.bodyMD().copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: GlassColors.onSurfaceVariant
-                                          .withOpacity(0.9),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: GlassColors.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -261,16 +253,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
-            ),
-            child: _buildNavBar(
-              metaText:
-                  'Edited ${DateFormat('MMM d').format(selectedMeeting.createdAt)}',
-            ),
-          ),
-          const SizedBox(height: 18),
           Expanded(
             child: MeetingsBoardSheet(
               board: widget.board,
@@ -306,13 +288,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
-            ),
-            child: _buildNavBar(metaText: 'New draft'),
-          ),
-          const SizedBox(height: 18),
           Expanded(
             child: MeetingsBoardSheet(
               board: widget.board,
@@ -342,41 +317,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
     );
   }
 
-  Widget _buildNavBar({required String metaText}) {
-    return Row(
-      children: [
-        Expanded(
-          child: WorkspaceChromeHeader(
-            padding: EdgeInsets.zero,
-            gapAfterMeta: 0,
-            crumbs: [
-        WorkspaceCrumb(
-          icon: Icons.home_rounded,
-          label: 'Workspace HQ',
-          onTap: _exitToWorkspace,
-        ),
-        WorkspaceCrumb(
-          icon: Icons.calendar_today_rounded,
-          label: 'Meetings',
-          color: GlassColors.onSurfaceVariant.withOpacity(0.72),
-          onTap: _returnToMeetingsList,
-        ),
-        WorkspaceCrumb(label: widget.board.name),
-      ],
-      metaText: metaText,
-      title: const SizedBox.shrink(),
-    ),
-  ),
-  ],
-);
-  }
-
-  void _returnToMeetingsList() {
-    if (_isCreatingDraft) {
-      setState(() => _isCreatingDraft = false);
-    }
-    context.read<StateMeetings>().closeMeetingDetail();
-  }
 
   Widget _pillToggle({
     required String label,
