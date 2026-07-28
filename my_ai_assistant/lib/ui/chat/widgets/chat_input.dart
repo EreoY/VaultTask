@@ -31,7 +31,7 @@ class AetherChatInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: GlassColors.background.withOpacity(0.4),
         border: Border(
@@ -87,10 +87,10 @@ class AetherChatInput extends StatelessWidget {
                     maxLines: 5,
                     minLines: 1,
                     decoration: InputDecoration(
-                      hintText: 'Message Saturn...',
+                      hintText: 'ข้อความ...',
                       hintStyle: GlassText.body().copyWith(
                         color: GlassColors.onSurfaceVariant.withOpacity(0.5),
-                        fontSize: 16,
+                        fontSize: 12,
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(

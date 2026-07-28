@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'dart:ui' as ui;
 import 'dart:async';
+import 'package:flutter/rendering.dart';
 import 'utils/db_init.dart';
 
 import 'firebase_options.dart';
@@ -38,13 +39,16 @@ import 'ui/common/dynamic_backdrop.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
       systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
     ),
   );
 
@@ -272,6 +276,7 @@ class _AppShellState extends State<AppShell> {
   final Set<int> _visitedTabs = {0};
   // StreamSubscription<html.Event>? _windowFocusSub;
   bool _isRestoringShellState = true;
+  bool _isNavBarVisible = true;
 
   @override
   void initState() {
@@ -296,6 +301,7 @@ class _AppShellState extends State<AppShell> {
   void _selectTab(int index, {bool clearBoard = true}) {
     setState(() {
       _index = index;
+      _isNavBarVisible = true;
       _visitedTabs.add(index);
       if (clearBoard) {
         final selectedBoardId = context.read<StateBoards>().selectedBoard?.id;
@@ -416,20 +422,36 @@ class _AppShellState extends State<AppShell> {
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
         systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
         systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
       ),
       child: Scaffold(
       extendBody: true,
       backgroundColor: GlassColors.background,
       bottomNavigationBar: !isDesktop && selectedBoard == null
-          ? FloatingBottomNavBar(
-              selectedIndex: _index,
-              onItemSelected: (index) => _selectTab(index),
-              isDark: false,
+          ? AnimatedSlide(
+              offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.5),
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: FloatingBottomNavBar(
+                selectedIndex: _index,
+                onItemSelected: (index) => _selectTab(index),
+                isDark: false,
+              ),
             )
           : null,
-      body: Stack(
-        children: [
+      body: NotificationListener<UserScrollNotification>(
+        onNotification: (notification) {
+          if (notification.direction == ScrollDirection.reverse) {
+            if (_isNavBarVisible) setState(() => _isNavBarVisible = false);
+          } else if (notification.direction == ScrollDirection.forward) {
+            if (!_isNavBarVisible) setState(() => _isNavBarVisible = true);
+          }
+          return false;
+        },
+        child: Stack(
+          children: [
           const Positioned.fill(
             child: IgnorePointer(
               child: AetherDynamicBackdrop(),
@@ -537,6 +559,7 @@ class _AppShellState extends State<AppShell> {
         ), // closes Row
       ], // closes outer Stack children
     ), // closes outer Stack
+      ), // closes NotificationListener
   ), // closes Scaffold
   ); // closes AnnotatedRegion
   }

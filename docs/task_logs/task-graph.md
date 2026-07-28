@@ -1,3 +1,131 @@
+## Phase 234: Compact Single-Line Chat Header & Minimalist Input Bar ("ข้อความ...") [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Chat Header Single-Line & Compact Restructuring (`chat_page.dart`)**:
+>    - In `my_ai_assistant/lib/ui/chat/chat_page.dart`, update `_buildHeader()` for mobile and desktop views.
+>    - Replace prominent "Global Chat" header (fontSize 24/48) and multi-line subtitle with a single-line, compact top bar.
+>    - Set header title text to concise `'ข้อความ...'` formatted with `maxLines: 1`, `overflow: TextOverflow.ellipsis`, small font size (`fontSize: 12`), and `color: GlassColors.onSurfaceVariant`.
+>    - Reduce container padding to maximize chat message reading viewport.
+> 2. **Input Bar Hint Text & Space Optimization (`chat_input.dart`)**:
+>    - In `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`, update text field `hintText` to concise `'ข้อความ...'` with `fontSize: 12`, `maxLines: 1`, `overflow: TextOverflow.ellipsis`, and `color: GlassColors.onSurfaceVariant.withOpacity(0.5)`.
+>    - Reduce `AetherChatInput` container padding to minimize vertical screen real estate consumption.
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation errors or static lint warnings.
+
+- [x] Task 234.1: Compact `chat_page.dart` header to single-line `'ข้อความ...'` (`fontSize: 12`, `maxLines: 1`, `overflow: TextOverflow.ellipsis`).
+- [x] Task 234.2: Update `chat_input.dart` `hintText` to concise `'ข้อความ...'` and reduce container padding.
+- [x] Task 234.3: Perform static analysis (`flutter analyze`).
+
+### Task 234.1: Compact chat_page.dart header to single-line 'ข้อความ...'
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/chat_page.dart`
+- **Action:** Restructure `_buildHeader()` in `chat_page.dart` to render a single-line header with concise text `'ข้อความ...'`, `fontSize: 12`, `maxLines: 1`, `overflow: TextOverflow.ellipsis`, and `color: GlassColors.onSurfaceVariant`.
+- **Why:** Reduce header height footprint to maximize chat reading viewport.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Chat header renders as a single compact line with small font size.
+
+### Task 234.2: Update chat_input.dart hintText to 'ข้อความ...' and reduce container padding
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** Update text field `hintText` to `'ข้อความ...'`, `fontSize: 12`, `maxLines: 1`, `overflow: TextOverflow.ellipsis`, and reduce container padding.
+- **Why:** Provide concise hint text and compact input bar layout.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Input bar displays concise hint text and compact padding.
+
+### Task 234.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/chat_page.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_input.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passes with 0 errors.
+
+## Phase 233: Workspace Mock Description Removal [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Workspace Header Description Clean-up (`boards_workspace_header.dart`)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, remove mock description paragraph text under Workspace Title.
+> 2. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to verify zero compilation errors or static warnings.
+
+- [x] Task 233.1: Remove mock description paragraph text under Workspace Title in `boards_workspace_header.dart`.
+- [x] Task 233.2: Perform static analysis (`flutter analyze`).
+
+### Task 233.1: Remove mock description paragraph text under Workspace Title in boards_workspace_header.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Remove mock description paragraph text beneath Workspace Title.
+- **Why:** Remove unnecessary clutter from workspace header.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Workspace header displays clean title without mock description.
+
+### Task 233.2: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passes with 0 errors.
+
+## Phase 232: Transparent Edge-to-Edge System UI & Scroll-Aware Auto-Hiding Floating Navigation Bar [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Android Edge-to-Edge System Navigation Bar (`main.dart`)**:
+>    - In `my_ai_assistant/lib/main.dart`, enable edge-to-edge UI mode via `SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)`.
+>    - Update `SystemUiOverlayStyle` in `main()` and in `AppShell`'s `AnnotatedRegion` with `systemNavigationBarColor: Colors.transparent`, `systemNavigationBarDividerColor: Colors.transparent`, `systemNavigationBarIconBrightness: Brightness.dark`, and `systemNavigationBarContrastEnforced: false` to ensure Android system 3-button or gesture bar is 100% transparent.
+> 2. **Scroll-Aware Auto-Hiding Floating Navigation Bar (`main.dart` & `floating_bottom_nav_bar.dart`)**:
+>    - In `AppShell` (`_AppShellState` in `main.dart`), introduce `bool _isNavBarVisible = true;`.
+>    - Wrap main body stack in `NotificationListener<UserScrollNotification>` (importing `package:flutter/rendering.dart`).
+>    - Listen to scroll notifications: set `_isNavBarVisible = false` when `notification.direction == ScrollDirection.reverse` (user scrolling down to read), set `_isNavBarVisible = true` when `notification.direction == ScrollDirection.forward` (user scrolling up).
+>    - Reset `_isNavBarVisible = true` in `_selectTab` so the nav bar is always visible when changing tabs.
+>    - Wrap `FloatingBottomNavBar` in `AnimatedSlide(offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.5), duration: const Duration(milliseconds: 250), curve: Curves.easeInOut)` for smooth slide-down hiding and slide-up revealing.
+> 3. **Static Analysis Verification**:
+>    - Run `flutter analyze` to ensure 0 compilation errors or static warnings.
+
+- [x] Task 232.1: Enable `SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)` and set `systemNavigationBarColor: Colors.transparent` in `main.dart`.
+- [x] Task 232.2: Add `UserScrollNotification` direction listener and `_isNavBarVisible` state in `AppShell` (`main.dart`).
+- [x] Task 232.3: Wrap `FloatingBottomNavBar` in `AnimatedSlide` with 250ms smooth curves animation in `main.dart`.
+- [x] Task 232.4: Perform static analysis (`flutter analyze`).
+
+### Task 232.1: Enable SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge) and transparent system navigation bar colors in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Add `SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)` in `main()` and update `SystemUiOverlayStyle` in `main()` and `AppShell`'s `AnnotatedRegion` with `systemNavigationBarColor: Colors.transparent`, `systemNavigationBarDividerColor: Colors.transparent`, `systemNavigationBarIconBrightness: Brightness.dark`, and `systemNavigationBarContrastEnforced: false`.
+- **Why:** Allow mobile viewport content to draw under the Android system navigation bar with 100% transparency.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** System navigation bar renders transparently over app background.
+
+### Task 232.2: Add _isNavBarVisible state and UserScrollNotification listener in AppShell
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Add `_isNavBarVisible` state boolean to `_AppShellState`, wrap main `Stack` in `NotificationListener<UserScrollNotification>`, update state based on `ScrollDirection.reverse` and `ScrollDirection.forward`, and reset to `true` in `_selectTab`.
+- **Why:** Detect user scroll behavior across all main tabs to trigger hiding when scrolling down and showing when scrolling up.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Scroll notifications update `_isNavBarVisible` state correctly.
+
+### Task 232.3: Wrap FloatingBottomNavBar in AnimatedSlide in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Wrap `FloatingBottomNavBar` in `AnimatedSlide(offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.5), duration: const Duration(milliseconds: 250), curve: Curves.easeInOut)`.
+- **Why:** Smoothly slide bottom floating navbar out of view when reading content down the screen and slide back up when scrolling up.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Navbar slides out of view on scroll down and slides back in on scroll up.
+
+### Task 232.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Run `flutter analyze` and confirm 0 errors.
+- **Why:** Ensure codebase health and quality.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+
 ## Phase 231: Seamless Mobile Top Status Bar & PWA Theme Color Alignment (#F8F9FA) [x] Completed
 
 - **Status:** [x] Completed
