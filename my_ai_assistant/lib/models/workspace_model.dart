@@ -7,6 +7,7 @@ class WorkspaceModel {
   final String ownerUid;
   final List<String> members; // List of Firebase UIDs
   final DateTime createdAt;
+  final String? description;
 
   WorkspaceModel({
     required this.id,
@@ -14,6 +15,7 @@ class WorkspaceModel {
     required this.type,
     this.ownerUid = '',
     this.members = const [],
+    this.description,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -30,6 +32,7 @@ class WorkspaceModel {
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : DateTime.now(),
+      description: map['description'] as String?,
     );
   }
 
@@ -41,6 +44,7 @@ class WorkspaceModel {
       'owner_uid': ownerUid,
       'members': jsonEncode(members),
       'created_at': createdAt.toIso8601String(),
+      'description': description,
     };
   }
 
@@ -59,6 +63,7 @@ class WorkspaceModel {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
+      description: json['description'] as String?,
     );
   }
 
@@ -70,6 +75,7 @@ class WorkspaceModel {
       'owner_uid': ownerUid,
       'members': members,
       'created_at': createdAt.toIso8601String(),
+      'description': description,
     };
   }
 
@@ -80,6 +86,7 @@ class WorkspaceModel {
     String? ownerUid,
     List<String>? members,
     DateTime? createdAt,
+    String? description,
   }) {
     return WorkspaceModel(
       id: id ?? this.id,
@@ -88,6 +95,7 @@ class WorkspaceModel {
       ownerUid: ownerUid ?? this.ownerUid,
       members: members ?? this.members,
       createdAt: createdAt ?? this.createdAt,
+      description: description ?? this.description,
     );
   }
 }

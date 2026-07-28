@@ -21,6 +21,7 @@ class FloatingBottomNavBar extends StatelessWidget {
     return Container(
       color: Colors.transparent,
       child: SafeArea(
+        bottom: false,
         child: Container(
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         height: 64,

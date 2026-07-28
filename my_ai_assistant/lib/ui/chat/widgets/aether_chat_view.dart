@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../state_managers/state_chat.dart';
@@ -29,6 +30,7 @@ class _AetherChatViewState extends State<AetherChatView> {
   final FocusNode _focusNode = FocusNode();
   StreamSubscription? _uploadErrorSub;
   StreamSubscription? _uploadSuccessSub;
+  bool _isNavBarVisible = true;
 
   @override
   void dispose() {
@@ -102,11 +104,21 @@ class _AetherChatViewState extends State<AetherChatView> {
           child: Column(
             children: [
               Expanded(
-                child: _MessageList(
-                  scrollController: _scrollController,
-                  isDark: widget.isDark,
-                  isFloating: widget.isFloating,
-                  onNavigate: widget.onNavigate,
+                child: NotificationListener<UserScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.direction == ScrollDirection.reverse) {
+                      if (_isNavBarVisible) setState(() => _isNavBarVisible = false);
+                    } else if (notification.direction == ScrollDirection.forward) {
+                      if (!_isNavBarVisible) setState(() => _isNavBarVisible = true);
+                    }
+                    return false;
+                  },
+                  child: _MessageList(
+                    scrollController: _scrollController,
+                    isDark: widget.isDark,
+                    isFloating: widget.isFloating,
+                    onNavigate: widget.onNavigate,
+                  ),
                 ),
               ),
 
@@ -117,6 +129,7 @@ class _AetherChatViewState extends State<AetherChatView> {
                 onSend: _handleSend,
                 isDark: widget.isDark,
                 isFloating: widget.isFloating,
+                isNavBarVisible: _isNavBarVisible,
               ),
             ],
           ),
@@ -250,6 +263,7 @@ class _ChatInputArea extends StatelessWidget {
   final VoidCallback onSend;
   final bool isDark;
   final bool isFloating;
+  final bool isNavBarVisible;
 
   const _ChatInputArea({
     required this.controller,
@@ -257,6 +271,7 @@ class _ChatInputArea extends StatelessWidget {
     required this.onSend,
     required this.isDark,
     required this.isFloating,
+    required this.isNavBarVisible,
   });
 
   @override
@@ -273,17 +288,22 @@ class _ChatInputArea extends StatelessWidget {
         return Padding(
           padding: EdgeInsets.symmetric(
             horizontal: horizontalPadding,
-            vertical: bottomPadding,
+            vertical: 0,
           ),
-          child: AetherChatInput(
-            isDark: isDark,
-            controller: controller,
-            focusNode: focusNode,
-            pendingFiles: chatState.pendingFileMaps,
-            onSend: onSend,
-            onFilesPicked: (files) => chatState.addPendingFiles(files),
-            onRemoveFile: (i) => chatState.removeFile(i),
-            onPreviewImage: (url) {},
+          child: AnimatedPadding(
+            padding: EdgeInsets.only(bottom: isNavBarVisible ? 80 : 8),
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: AetherChatInput(
+              isDark: isDark,
+              controller: controller,
+              focusNode: focusNode,
+              pendingFiles: chatState.pendingFileMaps,
+              onSend: onSend,
+              onFilesPicked: (files) => chatState.addPendingFiles(files),
+              onRemoveFile: (i) => chatState.removeFile(i),
+              onPreviewImage: (url) {},
+            ),
           ),
         );
       },
