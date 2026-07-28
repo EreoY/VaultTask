@@ -74,7 +74,7 @@ class _ChatPageState extends State<ChatPage> {
         vertical: 12,
       ),
       child: Text(
-        'ข้อความ...',
+        'Chat',
         style: GlassText.bodyMD().copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w600,
