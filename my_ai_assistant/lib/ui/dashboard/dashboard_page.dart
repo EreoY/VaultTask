@@ -62,13 +62,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final boards = boardsState.boards;
     final tasksState = context.watch<StateTasks>();
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          padding: const EdgeInsets.only(bottom: 110),
-          child: Column(
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
+      child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Section A: Header Greeting
@@ -149,8 +146,6 @@ class _DashboardPageState extends State<DashboardPage> {
               _buildRecentTaskList(context, boards, tasksState),
             ],
           ),
-        ),
-      ),
     );
   }
 
