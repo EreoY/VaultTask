@@ -130,24 +130,45 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                     width: maxTextWidth,
                     color: Colors.transparent, // expand tap area
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          isMobile ? Icons.keyboard_arrow_down_rounded : Icons.swap_horiz_rounded,
-                          color: GlassColors.deepBlack.withOpacity(0.7),
-                          size: 24,
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Icon(
+                            isMobile ? Icons.keyboard_arrow_down_rounded : Icons.swap_horiz_rounded,
+                            color: GlassColors.deepBlack.withOpacity(0.7),
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Flexible(
-                          child: Text(
-                            selectedWorkspace?.name ?? 'Projects Hub',
-                            style: GlassText.headlineMD().copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: GlassColors.deepBlack,
-                              fontSize: isMobile ? 20 : 26,
-                              height: 1.2,
-                            ),
-                            softWrap: true,
-                            maxLines: null,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                selectedWorkspace?.name ?? 'Projects Hub',
+                                style: GlassText.headlineMD().copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: GlassColors.deepBlack,
+                                  fontSize: isMobile ? 20 : 26,
+                                  height: 1.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (selectedWorkspace?.description != null && selectedWorkspace!.description!.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  selectedWorkspace!.description!,
+                                  style: GlassText.bodyMD().copyWith(
+                                    color: GlassColors.onSurfaceVariant,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],

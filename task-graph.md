@@ -1,3 +1,114 @@
+## Phase 237: Smooth Slide Down Chat Input Bar [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Smooth Slide Down Chat Input Bar (`chat_page.dart`)**:
+>    - In `my_ai_assistant/lib/ui/chat/chat_page.dart`, wrap `AetherChatInput` in smooth `AnimatedPadding` (duration 250ms, curve `easeInOut`) so chat input slides down to screen edge when nav bar hides.
+> 2. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 237.1: Add smooth `AnimatedPadding` (duration 250ms, curve `easeInOut`) to `AetherChatInput` in `aether_chat_view.dart` / `chat_page.dart` so chat input slides down to screen edge when nav bar hides.
+- [x] Task 237.2: Perform static analysis (`flutter analyze`).
+
+### Task 237.1: Add smooth AnimatedPadding to AetherChatInput in chat_page.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/chat_page.dart`
+- **Action:** Add smooth `AnimatedPadding` (duration 250ms, curve `easeInOut`) to `AetherChatInput` in `chat_page.dart` so chat input slides down to screen edge when nav bar hides.
+- **Why:** Ensure smooth animation of chat input bar when bottom navigation bar toggles visibility.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Chat input slides down smoothly when bottom navigation bar hides.
+
+### Task 237.2: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/chat_page.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passes with 0 errors.
+
+## Phase 236: Transparent 3-Button Bottom System Navigation Bar [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Viewport Fit Meta Tag (`web/index.html`)**:
+>    - Add `viewport-fit=cover` to `web/index.html` viewport meta tag.
+> 2. **Bottom Inset Removal (`floating_bottom_nav_bar.dart`)**:
+>    - Set `SafeArea(bottom: false)` in `floating_bottom_nav_bar.dart` to remove bottom container inset strip.
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 236.1: Add `viewport-fit=cover` to `web/index.html` viewport meta tag.
+- [x] Task 236.2: Set `SafeArea(bottom: false)` in `floating_bottom_nav_bar.dart` to remove bottom container inset strip.
+- [x] Task 236.3: Perform static analysis (`flutter analyze`).
+
+### Task 236.1: Add viewport-fit=cover to web/index.html viewport meta tag
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/index.html`
+- **Action:** Add `viewport-fit=cover` to viewport meta tag.
+- **Why:** Allow web viewport content to extend edge-to-edge covering notch and navigation bar insets.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Viewport meta tag contains `viewport-fit=cover`.
+
+### Task 236.2: Set SafeArea(bottom: false) in floating_bottom_nav_bar.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Set `SafeArea(bottom: false)` in `floating_bottom_nav_bar.dart` to remove bottom container inset strip.
+- **Why:** Eliminate unwanted extra padding below floating bottom navigation bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `FloatingBottomNavBar` uses `SafeArea(bottom: false)`.
+
+### Task 236.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/index.html`, `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passes with 0 errors.
+
+## Phase 235: Workspace Header Title & Description 2-Line Alignment [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Workspace Model Description Support (`workspace_model.dart`)**:
+>    - In `my_ai_assistant/lib/models/workspace_model.dart`, add optional `description` field to `WorkspaceModel`.
+>    - Update constructor, `fromMap`, `toMap`, `fromJson`, `toJson`, and `copyWith` to handle optional `description`.
+> 2. **Workspace Header UI Update (`boards_workspace_header.dart`)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`:
+>    - Update `boards_workspace_header.dart` to align Workspace Description with Title column and set `maxLines: 2` with `overflow: TextOverflow.ellipsis` (`..`).
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 235.1: Add optional `description` field to `WorkspaceModel` in `workspace_model.dart`.
+- [x] Task 235.2: Update `boards_workspace_header.dart` to align Workspace Description with Title column and set `maxLines: 2` with `overflow: TextOverflow.ellipsis` (`..`).
+- [x] Task 235.3: Perform static analysis (`flutter analyze`).
+
+### Task 235.1: Add optional description field to WorkspaceModel in workspace_model.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/models/workspace_model.dart`
+- **Action:** Add `final String? description;` to `WorkspaceModel` and update serialization methods (`fromMap`, `toMap`, `fromJson`, `toJson`, `copyWith`).
+- **Why:** Allow workspace entities to store and provide description text to UI widgets.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `WorkspaceModel` instantiates and serializes `description` field cleanly.
+
+### Task 235.2: Update boards_workspace_header.dart to align Workspace Description with Title column and set maxLines: 2 with ellipsis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Align Workspace Description with Title column and set `maxLines: 2` with `overflow: TextOverflow.ellipsis`.
+- **Why:** Truncate workspace description and align with title column per layout specifications.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Workspace Description aligns with Title column and truncates to 2 lines with ellipsis.
+
+### Task 235.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/models/workspace_model.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure code quality and adherence to guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports 0 errors.
+
 ## Phase 234: Compact Single-Line Chat Header & Minimalist Input Bar ("ข้อความ...") [x] Completed
 
 - **Status:** [x] Completed
