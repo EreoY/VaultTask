@@ -1,3 +1,109 @@
+## Phase 231: Seamless Mobile Top Status Bar & PWA Theme Color Alignment (#F8F9FA) [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **PWA Manifest Color Alignment (`web/manifest.json`)**:
+>    - In `my_ai_assistant/web/manifest.json`, replace `"background_color": "#0175C2"` and `"theme_color": "#0175C2"` with `"background_color": "#F8F9FA"` and `"theme_color": "#F8F9FA"`.
+> 2. **HTML Meta Tags Theme Color Alignment (`web/index.html`)**:
+>    - In `my_ai_assistant/web/index.html`, insert `<meta name="theme-color" content="#F8F9FA">` in `<head>`.
+>    - Update `<meta name="apple-mobile-web-app-status-bar-style" content="black">` to `<meta name="apple-mobile-web-app-status-bar-style" content="default">` so iOS/Safari status bar renders seamlessly with `#F8F9FA`.
+> 3. **System UI Overlay Style Verification (`main.dart`)**:
+>    - Ensure `SystemUiOverlayStyle` in `main.dart` maintains `statusBarColor: Colors.transparent` (or `GlassColors.background`), `statusBarIconBrightness: Brightness.dark`, and `statusBarBrightness: Brightness.light` so system icons remain crisp and dark over `#F8F9FA`.
+> 4. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to verify zero compilation errors or lint warnings.
+
+- [x] Task 231.1: Update `web/manifest.json` `background_color` and `theme_color` to `#F8F9FA`.
+- [x] Task 231.2: Update `web/index.html` with `<meta name="theme-color" content="#F8F9FA">` and `apple-mobile-web-app-status-bar-style` to `default`.
+- [x] Task 231.3: Verify `SystemUiOverlayStyle` in `lib/main.dart` for transparent status bar with dark icons.
+- [x] Task 231.4: Perform static analysis (`flutter analyze`).
+
+### Task 231.1: Update web/manifest.json theme_color and background_color to #F8F9FA
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/manifest.json`
+- **Action:** Replace `"background_color": "#0175C2"` and `"theme_color": "#0175C2"` with `#F8F9FA`.
+- **Why:** Eliminate default Flutter blue PWA theme color `#0175C2` causing mobile browser status bar tinting.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** PWA manifest specifies `#F8F9FA` theme and background colors matching app design system.
+
+### Task 231.2: Add HTML meta theme-color tag and status bar style in web/index.html
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/index.html`
+- **Action:** Add `<meta name="theme-color" content="#F8F9FA">` and update `apple-mobile-web-app-status-bar-style` to `default`.
+- **Why:** Control mobile browser top status bar / notch background color to blend 100% seamlessly with `#F8F9FA`.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** HTML head section contains valid `#F8F9FA` theme-color meta tag.
+
+### Task 231.3: Verify Flutter SystemUiOverlayStyle in lib/main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Confirm `SystemUiOverlayStyle` sets `statusBarColor: Colors.transparent`, `statusBarIconBrightness: Brightness.dark`, `statusBarBrightness: Brightness.light`.
+- **Why:** Guarantee native/web Flutter status overlay remains transparent with dark readable icons on light background.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Status bar icons render dark on transparent background.
+
+### Task 231.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/web/manifest.json`, `my_ai_assistant/web/index.html`, `my_ai_assistant/lib/main.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Guarantee codebase health and zero build errors.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis completes with 0 errors.
+
+## Phase 230: Mobile Status Bar Theme & Navigation Index Sync Fix [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **System UI Overlay Enforcer (`main.dart` & `AppShell`)**:
+>    - In `my_ai_assistant/lib/main.dart`, wrap `AppShell` with `AnnotatedRegion<SystemUiOverlayStyle>` specifying `statusBarColor: Colors.transparent`, `statusBarIconBrightness: Brightness.dark`, `statusBarBrightness: Brightness.light`, `systemNavigationBarColor: Colors.transparent`, and `systemNavigationBarIconBrightness: Brightness.dark`.
+>    - Ensure status bar background remains transparent without default Flutter/Android blue (`#007BC1` / `#2196F3`) header overlay.
+> 2. **Navigation Tab Index Alignment (`main.dart`, `dashboard_page.dart`, `floating_bottom_nav_bar.dart`)**:
+>    - Align `AppShell._buildScreen(index)` so tab indices match `FloatingBottomNavBar` (0: Dashboard, 1: Boards, 2: Calendar, 3: Profile, 4: Chat).
+>    - Update `FloatingBottomNavBar` item indices or `AppShell` tab indices so the 4th navbar item ('Profile' icon) navigates directly to `ProfilePage`.
+>    - Update `DashboardPage` header profile avatar `onProfilePressed` callback to navigate to `ProfilePage`.
+> 3. **Bottom Padding & SafeArea Adjustment (`dashboard_page.dart`)**:
+>    - Ensure `DashboardPage` scroll view bottom padding (`bottom: 120 + MediaQuery.of(context).padding.bottom`) prevents cards under "Your plan" and "Recent Tasks" from being obscured by `FloatingBottomNavBar`.
+> 4. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or lint errors.
+
+- [x] Task 230.1: Wrap `AppShell` in `AnnotatedRegion<SystemUiOverlayStyle>` in `main.dart` to enforce transparent status bar and dark icons.
+- [x] Task 230.2: Align navigation tab indices in `main.dart`, `dashboard_page.dart`, and `floating_bottom_nav_bar.dart` so Profile avatar/icon navigates to `ProfilePage`.
+- [x] Task 230.3: Adjust `DashboardPage` bottom scroll padding with `MediaQuery` safe area to prevent `FloatingBottomNavBar` overlap.
+- [x] Task 230.4: Perform static analysis (`flutter analyze`).
+
+### Task 230.1: Enforce System UI Overlay Style with AnnotatedRegion in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Wrap `AppShell` widget tree in `AnnotatedRegion<SystemUiOverlayStyle>` with `statusBarColor: Colors.transparent`, `statusBarIconBrightness: Brightness.dark`, `statusBarBrightness: Brightness.light`, and `systemNavigationBarColor: Colors.transparent`.
+- **Why:** Prevent Android system theme or Flutter Scaffold from resetting status bar to default bright blue (`#007BC1` / `#2196F3`).
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Status bar background remains transparent with dark icons over light app background on Android.
+
+### Task 230.2: Align navigation tab indices for Profile and Chat
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`, `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Fix tab index routing so tapping Profile avatar in header or Profile icon (4th tab) in `FloatingBottomNavBar` opens `ProfilePage` instead of `ChatPage`.
+- **Why:** Fix profile navigation mismatch where Profile icon opens AI Chat screen.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Tapping Profile avatar or Profile nav icon correctly displays `ProfilePage`.
+
+### Task 230.3: Adjust DashboardPage scroll view padding
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Update `SingleChildScrollView` padding to account for `FloatingBottomNavBar` height plus system bottom safe area padding.
+- **Why:** Ensure bottom cards ("Your plan" audio/AI cards and "Recent Tasks") are not obscured by floating nav bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** All dashboard content scrolls cleanly above floating nav bar.
+
+### Task 230.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
 ## Phase 229: Mobile System Status Bar Theme Color Fix [x] Completed
 
 - **Status:** [x] Completed
