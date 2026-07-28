@@ -1,3 +1,16 @@
+# Phase 192: Workspace Table Columns Reordering Setup
+We are adjusting the order of columns in the desktop projects table to improve workspace navigation and consistency. The project table's first column (which previously combined Project Name and Open Kanban inline button) will be split into two separate columns. The final columns order will be:
+1. **Project Name** (flex 3) - dot + board name
+2. **Members** (flex 2) - members avatars list + invite button
+3. **Open Kanban** (flex 3) - open kanban button (OPEN | TEAM / OPEN | PERSONAL)
+4. **Docs** (flex 2) - docs open button + count badge
+5. **Meetings** (flex 2) - meetings open button + count badge
+6. **Actions** (flex 1) - edit (rename) and delete icon buttons
+
+This alignment separates the key concepts logically, improves desktop space utilisation, and keeps actions properly aligned.
+
+---
+
 # Phase 189: Diagnostics and Command Execution Bootstrap Setup
 We are in a simple command execution setup for bootstrapping/diagnostics. The goal is to verify terminal command execution and feedback loop via the Executor.
 

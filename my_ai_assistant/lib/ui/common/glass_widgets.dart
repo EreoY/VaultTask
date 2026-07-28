@@ -74,37 +74,26 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = GlassContainer(
+    final cardContent = GlassContainer(
       isDark: isDark,
       radius: radius ?? ExecutiveRadius.l,
       padding: padding ?? EdgeInsets.all(ExecutiveSpacing.m),
-
       decoration: elevated 
         ? GlassDecorations.elevated(isDark: isDark, radius: radius ?? ExecutiveRadius.l)
         : null,
-      child: Stack(
-        children: [
-          if (hasAmbientGlow)
-            Positioned(
-              top: -40,
-              right: -40,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: GlassColors.primary.withOpacity(0.05),
-                ),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                  child: const SizedBox.shrink(),
-                ),
-              ),
-            ),
-          child,
-        ],
-      ),
+      child: child,
     );
+
+    Widget content = cardContent;
+
+    if (hasAmbientGlow) {
+      content = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          cardContent,
+        ],
+      );
+    }
 
     if (onTap != null) {
       content = MouseRegion(
@@ -141,34 +130,63 @@ class GlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color contentColor = isGold ? GlassColors.gold : GlassColors.primary;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Container(
-          width: width,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: GlassDecorations.button(isDark: isDark, isGold: isGold),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, color: contentColor, size: 18),
-                const SizedBox(width: 10),
-              ],
-              Text(
-                label.toUpperCase(),
-                style: GlassText.label(isDark).copyWith(
-                  color: contentColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+    bool isHovered = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        final Color displayColor = isHovered ? Colors.white : contentColor;
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: width,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: isHovered
+                    ? contentColor.withOpacity(0.18)
+                    : contentColor.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
+                border: Border.all(
+                  color: isHovered
+                      ? contentColor.withOpacity(0.7)
+                      : contentColor.withOpacity(0.24),
+                  width: 1.0,
                 ),
+                boxShadow: isHovered
+                    ? [
+                        BoxShadow(
+                          color: contentColor.withOpacity(0.22),
+                          blurRadius: 14,
+                          spreadRadius: -2,
+                        )
+                      ]
+                    : [],
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: displayColor, size: 18),
+                    const SizedBox(width: 10),
+                  ],
+                  Text(
+                    label.toUpperCase(),
+                    style: GlassText.label(isDark).copyWith(
+                      color: displayColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 }
@@ -551,6 +569,96 @@ class RenderHitTestBoundOffset extends RenderProxyBox {
       return true;
     }
     return false;
+  }
+}
+
+class AetherStaggeredFadeIn extends StatefulWidget {
+  final Widget child;
+  final int index;
+  final bool isActive;
+  final Duration delayStep;
+
+  const AetherStaggeredFadeIn({
+    super.key,
+    required this.child,
+    required this.index,
+    required this.isActive,
+    this.delayStep = const Duration(milliseconds: 80),
+  });
+
+  @override
+  State<AetherStaggeredFadeIn> createState() => _AetherStaggeredFadeInState();
+}
+
+class _AetherStaggeredFadeInState extends State<AetherStaggeredFadeIn>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.04), // subtle slide up
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+
+    if (widget.isActive) {
+      _startAnimation();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AetherStaggeredFadeIn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _startAnimation();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _controller.reset();
+      _hasAnimated = false;
+    }
+  }
+
+  void _startAnimation() {
+    if (_hasAnimated) return;
+    _hasAnimated = true;
+    Future.delayed(widget.delayStep * widget.index, () {
+      if (mounted) {
+        _controller.forward(from: 0.0);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: widget.child,
+      ),
+    );
   }
 }
 

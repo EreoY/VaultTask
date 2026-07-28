@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../theme/glass_theme.dart';
 import '../chat/widgets/aether_chat_view.dart';
 import 'responsive_layout.dart';
@@ -220,7 +221,7 @@ class _FloatingAssistantShellState extends State<FloatingAssistantShell> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'JONNY',
+                        'SATURN',
                         style: GlassText.labelSM().copyWith(
                           letterSpacing: 2.0,
                           color: GlassColors.gold,
@@ -241,28 +242,9 @@ class _FloatingAssistantShellState extends State<FloatingAssistantShell> {
 
   Widget _buildChatHead({bool isSmall = false}) {
     final size = isSmall ? _headSize * 0.8 : _headSize;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: GlassColors.gold,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: GlassColors.gold.withOpacity(0.4),
-            blurRadius: isSmall ? 10 : 20,
-            spreadRadius: isSmall ? 1 : 2,
-          ),
-        ],
-        border: Border.all(color: Colors.white.withOpacity(0.4), width: 2.5),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.auto_awesome_rounded,
-          color: Colors.black,
-          size: isSmall ? 20 : 28,
-        ),
-      ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: SaturnIcon(size: size),
     );
   }
 
@@ -320,7 +302,7 @@ class _FloatingAssistantShellState extends State<FloatingAssistantShell> {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            'JONNY',
+                            'SATURN',
                             style: GlassText.labelSM().copyWith(
                               letterSpacing: 1.5,
                               color: GlassColors.gold,
@@ -389,5 +371,179 @@ class _FloatingAssistantShellState extends State<FloatingAssistantShell> {
         ],
       ),
     );
+  }
+}
+
+class SaturnIcon extends StatefulWidget {
+  final double size;
+  const SaturnIcon({super.key, this.size = 54});
+
+  @override
+  State<SaturnIcon> createState() => _SaturnIconState();
+}
+
+class _SaturnIconState extends State<SaturnIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // 6-second slow animation loop for rocking and pulsing
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        final double pi2 = 2 * math.pi;
+
+        // Rocking/swaying rotation angle (radians)
+        final swayAngle = math.sin(t * pi2) * 0.14; // -8 to +8 degrees
+
+        // Ring opening aspect ratio (ry / rx)
+        // Animates between 0.33 and 0.41 to simulate 3D tilt pulsing
+        final ringOpening = 0.37 + math.cos(t * pi2) * 0.04;
+
+        // Glow pulse value (between 0.85 and 1.15)
+        final pulseValue = 1.0 + math.sin(t * pi2 * 2) * 0.15;
+
+        return CustomPaint(
+          size: Size(widget.size, widget.size),
+          painter: SaturnPainter(
+            swayAngle: swayAngle,
+            ringOpening: ringOpening,
+            pulseValue: pulseValue,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class SaturnPainter extends CustomPainter {
+  final double swayAngle;
+  final double ringOpening;
+  final double pulseValue;
+
+  SaturnPainter({
+    required this.swayAngle,
+    required this.ringOpening,
+    required this.pulseValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    
+    // Saturn dimensions relative to custom widget size
+    final double planetRadius = size.width * 0.25;
+    final double ringRadiusX = size.width * 0.44;
+    final double ringRadiusY = ringRadiusX * ringOpening;
+
+    // Save canvas state to apply rotation for the sway
+    canvas.save();
+    canvas.translate(centerX, centerY);
+    canvas.rotate(swayAngle);
+
+    // 1. Draw outer neon glow behind Saturn
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF00E5FF).withOpacity(0.28 * pulseValue),
+          const Color(0xFFEA4C89).withOpacity(0.12 * pulseValue),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.65, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset.zero, radius: size.width * 0.5));
+    canvas.drawCircle(Offset.zero, size.width * 0.48, glowPaint);
+
+    // 2. Draw BACK ring (semi-ellipse from 180 to 360 degrees)
+    final ringRect = Rect.fromCenter(
+      center: Offset.zero,
+      width: ringRadiusX * 2,
+      height: ringRadiusY * 2,
+    );
+
+    final ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.085
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFFFFD580), // Warm gold outer
+          Color(0xFFEA4C89), // Fuchsia mid
+          Color(0xFF00E5FF), // Cyan inner
+        ],
+        stops: [0.0, 0.55, 1.0],
+      ).createShader(ringRect);
+
+    // Top half of rings in rotated coordinate space: pi to 2*pi
+    canvas.drawArc(ringRect, math.pi, math.pi, false, ringPaint);
+
+    // Extra thin neon coordinate accent line on the ring for 3D HUD feel
+    final thinRingPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+      
+    final thinRingRect = Rect.fromCenter(
+      center: Offset.zero,
+      width: (ringRadiusX * 1.1) * 2,
+      height: (ringRadiusY * 1.1) * 2,
+    );
+    thinRingPaint.shader = const LinearGradient(
+      colors: [
+        Color(0x7FFFFFFF),
+        Color(0x1F00E5FF),
+      ],
+    ).createShader(thinRingRect);
+    canvas.drawArc(thinRingRect, math.pi, math.pi, false, thinRingPaint);
+
+    // 3. Draw Planet Sphere (Spherical Gradient)
+    final planetPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [
+          Color(0xFFFFD580), // Golden core
+          Color(0xFFEA4C89), // Fuchsia shade
+          Color(0xFF080614), // Dark space shadow
+        ],
+        stops: [0.0, 0.72, 1.0],
+        center: Alignment(-0.25, -0.25), // Top-left light source
+      ).createShader(Rect.fromCircle(center: Offset.zero, radius: planetRadius));
+
+    canvas.drawCircle(Offset.zero, planetRadius, planetPaint);
+
+    // Draw atmospheric glow accent ring around planet
+    final atmospherePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = const Color(0xFF00E5FF).withOpacity(0.4);
+    canvas.drawCircle(Offset.zero, planetRadius + 0.5, atmospherePaint);
+
+    // 4. Draw FRONT ring (semi-ellipse from 0 to 180 degrees)
+    // Bottom half of rings: 0 to pi
+    canvas.drawArc(ringRect, 0, math.pi, false, ringPaint);
+    canvas.drawArc(thinRingRect, 0, math.pi, false, thinRingPaint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant SaturnPainter oldDelegate) {
+    return oldDelegate.swayAngle != swayAngle ||
+        oldDelegate.ringOpening != ringOpening ||
+        oldDelegate.pulseValue != pulseValue;
   }
 }

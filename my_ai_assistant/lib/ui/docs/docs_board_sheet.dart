@@ -19,6 +19,8 @@ import '../common/glass_widgets.dart';
 import 'package:my_ai_assistant/ui/common/defer_pointer.dart';
 import '../theme/glass_theme.dart';
 import '../meetings/widgets/markdown_block_editor.dart';
+
+import '../meetings/widgets/ai_summarize_sheet.dart';
 import '../../utils/web_download_stub.dart'
     if (dart.library.html) '../../utils/web_download_web.dart';
 
@@ -61,6 +63,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
 
   DocumentModel? _selectedDocument;
   _DocsTab _activeTab = _DocsTab.summary;
+  
   List<Map<String, String>> _attachments = [];
   bool _isSaving = false;
   bool _isUploading = false;
@@ -208,6 +211,20 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
           )
         : Icon(icon, size: 14, color: color);
 
+    final isMobile = Responsive.isMobile(context);
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withOpacity(0.12), width: 0.8),
+        ),
+        child: iconWidget,
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -239,9 +256,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
     _titleController.addListener(_onTitleChanged);
     _ensureDraftInitialized();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<StateDocuments>().fetchDocumentsForBoard(
-        widget.board,
-      );
+      await context.read<StateDocuments>().fetchDocumentsForBoard(widget.board);
       if (!mounted) return;
       if (widget.initialDocumentId == null && !widget.autoLoadFirstDocument) {
         return;
@@ -431,10 +446,19 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
     final mime = (att['mime'] ?? att['mimeType'] ?? '').toLowerCase();
     return name.endsWith('.pdf') ||
         name.endsWith('.docx') ||
+        name.endsWith('.png') ||
+        name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
         url.endsWith('.pdf') ||
         url.endsWith('.docx') ||
+        url.endsWith('.png') ||
+        url.endsWith('.jpg') ||
+        url.endsWith('.jpeg') ||
         mime.contains('pdf') ||
-        mime.contains('wordprocessingml');
+        mime.contains('wordprocessingml') ||
+        mime.contains('png') ||
+        mime.contains('jpeg') ||
+        mime.contains('jpg');
   }
 
   Future<void> _extractAttachmentInBackground(Map<String, String> att) async {
@@ -607,7 +631,17 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
           : MediaQuery.of(context).size.height * 0.92,
       decoration: widget.embeddedInPage
           ? null
-          : GlassDecorations.solidSurface(radius: 20, hasShadow: true),
+          : BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
       child: _buildEditorPane(),
     );
 
@@ -687,8 +721,10 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
                       const SizedBox(height: 20),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+                          color: GlassColors.surface.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(
+                            ExecutiveRadius.l,
+                          ),
                           border: Border.all(
                             color: GlassColors.ghostBorder,
                             width: 1.0,
@@ -831,6 +867,8 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
   }
 
   Widget _buildTopActions() {
+    final isMobile = Responsive.isMobile(context);
+
     return Row(
       children: [
         if (widget.onBack != null)
@@ -840,11 +878,16 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
           ),
         if (widget.onBack != null) const SizedBox(width: 10),
         if (widget.onOpenBoard != null)
-          TextButton.icon(
-            onPressed: widget.onOpenBoard,
-            icon: const Icon(Icons.open_in_new_rounded, size: 15),
-            label: const Text('Open board'),
-          ),
+          isMobile
+              ? IconButton(
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  onPressed: widget.onOpenBoard,
+                )
+              : TextButton.icon(
+                  onPressed: widget.onOpenBoard,
+                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                  label: const Text('Open board'),
+                ),
         const Spacer(),
         if (_autoSaveStatus != null) ...[
           _buildAutoSaveStatusIndicator(),
@@ -936,14 +979,17 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
   Widget _buildTabBar() {
     return Padding(
       padding: const EdgeInsets.only(left: 0),
-      child: Row(
-        children: [
-          _docTab(_DocsTab.summary, 'Summary'),
-          const SizedBox(width: 10),
-          _docTab(_DocsTab.notes, 'Notes'),
-          const SizedBox(width: 10),
-          _docTab(_DocsTab.attachments, 'Attachments'),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _docTab(_DocsTab.summary, 'Summary'),
+            const SizedBox(width: 10),
+            _docTab(_DocsTab.notes, 'Notes'),
+            const SizedBox(width: 10),
+            _docTab(_DocsTab.attachments, 'Attachments'),
+          ],
+        ),
       ),
     );
   }
@@ -1100,7 +1146,10 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
                           if (_isExtractableFile(attachment))
                             IconButton(
                               tooltip: 'ดูเนื้อหาที่แกะได้',
-                              icon: const Icon(Icons.article_outlined, size: 16),
+                              icon: const Icon(
+                                Icons.article_outlined,
+                                size: 16,
+                              ),
                               color: GlassColors.onSurfaceVariant.withOpacity(
                                 0.7,
                               ),
@@ -1308,248 +1357,32 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
   Future<void> _handleAiSummarize() async {
     if (_selectedDocument == null) return;
 
-    bool includeNotes = _notesController.text.trim().isNotEmpty;
-    final Map<int, bool> includeAttachments = {};
-    for (var i = 0; i < _attachments.length; i++) {
-      final name = _attachments[i]['name'] ?? '';
-      if (name.isNotEmpty) includeAttachments[i] = true;
-    }
-
-    if (!includeNotes && includeAttachments.isEmpty) {
-      GlassNotifications.show(
-        context,
-        'ไม่พบ Notes หรือไฟล์แนบสำหรับนำมาใช้สรุปเอกสาร',
-        isError: true,
-      );
-      return;
-    }
-
-    final bool? confirm = await showDialog<bool>(
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: Colors.grey[900]?.withOpacity(0.95),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Text(
-                'เลือกแหล่งข้อมูลสำหรับสรุปเอกสาร',
-                style: GlassText.bodyMD().copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_notesController.text.trim().isNotEmpty)
-                      CheckboxListTile(
-                        title: const Text(
-                          'บันทึกข้อความ (Notes)',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        value: includeNotes,
-                        activeColor: GlassColors.gold,
-                        onChanged: (val) =>
-                            setDialogState(() => includeNotes = val ?? false),
-                      ),
-                    if (includeAttachments.isNotEmpty) ...[
-                      const Divider(color: Colors.white24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'ไฟล์แนบ (Attachments)',
-                            style: GlassText.secondary().copyWith(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      ...includeAttachments.keys.map((i) {
-                        return CheckboxListTile(
-                          title: Text(
-                            _attachments[i]['name'] ?? 'Attachment',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          value: includeAttachments[i],
-                          activeColor: GlassColors.gold,
-                          onChanged: (val) => setDialogState(
-                            () => includeAttachments[i] = val ?? false,
-                          ),
-                        );
-                      }),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(
-                    'ยกเลิก',
-                    style: GlassText.bodyMD().copyWith(
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final anySelected =
-                        includeNotes ||
-                        includeAttachments.values.contains(true);
-                    if (!anySelected) {
-                      GlassNotifications.show(
-                        context,
-                        'กรุณาเลือกแหล่งข้อมูลอย่างน้อย 1 แหล่ง',
-                        isError: true,
-                      );
-                      return;
-                    }
-                    Navigator.pop(context, true);
-                  },
-                  style: TextButton.styleFrom(foregroundColor: GlassColors.gold),
-                  child: Text(
-                    'เริ่มสรุปด้วย AI',
-                    style: GlassText.bodyMD().copyWith(
-                      color: GlassColors.gold,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AiSummarizeSheet(
+        isMeeting: false,
+        notesText: _notesController.text,
+        mainTranscriptText: '',
+        recordingTakes: const [],
+        fileAttachments: _attachments
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(),
+        targetId: 'doc_${_selectedDocument!.id}',
+        initialSummary: _summaryController.text,
+      ),
     );
 
-    if (confirm != true) return;
-
-    final buffer = StringBuffer();
-
-    if (includeNotes) {
-      buffer.writeln('=== DOCUMENT NOTES ===');
-      buffer.writeln(_notesController.text.trim());
-      buffer.writeln();
-    }
-
-    final selectedAttachments = includeAttachments.entries
-        .where((entry) => entry.value)
-        .map((entry) => _attachments[entry.key])
-        .toList();
-
-    // [Process] Extract the ACTUAL text content of each selected file
-    // (PDF via gemini, DOCX client-side) so the AI summarizes the real
-    // document rather than just a name/URL reference. Cached per file.
-    if (selectedAttachments.isNotEmpty) {
-      setState(() {
-        _isSummarizing = true;
-        _summarizingLabel = 'กำลังอ่านไฟล์แนบ...';
-      });
-      bool extractedAny = false;
-      for (final attachment in selectedAttachments) {
-        final existing = (attachment['extractedText'] ?? '').toString();
-        if (existing.isNotEmpty) continue; // reuse cached extraction
-        try {
-          debugPrint('[UI][Extract] Reading ${attachment['name']}...');
-          final text = await ApiCloudflare.extractAttachmentText(attachment);
-          if (text.isNotEmpty) {
-            attachment['extractedText'] = text;
-            extractedAny = true;
-          }
-        } catch (e) {
-          debugPrint('[UI][Extract][Error] ${attachment['name']}: $e');
-        }
-      }
-      // Persist newly cached extracted text through the existing save path.
-      if (extractedAny && mounted) _scheduleAutoSave();
-    }
-
-    if (selectedAttachments.isNotEmpty) {
-      buffer.writeln('=== REFERENCE ATTACHMENTS ===');
-      for (final attachment in selectedAttachments) {
-        final name = attachment['name'] ?? 'Attachment';
-        final url = attachment['url'] ?? '';
-        final extracted = (attachment['extractedText'] ?? '').toString();
-        if (extracted.isNotEmpty) {
-          // Feed the AI the real file contents.
-          buffer.writeln('=== FILE: $name ===');
-          buffer.writeln(extracted);
-          buffer.writeln();
-        } else {
-          // Fallback: unsupported/failed extraction -> name/URL reference.
-          buffer.writeln(
-            'Reference attachment: $name (${url.isEmpty ? 'no link' : url})',
-          );
-        }
-      }
-      buffer.writeln();
-    }
-
-    final combinedText = buffer.toString().trim();
-    if (combinedText.isEmpty) {
-      if (mounted) setState(() => _isSummarizing = false);
-      return;
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _isSummarizing = true;
-      _summarizingLabel = 'กำลังสรุปด้วย AI...';
-    });
-
-    try {
-      final systemInstruction =
-          'คุณคือผู้ช่วยเลขานุการ HR มืออาชีพที่มีหน้าที่สรุปเอกสาร '
-          'กรุณาเขียนบันทึกสรุปจากข้อมูลที่ได้รับให้ออกมาเป็นเอกสารทางการในรูปแบบ Markdown '
-          'ที่อ่านเข้าใจง่ายที่สุด แบ่งหัวข้อแยกประเด็นชัดเจนและสรุปประเด็นเป็นข้อๆ '
-          'โดยต้องครอบคลุม: หัวข้อเอกสาร, ประเด็นสำคัญ, ข้อสรุปหรือข้อตกลง, และ Action Items (สิ่งที่ต้องทำต่อไปพร้อมคนรับผิดชอบและกำหนดส่ง ถ้ามี) '
-          'ข้อกำหนดที่สำคัญที่สุด:\n'
-          '1. ห้ามใส่อิโมจิ (Emoji) หรือสติกเกอร์สัญลักษณ์พิเศษใดๆ ในเอกสารเด็ดขาด (No emojis allowed at all)\n'
-          '2. เขียนสรุปเป็นภาษาไทยอย่างเป็นทางการและกระชับ สละสลวย เข้าใจง่ายสำหรับผู้บริหารและเลขา HR\n'
-          '3. รูปแบบ Markdown ที่อนุญาตให้ใช้มีเพียง 4 แบบเท่านั้น: หัวข้อใหญ่ขึ้นต้นด้วย "# " (มีเว้นวรรค), หัวข้อย่อยขึ้นต้นด้วย "## " (มีเว้นวรรค), รายการขึ้นต้นด้วย "- " (มีเว้นวรรค), และรายการสิ่งที่ต้องทำขึ้นต้นด้วย "- [ ] " หรือ "- [x] "\n'
-          '4. ห้ามใช้ตัวหนา (**), ตัวเอียง (*), อินไลน์โค้ด (`), หัวข้อระดับ "###" ขึ้นไป, เลขลำดับ (1. 2. 3.), หรือเส้นคั่น (---) โดยเด็ดขาด เพราะระบบแสดงผลรองรับเฉพาะ 4 รูปแบบในข้อ 3 เท่านั้น';
-
-      final userPrompt =
-          '$systemInstruction\\n\\nนี่คือข้อมูลเอกสาร (Notes และไฟล์อ้างอิง):\\n\\n$combinedText';
-
-      final summaryResult = await ApiCloudflare.summarizeMeeting(
-        prompt: userPrompt,
-      );
-
-      if (summaryResult.isNotEmpty) {
-        // Normalize the AI output through the block parser/serializer so the
-        // stored summary contains ONLY the markdown subset the editor renders.
-        final normalized = serializeBlocksToMarkdown(
-          parseMarkdownToBlocks(summaryResult),
-        );
+    if (result != null && mounted) {
+      final summary = result['summary'] as String?;
+      
+      if (summary != null && summary.isNotEmpty) {
         setState(() {
-          _summaryController.text = normalized;
+          _summaryController.text = summary;
         });
         _scheduleAutoSave();
-        GlassNotifications.show(context, 'สรุปเอกสารด้วย AI เรียบร้อยแล้ว');
-      } else {
-        GlassNotifications.show(
-          context,
-          'ไม่สามารถสรุปข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
-          isError: true,
-        );
       }
-    } catch (e) {
-      debugPrint('[UI] AI Document Summary failed: $e');
-      GlassNotifications.show(
-        context,
-        'เกิดข้อผิดพลาดในการสรุปข้อมูล: $e',
-        isError: true,
-      );
-    } finally {
-      if (mounted) setState(() => _isSummarizing = false);
     }
   }
 }

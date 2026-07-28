@@ -1,54 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Aether AI Design System (Notion-Style Minimalist Light Theme)
-/// Adapted from React/Tailwind reference design.
+/// Aether AI Design System (Soft UI & Bento Box Pastel Mobile-First Theme)
 
 class GlassColors {
-  // Abyssal Minimal Palette
-  static const Color background = Color(0xFF0F1418);
-  static const Color surface = Color(0xFF181C20);
-  static const Color surfaceBright = Color(0xFF24292E);
-  static const Color surfaceContainer = Color(0xFF14181C);
-  static const Color surfaceHighest = Color(0xFF2C3136);
-  static const Color primary = Color(0xFFD7E5ED);
-  static const Color onPrimary = Color(0xFF202C33);
-  static const Color secondary = Color(0xFFC0CBD4);
-  static const Color tertiary = Color(0xFFD2DDE6);
-  static const Color gold = Color(0xFFCC9E67); // Muted Gold from DESIGN.md
-  static const Color hairline = Color(0xFF2A2F34);
-  static const Color hairlineStrong = Color(0xFF3A4046);
-  static const Color muted = Color(0xFF8D949A);
+  // Soft UI & Bento Pastel Palette
+  static const Color background = Color(0xFFF8F9FA); // Off-white soft background
+  static const Color surface = Color(0xFFFFFFFF); // Clean white card surface
+  static const Color surfaceBright = Color(0xFFF4F5F8);
+  static const Color surfaceContainer = Color(0xFFEFEFF4);
+  static const Color surfaceHighest = Color(0xFFE4E4EC);
 
-  static const Color onSurface = Color(0xFFDFE3E9);
-  static const Color onSurfaceVariant = Color(0xFFC3C7CA);
-  static const Color outline = Color(0xFF8D9194);
-  static const Color outlineVariant = Color(0xFF43474A);
+  static const Color deepBlack = Color(0xFF1E1E24); // Primary active & bottom nav
+  static const Color primary = Color(0xFF1E1E24);
+  static const Color onPrimary = Color(0xFFFFFFFF);
 
-  static const Color success = Color(0xFF34D399);
-  static const Color error = Color(0xFFFFB4AB);
+  // Bento Box Custom Vibrant Pastel Tokens
+  static const Color bentoLavender = Color(0xFFB3A0FF); // Daily Challenge card (#B3A0FF)
+  static const Color bentoOrange = Color(0xFFFFBE5A);   // Meeting card (#FFBE5A)
+  static const Color bentoBlue = Color(0xFFA9CBFF);     // Message with AI card (#A9CBFF)
+  static const Color bentoPink = Color(0xFFFD9FFF);     // Profile & Sync card (#FD9FFF)
 
-  // Exact Glass Tokens from Reference
-  static Color glassSurface = const Color(
-    0xFF23323B,
-  ).withOpacity(0.4); // rgba(35, 50, 59, 0.4)
-  static Color ghostBorder = const Color(
-    0xFFB0C2CB,
-  ).withOpacity(0.1); // rgba(176, 194, 203, 0.1)
+  static const Color secondary = Color(0xFF6C5CE7);
+  static const Color tertiary = Color(0xFFFF7675);
+  static const Color gold = Color(0xFFFDCB6E);
+  static const Color hairline = Color(0xFFE8E8EE);
+  static const Color hairlineStrong = Color(0xFFDDDDE6);
+  static const Color muted = Color(0xFF9595A6);
+
+  static const Color onSurface = Color(0xFF1E1E24); // Deep dark text
+  static const Color onSurfaceVariant = Color(0xFF6E6E7E); // Soft dark-grey text
+  static const Color outline = Color(0xFFE0E0EA);
+  static const Color outlineVariant = Color(0xFFECECF4);
+
+  static const Color success = Color(0xFF00B894);
+  static const Color error = Color(0xFFD63031);
+
+  static Color glassSurface = Colors.white;
+  static Color ghostBorder = const Color(0xFFE8E8EE);
 
   static Color glassBorder() => ghostBorder;
-  static Color glassTint() => primary.withOpacity(0.05);
+  static Color glassTint() => deepBlack.withOpacity(0.03);
 
-  // Distinct Operative Identity
   static const List<Color> memberPalette = [
-    Color(0xFF34D399), // success/green
-    Color(0xFFCC9E67), // gold
-    Color(0xFF60A5FA), // light blue
-    Color(0xFFF87171), // red/error
-    Color(0xFFA78BFA), // purple
-    Color(0xFFF472B6), // pink
-    Color(0xFFFB923C), // orange
-    Color(0xFF2DD4BF), // teal
+    Color(0xFF00B894),
+    Color(0xFFFDCB6E),
+    Color(0xFF0984E3),
+    Color(0xFFD63031),
+    Color(0xFF6C5CE7),
+    Color(0xFFE84393),
+    Color(0xFFE17055),
+    Color(0xFF00CEC9),
   ];
 
   static Color getMemberColor(String uid) {
@@ -69,7 +71,6 @@ class ExecutiveSpacing {
   static const double xl = 24.0;
   static const double xxl = 32.0;
 
-  // Dynamic scaling based on screen size
   static double stackMd(BuildContext context) =>
       MediaQuery.of(context).size.width < 600 ? 16.0 : 32.0;
 
@@ -82,98 +83,76 @@ class ExecutiveSpacing {
   static double sectionGap(BuildContext context) =>
       MediaQuery.of(context).size.width < 600 ? 48.0 : 160.0;
 
-  // Legacy Aliases (Now Dynamic)
   static double get m => 16.0;
   static double get l => 24.0;
 }
 
 class ExecutiveRadius {
-  static const double s = 4.0;
-  static const double m = 6.0;
-  static const double l = 8.0;
-  static const double xl = 12.0;
-  static const double xxl = 12.0;
+  static const double s = 8.0;
+  static const double m = 12.0;
+  static const double l = 16.0;
+  static const double xl = 24.0;  // Bento standard rounded corner
+  static const double xxl = 32.0; // Large Bento card rounded corner
   static const double circular = 9999.0;
 }
 
 class GlassGradients {
-  static LinearGradient background() => const LinearGradient(
+  static LinearGradient background([bool isDark = false]) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [GlassColors.background, Color(0xFF0A0F13)],
+    colors: [
+      isDark ? const Color(0xFF0F121C) : GlassColors.background,
+      isDark ? const Color(0xFF0F121C) : GlassColors.background,
+    ],
   );
 }
 
 class GlassDecorations {
-  static BoxDecoration surface({
-    bool isDark = true,
-    double radius = 8,
-    bool hasShadow = false,
+  static BoxDecoration softCard({
+    Color backgroundColor = GlassColors.surface,
+    double radius = ExecutiveRadius.xl, // 24px default
+    bool hasShadow = true,
   }) => BoxDecoration(
-    color: GlassColors.glassSurface,
+    color: backgroundColor,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(color: GlassColors.ghostBorder, width: 1.0),
+    border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
     boxShadow: hasShadow
         ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 40,
-              offset: const Offset(0, 12),
-            ),
-          ]
-        : [],
-  );
-
-  static BoxDecoration solidSurface({
-    double radius = 8,
-    bool hasShadow = false,
-  }) => BoxDecoration(
-    color: GlassColors.surface,
-    borderRadius: BorderRadius.circular(radius),
-    border: Border.all(
-      color: GlassColors.hairlineStrong.withOpacity(0.7),
-      width: 1.0,
-    ),
-    boxShadow: hasShadow
-        ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.22),
-              blurRadius: 28,
+              color: const Color(0xFF1E1E24).withOpacity(0.05),
+              blurRadius: 20,
+              spreadRadius: 0,
               offset: const Offset(0, 8),
             ),
           ]
         : [],
   );
 
-  static BoxDecoration elevated({bool isDark = true, double radius = 16}) =>
-      BoxDecoration(
-        color: GlassColors.glassSurface.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: GlassColors.primary.withOpacity(0.2),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      );
+  static BoxDecoration surface({
+    bool isDark = false,
+    double radius = ExecutiveRadius.xl,
+    bool hasShadow = true,
+  }) => softCard(backgroundColor: GlassColors.surface, radius: radius, hasShadow: hasShadow);
 
-  static BoxDecoration button({bool isDark = true, bool isGold = false}) {
+  static BoxDecoration solidSurface({
+    double radius = ExecutiveRadius.xl,
+    bool hasShadow = true,
+  }) => softCard(backgroundColor: GlassColors.surface, radius: radius, hasShadow: hasShadow);
+
+  static BoxDecoration elevated({bool isDark = false, double radius = ExecutiveRadius.xl}) =>
+      softCard(backgroundColor: GlassColors.surface, radius: radius, hasShadow: true);
+
+  static BoxDecoration button({bool isDark = false, bool isGold = false}) {
     return BoxDecoration(
-      color: isGold
-          ? GlassColors.gold.withOpacity(0.1)
-          : GlassColors.primary.withOpacity(0.1),
+      color: isGold ? GlassColors.gold.withOpacity(0.2) : GlassColors.deepBlack,
       borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-      border: Border.all(
-        color: isGold
-            ? GlassColors.gold.withOpacity(0.3)
-            : GlassColors.primary.withOpacity(0.2),
-        width: 1.0,
-      ),
+      boxShadow: [
+        BoxShadow(
+          color: GlassColors.deepBlack.withOpacity(0.12),
+          blurRadius: 15,
+          offset: const Offset(0, 6),
+        ),
+      ],
     );
   }
 
@@ -182,7 +161,7 @@ class GlassDecorations {
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
       border: Border.all(
-        color: GlassColors.outlineVariant.withOpacity(0.3),
+        color: GlassColors.outline.withOpacity(0.8),
         width: 1.0,
       ),
     );
@@ -190,83 +169,80 @@ class GlassDecorations {
 }
 
 class GlassText {
-  // Headlines (Inter)
-  static TextStyle headlineXL() => GoogleFonts.inter(
-    fontSize: 83,
+  static TextStyle headlineXL() => GoogleFonts.poppins(
+    fontSize: 48,
     fontWeight: FontWeight.w700,
     color: GlassColors.onSurface,
-    letterSpacing: -0.02 * 83,
+    letterSpacing: -1.0,
     height: 1.1,
   );
 
-  static TextStyle headlineLG() => GoogleFonts.inter(
-    fontSize: 36,
-    fontWeight: FontWeight.w600,
+  static TextStyle headlineLG() => GoogleFonts.poppins(
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
     color: GlassColors.onSurface,
+    letterSpacing: -0.5,
     height: 1.15,
   );
 
-  static TextStyle headlineMD() => GoogleFonts.inter(
-    fontSize: 28,
-    fontWeight: FontWeight.w600,
+  static TextStyle headlineMD() => GoogleFonts.poppins(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
     color: GlassColors.onSurface,
     height: 1.25,
   );
 
-  // Body & Labels (Inter)
-  static TextStyle bodyLG() => GoogleFonts.inter(
+  static TextStyle bodyLG() => GoogleFonts.poppins(
     fontSize: 18,
+    fontWeight: FontWeight.w500,
+    color: GlassColors.onSurface,
+    height: 1.5,
+  );
+
+  static TextStyle bodyMD() => GoogleFonts.poppins(
+    fontSize: 15,
     fontWeight: FontWeight.w400,
     color: GlassColors.onSurface,
     height: 1.5,
   );
 
-  static TextStyle bodyMD() => GoogleFonts.inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    color: GlassColors.onSurface,
-    height: 1.55,
-  );
-
-  static TextStyle secondary() => GoogleFonts.inter(
-    fontSize: 14,
+  static TextStyle secondary() => GoogleFonts.poppins(
+    fontSize: 13,
     fontWeight: FontWeight.w400,
     color: GlassColors.onSurfaceVariant,
-    height: 1.5,
-  );
-
-  static TextStyle labelSM() => GoogleFonts.inter(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
-    color: GlassColors.onSurface,
-    letterSpacing: 1.0,
     height: 1.4,
   );
 
-  // Monospace (JetBrains Mono)
+  static TextStyle labelSM() => GoogleFonts.poppins(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: GlassColors.onSurface,
+    letterSpacing: 0.5,
+    height: 1.4,
+  );
+
   static TextStyle mono([double size = 12]) => GoogleFonts.jetBrainsMono(
     fontSize: size,
     fontWeight: FontWeight.w400,
     color: GlassColors.onSurfaceVariant,
   );
 
-  // Legacy alias for compatibility
-  static TextStyle headline([bool isDark = true]) => headlineLG();
-  static TextStyle title([bool isDark = true]) => headlineMD();
-  static TextStyle body([bool isDark = true]) => bodyMD();
-  static TextStyle label([bool isDark = true]) =>
-      labelSM().copyWith(color: GlassColors.primary);
-  static TextStyle caption([bool isDark = true]) =>
-      secondary().copyWith(fontSize: 12);
+  static TextStyle headline([bool isDark = false]) => headlineLG();
+  static TextStyle title([bool isDark = false]) => headlineMD();
+  static TextStyle body([bool isDark = false]) => bodyMD();
+  static TextStyle label([bool isDark = false]) => labelSM();
+  static TextStyle caption([bool isDark = false]) => secondary();
 }
 
 class GlassAppTheme {
-  static ThemeData dark() {
+  static ThemeData dark() => light();
+
+  static ThemeData light() {
     final base = ThemeData(
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: GlassColors.background,
       useMaterial3: true,
-      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamily: GoogleFonts.poppins().fontFamily,
     );
 
     return base.copyWith(
@@ -274,8 +250,8 @@ class GlassAppTheme {
       cardColor: GlassColors.surface,
       dividerColor: GlassColors.hairline,
       iconTheme: const IconThemeData(
-        color: GlassColors.onSurfaceVariant,
-        size: 18,
+        color: GlassColors.onSurface,
+        size: 20,
       ),
       textTheme: base.textTheme.apply(
         bodyColor: GlassColors.onSurface,
@@ -283,26 +259,21 @@ class GlassAppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: GlassColors.gold.withOpacity(0.1),
-          foregroundColor: GlassColors.gold,
-          side: BorderSide(
-            color: GlassColors.gold.withOpacity(0.3),
-            width: 1.0,
-          ),
+          backgroundColor: GlassColors.deepBlack,
+          foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           textStyle: GlassText.bodyMD().copyWith(
-            fontWeight: FontWeight.w500,
-            letterSpacing: 1.0,
+            fontWeight: FontWeight.w600,
           ),
           shape: const StadiumBorder(),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: GlassColors.onSurfaceVariant,
-          side: BorderSide(color: GlassColors.hairlineStrong.withOpacity(0.9)),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          foregroundColor: GlassColors.onSurface,
+          side: BorderSide(color: GlassColors.hairlineStrong),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           textStyle: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w500),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
@@ -311,68 +282,47 @@ class GlassAppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: GlassColors.onSurfaceVariant,
-          textStyle: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w500),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          foregroundColor: GlassColors.onSurface,
+          textStyle: GlassText.bodyMD().copyWith(fontWeight: FontWeight.w600),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ExecutiveRadius.l),
+            borderRadius: BorderRadius.circular(ExecutiveRadius.m),
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withOpacity(0.015),
+        fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
+          horizontal: 18,
           vertical: 14,
         ),
         hintStyle: GlassText.bodyMD().copyWith(
-          color: GlassColors.onSurfaceVariant.withOpacity(0.34),
+          color: GlassColors.onSurfaceVariant.withOpacity(0.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
           borderSide: BorderSide(
-            color: GlassColors.hairlineStrong.withOpacity(0.8),
+            color: GlassColors.outlineVariant,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
-          borderSide: BorderSide(color: GlassColors.primary.withOpacity(0.22)),
+          borderSide: const BorderSide(color: GlassColors.deepBlack, width: 1.5),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
           borderSide: BorderSide(
-            color: GlassColors.hairlineStrong.withOpacity(0.8),
+            color: GlassColors.outlineVariant,
           ),
         ),
       ),
-      dividerTheme: DividerThemeData(
-        color: GlassColors.hairlineStrong.withOpacity(0.42),
+      dividerTheme: const DividerThemeData(
+        color: GlassColors.hairline,
         thickness: 1,
         space: 1,
-      ),
-      chipTheme: base.chipTheme.copyWith(
-        backgroundColor: Colors.transparent,
-        selectedColor: GlassColors.primary.withOpacity(0.08),
-        side: BorderSide(color: GlassColors.hairlineStrong.withOpacity(0.72)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ExecutiveRadius.circular),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        labelStyle: GlassText.secondary().copyWith(fontSize: 13),
-      ),
-      scrollbarTheme: ScrollbarThemeData(
-        thumbVisibility: const WidgetStatePropertyAll(true),
-        trackVisibility: const WidgetStatePropertyAll(false),
-        radius: const Radius.circular(999),
-        thickness: const WidgetStatePropertyAll(8),
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.dragged)) {
-            return GlassColors.onSurfaceVariant.withOpacity(0.55);
-          }
-          return GlassColors.onSurfaceVariant.withOpacity(0.28);
-        }),
       ),
     );
   }
 }
+

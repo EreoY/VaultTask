@@ -12,6 +12,7 @@ import '../../kanban/widgets/task_edit_modal.dart';
 import '../../theme/glass_theme.dart';
 import '../../common/responsive_layout.dart';
 import 'task_type_icon.dart';
+import 'vertical_pill_date_selector.dart';
 
 class DailyTimelineView extends StatefulWidget {
   final DateTime date;
@@ -22,6 +23,7 @@ class DailyTimelineView extends StatefulWidget {
   final bool isDark;
   final Function(int)? onNavigate;
   final void Function(MeetingModel meeting, BoardModel? board)? onMeetingTap;
+  final ValueChanged<DateTime>? onDateSelected;
 
   const DailyTimelineView({
     super.key,
@@ -33,6 +35,7 @@ class DailyTimelineView extends StatefulWidget {
     required this.isDark,
     this.onNavigate,
     this.onMeetingTap,
+    this.onDateSelected,
   });
 
   @override
@@ -111,9 +114,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         Expanded(
           child: ListView.builder(
             controller: _scrollController,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 48,
-              vertical: isMobile ? 16 : 32,
+            padding: EdgeInsets.only(
+              left: isMobile ? 16 : 48,
+              right: isMobile ? 16 : 48,
+              top: isMobile ? 16 : 32,
+              bottom: isMobile ? 160 : 110,
             ),
             itemCount: 24,
             itemBuilder: (context, hour) {

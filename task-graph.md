@@ -1,3 +1,2236 @@
+## Phase 229: Mobile System Status Bar Theme Color Fix [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Configure SystemChrome System UI Overlay Style (`main.dart`)**:
+>    - In `my_ai_assistant/lib/main.dart`, configure `SystemChrome.setSystemUIOverlayStyle` with transparent status bar (`statusBarColor: Colors.transparent`) and matching icon brightness (`statusBarIconBrightness: Brightness.dark` / `statusBarBrightness: Brightness.light`).
+> 2. **Update MaterialApp Theme Definition Seed Color (`main.dart`)**:
+>    - Update `MaterialApp` theme definition in `main.dart` with seed color `GlassColors.primary` (`#1E1E24`) to eliminate default Flutter blue (`#2196F3`).
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or lint errors across the application.
+
+- [x] Task 229.1: Configure `SystemChrome.setSystemUIOverlayStyle` in `main.dart` with transparent status bar and matching icon brightness.
+- [x] Task 229.2: Update `MaterialApp` theme definition with seed color `GlassColors.primary` in `main.dart` to eliminate default Flutter blue (`#2196F3`).
+- [x] Task 229.3: Perform static analysis (`flutter analyze`).
+
+### Task 229.1: Configure SystemChrome.setSystemUIOverlayStyle in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Configure `SystemChrome.setSystemUIOverlayStyle` in `main.dart` with `statusBarColor: Colors.transparent` and matching icon brightness.
+- **Why:** Fix mobile status bar background color artifacts on startup and runtime.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Status bar background is transparent with correct icon contrast.
+
+### Task 229.2: Update MaterialApp theme definition seed color in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Set `ColorScheme.fromSeed(seedColor: GlassColors.primary)` in `MaterialApp` theme in `main.dart`.
+- **Why:** Replace default Flutter blue seed color (`#2196F3`) with `GlassColors.primary` (`#1E1E24`).
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Default blue theme tint replaced with monochrome design system primary color.
+
+### Task 229.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 228: Desktop Sidebar Nested Kanban Sub-Expansion Removal [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Sidebar Workspace Nested Board Sub-Expansion Removal (`aether_side_nav.dart`)**:
+>    - In `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, locate the expanded workspace mapping loop (`workspaces.map((workspace) { ... })`).
+>    - Remove the conditional nested board sub-expansion list (`if (isSelected) ...[ ...boards.where((b) => b.workspaceId == workspace.id).map((board) { ... }) ]`).
+>    - Ensure clicking a workspace row triggers `stateBoards.setSelectedWorkspace(workspace)`, `stateBoards.setSelectedBoard(null)`, and `widget.onItemSelected(1)` to cleanly open the Workspace Overview (`BoardsPage`) displaying module Bento cards (Board, Docs, Meetings).
+> 2. **Unused State Clean-Up**:
+>    - Clean up unused board selections (`boards`, `selectedBoardId`) from `_AetherSideNavState.build()` if no longer needed by sidebar rendering.
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero compilation or lint errors across the application.
+
+- [x] Task 228.1: Remove nested sub-expansion list of Kanban boards in `aether_side_nav.dart`.
+- [x] Task 228.2: Clean up unused board selection state getters in `aether_side_nav.dart`.
+- [x] Task 228.3: Perform static analysis (`flutter analyze`).
+
+### Task 228.1: Remove nested Kanban boards sub-expansion list under workspaces in aether_side_nav.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** Remove lines 361-436 in `aether_side_nav.dart` containing `if (isSelected) ...[ const SizedBox(height: 4), ...boards.where((b) => b.workspaceId == workspace.id).map((board) { ... }) ]`.
+- **Why:** Resolve user request ("ตอนที่เรากดไปที่เวิร์คสเปรชไหนแล้วมันจะทำการโชว์ว่ามีกี่บอร์ดถูกไหมเอาออกเลยเพราะตอนนี้พอกดไปที่บอกนั่นแล้วมันจะไปคันบันเลยคือตอนนี้เรามีหลายระบบมากไม่ได้เน้นแค่คันบันเฉยๆเเล้ว") by keeping sidebar navigation focused on workspace level selection.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Workspace entries render cleanly as top-level sidebar items without nested sub-boards, navigating directly to Workspace Overview (`BoardsPage`) on click.
+
+### Task 228.2: Clean up unused board selection state getters in aether_side_nav.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** Remove `boards` and `selectedBoardId` declarations from `_AetherSideNavState.build()` if no longer referenced.
+- **Why:** Maintain clean, efficient state selectors without unnecessary context rebuilds.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Code compiles without unused variable warnings.
+
+### Task 228.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 227: Grouped Action Items with Sequential Numbered Categories [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **AI Prompt System Instruction Rules (`ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update prompt instructions in `_handleSummarize` (meeting and document modes) and `_handleRefine` to support **Grouped Action Items**:
+>      - **Rule 4 Update**: Allow `## Action Items` section to be organized into numbered category headers (`1. กลุ่มหัวข้อแรก`, `2. กลุ่มหัวข้อถัดไป`, `3. ...`).
+>      - Under each numbered category header, allow sub-checklist items (`- [ ] งานที่ 1`, `- [ ] งานที่ 2`).
+>      - Sequential group numbers MUST count strictly in order (`1.`, `2.`, `3.`) without skips or resets within the Action Items section.
+>      - **Rule 8 Update**: Sub-checklist items must start at the beginning of their own line (`- [ ] ข้อความ` or indented `  - [ ] ข้อความ`) under the numbered category header, and must not be combined on the same line as the category title.
+> 2. **Markdown Block Editor Parser & Serializer Audit (`markdown_block_editor.dart`)**:
+>    - **Check `parseMarkdownToBlocks()`**: Verify `todoUnchecked` and `todoChecked` regexes handle indented or non-indented checklist items (`- [ ]` / `- [x]`) under numbered category headers (`1. กลุ่มหัวข้อ`). Confirm `1. กลุ่ม...` parses as `type: 'numbered'` and sub-checklists parse as `type: 'todo'`.
+>    - **Check `preserveCheckedItems()`**: Confirm matching logic normalizes text and preserves `isChecked: true` states across AI summary refinements even when items are grouped under numbered headers.
+>    - **Fix `serializeBlocksToMarkdown()`**: Fix `serializeBlocksToMarkdown()` so `numberedIndex` does NOT reset when encountering `todo` or `bullet` blocks, and only resets upon major section breaks (`h1`, `h2`, `paragraph`).
+>    - **Fix `_BlockRow` Numbered Prefix Indexing**: In `MarkdownBlockEditor.build()`, update the backwards lookup loop for `block.type == 'numbered'` so it skips over intervening `todo` and `bullet` blocks to calculate the correct sequential index (`1.`, `2.`, `3.`) relative to the current section.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 227.1: Update system prompt instructions in `ai_summarize_sheet.dart` (`_handleSummarize` meeting/document prompts & `_handleRefine` prompt) for Grouped Action Items with sequential numbered categories (`1.`, `2.`, `3.`) and sub-checklists (`- [ ]`).
+- [x] Task 227.2: Audit and fix `markdown_block_editor.dart` (`serializeBlocksToMarkdown()` and `_BlockRow` index calculation) so intervening `todo`/`bullet` blocks do not reset numbered category indexes (`1.`, `2.`), ensuring correct rendering, serialization, and checked state preservation (`preserveCheckedItems`).
+- [x] Task 227.3: Perform static analysis (`flutter analyze`).
+
+### Task 227.1: Update system prompt instructions in ai_summarize_sheet.dart for Grouped Action Items
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update Rule 4 and Rule 8 in `_handleSummarize` (meeting and document prompts) and `_handleRefine` to permit numbered category headers (`1. กลุ่มหัวข้อแรก`, `2. กลุ่มหัวข้อถัดไป`) under `## Action Items` with sub-checklists (`- [ ]`), requiring sequential ordering (`1.`, `2.`, `3.`).
+- **Why:** Provide flexibility for AI to organize action items into numbered category groups as requested by prompt directive.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prompt explicitly specifies grouped action items format with sequential numbers.
+
+### Task 227.2: Audit and fix markdown_block_editor.dart for Grouped Action Items support
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Audit `parseMarkdownToBlocks()` and `preserveCheckedItems()`. Update `serializeBlocksToMarkdown()` and `_BlockRow` index calculation so intervening `todo` and `bullet` blocks do not reset `numberedIndex`, allowing sequential numbered headers (`1.`, `2.`, `3.`) to increment correctly when separated by todo items.
+- **Why:** Prevent UI and serialized Markdown from resetting category numbers back to `1.` after every checklist item.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Numbered headers increment correctly (`1.`, `2.`, `3.`) in both editor rendering and serialized Markdown string, with checkbox states preserved.
+
+### Task 227.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and ensure no lint warnings or syntax errors.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` returns zero errors.
+
+## Phase 226: AI System Prompt Strict Checklist Scope & Prefix Placement Rules [x] Completed
+
+> **Architecture Mandate:**
+> 1. **AI Prompt Rules - Checklist Scope Rule (Rule A)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update prompt instructions in `_handleSummarize` (meeting and document modes) and `_handleRefine`:
+>    - Add explicit Rule 7: Checklists (`- [ ]` / `- [x]`) are strictly allowed ONLY under the `## Action Items` section. All other sections (Summary, Topics, Key Points) MUST NOT contain checkboxes.
+> 2. **AI Prompt Rules - Checklist Prefix Placement Rule (Rule B)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update prompt instructions in `_handleSummarize` and `_handleRefine`:
+>    - Add explicit Rule 8: Checklists MUST ALWAYS sit at the VERY FRONT (beginning) of the line (`- [ ] <task_text>` or `- [x] <task_text>`). Checkboxes must NEVER be placed in the middle or at the end of a sentence, nor appended after numbered or bullet points.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 226.1: Update prompt instructions in `ai_summarize_sheet.dart` (`_handleSummarize` meeting/document prompts & `_handleRefine` prompt) to enforce Rule A (Checklists allowed ONLY under `## Action Items` section).
+- [x] Task 226.2: Update prompt instructions in `ai_summarize_sheet.dart` (`_handleSummarize` meeting/document prompts & `_handleRefine` prompt) to enforce Rule B (Checklists MUST sit at VERY FRONT of the line `- [ ] <task_text>`, NEVER middle/end/numbered line).
+- [x] Task 226.3: Perform static analysis (`flutter analyze`).
+
+### Task 226.1: Update prompt instructions in ai_summarize_sheet.dart to enforce Rule A (Checklists ONLY under ## Action Items)
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add Rule 7 to system instruction strings in `_handleSummarize` and `_handleRefine`: "7. กฎตำแหน่งของเช็กลิสต์: สัญลักษณ์เช็กลิสต์ (- [ ] หรือ - [x] ) อนุญาตให้มีได้เฉพาะในหัวข้อ Action Items (## Action Items) เท่านั้น หัวข้ออื่นทั้งหมด (เช่น สรุปประเด็น, รายละเอียดการประชุม, ประเด็นสำคัญ) ห้ามใส่เช็กลิสต์เด็ดขาด".
+- **Why:** Prevent AI from putting checkboxes in non-action item sections (Summary, Topics, Key Points).
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prompt explicitly restricts checkboxes to the Action Items section.
+
+### Task 226.2: Update prompt instructions in ai_summarize_sheet.dart to enforce Rule B (Checklists MUST sit at VERY FRONT of line)
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add Rule 8 to system instruction strings in `_handleSummarize` and `_handleRefine`: "8. กฎการวางสัญลักษณ์เช็กลิสต์: สัญลักษณ์เช็กลิสต์ต้องอยู่ด้านหน้าสุดของบรรทัดเท่านั้น เช่น '- [ ] ข้อความ' ห้ามนำเช็กลิสต์ไปวางตรงกลางข้อความ ต่อท้ายข้อความ หรือต่อท้ายรายการลำดับตัวเลขเด็ดขาด".
+- **Why:** Prevent AI from placing checkboxes at middle/end of sentences or numbered lines, ensuring Markdown parser can parse todo items reliably.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prompt explicitly instructs AI to place checkboxes exclusively at line beginnings.
+
+### Task 226.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Execute `flutter analyze` and confirm zero errors.
+- **Why:** Ensure codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passes with 0 issues.
+
+## Phase 225: Checklist Exemption from Numbered List Conversion (> 3 Items Rule) [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **AI Summarizer Prompt Rules Update (`ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, update Rule 4 in prompt instructions for `_handleSummarize` (both meeting and document modes) and `_handleRefine`:
+>      - Explicitly state that Action Items / checklist items (`- [ ]` / `- [x]`) are EXEMPT from the "more than 3 items -> numbered list" rule and MUST always remain as pure checkboxes (`- [ ]` / `- [x]`) regardless of item count.
+> 2. **Markdown Block Parser Checklist Numbered Prefix Handling (`markdown_block_editor.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, update `parseMarkdownToBlocks()` regexes for `todoUnchecked` and `todoChecked`:
+>      - Change regex pattern to match numbered prefixes before brackets (e.g., `^\s*(?:[-*]|\d+[.)])\s*\[\s\]\s*(.*)$` and `^\s*(?:[-*]|\d+[.)])\s*\[[xX]\]\s*(.*)$`).
+>      - This guarantees any line formatted like `1. [ ] item` or `1) [x] item` is correctly parsed as `type: 'todo'` and serialized as `- [ ] item` or `- [x] item`.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 225.1: Update prompt instructions in `ai_summarize_sheet.dart` to explicitly exempt Action Items / checklist items (`- [ ]` / `- [x]`) from the > 3 items numbered list rule.
+- [x] Task 225.2: Update `parseMarkdownToBlocks` regex in `markdown_block_editor.dart` to recognize numbered checkbox items (`1. [ ]`, `2. [x]`) as `type: 'todo'`.
+- [x] Task 225.3: Perform static analysis (`flutter analyze`).
+
+### Task 225.1: Update prompt instructions in ai_summarize_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update Rule 4 in system prompt strings in `_handleSummarize` (lines 292-293) and `_handleRefine` (line 369) to state: "4. กฎการใช้รายการย่อย: หากมีย่อย ให้ใช้รายการ "- " ได้สูงสุดแค่ 3 ข้อเท่านั้น หากมีย่อยมากกว่า 3 ข้อขึ้นไป ให้ใช้รายการลำดับตัวเลข ("1. ", "2. ", "3. "...) แทน (ข้อยกเว้น: รายการ Action Items หรือเช็กลิสต์ ให้ใช้ "- [ ] " หรือ "- [x] " เป็นเช็กลิสต์เสมอ ไม่ว่าจะมียี่สิบหรือกี่ข้อก็ตาม ห้ามเปลี่ยนเป็นรายการลำดับตัวเลขเด็ดขาด)".
+- **Why:** Resolve bug where AI converts Action Items into numbered lists (`1. `, `2. `) when count > 3.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** AI prompt explicitly instructs LLM to keep Action Items as checkboxes regardless of count.
+
+### Task 225.2: Update parseMarkdownToBlocks regex in markdown_block_editor.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Modify `todoUnchecked` and `todoChecked` regex in `parseMarkdownToBlocks` to allow optional digits/number prefixes (e.g. `^\s*(?:[-*]|\d+[.)])\s*\[\s\]\s*(.*)$` and `^\s*(?:[-*]|\d+[.)])\s*\[[xX]\]\s*(.*)$`).
+- **Why:** Ensure any fallback or legacy numbered checkboxes (e.g. `1. [ ] Item`) are parsed as `type: 'todo'` rather than being misclassified by `numberedRe` as `type: 'numbered'`.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Numbered todo items parse as `todo` blocks and serialize back to pure `- [ ]` checkboxes.
+
+### Task 225.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Ensure code quality and adherence to guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 224: AI Summary Unchecked Checkbox Contrast & Session Stale State Synchronization [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Unchecked Checkbox High Contrast Styling (`markdown_block_editor.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, update the `- [ ]` unchecked checkbox container decoration styling:
+>      - Change border color from `GlassColors.outlineVariant.withOpacity(0.4)` to a crisp, clear 1.5px border: `GlassColors.onSurfaceVariant.withOpacity(0.6)`.
+>      - Change background fill from `Colors.transparent` to a subtle container fill: `GlassColors.onSurfaceVariant.withOpacity(0.05)`.
+>      - This guarantees empty checkbox boxes `- [ ]` are 100% visible on both Light and Dark backgrounds.
+> 2. **Stale Summary Loading & Real-Time Session Sync (`ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`:
+>      - In `_loadCurrentSessionMessages()`: Load the newest AI summary message (`msgs.where((m) => !m.isUser).firstOrNull`). When `widget.initialSummary` is present and non-empty, apply `preserveCheckedItems(widget.initialSummary!, newestAiMsg.text)` so user-checked checkboxes from the meeting/doc are not overwritten by stale DB states.
+>      - If the merged summary text differs from `newestAiMsg.text`, update `newestAiMsg` in RAM (`_chatMessages`) and sync to Cloudflare DB immediately via `ApiCloudflare.insertChatMessage`.
+>      - When checkbox items are toggled in `MarkdownBlockEditor` inside `AiSummarizeSheet` (in `onChanged`), update `_summaryOutput` and `_chatMessages` in RAM and call `ApiCloudflare.insertChatMessage` immediately to persist to DB. If no AI message exists yet in the session, create a new AI message and insert into RAM and DB.
+> 3. **Static Analysis & Verification**:
+>    - Run `flutter analyze` to ensure zero compilation or static analysis errors.
+
+- [x] Task 224.1: Update `- [ ]` unchecked checkbox styling in `markdown_block_editor.dart` with 1.5px border (`GlassColors.onSurfaceVariant.withOpacity(0.6)`) and subtle fill (`GlassColors.onSurfaceVariant.withOpacity(0.05)`).
+- [x] Task 224.2: Update `_loadCurrentSessionMessages()` in `ai_summarize_sheet.dart` to merge checked states from `widget.initialSummary` using `preserveCheckedItems` when loading session messages, and update RAM (`_chatMessages`) and DB when merged.
+- [x] Task 224.3: Ensure `onChanged` in `ai_summarize_sheet.dart` syncs updated summary text to RAM & DB immediately when checkboxes are toggled (creating AI message in RAM/DB if none exists yet).
+- [x] Task 224.4: Perform static analysis (`flutter analyze`).
+
+### Task 224.1: Update unchecked checkbox styling in markdown_block_editor.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Update line 943 to use `GlassColors.onSurfaceVariant.withOpacity(0.6)` for border color when `!block.isChecked` with `width: 1.5`, and line 948 to use `GlassColors.onSurfaceVariant.withOpacity(0.05)` for fill color when `!block.isChecked`.
+- **Why:** Resolve user report that empty checkboxes `- [ ]` are faint and invisible ("มองไม่เห็นเลยมองยากมากพอไม่มีการติ๊ก").
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Empty checkboxes render with clear 1.5px border and subtle fill.
+
+### Task 224.2: Update _loadCurrentSessionMessages() to preserve checked state on session load
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** In `_loadCurrentSessionMessages()`, load `newestAiMsg` (`msgs.where((m) => !m.isUser).firstOrNull`). If `widget.initialSummary` is present and non-empty and `newestAiMsg` exists, run `preserveCheckedItems(widget.initialSummary!, newestAiMsg.text)` to preserve checked items. Set `_summaryOutput` to this merged text, and if changed, update `_chatMessages` in RAM and sync to DB via `ApiCloudflare.insertChatMessage`.
+- **Why:** Resolve user report that opening AI Summary sheet loads stale summary without latest checked boxes.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Sheet loads latest AI summary with checked items preserved.
+
+### Task 224.3: Sync updated summary to RAM & DB on checkbox toggles in ai_summarize_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** In `MarkdownBlockEditor.onChanged` in `ai_summarize_sheet.dart`, update `_summaryOutput` and update/create AI message in `_chatMessages` RAM and call `ApiCloudflare.insertChatMessage` to persist to DB.
+- **Why:** Ensure checkbox toggling in AI summary sheet immediately updates both RAM and Cloudflare DB.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Toggling checkbox updates RAM and DB immediately.
+
+### Task 224.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run `flutter analyze` and confirm zero errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Flutter analyze passes with 0 issues.
+
+## Phase 223: Re-architect DashboardPage for 100% Home Floating Nav Transparency & 160px Calendar Scroll Padding [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Home Page Structure & Transparency Alignment (`dashboard_page.dart`)**:
+>    - Remove nested `Scaffold` and nested `SafeArea` from `DashboardPage` so it matches `BoardsPage` (`boards_page.dart`) structure by returning `SingleChildScrollView` directly with transparent background.
+>    - Update `SingleChildScrollView` bottom padding in `dashboard_page.dart` to `const EdgeInsets.only(bottom: 160)` so `FloatingBottomNavBar` floats 100% transparently over `AetherDynamicBackdrop` without white strip artifacts.
+> 2. **Calendar Daily Timeline & Monthly Grid 160px Scroll Clearance (`daily_timeline_view.dart` & `calendar_page.dart`)**:
+>    - In `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, increase `ListView.builder` bottom padding to `160` (e.g. `bottom: isMobile ? 160 : 110`) so the 24:00 timeline slot scrolls 100% clear above `FloatingBottomNavBar`.
+>    - In `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, update `_buildMonthlyGrid()` bottom padding to `160` (e.g. `EdgeInsets.fromLTRB(isMobile ? 16 : 48, 0, isMobile ? 16 : 48, 160)`).
+> 3. **Static Analysis Verification**:
+>    - Run `flutter analyze` to ensure 0 compilation errors or static warnings.
+
+- [x] Task 223.1: Re-architect `dashboard_page.dart` by removing nested `Scaffold` & `SafeArea` and returning `SingleChildScrollView` directly with 160px bottom padding, making Home page background 100% transparent matching `boards_page.dart`.
+- [x] Task 223.2: Update `daily_timeline_view.dart` `ListView.builder` bottom padding to `isMobile ? 160 : 110` so 24:00 timeline slot scrolls 100% clear above `FloatingBottomNavBar`.
+- [x] Task 223.3: Update `calendar_page.dart` `_buildMonthlyGrid()` bottom padding to `isMobile ? 160 : 110`.
+- [x] Task 223.4: Perform static analysis (`flutter analyze`).
+
+### Task 223.1: Remove nested Scaffold & SafeArea in dashboard_page.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Replace `Scaffold` and `SafeArea` wrapper with a direct `SingleChildScrollView` (or `Column` layout matching `boards_page.dart`) with `padding: const EdgeInsets.only(bottom: 160)`.
+- **Why:** Resolve user report that Home page still has a white non-transparent strip behind floating bottom navbar. Nested Scaffold & SafeArea interfere with outer Scaffold's `extendBody: true` in `AppShell`.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Home page renders with 100% floating navbar transparency over dynamic backdrop.
+
+### Task 223.2: Increase bottom scroll padding in daily_timeline_view.dart to 160px
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** Update `ListView.builder` bottom padding from `110` to `isMobile ? 160 : 110`.
+- **Why:** Resolve user report that 24:00 timeline slot on mobile calendar is obscured by floating bottom navbar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** 24:00 timeline slot scrolls completely clear above floating bottom navbar on mobile.
+
+### Task 223.3: Increase bottom scroll padding in calendar_page.dart to 160px
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** Update `_buildMonthlyGrid()` bottom padding from `110` to `isMobile ? 160 : 110`.
+- **Why:** Ensure monthly calendar grid also has 160px clearance matching daily timeline.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Monthly calendar grid scrolls cleanly above floating bottom navbar.
+
+### Task 223.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, `my_ai_assistant/lib/ui/calendar/calendar_page.dart`
+- **Action:** Execute `flutter analyze` and confirm zero errors.
+- **Why:** Maintain codebase quality and strict adherence to project standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Flutter analyze passes with 0 issues.
+
+## Phase 222: 100% Home Floating Nav Transparency, High-Contrast Apply Button & 110px Bottom Scroll Inset [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Home Dashboard Background Strip Alignment (`dashboard_page.dart`)**:
+>    - Ensure `DashboardPage` renders transparent background `backgroundColor: Colors.transparent` allowing `AppShell`'s `AetherDynamicBackdrop` to show cleanly without white background strip artifacts. Update `SingleChildScrollView` bottom padding to `EdgeInsets.only(bottom: 110)`.
+> 2. **Workspace Main Scroll View Clearance (`boards_page.dart`)**:
+>    - In `my_ai_assistant/lib/ui/boards/boards_page.dart`, add `padding: const EdgeInsets.only(bottom: 110)` to `SingleChildScrollView` around `ProjectsTable` so bottom workspace cards are not obscured by the floating bottom nav bar.
+> 3. **Calendar Month & Daily Timeline Scroll Clearance (`calendar_page.dart` & `daily_timeline_view.dart`)**:
+>    - In `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, update `_buildMonthlyGrid()` bottom padding to `110` (e.g. `EdgeInsets.fromLTRB(isMobile ? 16 : 48, 0, isMobile ? 16 : 48, 110)`).
+>    - In `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, set `ListView.builder` bottom padding to `110` (e.g. `bottom: isMobile ? 110 : 32`).
+> 4. **AI Summarize Sheet "นำไปใช้" Button High Contrast Styling (`ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, fix "นำไปใช้" `FilledButton` text contrast by replacing `color: GlassColors.onSurface` (dark text) with `color: GlassColors.onPrimary` (`#FFFFFF` crisp white text) on dark background `#1E1E24` (`GlassColors.primary`).
+> 5. **Static Analysis**:
+>    - Execute `flutter analyze` to verify zero compilation or static analysis errors.
+
+- [x] Task 222.1: Purge hardcoded background fills in `dashboard_page.dart` ensuring 100% floating nav bar transparency matching all other tabs.
+- [x] Task 222.2: Update "นำไปใช้" apply button text style in `ai_summarize_sheet.dart` to `GlassColors.onPrimary` (white text on dark primary background) for 100% readable contrast.
+- [x] Task 222.3: Add 110px bottom scroll padding to `SingleChildScrollView` in `boards_page.dart` so bottom project cards (e.g. "cfo") scroll cleanly above `FloatingBottomNavBar`.
+- [x] Task 222.4: Add 110px bottom scroll padding to `calendar_page.dart` & `daily_timeline_view.dart` so timeline scrolls past 24:00.
+- [x] Task 222.5: Perform static analysis (`flutter analyze`).
+
+### Task 222.1: Purge hardcoded background fills in dashboard_page.dart ensuring 100% floating nav bar transparency matching all other tabs
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Ensure `Scaffold` uses `backgroundColor: Colors.transparent` and set `SingleChildScrollView` padding to `const EdgeInsets.only(bottom: 110)`.
+- **Why:** Resolve user report of white background strip on Home page and ensure bottom content clears floating bottom nav bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Home page renders cleanly with dynamic backdrop and 110px scroll clearance.
+
+### Task 222.2: Update "นำไปใช้" apply button text style in ai_summarize_sheet.dart to GlassColors.onPrimary for 100% readable contrast
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update `FilledButton` style for "นำไปใช้": set background to `#1E1E24` (`GlassColors.primary`) and text color to `GlassColors.onPrimary` (`#FFFFFF` crisp white text).
+- **Why:** Resolve user report that "นำไปใช้" button text was unreadable due to dark text on dark background ("ตัวอักษรอ่านไม่ออกเลยอะมันกล่นกัน").
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** "นำไปใช้" button renders crisp white text on high contrast dark `#1E1E24` background.
+
+### Task 222.3: Add 110px bottom scroll padding to SingleChildScrollView in boards_page.dart so bottom project cards scroll cleanly above FloatingBottomNavBar
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** Add `padding: const EdgeInsets.only(bottom: 110)` to `SingleChildScrollView` wrapping `ProjectsTable`.
+- **Why:** Resolve user report that bottom workspace cards are obscured by floating bottom nav bar and cannot be scrolled down.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Workspace cards scroll cleanly above floating bottom nav bar with 110px clearance.
+
+### Task 222.4: Add 110px bottom scroll padding to calendar_page.dart & daily_timeline_view.dart so timeline scrolls past 24:00
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** Update bottom padding to `110` in `_buildMonthlyGrid()` in `calendar_page.dart` and `ListView.builder` in `daily_timeline_view.dart`.
+- **Why:** Resolve user report that calendar view content is obscured by floating bottom nav bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Calendar monthly grid and daily timeline view scroll completely above floating bottom nav bar.
+
+### Task 222.5: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+## Phase 221: Home Dashboard Nav Bar Alignment & Calendar 24:00 Scroll Padding [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Home / Dashboard Floating Nav Bar Discrepancy Alignment (`dashboard_page.dart`)**:
+>    - In `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`, update `Scaffold` background to `Colors.transparent` (or remove nested solid background fill).
+>    - Ensure `DashboardPage` allows the outer `AppShell` dynamic backdrop (`AetherDynamicBackdrop`) to pass through cleanly, eliminating solid off-white background fill behind `FloatingBottomNavBar` so it floats identically to `BoardsPage`, `CalendarPage`, `ChatPage`, and `ProfilePage`.
+> 2. **Calendar 24:00 Time Slot Scroll Clearance (`daily_timeline_view.dart`)**:
+>    - In `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, adjust `ListView.builder` bottom padding from `isMobile ? 16 : 32` to `isMobile ? 100 : 32` (or `bottom: 90`).
+>    - Ensure the 23:00 / 24:00 time slot row at the bottom of the daily timeline scroll view can be scrolled cleanly above the floating capsule navigation bar without being obscured.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 221.1: Align `DashboardPage` background to `Colors.transparent` in `dashboard_page.dart` so `FloatingBottomNavBar` floats cleanly on Home page identically to all other pages.
+- [x] Task 221.2: Add bottom scroll padding (`isMobile ? 100 : 32`) to `ListView.builder` in `daily_timeline_view.dart` so users can scroll to 24:00 cleanly above floating nav bar.
+- [x] Task 221.3: Perform static analysis (`flutter analyze`).
+
+### Task 221.1: Align DashboardPage background to Colors.transparent in dashboard_page.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Update `Scaffold` background in `DashboardPage` to `backgroundColor: Colors.transparent`.
+- **Why:** Resolve user's report where Home tab renders solid background behind floating nav bar unlike all other tab pages.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Floating bottom navigation bar renders over transparent background on Home page identically to all other tabs.
+
+### Task 221.2: Add bottom scroll padding to ListView.builder in daily_timeline_view.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** Update `ListView.builder` padding in `daily_timeline_view.dart` to use `bottom: isMobile ? 100 : 32` (or 90px bottom padding).
+- **Why:** Resolve user's report where scrolling to 24:00 in calendar timeline is obscured by the floating nav bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** User can scroll timeline view completely to 24:00 above the floating bottom nav bar.
+
+### Task 221.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with project standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+## Phase 220: AiSummarizeSheet Dynamic Light/Dark Theme Token Conversion [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Purge Hardcoded `Colors.white` Overrides in `AiSummarizeSheet` (`ai_summarize_sheet.dart`)**:
+>    - Replace hardcoded `Colors.white` text, icon, and border overrides with dynamic design system tokens (`GlassColors` / `Theme.of(context)`).
+>    - Text colors: Use `GlassColors.onSurface` (or `GlassText` default styles) for all labels, header title, prompt labels, session names, checkbox titles, alert titles, and text field inputs so text adapts dynamically to Light (`#1E1E24` dark text) and Dark mode (`#FFFFFF` white text).
+>    - Sub-text & Hints: Use `GlassColors.onSurfaceVariant` or `GlassColors.onSurfaceVariant.withOpacity(0.5)` for hint texts, secondary labels, and close/action icons.
+>    - Card/Chip/Container Fills: Replace hardcoded dark fills (`0x80161926`, `0x801E2235`, white opacities) with dynamic theme container tokens (`GlassColors.surfaceContainer`, `GlassColors.surfaceBright`, `GlassColors.surface`).
+>    - Borders & Dividers: Use `GlassColors.outlineVariant` or `GlassColors.hairline` instead of `Colors.white12`/`Colors.white24`.
+>    - Primary Accents & Buttons: Use `GlassColors.primary` (`#1E1E24`) for filled buttons ("สร้างสรุป", "นำไปใช้") and active ChoiceChips, with `GlassColors.onPrimary` (`#FFFFFF`) for foreground button text/icons.
+> 2. **Verify `MarkdownBlockEditor` & Chat Bubble Legibility**:
+>    - Ensure `MarkdownBlockEditor` block container and chat message bubbles (`ChatMessage`) utilize adaptive surface fills (`GlassColors.surfaceBright`, `GlassColors.surfaceContainer`) and text colors (`GlassColors.onSurface`) in Light Mode.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero compilation or layout regressions.
+
+- [x] Task 220.1: Convert all hardcoded `Colors.white` text, icons, text fields, checkboxes, chips, and container fills in `ai_summarize_sheet.dart` to dynamic theme tokens (`GlassColors.onSurface`, `GlassColors.surfaceContainer`, `GlassColors.primary`, `GlassColors.onPrimary`).
+- [x] Task 220.2: Perform static analysis (`flutter analyze`).
+
+### Task 220.1: Convert hardcoded Colors.white in ai_summarize_sheet.dart to dynamic theme tokens
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** 
+  1. Header (lines 428-445): Change sparkle icon color from `Colors.white` to `GlassColors.primary` or `GlassColors.onSurface`, header text style to remove `.copyWith(color: Colors.white)`, close icon color to `GlassColors.onSurfaceVariant`, and divider color to `GlassColors.outlineVariant`.
+  2. Session selector & dialog (lines 78-101, 474-529):
+     - Rename session dialog: change title/content text style to `GlassColors.onSurface`, hintStyle to `GlassColors.onSurfaceVariant`, textField fillColor to `GlassColors.surfaceContainer`, cancel button to `GlassColors.onSurfaceVariant`, save button to `GlassColors.primary`.
+     - `+ เสสชันใหม่` ActionChip: `backgroundColor: GlassColors.surfaceContainer`, border `GlassColors.outlineVariant`, label `GlassColors.onSurface`.
+     - ChoiceChip session tabs: `selectedColor: GlassColors.primary`, active label color `GlassColors.onPrimary`, inactive label color `GlassColors.onSurface`, edit icon color `GlassColors.onPrimary` (when active) / `GlassColors.onSurface` (when inactive).
+  3. Config view (lines 557-675):
+     - Section titles: `GlassColors.onSurface`.
+     - CheckboxListTile widgets: text `GlassColors.onSurface`, `activeColor: GlassColors.primary`, `checkColor: GlassColors.onPrimary`.
+     - Custom prompt TextField: text `GlassColors.onSurface`, hint text `GlassColors.onSurfaceVariant.withOpacity(0.5)`, fillColor `GlassColors.surfaceContainer`, border `GlassColors.outlineVariant`.
+     - "สร้างสรุป" button: `backgroundColor: GlassColors.primary`, foreground text/icon `GlassColors.onPrimary`, indicator color `GlassColors.onPrimary`.
+  4. Output view (lines 690-888):
+     - SegmentedButton: `backgroundColor: GlassColors.surfaceContainer`, `selectedBackgroundColor: GlassColors.primary`, `foregroundColor: GlassColors.onSurfaceVariant`, `selectedForegroundColor: GlassColors.onPrimary`, border `GlassColors.outlineVariant`.
+     - MarkdownBlockEditor container: `color: GlassColors.surfaceBright`, border `GlassColors.outlineVariant`.
+     - Chat bubbles: user bubble `GlassColors.primary` with `GlassColors.onPrimary` text, AI bubble `GlassColors.surfaceContainer` with `GlassColors.onSurface` text.
+     - LinearProgressIndicator: color `GlassColors.primary`.
+     - Refinement chat bar: container `color: GlassColors.surfaceContainer`, top border `GlassColors.outlineVariant`, TextField style `GlassColors.onSurface`, hintStyle `GlassColors.onSurfaceVariant.withOpacity(0.5)`, fillColor `GlassColors.surface`, send icon `GlassColors.primary`.
+     - Apply button ("นำไปใช้"): `backgroundColor: GlassColors.primary`, text color `GlassColors.onPrimary`.
+- **Why:** Resolve user's critical Light Mode contrast bug where white text on white sheet background made session tabs, labels, and text fields completely invisible ("มองไม่เห็นอะไรเลยนายใช้ธีมของแพลตฟอร์มนั่นแหละทำมาเลย").
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** All hardcoded white text and icons replaced with dynamic theme tokens, creating high-contrast legible UI in Light Mode and Dark Mode.
+
+### Task 220.2: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with 0 errors.
+
+
+## Phase 219: Eliminate Solid White Background Strip Behind FloatingBottomNavBar [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Enable Scaffold `extendBody: true` in `AppShell` (`lib/main.dart`)**:
+>    - Set `extendBody: true` on the root `Scaffold` in `AppShell` (`lib/main.dart`).
+>    - This ensures the `Scaffold`'s `body` (including `AetherDynamicBackdrop`, background colors, page grids/lists) extends continuously to the bottom edge of the screen underneath the `bottomNavigationBar`, eliminating the dedicated off-white/white slot background.
+> 2. **Ensure Outer Wrapper Transparency in `FloatingBottomNavBar` (`lib/ui/common/floating_bottom_nav_bar.dart`)**:
+>    - Ensure `FloatingBottomNavBar` outer container is set to `Colors.transparent` and does not introduce any canvas or solid color fill around the dark capsule container (`Color(0xFF0F121C)`).
+> 3. **Verify Page Padding & Static Analysis**:
+>    - Confirm that page scroll views (`DashboardPage`, `BoardsPage`, `CalendarPage`, `ChatPage`, `ProfilePage`) have sufficient bottom padding (e.g. 80-100px) so content is not obstructed by the floating navigation bar.
+>    - Execute `flutter analyze` to verify zero syntax or static analysis errors.
+
+- [x] Task 219.1: Enable `extendBody: true` on `Scaffold` in `main.dart` so page backdrop extends to screen bottom under `bottomNavigationBar`.
+- [x] Task 219.2: Set outer wrapper `color: Colors.transparent` in `floating_bottom_nav_bar.dart` so only dark capsule floats over background.
+- [x] Task 219.3: Perform static analysis (`flutter analyze`).
+
+### Task 219.1: Enable extendBody: true on Scaffold in main.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** Set `extendBody: true` in `AppShell` `Scaffold` inside `my_ai_assistant/lib/main.dart`.
+- **Why:** Resolve user's issue where an unwanted solid white strip was rendered behind the floating navigation bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Floating bottom navigation bar renders with transparent background floating directly over page background without white rectangular bar.
+
+### Task 219.2: Set outer wrapper color: Colors.transparent in floating_bottom_nav_bar.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** Ensure `FloatingBottomNavBar` outer container is set to `Colors.transparent` so only dark capsule floats over background.
+- **Why:** Ensure outer wrapper introduces no canvas or solid color fill around dark capsule container.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Outer wrapper is transparent.
+
+### Task 219.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+
+
+## Phase 218: Gold Color Purge & High-Contrast Black & White Monochrome [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Purge All Gold Accents and Text in `AiSummarizeSheet` (`ai_summarize_sheet.dart`)**:
+>    - Replace `GlassColors.gold` header sparkle icon (`Icons.auto_awesome`) with `Colors.white`.
+>    - Replace `GlassColors.gold` in Rename Session dialog save button with `Colors.white`.
+>    - Replace faint gold fill/border/text in `+ เสสชันใหม่` ActionChip (`backgroundColor: GlassColors.gold.withOpacity(0.1)`, `side: BorderSide(color: GlassColors.gold.withOpacity(0.5))`, `style: TextStyle(color: GlassColors.gold)`) with clean translucent white container (`backgroundColor: Colors.white.withOpacity(0.08)`, `side: BorderSide(color: Colors.white24)`, `style: TextStyle(color: Colors.white)`).
+>    - Replace active session ChoiceChip `selectedColor: GlassColors.gold` with high-contrast white badge (`Colors.white` background with `Colors.black` text).
+>    - Replace `GlassColors.gold` in source selection CheckboxListTile widgets with `Colors.white` active fill and `Colors.black` check mark.
+>    - Replace `GlassColors.gold` in "สร้างสรุป" action button with `Colors.white` background and `Colors.black` text/icon.
+>    - Replace `GlassColors.gold` in `SegmentedButton` tab selector ("📄 เอกสารสรุป" & "💬 ประวัติแชท") with `selectedBackgroundColor: Colors.white.withOpacity(0.15)` and `selectedForegroundColor: Colors.white`.
+>    - Replace `GlassColors.gold` in AI chat message bubble icon (`Icons.auto_awesome`), linear/circular progress indicators, and refinement send button (`Icons.send_rounded`) with `Colors.white`.
+> 2. **Purge Gold Accents from Chat Proposal & Draft Cards (`draft_cards.dart`)**:
+>    - Replace `GlassColors.gold` borders, icons, badge labels, and action buttons in proposal draft cards with crisp high-contrast monochrome elements (`Colors.white`, `Colors.white.withOpacity(0.12)`, `Colors.white38`).
+> 3. **Verify `MarkdownBlockEditor` & Chat Bubbles**:
+>    - Confirm zero residual gold colors in `markdown_block_editor.dart` and `chat_bubbles.dart`, maintaining maximum contrast and legibility.
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 218.1: Purge all 18 `GlassColors.gold` references from `ai_summarize_sheet.dart` and convert all session chips, sub-tabs, checkboxes, buttons, icons, and progress indicators to clean high-contrast monochrome styling (`Colors.white`, `Colors.black`, `Colors.white24`).
+- [x] Task 218.2: Purge gold accents and borders from AI proposal/draft cards in `draft_cards.dart`.
+- [x] Task 218.3: Perform static analysis (`flutter analyze`).
+
+### Task 218.1: Purge all GlassColors.gold references from ai_summarize_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Replace all 18 occurrences of `GlassColors.gold` with crisp high-contrast monochrome white/black colors. Convert active session chips to white fills with black text, `+ เสสชันใหม่` button to white text with subtle border, sub-tab SegmentedButton selection to white foreground/translucent white background, checkboxes to white active fill, "สร้างสรุป" button to solid white with black text, and send/sparkle icons to white.
+- **Why:** Resolve user's explicit request ("ไม่เอาสีทองเราเอาแค่สีขาวดำพอให้มันอ่านง่ายทำมาให้หน่อยพอดีหน้าแชทของมีทติ้งมันเป็นแบบนี้ไปแล้วอะ") to improve legibility.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** All gold colors purged from `AiSummarizeSheet` and replaced with high-contrast monochrome elements.
+
+### Task 218.2: Purge gold accents and borders from AI proposal/draft cards in draft_cards.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/draft_cards.dart`
+- **Action:** Replace `GlassColors.gold` borders, badges, icons, and buttons in draft proposal cards with high-contrast monochrome white/grey styling (`Colors.white`, `Colors.white.withOpacity(0.12)`, `Colors.white38`).
+- **Why:** Maintain design consistency across all meeting AI summary and chat UI components.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Proposal and draft cards styled with crisp monochrome accents.
+
+### Task 218.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation, syntax, or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 217: Separate Top-Right Circular Count Badges for Bento Card Module Buttons [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Separate Module Count Badges on Bento Card Buttons**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`, update `_BentoActionButton` to display an individual top-right circular count badge (`BoxShape.circle` or rounded badge container with white border) for each module button (`Board`, `Docs`, `Meetings`).
+>    - Pass explicit `count` parameters (`tasksCount`, `docsCount`, `meetingsCount`) to each button and revert button text labels to clean titles ('Board', 'Docs', 'Meetings').
+>    - Render top-right count badges conditionally when `count > 0`.
+>    - Remove redundant card-level combined `totalCount` badge from top-right of card header.
+> 2. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 217.1: Update `_BentoActionButton` in `bento_project_card.dart` to render individual top-right circular count badges for Board (`tasksCount`), Docs (`docsCount`), and Meetings (`meetingsCount`).
+- [x] Task 217.2: Remove card-level total count badge and restore clean action button text labels in `bento_project_card.dart`.
+- [x] Task 217.3: Perform static analysis (`flutter analyze`).
+
+### Task 217.1: Update _BentoActionButton for individual top-right circular count badges
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Add `int count` parameter to `_BentoActionButton`. Wrap button layout in `Stack(clipBehavior: Clip.none)` and position a circular count badge (`GlassColors.primary` background, white text, subtle border) at top-right (`top: -4`, `right: -4`) when `count > 0`.
+- **Why:** Satisfy explicit user feedback that task, document, and meeting counts must be shown separately on each respective module button.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Individual count badges display at top-right of Board, Docs, and Meetings buttons.
+
+### Task 217.2: Remove card-level total count badge and restore clean action button text labels
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Revert button labels from interpolated strings (`$tasksCount Tasks`) to clean labels (`Board`, `Docs`, `Meetings`). Remove redundant card-level top-right `totalCount` badge from `BentoProjectCard`.
+- **Why:** Prevent text overflow/clutter in button labels and eliminate redundant combined count badge.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Labels restored and card-level total badge removed.
+
+### Task 217.3: Perform static analysis (flutter analyze)
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to verify zero syntax or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 216: Bento Card Top-Right Count Badge, Workspace Title Wrap & Workspace Switcher Icon Positioning [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Top-Right Circular Count Badge on Cards)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`, wrap card content in a `Stack` (with `clipBehavior: Clip.none`) and position a circular count badge (`BoxShape.circle`) at `top: 8`, `right: 8` displaying total resource count (`tasksCount + docsCount + meetingsCount`).
+> 2. **Issue B (Full Workspace Title with No Ellipsis)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, remove `overflow: TextOverflow.ellipsis` from the Workspace Title `Text` widget. Set `maxLines: null` and `softWrap: true` so long workspace titles wrap naturally onto new lines without truncation.
+> 3. **Issue C (Workspace Switcher Icon Placed BEFORE Workspace Title)**:
+>    - In `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, position the workspace switcher dropdown button/icon BEFORE (in front of) the workspace title text in the `Row`: `Row(crossAxisAlignment: CrossAxisAlignment.center, children: [SwitcherIcon/Button, SizedBox(width: 8), WorkspaceTitleText])`. Ensure workspace selection functionality is triggered when tapped on both desktop and mobile.
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 216.1: Add top-right circular count badge on Bento project cards in `bento_project_card.dart`.
+- [x] Task 216.2: Update `boards_workspace_header.dart` to allow multi-line workspace title wrapping without ellipsis (`maxLines: null`, `softWrap: true`) and place workspace switcher icon BEFORE workspace title.
+- [x] Task 216.3: Perform static analysis (`flutter analyze`).
+
+### Task 216.1: Add top-right circular count badge on Bento project cards in `bento_project_card.dart`
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Wrap project card structure in a `Stack` (with `clipBehavior: Clip.none`). Add a `Positioned(top: 8, right: 8, child: Container(decoration: BoxDecoration(shape: BoxShape.circle, ...), child: Text('$totalCount')))` circular badge showing combined task, document, and meeting count for easy visibility.
+- **Why:** Provide immediate visual feedback on total resources within each project card at a glance.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Circular count badge rendered at top-right of Bento project card.
+
+### Task 216.2: Update `boards_workspace_header.dart` for full multi-line title and switcher icon positioning
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** Remove `overflow: TextOverflow.ellipsis` from Workspace Title text widget and set `maxLines: null` and `softWrap: true`. Re-order Workspace Title row so that the workspace switcher icon/button is positioned BEFORE the workspace title text (`Row(children: [SwitcherIcon, SizedBox(width: 8), WorkspaceTitleText])`). Enable workspace selector dropdown modal trigger across mobile and desktop header clicks.
+- **Why:** Satisfy user requirement for non-truncated workspace names and intuitive workspace switcher icon placement ahead of title text.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Title wraps fully and switcher icon is placed in front of title.
+
+### Task 216.3: Perform static analysis (`flutter analyze`)
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation, syntax, or layout warnings/errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 215: Meetings Page Back Button & Workspace Card Count Badges [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (`WorkspaceBackButton` in `MeetingsBoardPage`)**:
+>    - Add `WorkspaceBackButton` to `MeetingsBoardPage` (`meetings_board_page.dart`) returning users to Workspace overview (`BoardsPage`).
+> 2. **Issue B (Workspace Card Count Badges)**:
+>    - Add Task, Doc, and Meeting count badges (`Board (X)`, `Docs (Y)`, `Meetings (Z)`) to project cards in `bento_project_card.dart`.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 215.1: Add `WorkspaceBackButton` to `MeetingsBoardPage` (`meetings_board_page.dart`) returning users to Workspace overview.
+- [x] Task 215.2: Add Task, Doc, and Meeting count badges (`Board (X)`, `Docs (Y)`, `Meetings (Z)`) to project cards in `bento_project_card.dart`.
+- [x] Task 215.3: Perform static analysis (`flutter analyze`).
+
+### Task 215.1: Add WorkspaceBackButton to MeetingsBoardPage returning users to Workspace overview
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** Add `WorkspaceBackButton` to top bar of `MeetingsBoardPage` so users can navigate back to workspace overview.
+- **Why:** Provide consistent back navigation across workspace sub-pages.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `WorkspaceBackButton` added and functional.
+
+### Task 215.2: Add Task, Doc, and Meeting count badges to project cards in bento_project_card.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** Display count badges (`Board (X)`, `Docs (Y)`, `Meetings (Z)`) on project cards in `bento_project_card.dart`.
+- **Why:** Give users immediate visibility into resource counts per project card.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Count badges added and verified.
+
+### Task 215.3: Perform static analysis (flutter analyze)
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with 0 errors.
+
+
+## Phase 214: Single Back Button, Translucent Cards & Task-Matched AI Summarize Modal [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Single Clean Back Button at Top Left)**:
+>    - Remove redundant `IconButton` (`Icons.arrow_back_rounded`) from `_buildNavBar()` in `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`.
+>    - Remove redundant `IconButton` (`Icons.arrow_back_rounded`) from `_buildBreadcrumb()` in `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart` and `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`.
+>    - Ensure exactly ONE clean Back Button (`_roundIconButton` in sheet top actions or `WorkspaceBackButton` in list surface) is rendered at the top left per page/modal.
+> 2. **Issue B (Clean Translucent Glass Card Background Fills)**:
+>    - Convert blocky solid/dark container card background fills (`Color(0x801E2235)`, `Color(0x80161926)`, and opaque `GlassColors.surface` / `Colors.white` without opacity) to translucent glass fills (`GlassColors.surface.withOpacity(0.05)` / `Colors.transparent`) in `meetings_board_sheet.dart`, `docs_board_sheet.dart`, and `bento_meeting_widgets.dart`.
+> 3. **Issue C (Match AiSummarizeSheet Background Color & Opacity)**:
+>    - Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart` (`GlassColors.surface`).
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 214.1: Remove duplicate Back Buttons in `meetings_board_page.dart`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart` ensuring exactly one Back button per page.
+- [x] Task 214.2: Change blocky dark card container fills to subtle translucent glass fills (`GlassColors.surface.withOpacity(0.05)`) in `meetings_board_sheet.dart`, `docs_board_sheet.dart`, and `bento_meeting_widgets.dart`.
+- [x] Task 214.3: Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart` (`GlassColors.surface`).
+- [x] Task 214.4: Perform static analysis (`flutter analyze`).
+
+### Task 214.1: Remove duplicate Back Buttons in `meetings_board_page.dart`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart`
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Remove extra `IconButton` in `_buildNavBar()` in `meetings_board_page.dart` duplicate breadcrumb back navigation and `_roundIconButton` back button in `MeetingsBoardSheet`. Remove duplicate `IconButton` in `_buildBreadcrumb()` in `meetings_board_sheet.dart` and `docs_board_sheet.dart`. Ensure each page surface and modal sheet renders exactly ONE clean top-left Back button.
+- **Why:** Resolve user's report of duplicate back buttons (`<-`) displaying simultaneously in top bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Duplicate Back Buttons removed ensuring exactly one Back button per page.
+
+### Task 214.2: Change blocky dark card container fills to subtle translucent glass fills
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`
+- **Action:** Replace hardcoded blocky dark/solid background fills with subtle translucent glass container fills (`GlassColors.surface.withOpacity(0.05)` / `Colors.transparent` with glass border `GlassColors.ghostBorder`).
+- **Why:** Resolve user's issue with blocky/jarring solid card background colors by implementing clean translucent glass aesthetics.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Card container fills updated to subtle translucent glass fills (`GlassColors.surface.withOpacity(0.05)`).
+
+### Task 214.3: Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart`
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Match `AiSummarizeSheet` background color and opacity to `task_edit_modal.dart` (`GlassColors.surface`).
+- **Why:** Maintain uniform modal sheet theme styling across the app.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** `AiSummarizeSheet` background color and opacity matched to `task_edit_modal.dart` (`GlassColors.surface`).
+
+### Task 214.4: Perform static analysis (`flutter analyze`)
+- **Status:** [x] Completed
+- **Target Files:** Modified files
+- **Action:** Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with project standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 213: Pure Solid White Light Mode Backdrop & Gradient Glow Removal [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Light Mode Pure Solid White Backdrop)**:
+>    - Set Light Mode Backdrop to Pure Solid White (`Color(0xFFF8F9FA)` / `Color(0xFFFFFFFF)`) in `dynamic_backdrop.dart` & `glass_theme.dart`, matching Home/Dashboard page.
+> 2. **Issue B (Pinkish / Fuchsia Mesh Gradient Orb Removal)**:
+>    - Remove pinkish/fuchsia ambient radial gradient glows in `aether_chat_view.dart`, `chat_page.dart`, and `glass_widgets.dart`.
+> 3. **Issue C (Residual Dark Containers Conversion)**:
+>    - Convert residual dark containers in `bento_meeting_widgets.dart`, `month_calendar_panel.dart`, and `task_edit_modal.dart` to `GlassColors.surface`.
+> 4. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 213.1: Set Light Mode Backdrop to Pure Solid White (`Color(0xFFF8F9FA)` / `Color(0xFFFFFFFF)`) in `dynamic_backdrop.dart` & `glass_theme.dart`, matching Home/Dashboard page.
+- [x] Task 213.2: Remove pinkish/fuchsia ambient radial gradient glows in `aether_chat_view.dart`, `chat_page.dart`, and `glass_widgets.dart`.
+- [x] Task 213.3: Convert residual dark containers in `bento_meeting_widgets.dart`, `month_calendar_panel.dart`, and `task_edit_modal.dart` to `GlassColors.surface`.
+- [x] Task 213.4: Perform static analysis (`flutter analyze`).
+
+### Task 213.1: Set Light Mode Backdrop to Flat Solid White in dynamic_backdrop.dart & glass_theme.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart`, `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** Update `AetherDynamicBackdrop` in `dynamic_backdrop.dart` so that when `isDark` is `false`, it returns `const Color(0xFFFFFFFF)` (or `GlassColors.background`). In `glass_theme.dart`, set `GlassColors.background` to clean solid white (`Color(0xFFFFFFFF)` or `Color(0xFFF8F9FA)`) and ensure `GlassGradients.background()` returns flat white without gradients or pinkish mesh glows in Light Mode.
+- **Why:** Satisfy user's explicit request for solid flat WHITE Light Mode background with gradient removed.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Light mode backdrop set to pure solid white.
+
+### Task 213.2: Remove pinkish/fuchsia ambient radial gradient glows
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`, `my_ai_assistant/lib/ui/chat/chat_page.dart`, `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** Remove pinkish/fuchsia ambient radial gradient glows across chat view, chat page, and glass widgets.
+- **Why:** Eliminate unwanted colored glows in light mode interface.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Pinkish and fuchsia radial gradient glows removed.
+
+### Task 213.3: Convert residual dark containers to GlassColors.surface
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`, `my_ai_assistant/lib/ui/calendar/widgets/month_calendar_panel.dart`, `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
+- **Action:** Convert residual dark container backgrounds to `GlassColors.surface` for proper light mode adaptive theme support.
+- **Why:** Fix residual dark hardcoded containers so they dynamically adapt to light/dark themes.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Residual dark containers converted to adaptive `GlassColors.surface`.
+
+### Task 213.4: Perform static analysis and verification
+- **Status:** [x] Completed
+- **Target Files:** Modified files
+- **Action:** Run `flutter analyze` to ensure zero compilation errors or static analysis warnings.
+- **Why:** Maintain codebase health and compliance with project standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 212: Flat Solid Backdrop & Revert Glassmorphic Card Opacities [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Revert Solid Cards to Glassmorphic Translucency)**:
+>    - Revert card containers, modals, sheets, and chat bubbles back to their elegant translucent glassmorphism (`withOpacity(...)`, soft glass blur/tint):
+>      * `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart` (Kanban task detail modal & inner containers)
+>      * `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart` & `meetings_board_page.dart` (Meeting detail sheet & workspace containers)
+>      * `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart` (Docs detail sheet & workspace containers)
+>      * `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart` (AI summarize modal sheet & refinement chat bar)
+>      * `my_ai_assistant/lib/ui/chat/chat_page.dart`, `aether_chat_view.dart` & `chat_bubbles.dart` (`UserMessageBubble`, `AssistantMessageBubble`, chat input bar)
+> 2. **Issue B (Flat Solid Background Color without Gradient)**:
+>    - Replace background gradient in `GlassGradients.background()` / `GlassColors.background` in `my_ai_assistant/lib/ui/theme/glass_theme.dart` with a clean, flat solid color without gradient (e.g. `Color(0xFF0F121C)` / `Color(0xFF131726)`).
+>    - Update `AetherDynamicBackdrop` in `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart` to display a flat, solid background color (`Color(0xFF0F121C)` / `Color(0xFF131726)`).
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout errors.
+
+- [x] Task 212.1: Revert card containers, modals, sheets, and chat bubbles to translucent glassmorphic opacities across `task_edit_modal.dart`, `meetings_board_sheet.dart`, `docs_board_sheet.dart`, `ai_summarize_sheet.dart`, and `chat_bubbles.dart`.
+- [x] Task 212.2: Convert app backdrop and theme background gradients to a flat solid single-color background (`Color(0xFF0F121C)` / `Color(0xFF131726)`) in `dynamic_backdrop.dart` & `glass_theme.dart`.
+- [x] Task 212.3: Perform static analysis (`flutter analyze`).
+
+### Task 212.1: Revert card containers, modals, sheets, and chat bubbles to translucent glassmorphic opacities
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/chat/chat_page.dart`, `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** Restore semi-transparent translucent container fills (`withOpacity(...)`, `GlassContainer` translucency) across card containers, modals, detail sheets, workspace surfaces, and chat bubbles (`UserMessageBubble`, `AssistantMessageBubble`).
+- **Why:** Satisfy user design pivot requesting elegant translucent glassmorphic cards back.
+- **Owner:** FrontendCoder
+
+### Task 212.2: Replace page background gradients with flat solid color
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart`, `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** Replace background linear gradient `GlassGradients.background()` with a flat single-color fill (`Color(0xFF0F121C)` / `Color(0xFF131726)`). Update `AetherDynamicBackdrop` background foundation and orb layer to render clean solid single-color background without background gradient.
+- **Why:** Provide a clean, non-gradient solid background color as requested by the user.
+- **Owner:** FrontendCoder
+
+### Task 212.3: Perform static analysis and verification
+- **Status:** [x] Completed
+- **Target Files:** Modified files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+
+
+## Phase 211: Solid Opaque Single-Color Backgrounds & Calendar Fixes [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Calendar Visual Bug Resolution in `calendar_page.dart` & `daily_timeline_view.dart`)**:
+>    - **Visual Bug 1 (Bottom Overflowed Error)**: Fix vertical overflow in `_buildWeekDayStrip()` (`calendar_page.dart`) caused by tight height constraints (`height: 100/120`, `padding: 16/12`) relative to child Column content (~48-52px height) causing `BOTTOM OVERFLOWED BY 1.00 PIXELS` error.
+>    - **Visual Bug 2 (Duplicate Date Selector Bar)**: Eliminate stacked redundant date selectors between `_buildWeekDayStrip()` in `calendar_page.dart` and `VerticalPillDateSelector` in `daily_timeline_view.dart` during Day View.
+> 2. **Issue B (Solid Opaque Single-Color Backgrounds for Maximum Readability)**:
+>    - Replace semi-transparent backgrounds, glass container opacities (`withOpacity(...)`), and translucent overlays with 100% solid opaque single-color background fills (`GlassColors.surface` / `Color(0xFFFFFFFF)` in light mode, `Color(0xFF191C28)` / `Color(0xFF1E2235)` in dark mode) without background gradient bleed-through across:
+>      * `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart` (Kanban task detail modal & inner containers)
+>      * `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart` & `meetings_board_page.dart` (Meeting detail sheet & workspace containers)
+>      * `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart` (Docs detail sheet & workspace containers)
+>      * `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart` (AI summarize modal sheet & refinement chat bar)
+>      * `my_ai_assistant/lib/ui/chat/chat_page.dart`, `aether_chat_view.dart` & `chat_bubbles.dart` (`UserMessageBubble`, `AssistantMessageBubble`, chat input bar, and background container)
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout errors.
+
+- [x] Task 211.1: Fix Calendar day picker bottom overflow error (1px) in `calendar_page.dart`.
+- [x] Task 211.2: Convert Kanban, Meetings, Docs, AI Summarize sheet, and Chat container/bubble styling to solid 100% opaque single-color backgrounds (`0xFF1E2235` / `0xFF161926`).
+- [x] Task 211.3: Perform static analysis (`flutter analyze`).
+
+### Task 211.1: Fix Calendar day picker overflow error and eliminate duplicate date selector bar
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/calendar_page.dart`, `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** Adjust padding and height constraints in `_buildWeekDayStrip()` in `calendar_page.dart` (or increase vertical space / reduce padding from `vertical: 16` & `vertical: 12` to `vertical: 8`) to eliminate `BOTTOM OVERFLOWED BY 1.00 PIXELS` error. Consolidate date strip rendering so that `_buildWeekDayStrip()` and `VerticalPillDateSelector` do not double-render in Day View.
+- **Why:** Provide a clean, error-free calendar date navigation experience without layout overflow or duplicate date bars.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Calendar day picker overflow fixed and layout verified.
+
+### Task 211.2: Convert Kanban, Meetings, Docs, AI Summarize, and Chat containers to solid opaque single-color backgrounds
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/chat/chat_page.dart`, `my_ai_assistant/lib/ui/chat/widgets/aether_chat_view.dart`, `my_ai_assistant/lib/ui/chat/widgets/chat_bubbles.dart`
+- **Action:** Replace semi-transparent background colors (`withOpacity(...)`, `GlassContainer` translucent fills) with 100% solid opaque colors (`GlassColors.surface` / `#FFFFFF` in light mode, `#191C28` / `#1E2235` in dark mode) for modals, detail sheets, workspace containers, AI summarize sheets, and chat message bubbles (`UserMessageBubble`, `AssistantMessageBubble`, chat input bar).
+- **Why:** Ensure background gradient bleed-through is eliminated and text content in Kanban, Docs, Meetings, and Chat views is clear and easy to read.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** All targeted containers converted to solid 100% opaque single-color backgrounds (`0xFF1E2235` / `0xFF161926`).
+
+### Task 211.3: Perform static analysis and verification
+- **Status:** [x] Completed
+- **Target Files:** Modified files
+- **Action:** Run `flutter analyze` to verify zero static analysis or syntax errors.
+- **Why:** Ensure codebase quality and zero regressions.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 210: Mobile Workspace Switcher UI & Back Buttons Integration [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Issue A (Mobile Workspace Switcher)**:
+>    - Expose `BoardsWorkspaceTabs` horizontal tab bar in `boards_page.dart` so mobile users can swipe and select workspaces.
+>    - Enhance `BoardsWorkspaceHeader` (`boards_workspace_header.dart`) with an interactive workspace dropdown / bottom sheet trigger (`WorkspaceSelectorBottomSheet`) that presents the complete list of workspaces with active indicators and "+ Add Workspace".
+>    - Ensure seamless state updates via `StateBoards.setSelectedWorkspace()` when switching active workspace on mobile devices.
+> 2. **Issue B (Sub-Page & Meeting Prominent Back Buttons)**:
+>    - In `meetings_board_page.dart`: Add a prominent Glassmorphism Back button (`WorkspaceBackButton(onTap: _exitToWorkspace)` / `Icons.arrow_back_rounded`) in `_buildListSurface`, `_buildDetailSurface`, and `_buildCreateSurface` top navigation headers, enabling users to return to `BoardsPage` (`stateBoards.setSelectedBoard(null)`) easily.
+>    - In `meetings_board_sheet.dart` & `docs_board_sheet.dart`: Enhance `_buildTopActions()` so top-left header displays a clear Back / Close button (`Icons.arrow_back_rounded` / `Icons.arrow_back_ios_new_rounded` / `Icons.chevron_left_rounded`) when `widget.onBack != null` OR when `Navigator.of(context).canPop()` is true (calling `Navigator.of(context).pop()`).
+>    - Guarantee consistent navigation UX across Kanban (`kanban_page.dart`), Docs (`docs_board_page.dart`), and Meetings (`meetings_board_page.dart`) pages and modal bottom sheets on both desktop and mobile screens.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 210.1: Add mobile interactive workspace switcher dropdown with subtle soft glass pill aesthetics in `boards_workspace_header.dart` & `boards_page.dart`.
+- [x] Task 210.2: Add prominent, subtle Back Buttons (`<-`) in `meetings_board_page.dart`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart`.
+- [x] Task 210.3: Perform static analysis (`flutter analyze`).
+
+### Task 210.1: Add mobile interactive workspace switcher dropdown in boards_workspace_header.dart & boards_page.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_tabs.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** Update `BoardsWorkspaceHeader` to render an interactive category badge / title with a dropdown indicator (`Icons.keyboard_arrow_down_rounded`) that opens a mobile `WorkspaceSelectorBottomSheet` showing all workspaces (with type icons, active selection indicator, and "+ Add Workspace" button). Integrate `BoardsWorkspaceTabs` into `boards_page.dart` directly below `BoardsWorkspaceHeader`.
+- **Why:** Provide mobile users with two intuitive ways to switch workspaces: single-tap horizontal tabs and a prominent header dropdown modal bottom sheet.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Mobile workspace switcher UI implemented with subtle soft glass pill dropdown.
+
+### Task 210.2: Add prominent Back Buttons in meetings_board_page.dart, meetings_board_sheet.dart, and docs_board_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Add `WorkspaceBackButton(onTap: _exitToWorkspace)` in `meetings_board_page.dart` headers (`_buildListSurface`, `_buildDetailSurface`, `_buildCreateSurface`) so users can easily pop back to `BoardsPage`. Update `_buildTopActions()` in `meetings_board_sheet.dart` and `docs_board_sheet.dart` to display a clear Back/Close button when `widget.onBack != null` or when `Navigator.of(context).canPop()` is true (invoking `Navigator.of(context).pop()`).
+- **Why:** Ensure users always have an obvious, visible Back button when viewing meetings or project details.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Prominent back buttons added across meetings board page and sub-page sheet headers.
+
+### Task 210.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+
+
+## Phase 209: Merge Friend's Bento UI Redesign with AI Chat Features [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Execute `git merge origin/main` into `master`.
+> 2. Resolve conflict markers in UI redesign files taking friend's latest Bento UI redesign while preserving task-graph.md.
+> 3. Commit merge result and perform static analysis (`flutter analyze` & `gitnexus_detect_changes`).
+
+- [x] Task 209.1: Execute `git merge origin/main` into `master`.
+- [x] Task 209.2: Resolve conflict markers in UI redesign files taking friend's latest Bento UI redesign while preserving task-graph.md.
+- [x] Task 209.3: Commit merge result and perform static analysis (`flutter analyze` & `gitnexus_detect_changes`).
+
+### Task 209.1: Merge origin/main into master
+- **Status:** [x] Completed
+- **Target Files:** Git repository (`origin/main`, `master`)
+- **Action:** Execute `git merge origin/main` into `master`.
+- **Why:** Incorporate friend's latest Bento UI redesign into master branch.
+- **Owner:** DevOps / Lead Architecture
+- **Verification:** **[AUTONOMOUS]** Git merge executed successfully.
+
+### Task 209.2: Resolve conflict markers in UI redesign files
+- **Status:** [x] Completed
+- **Target Files:** Codebase conflict files, `task-graph.md`
+- **Action:** Resolve conflict markers in UI redesign files taking friend's latest Bento UI redesign while preserving task-graph.md.
+- **Why:** Integrate redesigned UI seamlessly without losing project tracking state.
+- **Owner:** FrontendCoder / DevOps
+- **Verification:** **[AUTONOMOUS]** Conflicts resolved and task-graph.md preserved.
+
+### Task 209.3: Commit merge result and perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Entire codebase
+- **Action:** Commit merge result and perform static analysis (`flutter analyze` & `gitnexus_detect_changes`).
+- **Why:** Ensure zero static analysis errors and updated impact analysis.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 208: Git Branch Redesign Merge & Clean Commit Checkpoint [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Verify `main` branch UI redesign commits are incorporated in `master`.
+> 2. Commit all Phase 200-207 AI Chat, 2-Tab Layout, RAG context, and checkmark preservation features to `master`.
+> 3. Perform static analysis (`flutter analyze`) and GitNexus scope check.
+
+- [x] Task 208.1: Verify `main` branch UI redesign commits are incorporated in `master`.
+- [x] Task 208.2: Commit all Phase 200-207 AI Chat, 2-Tab Layout, RAG context, and checkmark preservation features to `master`.
+- [x] Task 208.3: Perform static analysis (`flutter analyze`) and GitNexus scope check.
+
+### Task 208.1: Verify main branch UI redesign commits incorporated in master
+- **Status:** [x] Completed
+- **Target Files:** Git repository (`main`, `master` branches)
+- **Action:** Verify all UI redesign commits from `main` branch are fully merged and present in `master`.
+- **Why:** Ensure no branch drift or missing redesign features across main development lines.
+- **Owner:** DevOps / Lead Architecture
+- **Verification:** **[AUTONOMOUS]** Git history verified and merged into `master`.
+
+### Task 208.2: Commit Phase 200-207 features to master
+- **Status:** [x] Completed
+- **Target Files:** Codebase (`my_ai_assistant/`, `cloudflare_backend/`, `run_local.sh`, `task-graph.md`)
+- **Action:** Commit all Phase 200-207 AI Chat, 2-Tab Layout, RAG context, checkmark preservation, and session persistence features to `master`.
+- **Why:** Establish clean checkpoint on `master` branch.
+- **Owner:** FrontendCoder / BackendCoder / DevOps
+- **Verification:** **[AUTONOMOUS]** All Phase 200-207 features committed with clean git state.
+
+### Task 208.3: Static analysis and GitNexus scope check
+- **Status:** [x] Completed
+- **Target Files:** Entire codebase
+- **Action:** Run `flutter analyze` static analysis and perform GitNexus scope check.
+- **Why:** Maintain zero errors, high codebase quality, and clear architectural index.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 207: Fix Stale Summary Loading (.firstOrNull) & Checkmark Edits Sync [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Fix `_loadCurrentSessionMessages()` in `ai_summarize_sheet.dart`: change `msgs.where((m) => !m.isUser).toList().lastOrNull` to `.firstOrNull` so that opening a session loads the latest/newest AI summary instead of the oldest initial summary.
+> 2. Capture `final oldSummary = _summaryOutput;` BEFORE calling `await ApiCloudflare.summarizeMeeting(...)` in `_handleRefine()`, ensuring `preserveCheckedItems(oldSummary, result)` evaluates against the snapshot taken at user invocation time.
+> 3. Persist manual text edits and checkbox toggles in `MarkdownBlockEditor` (`onChanged: (val)`) to `_summaryOutput` and update/insert into DB `chat_messages` so user-ticked items (`- [x]`) survive session switching and bottom sheet re-opening.
+> 4. Pass `initialSummary` (`_descriptionController.text` / `_summaryController.text`) from `meetings_board_sheet.dart` and `docs_board_sheet.dart` into `AiSummarizeSheet` as a fallback when chat messages are empty.
+> 5. Perform static analysis (`flutter analyze`) to guarantee zero syntax or compilation errors.
+
+- [x] Task 207.1: Fix `_loadCurrentSessionMessages()` to load newest AI summary (`.firstOrNull`) & capture `oldSummary` in `_handleRefine()`.
+- [x] Task 207.2: Sync checkmark and text edits in `MarkdownBlockEditor` to RAM & DB message list.
+- [x] Task 207.3: Wire `initialSummary` parameter in `AiSummarizeSheet`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart`.
+- [x] Task 207.4: Perform code audit and static analysis (`flutter analyze`).
+
+### Task 207.1: Fix _loadCurrentSessionMessages() & capture oldSummary in _handleRefine()
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** In `_loadCurrentSessionMessages()`, change `lastOrNull` to `firstOrNull` when picking the latest AI message from `msgs` (which is ordered newest-first). In `_handleRefine()`, capture `final oldSummary = _summaryOutput;` before `await ApiCloudflare.summarizeMeeting(prompt: prompt)` and pass `oldSummary` to `preserveCheckedItems`.
+- **Why:** Stop loading stale/oldest summary on open/switch and ensure checkmark preservation logic receives current summary snapshot.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Updated `_loadCurrentSessionMessages()` to `.firstOrNull` and captured `oldSummary` snapshot prior to async refinement call.
+
+### Task 207.2: Persist user edits and checkmarks in MarkdownBlockEditor to DB
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** In `onChanged: (val)` callback of `MarkdownBlockEditor`, update `_summaryOutput = val`. Update the text of the latest AI message in `_chatMessages` in RAM, and persist the updated summary to `chat_messages` DB via `ApiCloudflare.insertChatMessage` upon manual edit/apply.
+- **Why:** Guarantee that user checkmarks (`- [x]`) and text edits are saved to DB and restored when re-opening sheet or switching sessions.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Block editor edits and checkbox state synced to RAM and persisted to DB.
+
+### Task 207.3: Wire initialSummary in AiSummarizeSheet and host board sheets
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Add `final String? initialSummary;` constructor parameter to `AiSummarizeSheet`. Pass `initialSummary: _descriptionController.text` in `meetings_board_sheet.dart` and `initialSummary: _summaryController.text` in `docs_board_sheet.dart`. Use `widget.initialSummary` as fallback when session messages are empty.
+- **Why:** Provide seamless fallback display if no chat history exists in DB yet.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Initial summary wired across board sheets and sheet widget.
+
+### Task 207.4: Perform static analysis and verification
+- **Status:** [x] Completed
+- **Target Files:** Modified files
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Ensure codebase health and zero regressions.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+
+## Phase 206: Checked To-Do Action Items (- [x] ) State Preservation [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Design a two-layer Checked State Preservation strategy to prevent checked action items (`- [x] `) from being reset to unchecked (`- [ ] `) during AI summary generation or refinement.
+> 2. Layer 1 (System Prompt Rule): Add strict instructions in system prompts in `ai_summarize_sheet.dart` to mandate that any action item in the previous summary marked as done (`- [x] `) must retain its done state (`- [x] `) if present in the new summary.
+> 3. Layer 2 (Client-Side Checkmark Preservation Sanitizer): Implement top-level helper function `preserveCheckedItems(String oldMarkdown, String newMarkdown)` in `markdown_block_editor.dart`. Extract all checked items (`- [x] <text>`) from `oldMarkdown`. When parsing `newMarkdown`, if a `- [ ] <text>` item matches a previously checked text (via normalized string matching or substring similarity), preserve its `- [x] ` status.
+> 4. Integrate `preserveCheckedItems(_summaryOutput, newOutput)` in `ai_summarize_sheet.dart` before setting `_summaryOutput` in both `_handleSummarize()` and `_handleRefine()`.
+> 5. Perform static analysis (`flutter analyze`) to ensure zero syntax or compilation errors.
+
+- [x] Task 206.1: Implement Client-Side `preserveCheckedItems` Sanitizer in `markdown_block_editor.dart`.
+- [x] Task 206.2: Update System Prompts with Rule #6 and integrate `preserveCheckedItems` sanitizer in `ai_summarize_sheet.dart`.
+- [x] Task 206.3: Perform static analysis and verification (`flutter analyze`).
+
+### Task 206.1: Implement preserveCheckedItems helper function in markdown_block_editor.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Add top-level helper function `preserveCheckedItems(String oldMarkdown, String newMarkdown)` in `markdown_block_editor.dart`. Parse `oldMarkdown` to extract all checked (`isChecked == true`) `todo` items into a normalized text set. Parse `newMarkdown` into blocks; for any unchecked `todo` block whose text matches a previously checked item (via exact normalized string or substring containment), update its `isChecked` property to `true`. Return serialized markdown.
+- **Why:** Provide client-side sanitizer to guarantee checked action items are never accidentally lost due to LLM rephrasing or prompt omission.
+- **Owner:** FrontendCoder
+
+### Task 206.2: Update System Prompts and Integrate Sanitizer in ai_summarize_sheet.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add Layer 1 system prompt rule: "6. หากรายการ Action Items ใดในสรุปเดิมมีสถานะทำเสร็จแล้ว (- [x] ) และรายการนั้นยังคงอยู่ในสรุปฉบับใหม่ ให้คงสถานะทำเสร็จแล้ว (- [x] ) ไว้เสมอ ห้ามเปลี่ยนกลับเป็น (- [ ] ) เด็ดขาด" to system instructions in `_handleSummarize` and `_handleRefine`. Wrap raw AI outputs with `preserveCheckedItems(_summaryOutput, summaryResult)` before setting state.
+- **Why:** Enforce checked state preservation at both system prompt instruction level and client sanitization layer.
+- **Owner:** FrontendCoder
+
+### Task 206.3: Perform static analysis and verification
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run static analysis (`flutter analyze`) to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+
+
+## Phase 205: Markdown List Formatting Rule & Numbered List Editor Support [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Extend `MarkdownBlock` types in `markdown_block_editor.dart` to support `'numbered'` list blocks (`1. `, `2. `, `3. `...).
+> 2. Update `parseMarkdownToBlocks` to map `\d+[.)]\s+` lines to `'numbered'` type instead of converting them to `'bullet'`.
+> 3. Update `serializeBlocksToMarkdown` to output sequential numbered prefixes (`1. `, `2. `...) for consecutive `'numbered'` blocks.
+> 4. Update UI rendering (`_BlockRow`), Slash menu, Plus menu, and keyboard navigation (Enter key creating next numbered block) in `markdown_block_editor.dart`.
+> 5. Update System Prompt instructions in `ai_summarize_sheet.dart` to enforce maximum 3 bullet points (`- `) for sub-items and require numbered lists (`1. `, `2. `...) when sub-items exceed 3 items. Update permitted format rules to include numbered lists alongside `# `, `## `, `- `, `- [ ] `.
+> 6. Perform static analysis (`flutter analyze`) to guarantee zero syntax or compilation errors.
+
+- [x] Task 205.1: Add `'numbered'` list block support to `MarkdownBlock`, `parseMarkdownToBlocks`, `serializeBlocksToMarkdown`, slash/plus menu, and `_BlockRow` renderer in `markdown_block_editor.dart`.
+- [x] Task 205.2: Update System Prompts in `ai_summarize_sheet.dart` to include numbered lists as allowed format and enforce the 3-bullet max rule with numbered list fallback for >3 sub-items.
+- [x] Task 205.3: Perform static analysis and verification (`flutter analyze`).
+
+### Task 205.1: Add numbered list block support in markdown_block_editor.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`
+- **Action:** Support `'numbered'` block type in `MarkdownBlock`. Update `parseMarkdownToBlocks` regex `numberedRe` to map matches to `type: 'numbered'`. Update `serializeBlocksToMarkdown` to serialize consecutive numbered blocks as `1. `, `2. `, etc. Add `'numbered'` item option to Slash and Plus menu popups, handle Enter key continuation, and render sequence numbers in `_BlockRow`.
+- **Why:** Provide full support for numbered list items in the Markdown block editor.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Numbered list block support verified in `markdown_block_editor.dart`.
+
+### Task 205.2: Update System Prompts in ai_summarize_sheet.dart for 3-bullet rule and numbered lists
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update System Instruction prompts (meeting summary, doc summary, and `_handleRefine` prompt) to allow 5 Markdown format types (including `1. `, `2. ` numbered lists) and explicitly instruct AI: use `- ` for up to 3 sub-items max; if sub-items > 3, use numbered list `1. `, `2. `... instead.
+- **Why:** Align AI summary generator with user formatting guidelines and editor capability.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** System Prompts updated in `ai_summarize_sheet.dart` for 3-bullet rule and numbered lists.
+
+### Task 205.3: Perform static analysis and verification
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run static analysis (`flutter analyze`) to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` completed with 0 issues.
+
+
+## Phase 204: Integration of Main Chat Engine (ChatSession/ChatMessage) & RAG Context for Meeting Chat [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Bind target ID (`meeting_${meeting.id}`) and load `ChatSession` list from main chat engine (`ApiCloudflare.getChatSessions`).
+> 2. Inject user-ticked files context (`combinedText`) as the RAG Context Layer in System Prompt.
+> 3. Persist all turns to `chat_messages` table automatically via `ApiCloudflare.insertChatMessage`.
+> 4. Render 2-Tab Segmented View (`[📄 เอกสารสรุป]` & `[💬 ประวัติแชท]`) and auto-default to latest `ChatSession`.
+> 5. Perform code audit and static analysis (`flutter analyze` & `node -c`).
+
+- [x] Task 204.1: Bind meeting target ID (`meeting_${meeting.id}`) and load `ChatSession` list from main chat engine (`ApiCloudflare.getChatSessions`).
+- [x] Task 204.2: Inject user-ticked files context (`combinedText`) as the RAG Context Layer in System Prompt.
+- [x] Task 204.3: Persist all turns to `chat_messages` table automatically via `ApiCloudflare.insertChatMessage`.
+- [x] Task 204.4: Render 2-Tab Segmented View (`[📄 เอกสารสรุป]` & `[💬 ประวัติแชท]`) and auto-default to latest `ChatSession`.
+- [x] Task 204.5: Perform code audit and static analysis (`flutter analyze` & `node -c`).
+
+### Task 204.1: Bind meeting target ID and load ChatSession list from main chat engine
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Bind meeting target ID (`meeting_${meeting.id}`) and load `ChatSession` list from main chat engine via `ApiCloudflare.getChatSessions`.
+- **Why:** Connect meeting AI chat with main chat engine persistence layer.
+- **Owner:** FrontendCoder / BackendCoder
+- **Verification:** **[AUTONOMOUS]** Target ID binding and session loading verified.
+
+### Task 204.2: Inject user-ticked files context as RAG Context Layer in System Prompt
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Inject user-ticked files context (`combinedText`) into system prompt as RAG Context Layer.
+- **Why:** Provide meeting document/audio transcript context for accurate RAG answers.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** RAG context injection in system prompt verified.
+
+### Task 204.3: Persist all turns to chat_messages table automatically via ApiCloudflare.insertChatMessage
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/services/api_cloudflare.dart`
+- **Action:** Call `ApiCloudflare.insertChatMessage` to persist both user questions and AI responses to `chat_messages` D1 database.
+- **Why:** Ensure full persistence of multi-turn chat history under meeting target ID.
+- **Owner:** BackendCoder / FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Message persistence verified.
+
+### Task 204.4: Render 2-Tab Segmented View and auto-default to latest ChatSession
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Render 2-Tab Segmented View (`[📄 เอกสารสรุป]` & `[💬 ประวัติแชท]`) and default view to latest active `ChatSession`.
+- **Why:** Provide clear navigation between summary output and interactive chat history.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** 2-Tab segmented view and session switching verified.
+
+### Task 204.5: Perform code audit and static analysis
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run static analysis (`flutter analyze` & `node -c cloudflare_backend/cloudflare_worker.js`).
+- **Why:** Ensure codebase stability and zero compilation errors.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` and `node -c` passed with 0 errors.
+
+
+## Phase 203: AI Summarization Sessions Multi-Database Persistence & Tab Output Restore
+
+- **Status:** [ ] In Progress
+
+> **Architecture Mandate:**
+> 1. Extend `MeetingModel` (`meeting_model.dart`) and `DocumentModel` (`document_model.dart`) to include `aiSessions` (`List<AiChatSession>`), with complete JSON serialization/deserialization support (`fromMap`, `fromJson`, `toMap`, `toJson`, `copyWith`).
+> 2. Upgrade SQLite database (`db_personal_sqlite.dart` v15) and Cloudflare Worker D1 schema/endpoints (`cloudflare_worker.js`) to add `ai_sessions TEXT DEFAULT '[]'` columns to `personal_meetings`, `project_documents`, `team_meetings`, and `team_documents`.
+> 3. Update host board sheets (`meetings_board_sheet.dart` & `docs_board_sheet.dart`) to load `meeting.aiSessions` / `doc.aiSessions` into `_aiChatSessions`, save `_aiChatSessions` on auto-save/manual save, and pass `initialSessions` to `AiSummarizeSheet`. Add `onSessionsChanged` callback to sync changes when closing or during edits.
+> 4. Update `AiSummarizeSheet` (`ai_summarize_sheet.dart`) to auto-select the latest non-empty session on open, and immediately render `_buildOutputView()` with the two tabs (`📄 เอกสารสรุป` & `💬 ประวัติแชท`) whenever existing sessions/history are present.
+
+- [ ] Task 203.1: Update `MeetingModel` & `DocumentModel` with `aiSessions` property and JSON serialization.
+- [ ] Task 203.2: Upgrade SQLite database (v15) in `db_personal_sqlite.dart` and Cloudflare D1 schema & REST API endpoints in `cloudflare_worker.js` for `ai_sessions`.
+- [ ] Task 203.3: Wire `aiSessions` in host board sheets (`meetings_board_sheet.dart` and `docs_board_sheet.dart`) with auto-save & real-time synchronization.
+- [ ] Task 203.4: Update `AiSummarizeSheet` (`ai_summarize_sheet.dart`) to auto-select active session with history and immediately display two tabs (`[📄 เอกสารสรุป]` & `[💬 ประวัติแชท]`).
+- [ ] Task 203.5: Perform code audit and static analysis (`flutter analyze` & `node --check`).
+
+### Task 203.1: Update MeetingModel & DocumentModel with aiSessions property
+- **Status:** [ ] To Do
+- **Target Files:** `my_ai_assistant/lib/models/meeting_model.dart`, `my_ai_assistant/lib/models/document_model.dart`
+- **Action:** Add `List<AiChatSession> aiSessions` field with default `[]`. Update `fromMap`, `fromJson`, `toMap`, `toJson`, and `copyWith` to handle `ai_sessions` serialization.
+- **Why:** Provide model-level data storage for AI chat sessions in meetings and documents.
+- **Owner:** BackendCoder
+
+### Task 203.2: Upgrade SQLite database & Cloudflare D1 schema for ai_sessions
+- **Status:** [ ] To Do
+- **Target Files:** `my_ai_assistant/lib/databases/db_personal_sqlite.dart`, `cloudflare_backend/cloudflare_worker.js`
+- **Action:** Add `ai_sessions TEXT DEFAULT '[]'` column to SQLite tables (`personal_meetings`, `project_documents`, v15 upgrade) and Cloudflare D1 worker tables (`team_meetings`, `team_documents`, auto-migration + POST/PUT/GET endpoint binding).
+- **Why:** Ensure full local and cloud persistence of AI chat sessions.
+- **Owner:** BackendCoder
+
+### Task 203.3: Wire aiSessions in host board sheets with auto-save
+- **Status:** [ ] To Do
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Populate `_aiChatSessions` from loaded `meeting.aiSessions`/`doc.aiSessions`. Pass `_aiChatSessions` to `AiSummarizeSheet`. Save `aiSessions` in `MeetingModel`/`DocumentModel` during auto-save and manual save. Handle live session updates via `onSessionsChanged` or modal pop results.
+- **Why:** Prevent chat session data loss when closing bottom sheets or restarting the application.
+- **Owner:** FrontendCoder
+
+### Task 203.4: Update AiSummarizeSheet to auto-select active session and render two tabs
+- **Status:** [ ] To Do
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** In `initState()`, default `_activeSessionIndex` to the latest session that contains history (`summaryText` or `messages`), and populate active summary/chat messages. On render, if `_sessions` has existing history (or active session has content), immediately display `_buildOutputView()` containing the two tabs (`[📄 เอกสารสรุป]` & `[💬 ประวัติแชท]`).
+- **Why:** Restore the requested two-tab UI immediately upon opening whenever chat history exists.
+- **Owner:** FrontendCoder
+
+### Task 203.5: Perform code audit and static analysis
+- **Status:** [ ] To Do
+- **Target Files:** All modified files
+- **Action:** Run static analysis (`flutter analyze` and `node --check`) to verify syntax, type safety, and 0 regression errors.
+- **Why:** Ensure codebase stability and zero syntax errors.
+- **Owner:** QA / Planner
+
+
+## Phase 202: Emergency Disk Cleanup & Startup Auto-Cleanup [x] Completed
+
+> **Architecture Mandate:**
+> 1. Purge Wrangler dev tmp files (`~/.config/.wrangler/tmp`), Flutter build artifacts, and crash logs to reclaim disk space.
+> 2. Add automatic startup disk cleanup to `run_local.sh` to prevent disk bloat.
+> 3. Verify script syntax using `bash -n`.
+
+- [x] Task 202.1: Purge Wrangler dev tmp files, Flutter build artifacts, and crash logs (reclaimed 1.6 GB free space).
+- [x] Task 202.2: Add automatic startup disk cleanup to `run_local.sh`.
+- [x] Task 202.3: Verify script syntax.
+
+### Task 202.1: Purge Wrangler dev tmp files, Flutter build artifacts, and crash logs
+- **Status:** [x] Done
+- **Target Files:** `~/.config/.wrangler/tmp`, `my_ai_assistant/build`, `/var/crash/*`
+- **Action:** Purge temporary Wrangler dev files, Flutter build artifacts, and crash logs (reclaimed 1.6 GB free space).
+- **Why:** Reclaim disk space and maintain host performance.
+- **Owner:** DevOps / System
+- **Verification:** **[AUTONOMOUS]** Reclaimed 1.6 GB free space.
+
+### Task 202.2: Add automatic startup disk cleanup to run_local.sh
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** Add automatic startup disk cleanup routines to `run_local.sh`.
+- **Why:** Keep local dev environment clean on every startup.
+- **Owner:** DevOps / BackendCoder
+- **Verification:** **[AUTONOMOUS]** Confirmed cleanup routine in `run_local.sh`.
+
+### Task 202.3: Verify script syntax
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** Verify bash script syntax using `bash -n run_local.sh`.
+- **Why:** Ensure startup script runs cleanly without syntax errors.
+- **Owner:** QA / DevOps
+- **Verification:** **[AUTONOMOUS]** Syntax check passed.
+
+
+## Phase 201: Session Title Editing & Chat History Prominence Layout [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Add Session Title Editing functionality in `AiSummarizeSheet` (`ai_summarize_sheet.dart`): allow renaming session title via edit icon on active chip or popup dialog, updating `_sessions[index]` title state and propagating changes.
+> 2. Fix Chat History Prominence: ensure `_chatMessages` bubbles are prominently displayed and accessible whenever a session is loaded or selected, either through a dedicated chat view/tab, automatic scrolling, or split output layout.
+> 3. Verify seamless session switching, title editing persistence, and chat context preservation across modal sessions.
+
+- [x] Task 201.1: Add Session Title Editing UI & Rename Dialog in `AiSummarizeSheet`.
+- [x] Task 201.2: Redesign Output View & Segmented Toggle (`[📄 เอกสารสรุป]` / `[💬 ประวัติแชท]`) with Auto-Scroll in `AiSummarizeSheet`.
+- [x] Task 201.3: Verify state & session synchronization across sheets.
+- [x] Task 201.4: Perform code audit and static analysis (`flutter analyze`).
+
+### Task 201.1: Add Session Title Editing UI & Rename Dialog in AiSummarizeSheet
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update `_buildSessionSelector()` to display an edit icon button (`Icons.edit_outlined`) on the active session chip. Implement `_showEditSessionTitleDialog(int index)` to open a modal dialog with a `TextField` allowing the user to rename `_sessions[index].title`. On submit/confirm, update `_sessions[index] = _sessions[index].copyWith(title: newTitle)` and trigger `setState()`.
+- **Why:** Enable users to customize session names for better organization during multi-session summarization.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Confirmed Session Title Editing UI and rename dialog implementation.
+
+### Task 201.2: Redesign Output View & Segmented Toggle for Chat Prominence
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add a View Toggle / Segmented Tab below Session Selector: `[ 📄 สรุปเนื้อหา ]` vs `[ 💬 ประวัติการสนทนา (N) ]`, or render a clean split/tabbed layout so chat messages are immediately visible without being hidden below a long markdown document. Ensure `_chatMessages` are visible whenever existing chat history is present.
+- **Why:** Solve the issue where chat history bubbles were hidden below tall summary blocks or suppressed when summary was empty.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Confirmed segmented view toggle and chat prominence layout.
+
+### Task 201.3: Verify State & Session Synchronization Across Sheets
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Ensure updated `_sessions` (with new titles and chat messages) returned from `AiSummarizeSheet` are correctly saved to host state (`_aiChatSessions`) and persisted via meeting/doc auto-save.
+- **Why:** Guarantee that renamed titles and chat histories survive sheet reopening and app restarts.
+- **Owner:** FrontendCoder / BackendCoder
+- **Verification:** **[AUTONOMOUS]** Confirmed state synchronization across board sheets.
+
+### Task 201.4: Code audit and static analysis
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Run `flutter analyze` to ensure 0 errors and zero syntax/type regressions.
+- **Why:** Maintain codebase health and compliance with Sovereign guidelines.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passed with 0 errors.
+
+
+## Phase 200: Meeting AI Summarization Chat Session Management [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Design and implement `AiChatSession` model (`{id, title, summaryText, messages, createdAt}`) in `my_ai_assistant/lib/models/ai_chat_session.dart`.
+> 2. Support `aiSessions` in `MeetingModel`, `DocumentModel`, `db_personal_sqlite.dart`, and `cloudflare_worker.js` for persistent multi-session storage across restarts.
+> 3. Enhance `AiSummarizeSheet` with a Session Selector Bar (Chips / Selector), "+ New Session" button, session switching logic, and default auto-selection of the **latest session** (`_activeSessionIndex = _sessions.length - 1`).
+> 4. Wire session management in `meetings_board_sheet.dart` and `docs_board_sheet.dart` to pass, receive, and persist `_aiChatSessions`.
+
+- [x] Task 200.1: Create `AiChatSession` model class in `my_ai_assistant/lib/models/ai_chat_session.dart`.
+- [x] Task 200.2: Update `MeetingModel` & `DocumentModel` and persistence logic (`db_personal_sqlite.dart`, `cloudflare_worker.js`) to support `ai_sessions`.
+- [x] Task 200.3: Implement Session Selector UI, "+ New Session", and auto-default to latest session in `AiSummarizeSheet`.
+- [x] Task 200.4: Integrate `_aiChatSessions` in host board sheets.
+- [x] Task 200.5: Perform code audit and static analysis (`flutter analyze`).
+
+### Task 200.1: Create AiChatSession model class
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/models/ai_chat_session.dart`
+- **Action:** Create `AiChatSession` model with fields `id`, `title`, `summaryText`, `messages`, `createdAt`, `fromMap`, `toMap`, `toJson`, `fromJson`, `copyWith`.
+- **Why:** Provide a clean data structure for managing individual chat sessions within an AI summarization session.
+- **Owner:** BackendCoder / FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Confirmed `AiChatSession` model class creation and serialization methods.
+
+### Task 200.2: Update MeetingModel & DocumentModel and persistence logic
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/models/meeting_model.dart`, `my_ai_assistant/lib/models/document_model.dart`, `my_ai_assistant/lib/databases/db_personal_sqlite.dart`, `cloudflare_backend/cloudflare_worker.js`
+- **Action:** Add `aiSessions` list property to `MeetingModel` and `DocumentModel`, and update SQLite (`personal_meetings`, `project_documents`) and Cloudflare Worker D1 backend to save/load `ai_sessions`.
+- **Why:** Persist user chat sessions across app restarts and sync between devices.
+- **Owner:** BackendCoder
+- **Verification:** **[AUTONOMOUS]** Verified database schemas and model conversions.
+
+### Task 200.3: Implement Session Selector UI, + New Session, and auto-default to latest session in AiSummarizeSheet
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Add Session Selector chip bar, "+ New Session" ("สร้างเสสชันใหม่") action, session switching, and default `_activeSessionIndex = _sessions.length - 1` on modal open.
+- **Why:** Satisfy user requirements for selecting past sessions, creating fresh sessions, and automatically landing on the latest session upon sheet opening.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Verified Session Selector UI and session switching state management.
+
+### Task 200.4: Integrate _aiChatSessions in host board sheets
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Pass `initialSessions` to `AiSummarizeSheet` and receive updated `sessions` on pop to update `_aiChatSessions` state and save meeting/doc.
+- **Why:** Maintain state continuity between host sheet and modal bottom sheet.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Verified `_aiChatSessions` integration across board sheets.
+
+### Task 200.5: Code audit and static analysis
+- **Status:** [x] Done
+- **Target Files:** All modified files
+- **Action:** Run `flutter analyze` and audit code implementation.
+- **Why:** Guarantee code quality, 0 errors, and zero regressions.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` passed with 0 errors.
+
+## Phase 199: Fix AI Summarize Sheet DeferredPointerHandler Assertion Error & Chat History Display/Persistence [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Wrap `AiSummarizeSheet` (or `MarkdownBlockEditor` host container) in `DeferredPointerHandler` in `ai_summarize_sheet.dart` to eliminate the `"DeferredPointerHandler was not found in the widget tree"` assertion failure.
+> 2. Ensure multi-turn chat message history (`_chatMessages`) is included in AI refinement prompt construction (`_handleRefine`) and displayed properly below `MarkdownBlockEditor`.
+> 3. Preserve `_chatMessages` history across refinement turns and allow users to continue editing/discussing from previous chat history.
+
+- [x] Task 199.1: Wrap `AiSummarizeSheet` widget tree in `DeferredPointerHandler` in `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`.
+- [x] Task 199.2: Update `_handleRefine` in `ai_summarize_sheet.dart` to incorporate multi-turn `_chatMessages` context into the prompt sent to AI.
+- [x] Task 199.3: Ensure `_chatMessages` history display layout is visible and persistent across modal reopens in `meetings_board_sheet.dart` and `docs_board_sheet.dart`.
+- [x] Task 199.4: Code audit & syntax verification.
+
+### Task 199.1: Wrap AiSummarizeSheet widget tree in DeferredPointerHandler
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Wrap `AiSummarizeSheet` widget tree in `DeferredPointerHandler` in `ai_summarize_sheet.dart` to eliminate the `DeferredPointerHandler was not found in the widget tree` assertion failure.
+- **Why:** Resolve pointer handler context assertion failure when rendering markdown popovers / tooltips inside modal sheet.
+- **Verification:** **[AUTONOMOUS]** Verified widget tree structure in `ai_summarize_sheet.dart`.
+
+### Task 199.2: Update _handleRefine to incorporate multi-turn chat messages context
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update `_handleRefine` to append multi-turn `_chatMessages` context into the payload sent to AI endpoint.
+- **Why:** Maintain chat context and allow multi-turn refinement conversation with AI assistant.
+- **Verification:** **[AUTONOMOUS]** Confirmed `_handleRefine` logic in `ai_summarize_sheet.dart`.
+
+### Task 199.3: Ensure _chatMessages history display layout is visible and persistent across modal reopens
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Pass and save `aiChatHistory` parameter between modal sheet calls in `meetings_board_sheet.dart` and `docs_board_sheet.dart`.
+- **Why:** Preserve user's conversation history with AI across modal closing and reopening.
+- **Verification:** **[AUTONOMOUS]** Verified state persistence implementation in host sheets.
+
+### Task 199.4: Code audit & syntax verification
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Audit code changes and verify syntax for Dart files.
+- **Why:** Guarantee no syntax or runtime regression introduced.
+- **Verification:** **[AUTONOMOUS]** Verified clean syntax and code structure.
+
+
+## Phase 198: Fix AI Chat 500 Error (Workers AI Deprecated Model & OpenRouter Key) [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Update Workers AI fallback model to `@cf/meta/llama-3.3-70b-instruct` in `cloudflare_worker.js`.
+> 2. Update valid OpenRouter API key in `run_local.sh` and `.dev.vars`.
+> 3. Verify JavaScript and Bash syntax.
+
+- [x] Task 198.1: Update Workers AI fallback model to `@cf/meta/llama-3.3-70b-instruct` in `cloudflare_worker.js`.
+- [x] Task 198.2: Update valid OpenRouter API key in `run_local.sh` and `.dev.vars`.
+- [x] Task 198.3: Verify JavaScript and Bash syntax.
+
+### Task 198.1: Update Workers AI fallback model to @cf/meta/llama-3.3-70b-instruct
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** Update Workers AI fallback model from deprecated `@cf/meta/llama-3-8b-instruct` to `@cf/meta/llama-3.3-70b-instruct`.
+- **Why:** Resolve 500 error caused by Cloudflare Workers AI model deprecation.
+- **Verification:** **[AUTONOMOUS]** Confirmed model string in `cloudflare_worker.js`.
+
+### Task 198.2: Update valid OpenRouter API key in run_local.sh and .dev.vars
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`, `cloudflare_backend/.dev.vars`
+- **Action:** Update `OPENROUTER_API_KEY` to valid working key in environment files.
+- **Why:** Ensure OpenRouter API calls authenticate successfully without 401/500 errors.
+- **Verification:** **[AUTONOMOUS]** Confirmed valid key present in configuration files.
+
+### Task 198.3: Verify JavaScript and Bash syntax
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`, `run_local.sh`
+- **Action:** Verify syntax for modified files (`node --check` / `bash -n`).
+- **Why:** Ensure no syntax errors or typos were introduced.
+- **Verification:** **[AUTONOMOUS]** Verified clean syntax.
+
+
+## Phase 197: Fix run_local.sh Port 8080 Collision [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Stop Docker containers publishing port 8080 (`docker stop $(docker ps -q --filter "publish=8080")`) before starting services in `run_local.sh`.
+> 2. Include port 8080 in `run_local.sh` cleanup loop along with ports 8787, 8788, 8789.
+> 3. Kill stale processes occupying port 8080 using `lsof`.
+> 4. Verify script and port availability for Flutter web-server startup.
+
+- [x] Task 197.1: Stop Docker containers publishing port 8080 (`docker stop $(docker ps -q --filter "publish=8080")`).
+- [x] Task 197.2: Include port 8080 in `run_local.sh` cleanup loop.
+- [x] Task 197.3: Kill stale processes occupying port 8080.
+- [x] Task 197.4: Verify script and port availability.
+
+### Task 197.1: Stop Docker containers publishing port 8080
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** Add command to stop Docker containers publishing port 8080 in `run_local.sh` before running backend/frontend services.
+- **Why:** To avoid port 8080 binding collisions caused by active Docker containers.
+- **Verification:** **[AUTONOMOUS]** Confirmed command in `run_local.sh`.
+
+### Task 197.2: Include port 8080 in run_local.sh cleanup loop
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** Include port 8080 in the cleanup loop `for port in 8080 8787 8788 8789; do`.
+- **Why:** Ensure all potential development ports are freed prior to service launch.
+- **Verification:** **[AUTONOMOUS]** Confirmed loop updated in `run_local.sh`.
+
+### Task 197.3: Kill stale processes occupying port 8080
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** Free up port 8080 by finding stale process PIDs via `lsof` and terminating them.
+- **Why:** Prevent process collision errors when binding web-port 8080.
+- **Verification:** **[AUTONOMOUS]** Confirmed `lsof` process termination logic.
+
+### Task 197.4: Verify script and port availability
+- **Status:** [x] Done
+- **Target Files:** `run_local.sh`
+- **Action:** Verify `run_local.sh` execution flow and port cleanup mechanisms.
+- **Why:** Ensure clean execution of local environment setup.
+- **Verification:** **[AUTONOMOUS]** Verified `run_local.sh` logic.
+
+
+## Phase 196: Meeting Chat Session & Ticked Files Context Refactoring [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. Preserve `combinedText` (ticked files, notes, transcripts) across multi-turn refinement chat sessions in `AiSummarizeSheet`.
+> 2. Restrict meeting chat LLM payload strictly to reading ticked files and editing summary text, disabling all external tool calls (`tools: []`).
+> 3. Ensure backend `/api/ai/chat` compatibility for multi-turn meeting refinement payloads.
+> 4. Perform syntax verification and code audit.
+
+- [x] Task 196.1: Update `AiSummarizeSheet` in `lib/ui/meetings/widgets/ai_summarize_sheet.dart` to preserve `combinedText` (ticked files, notes, transcripts) across multi-turn refinement chat sessions.
+- [x] Task 196.2: Restrict meeting chat LLM payload strictly to (a) reading ticked files and (b) editing summary text, disabling all external tool calls (`tools: []`).
+- [x] Task 196.3: Ensure backend `/api/ai/chat` compatibility for multi-turn meeting refinement payloads.
+- [x] Task 196.4: Perform syntax verification and code audit.
+
+### Task 196.1: Update AiSummarizeSheet to preserve combinedText
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Update `AiSummarizeSheet` to preserve `combinedText` (ticked files, notes, transcripts) across multi-turn refinement chat sessions.
+- **Why:** To maintain complete context across multi-turn chat interactions during meeting summary refinement.
+
+### Task 196.2: Restrict meeting chat LLM payload and disable external tool calls
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Restrict meeting chat LLM payload strictly to reading ticked files and editing summary text, setting `tools: []`.
+- **Why:** To prevent unexpected external tool invocations during summary refinement chat sessions.
+
+### Task 196.3: Ensure backend /api/ai/chat compatibility
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** Ensure backend `/api/ai/chat` compatibility for multi-turn meeting refinement payloads.
+- **Why:** To ensure multi-turn payload structures are processed seamlessly without endpoint rejection.
+
+### Task 196.4: Perform syntax verification and code audit
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** Run syntax verification (`flutter analyze` / `python3 runner.py analyze`) and audit the changes.
+- **Why:** To guarantee system stability and code quality.
+
+## Phase 197: OpenRouter 401 Fix & Audio Download Feature [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:** 
+> 1. แก้ไขปัญหา OpenRouter API Error 401 - User not found ตอนเรียก `/api/ai/chat` โดยเพิ่มกลไกสลับการทำงานไปใช้ Cloudflare Workers AI (`env.AI`) เป็น fallback หากเรียก OpenRouter ล้มเหลว หรือตรวจสอบความถูกต้องของ `env.OPENROUTER_API_KEY`
+> 2. เพิ่มฟีเจอร์ "ดาวน์โหลดเสียง" (Download Audio) สำหรับไฟล์บันทึกเสียง (`type == 'recording'`) ในหน้า `meetings_board_sheet.dart` โดยเพิ่ม PopupMenu Action ให้ผู้ใช้เปิด/ดาวน์โหลดไฟล์ R2 URL ผ่านเบราว์เซอร์หรือเครื่อง
+## Phase 211: Meetings Page Bento UI Redesign & Mobile Text Optimization
+
+### Task 211.1: Register Phase 211 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 211 tasks for redesigning the Meetings surface into Bento UI with Quick Jump Chips, Collapsible Text Toggles, and Bento Card Summaries.
+- **Why:** Provide a premium Bento UI aesthetic for Meetings while eliminating mobile long-text scroll fatigue.
+
+### Task 211.2: Build bento_meeting_widgets.dart Component Suite
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`
+- **Action:** Create `bento_meeting_widgets.dart` with `BentoMeetingHeroHeader`, `BentoMeetingQuickChips`, `BentoMeetingSummaryCard`, `BentoMeetingActionItemsCard`, and `BentoCollapsibleText`.
+- **Why:** Modularize Bento UI widgets for Meetings page according to Anti-Bloat Mandates.
+
+### Task 211.3: Refactor meetings_board_page.dart & meetings_board_sheet.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** Integrate Bento UI components, quick section jump tabs, and collapsible text read-more controls into meetings list and detail surfaces.
+- **Why:** Deliver cohesive Bento UI matching Dashboard with mobile long-text UX optimization.
+
+### Task 211.4: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/bento_meeting_widgets.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** Perform syntax check and code structure audit for all modified files.
+- **Why:** Ensure clean execution across mobile, tablet, and desktop viewports.
+
+## Phase 210: Desktop Date Strip Dynamic Day Expansion & Month Header Integration
+
+### Task 210.1: Register Phase 210 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 210 tasks for adding Month & Year Header bar and dynamic day filler calculation for wide desktop viewports in `bento_box_widgets.dart`.
+- **Why:** Eliminate huge gaps on desktop viewports by dynamically populating more days and displaying Month context.
+
+### Task 210.2: Implement Month Header & Dynamic Day Count Calculation in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Add Month/Year title row above date strip, calculate dynamic day count based on viewport width (`count = (netWidth / itemWidth)`), and render consecutive date capsules neatly.
+- **Why:** Prevent capsules from separating across large desktop screen widths.
+
+### Task 210.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution across mobile, tablet, and desktop viewports.
+
+## Phase 209: Dashboard Weekly Date Strip Dynamic Full-Width Stretch
+
+### Task 209.1: Register Phase 209 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 209 tasks for making `BentoWeeklyDateStrip` dynamically stretch across the entire available dashboard width from left (20px) to right (screenWidth - 20px).
+- **Why:** Guarantee 100% full-width coverage touching the right edge of dashboard cards.
+
+### Task 209.2: Implement Dynamic Width & MainAxisAlignment.spaceBetween in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Calculate `availableWidth = screenWidth - 40`, calculate dynamic `itemWidth = (availableWidth - (gap * 5)) / 6`, and arrange date capsules using `MainAxisAlignment.spaceBetween`.
+- **Why:** Ensure date capsules stretch completely across the dashboard from left margin to right margin without leaving empty gaps.
+
+### Task 209.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or responsive layout breaking.
+
+## Phase 208: Weekly Date Strip Full-Bleed Edge-to-Edge Layout
+
+### Task 208.1: Register Phase 208 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 208 tasks for updating `BentoWeeklyDateStrip` to full-bleed edge-to-edge right boundary scroll layout in `bento_box_widgets.dart`.
+- **Why:** Allow date strip capsules to scroll all the way to the right screen edge.
+
+### Task 208.2: Refactor BentoWeeklyDateStrip for Full-Bleed Scrolling in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Move horizontal padding from outer container into `SingleChildScrollView.padding` (`EdgeInsets.only(left: 20, right: 20)`).
+- **Why:** Ensure scrolling capsules flow seamlessly to the right boundary of the viewport.
+
+### Task 208.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Validate syntax and layout rendering in `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or visual regression.
+
+## Phase 207: Move Weekly Date Strip Outside Hero Card
+
+### Task 207.1: Register Phase 207 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 207 tasks for moving the weekly date strip outside `BentoHeroCard` and placing it below the card in `dashboard_page.dart`.
+- **Why:** To follow user's UI layout clarification.
+
+### Task 207.2: Extract BentoWeeklyDateStrip Standalone Widget in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Remove date strip from inside `BentoHeroCard` and extract standalone `BentoWeeklyDateStrip` widget.
+- **Why:** Decouple date strip from inside card background.
+
+### Task 207.3: Position BentoWeeklyDateStrip Below Hero Card in dashboard_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Place `BentoWeeklyDateStrip` between `BentoHeroCard` and `BentoPlanGrid`.
+- **Why:** Display weekly date capsules cleanly outside the hero card.
+
+### Task 207.4: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Validate syntax and layout rendering for both modified files.
+- **Why:** Ensure zero errors or visual regressions.
+
+## Phase 206: Dashboard Hero Card Weekly Date Strip Integration
+
+### Task 206.1: Register Phase 206 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 206 tasks for adding weekly date strip capsule widget in `bento_box_widgets.dart`.
+- **Why:** Display interactive/aesthetic 6-day date capsules on the Daily Challenge hero card matching image.png reference.
+
+### Task 206.2: Build _buildWeeklyDateStrip Widget in BentoHeroCard
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Add `_buildWeeklyDateStrip` with capsule layout, indicator dots, day labels, day numbers, and active/today highlighting.
+- **Why:** Match the date widget aesthetic requested by user from image.png.
+
+### Task 206.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or responsive layout breaking.
+
+## Phase 205: Dashboard Bento Card Color Palette Update
+
+### Task 205.1: Register Phase 205 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 205 tasks for updating Bento card color tokens in `glass_theme.dart`.
+- **Why:** To update card colors to new requested hex values (#B3A0FF, #FFBE5A, #A9CBFF, #FD9FFF).
+
+### Task 205.2: Update Bento Color Tokens in glass_theme.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** Update `bentoLavender`, `bentoOrange`, `bentoBlue`, and `bentoPink` color constants.
+- **Why:** Apply user's custom hex color palette across all dashboard Bento cards.
+
+### Task 205.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** Perform syntax check and code structure audit for `glass_theme.dart`.
+- **Why:** Ensure clean execution without syntax errors or color token breaking changes.
+
+## Phase 204: Dashboard Bento Card Description Shortening and Mobile Line Constraint
+
+### Task 204.1: Register Phase 204 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 204 tasks for shortening description texts in "Message with AI" and "Profile & Sync" cards in `bento_box_widgets.dart`.
+- **Why:** Prevent description text from extending behind 3D graphics on small screens.
+
+### Task 204.2: Update Card Description Strings in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Shorten description for "Message with AI" to `'Chat with AI anytime'` and "Profile & Sync" to `'Sync avatars & team roles'`.
+- **Why:** Keep card text concise and clean on mobile displays.
+
+### Task 204.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Validate syntax and layout logic in `bento_box_widgets.dart`.
+- **Why:** Guarantee zero errors or visual regressions.
+
+## Phase 203: Mobile Dashboard Bento Card 3D Image Overlap and Overflow Fix
+
+### Task 203.1: Register Phase 203 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** Register Phase 203 tasks for fixing text overlap and 3D image overflow in "Message with AI" and "Profile & Sync" cards on mobile screens in `bento_box_widgets.dart`.
+- **Why:** To fulfill Sovereign Protocol V2 infrastructure real-time tracking mandates.
+
+### Task 203.2: Refactor _buildBentoCard in bento_box_widgets.dart for Mobile Text Margin and Image Positioning
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Add text padding / constrained width for card content and adjust 3D graphic image sizing (`imageSize`), relative positioning (`rightOffset`, `bottomOffset`, `topOffset`), and clipping/container constraints on mobile screens.
+- **Why:** Prevent 3D graphic images from overlapping card text and spilling out of card bounds on small mobile viewports.
+
+### Task 203.3: Empirical Code Validation & Forensic Audit
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** Perform syntax check and code structure audit for `bento_box_widgets.dart`.
+- **Why:** Ensure clean execution without syntax errors or visual regression.
+
+## Phase 202: Workspace Header Fine-Tuning, Rename Button Restore & Workspace Tabs Removal
+
+### Task 202.1: Register Phase 202 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 202 สำหรับการนำปุ่ม Rename Workspace กลับคืนมา, ลบส่วนประกอบ Workspace Tabs (ตามภาพ image.png), ปรับขยับรูป 3D เข้าด้านใน และแก้ปัญหาข้อความล้นปุ่มบนมือถือ
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 202.2: Restore Rename Workspace Button in BoardsWorkspaceHeader & boards_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** เพิ่มปุ่มดินสอ Rename Workspace คืนใน Header และผูก Callback จาก boards_page.dart
+- **Why:** เพื่อเปิดให้ผู้ใช้สามารถเปลี่ยนชื่อ Workspace ได้ตามเดิม
+
+### Task 202.3: Remove BoardsWorkspaceTabs Component from boards_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/boards_page.dart`
+- **Action:** ลบส่วนเรียกใช้ BoardsWorkspaceTabs ออกจาก boards_page.dart ตามภาพ image.png
+- **Why:** เพื่อลบแถบแคปซูลรายการ Workspace ที่ไม่จำเป็นออกตามความต้องการของผู้ใช้
+
+### Task 202.4: Adjust 3D Image Offset & Fix Mobile Button Text Overflow
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/common/bouncy_soft_button.dart`
+- **Action:** ปรับตำแหน่ง Positioned(right: isMobile ? 24 : 48) เพื่อขยับรูป workspace.png เข้าด้านใน และใช้ FittedBox/Responsive Font Size ในปุ่ม Join Workspace & New Project ป้องกันข้อความล้นปุ่มบนมือถือ
+- **Why:** เพื่อให้การแสดงผลบนสมาร์ตโฟนประณีตและสวยงามสมบูรณ์แบบ
+
+### Task 202.5: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย `dart analyze`
+- **Why:** ยืนยันความถูกต้องและความสมบูรณ์ของโค้ด
+
+## Phase 201: Workspace Hero Bento 3D Graphic Integration & Rename Button Removal
+
+### Task 201.1: Register Phase 201 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 201 สำหรับการใส่รูปภาพ workspace.png แบบ 3D ใน Bento Hero Banner และลบปุ่ม Rename Workspace
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 201.2: Copy Asset workspace.png & Update pubspec.yaml
+- **Status:** [x] Done
+- **Target Files:** `picture/workspace.png`, `my_ai_assistant/assets/images/workspace.png`, `my_ai_assistant/pubspec.yaml`
+- **Action:** คัดลอกไฟล์รูปภาพไปยังไดเรกทอรี assets และยืนยันการลงทะเบียนใน pubspec.yaml
+- **Why:** เพื่อให้โปรเจกต์ Flutter สามารถเรียกใช้รูปภาพได้
+
+### Task 201.3: Update BoardsWorkspaceHeader with 3D Graphic & Remove Rename Button
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** ลบปุ่ม Rename Workspace ออก และเพิ่ม 3D Image popping out บน Bento Hero Header พร้อม Responsive Text Width Layout
+- **Why:** เพื่อให้ดีไซน์หน้า Workspace โดดเด่น สวยงามระดับ พรีเมียม ตรงตามความต้องการของผู้ใช้งาน
+
+### Task 201.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย `dart analyze`
+- **Why:** ยืนยันความถูกต้องและความสมบูรณ์ของโค้ด
+
+## Phase 200: Workspace Redesign for Bento UI & Soft Pastel Aesthetics Harmonization
+
+### Task 200.1: Register Phase 200 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 200 สำหรับการปรับปรุงดีไซน์ Workspace ให้เข้ากับ Bento UI Pastel Palette ของ Dashboard
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 200.2: Redesign BoardsWorkspaceHeader to Bento Hero Banner
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** แปลง Header ให้เป็น Bento Hero Card สี Lavender Soft Pastel พร้อม 3D Accent Graphic/Stats Badge และ Bouncy Soft Buttons
+- **Why:** เพื่อให้ส่วนบนสุดของหน้า Workspace สดใส สวยงาม มีมิติและเข้าธีม Bento UI
+
+### Task 200.3: Redesign BoardsWorkspaceTabs to Soft Pastel Segmented Chips
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_tabs.dart`
+- **Action:** แปลง Workspace Tabs ให้เป็น Soft Pastel Pill Segment Filter พร้อมเอฟเฟกต์สีพาสเทลเมื่อเลือก
+- **Why:** เพื่อแทนที่เส้นขีดขอบธรรมดาด้วยดีไซน์ Bento Chip สไตล์พรีเมียม
+
+### Task 200.4: Redesign ProjectsTable & Extract Bento Cards Widgets
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`, `my_ai_assistant/lib/ui/boards/widgets/bento_project_card.dart`
+- **Action:** ปรับดีไซน์ Project List/Grid เป็น Bento Card System ที่หมุนเวียนสี Soft Pastel (`bentoLavender`, `bentoOrange`, `bentoBlue`, `bentoPink`), ขอบมน 24px, Pill Status Badges, Member Stack Avatars และ Soft Action Pills ทั้งบน Mobile และ Desktop
+- **Why:** เพื่อให้สอดคล้องกับ Dashboard ธีม Bento UI Soft Pastel และปฏิบัติตาม Anti-Bloat Mandate (<600 บรรทัด)
+
+### Task 200.5: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย `flutter analyze`
+- **Why:** ยืนยันความถูกต้องและความสมบูรณ์ของโค้ด
+
+## Phase 199: Dashboard Bento Palette Harmonization & Mobile Create Project Button Upgrade
+
+### Task 199.1: Register Phase 199 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 199 สำหรับการคุมโทนสีปุ่มให้เข้ากับ Dashboard Bento Palette
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 199.2: Expand Dashboard Bento Color Palette in bouncy_soft_button.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/bouncy_soft_button.dart`
+- **Action:** เพิ่มตัวเลือกโทนสี Bento (Lavender, Orange, Blue, Pink, Dark) ให้กับ BouncySoftButton
+- **Why:** เพื่อให้โทนสีของปุ่มมีความสอดคล้องกับหน้า Dashboard อย่างสมบูรณ์แบบ
+
+### Task 199.3: Upgrade _MobileNewProjectButton in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** เปลี่ยนปุ่ม Create New Project บนมือถือให้เป็น BouncySoftButton สไตล์ Lavender/Dark ทรงแคปซูลใหญ่
+- **Why:** เพื่อให้ปุ่มสร้างโปรเจกต์ใหม่บนมือถือดูน่ารัก โดดเด่น และเด้งนุ่มนวลเวลาแตะสัมผัส
+
+### Task 199.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 198: Bouncy Soft Button Component & Theme Integration
+
+### Task 198.1: Register Phase 198 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 198 สำหรับการสร้าง BouncySoftButton ตามดีไซน์ HTML/CSS
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 198.2: Create BouncySoftButton Component in bouncy_soft_button.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/bouncy_soft_button.dart`
+- **Action:** สร้าง BouncySoftButton รองรับ 3 โทนสี (Purple, Orange, Executive Dark) พร้อมเอฟเฟกต์หดตัว scale(0.95) และเงาสีฟุ้ง
+- **Why:** มอบประสบการณ์การกดที่น่ารัก นุ่มนวล และตอบสนองสัมผัสได้อย่างดีเยี่ยม
+
+### Task 198.3: Integrate Bouncy Button Styling in glass_theme.dart & Boards Header
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`
+- **Action:** อัปเดต ThemeData ปุ่ม และนำ BouncySoftButton ไปใช้ในหน้า Workspace Header
+- **Why:** ให้ปุ่มทั่วทั้งแอปพลิเคชันมีสไตล์สอดคล้องกันอย่างสวยงาม
+
+### Task 198.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 197: Poppins Font Integration & Image-Matched Floating Bottom Nav Bar
+
+### Task 197.1: Register Phase 197 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตของ Phase 197 ลงใน task-graph.md
+- **Why:** เพื่อบันทึกประวัติการพัฒนาและสอดคล้องกับนโยบายสถาปัตยกรรม
+- **Verification:** **[AUTONOMOUS]** ตรวจสอบว่าโครงสร้าง task-graph.md ถูกต้อง
+
+### Task 197.2: Fix /api/ai/chat OpenRouter 401 (Cloudflare Workers AI Fallback)
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** แก้ไข endpoint `/api/ai/chat` ให้มีกลไก fallback/retry หาก OpenRouter คืนค่า Status 401 หรือ Error โดยหันไปเรียก Cloudflare Workers AI (`env.AI.run('@cf/meta/llama-3-8b-instruct')`) หรือตรวจสอบว่า API key ถูกต้องก่อนรัน
+- **Why:** แก้ปัญหาผู้ใช้ไม่สามารถพูดคุยกับ AI ได้เนื่องจาก OpenRouter API error (Owner: backend_coder)
+
+### Task 197.3: Add Audio Download Action to Meetings Board
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ในเมนู `PopupMenuButton` ของ `recordingTakes` (บรรทัด ~2630) ให้เพิ่ม `PopupMenuItem(value: 'download_audio', ...)` และจัดการเมื่อเลือกให้เรียก `launchUrl(Uri.parse(take['url']!), mode: LaunchMode.externalApplication)` เพื่อเปิดหรือโหลดไฟล์เสียงลงเครื่องผู้ใช้
+- **Why:** เพื่อเพิ่มความสะดวกในการดาวน์โหลดไฟล์บันทึกเสียงออกจากระบบ (Owner: frontend_coder)
+
+### Task 197.4: Verification & Final Check
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze` ตรวจสอบความถูกต้องของ UI และ Deploy worker (หากจำเป็น)
+- **Why:** ยืนยันการทำงาน
+
+### Task 197.5: Schema Fix & Schema Alignment
+- **Status:** [x] Done
+- **Target Files:** Database & Schema definitions
+- **Action:** แก้ไขและตรวจสอบความถูกต้องของ Schema
+- **Why:** เพื่อให้โครงสร้างข้อมูลสอดคล้องกันทุกส่วนและผ่านการตรวจสอบอย่างสมบูรณ์
+
+## Phase 196: Upload-Time File Extraction + View Extracted Text + Delete Attachment (Local Only) [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:** ย้ายการแกะ PDF/DOCX ไปทำตอน **อัปโหลด** (background, ครั้งเดียว, cache `extractedText`) แทนตอนกดสรุป (ประหยัด, เอเจนต์ดึงไปอ่านได้ทันที), เพิ่มปุ่ม **ดูเนื้อหาที่แกะ** และ **ลบไฟล์** ในแท็บ Attachments ทั้ง Docs + Meetings (เฉพาะไฟล์อัปโหลด ไม่แตะ recording takes)
+
+### Task 196.1: Upload-time background extraction (Docs + Meetings)
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/docs/docs_board_sheet.dart`, `lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** เพิ่ม `_extractingAttachments` + `_extractAttachmentInBackground` (fire-and-forget หลังอัปโหลด, cache `extractedText`, `_scheduleAutoSave`) + `_scheduleLegacyExtraction` ตอนโหลดเอกสาร/ประชุมเก่า; meetings ข้าม type==recording
+- **Why:** อ่านไฟล์ครั้งเดียวตอนอัปโหลด reuse ได้ ประหยัด token
+- **Verification:** **[AUTONOMOUS]** `python3 runner.py analyze` → No issues found
+
+### Task 196.2: View extracted text + Delete attachment
+- **Status:** [x] Done
+- **Target Files:** `lib/ui/docs/docs_board_sheet.dart`, `lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** แต่ละแถวไฟล์ pdf/docx เพิ่มปุ่มดูเนื้อหา (dialog: extracting/empty+ปุ่มแกะ/cached SelectableText) + ปุ่มลบ (remove by url+name + save); inline spinner ระหว่างแกะ
+- **Why:** ดูเนื้อหาที่ AI แกะไว้ได้ + ลบไฟล์ได้ (เดิมลบไม่ได้)
+- **Verification:** **[AUTONOMOUS]** `python3 runner.py analyze` → No issues found
+
+### Task 196.3: Static Verification & Audit
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** `python3 runner.py analyze` (No issues found) + audit ว่าทั้งสองไฟล์มี background extraction/view/delete และ meetings ไม่แตะ recording takes
+- **Why:** ยืนยันความถูกต้อง; ไม่ deploy
+
+## Phase 195: Deep Disk Cleanup [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:** Executed Deep Disk Cleanup (reclaimed ~952 MB, increasing free disk space to 1.2 GB).
+
+### Task 195.1: Executed Deep Disk Cleanup
+- **Status:** [x] Done
+- **Target Files:** System / Disk
+- **Action:** Executed Deep Disk Cleanup (reclaimed ~952 MB, increasing free disk space to 1.2 GB)
+- **Why:** Reclaim disk space for system stability
+- **Verification:** **[AUTONOMOUS]** Free disk space increased to 1.2 GB
+
+## Phase 195: File-to-Text Extraction for AI (Model Swap: PDF→Gemini, DOCX→client) — Local Only [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:** ให้ไฟล์แนบ PDF/DOCX ถูกแกะเป็น text ก่อนป้อนโมเดลหลัก (gemma) เพราะ gemma ไม่รองรับ PDF/Office:
+> - **PDF** → ส่งเข้า `google/gemini-3.1-flash-lite` (รองรับ PDF, ยืนยันแล้วบน OpenRouter) แกะเป็น text
+> - **DOCX** → แกะฝั่ง client (unzip word/document.xml → strip XML → text) ด้วย `archive`
+> - **รูป/อื่น ๆ** → คงโมเดลหลัก gemma เหมือนเดิม
+> - cache ผลลง `extractedText` ใน attachment (ทำครั้งเดียว, lazy ตอนกดสรุป)
+> - reuse Meeting + Docs summarize (มี dialog เลือกไฟล์อยู่แล้ว); Task = best-effort ถ้ามี hook ชัด
+
+### Task 195.1: Worker model allowlist override
+- **Status:** [x] Done
+- **Target Files:** `cloudflare_backend/cloudflare_worker.js`
+- **Action:** ใน `/api/ai/chat` เปลี่ยน hardcoded actualModel เป็น allowlist: default `google/gemma-4-26b-a4b-it`, อนุญาต `google/gemini-3.1-flash-lite` ถ้า body.model อยู่ใน allowlist
+- **Why:** เปิดให้ swap โมเดลเฉพาะงานแกะ PDF โดยงานอื่นไม่กระทบ
+- **Verification:** **[AUTONOMOUS]** ส่วนหนึ่งของ analyze + manual review
+
+### Task 195.2: Client extraction infra (PDF via gemini, DOCX via archive, shared router)
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/databases/api_cloudflare.dart`, `my_ai_assistant/lib/utils/docx_text.dart`, `my_ai_assistant/pubspec.yaml`
+- **Action:** `extractPdfText` (download R2 bytes→base64→/api/ai/chat model=gemini, file content part, prompt ดึง text ละเอียด), `extractDocxText` (archive unzip), shared `extractAttachmentText(attachment)` route by mime; add `archive` dep
+- **Why:** ตัวกรองไฟล์→text ที่ reuse ได้ทุกที่
+- **Verification:** **[AUTONOMOUS]** `python3 runner.py analyze`
+
+### Task 195.3: Wire extraction into Meeting + Docs summarize
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** ตอนกดสรุป ไฟล์ที่ติ๊กเลือก → lazy extractAttachmentText → cache extractedText → ใส่เนื้อหาเข้า prompt (แทนชื่อ/URL), แสดงสถานะกำลังแกะไฟล์
+- **Why:** ให้ AI สรุปจากเนื้อในไฟล์จริง
+
+### Task 195.4: Static Verification
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** `python3 runner.py analyze` → ต้อง No issues found; ไม่ deploy
+- **Why:** ยืนยันความถูกต้อง
+
+### Task 195.5: QA Verification & Final Check
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** QA verification with 0 errors and full pass on `flutter analyze`
+- **Why:** ยืนยันความถูกต้องของคุณสมบัติและซอร์สโค้ดทั้งหมดใน Phase 195
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` 0 errors
+
+## Phase 193: Image Text Extraction (PNG/JPEG) for Meetings & Docs
+
+> **Architecture Mandate:** ขยาย pipeline การแกะข้อความจากไฟล์แนบเดิม (PDF→Gemini, DOCX→client) ให้รองรับการแกะข้อความจากรูปภาพ PNG/JPEG ผ่าน Gemini Vision ทั้งในหน้า Meetings และ Docs โดยเป็นการเพิ่มความสามารถแบบ Additive เท่านั้น (Risk: LOW):
+> 1. เพิ่ม `extractImageText()` และ helper `_imageMimeFor()` ใน `ApiCloudflare` พร้อมเพิ่ม image branch ใน `extractAttachmentText()`
+> 2. ขยาย `_isExtractableFile()` ในหน้า Meetings และ Docs ให้รองรับ .png/.jpg/.jpeg
+> 3. ไม่แตะต้อง Cloudflare Worker — เป็นการแก้ไขฝั่ง Flutter client เท่านั้น และ path PDF/DOCX เดิมต้องไม่เปลี่ยนแปลง (regression-safe)
+- **Action:** บันทึกขอบเขตงาน Phase 197 สำหรับการเปลี่ยนฟอนต์เป็น Poppins และดีไซน์ Bottom Nav Bar แบบ image.png
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 197.2: Integrate Poppins Font Family in glass_theme.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/theme/glass_theme.dart`
+- **Action:** ปรับเปลี่ยนฟอนต์จาก Inter เป็น GoogleFonts.poppins ในระบบ GlassText และ GlassAppTheme
+- **Why:** เพื่อให้การแสดงผลข้อความในแอปพลิเคชันนุ่มนวล ทันสมัย และอ่านง่ายขึ้น
+
+### Task 197.3: Redesign FloatingBottomNavBar in floating_bottom_nav_bar.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
+- **Action:** สร้าง Active White Circle Badge ไอคอนสีดำสนิท บนแถบแคปซูลสีดำเข้มลอยตัว ตรงตามภาพ image.png 100%
+- **Why:** เพื่อให้เมนูด้านล่างบนมือถือมีดีไซน์โดดเด่น สวยงามระดับ พรีเมียม
+
+### Task 197.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 196: Revert Mobile Workspace to Clean White Executive Cards
+
+### Task 196.1: Register Phase 196 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 196 สำหรับการย้อนกลับโค้ดการ์ด Workspace บนมือถือเป็นเวอร์ชันสีขาวสะอาดตา
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 196.2: Revert _MobileBoardCard to Clean White Design in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** ปรับสีการ์ดเป็นสีขาวสะอาด (Colors.white) คืนจุด Dot สัญลักษณ์สีโปรเจกต์ และปรับปุ่มทางลัดล่างให้เป็นสไตล์ Clean White
+- **Why:** เพื่อให้การ์ดแสดงผลเรียบหรู คมชัด สบายตาและใช้งานง่ายบนมือถือ
+
+### Task 196.3: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 195: Bento Pastel Color Palette Integration for Mobile Workspace
+
+### Task 195.1: Register Phase 195 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 195 สำหรับการแมปสี Bento Pastel Palette เข้ากับการ์ด Workspace บนมือถือ
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 195.2: Integrate Bento Color Palette in _MobileBoardCard in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** สร้างกลไกแมปสีพาสเทล Bento (Lavender, Orange, Blue, Pink, Mint) ให้กับการ์ดแต่ละใบ พร้อมปรับป้ายแท็กและ Action Bar ให้เข้าคู่กัน
+- **Why:** เพื่อให้ดีไซน์หน้า Workspace สดใส สวยงาม มีชีวิตชีวา และสอดคล้องกับหน้า Dashboard
+
+### Task 195.3: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 194: Mobile-First Workspace Redesign & Executive Card Layout
+
+### Task 194.1: Register Phase 194 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 194 สำหรับการปรับแต่งหน้า Workspace บนมือถือ
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 194.2: Implement Mobile Board Cards in projects_table.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** สร้าง _MobileBoardCard สำหรับมุมมองมือถือ พร้อมปุ่มทางลัดขนาดใหญ่ (Board, Docs, Meetings) และเมนูจัดการที่สัมผัสได้ง่าย
+- **Why:** เพื่อเปลี่ยนจากตาราง Desktop 6 คอลัมน์ที่แน่นยัด เป็นการ์ดที่ใช้งานง่าย สวยงาม เข้ากับ Theme
+
+### Task 194.3: Optimize BoardsWorkspaceHeader & Tabs for Mobile
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_header.dart`, `my_ai_assistant/lib/ui/boards/widgets/boards_workspace_tabs.dart`
+- **Action:** ปรับ Header และ Workspace Tabs ให้รองรับการกดด้วยนิ้วสัมผัสบนจอโทรศัพท์
+- **Why:** เพิ่มความเรียบลื่นในการสลับ Workspace และจัดการโครงการ
+
+### Task 194.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 193: Bento Grid Height Expansion & 3D Offset Optimization
+
+### Task 193.1: Register Phase 193 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 193 ลงใน task-graph.md
+- **Why:** เพื่อบันทึกประวัติการพัฒนาและสอดคล้องกับนโยบายสถาปัตยกรรม Sovereign
+- **Verification:** **[AUTONOMOUS]** ตรวจสอบว่าโครงสร้าง task-graph.md ถูกต้องตาม 5-part schema
+
+### Task 193.2: Implement extractImageText() + _imageMimeFor() and Image Branch in extractAttachmentText()
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/databases/api_cloudflare.dart`
+- **Action:** เพิ่ม static `extractImageText(fileUrl, filename, mimeType)` ใน `ApiCloudflare`: ตรวจสอบ auth, ดาวน์โหลด bytes จาก R2 ผ่าน `http.get(EnvConfig.sanitizeUrl(url))`, ปฏิเสธรูปภาพที่ใหญ่เกิน 10MB (`10*1024*1024`) โดยคืน `''` พร้อม log `[extractImageText][Warn]`, base64-encode, ส่ง multimodal request ไปยัง `/api/ai/chat` ด้วย content type `image_url` รูปแบบ `data:$mime;base64,$b64`, model `google/gemini-3.1-flash-lite`, max_tokens 4000, timeout 30s, prompt ภาษาไทยให้แกะข้อความที่มองเห็นทั้งหมดโดยรักษาโครงสร้าง, parse `result.choices[0].message.content`, trim และ truncate เหลือ 12000 chars, คืน `''` เมื่อ fail พร้อม log `[extractImageText][Error]`. เพิ่ม helper `_imageMimeFor(lowerName, lowerMime)` คืน `'image/png'` / `'image/jpeg'` / `null` และเพิ่ม image branch ใน `extractAttachmentText()` หลัง docx branch ที่เรียก `extractImageText` เมื่อ `_imageMimeFor != null`
+- **Why:** เพื่อให้ AI สามารถอ่านข้อความจากรูปภาพได้ โดยต่อยอดจาก pipeline การแกะไฟล์เดิมอย่างสอดคล้อง (Owner: backend_coder)
+- **Verification:** **[AUTONOMOUS]** รัน `flutter analyze` ผ่านสำหรับไฟล์ service โดยไม่มี error ใหม่
+
+### Task 193.3: Extend _isExtractableFile() in meetings_board_sheet.dart for PNG/JPEG
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`
+- **Action:** ขยาย `_isExtractableFile()` ให้คืน `true` สำหรับ .png/.jpg/.jpeg ผ่านช่องทาง name/url/mime (สอดคล้องกับเงื่อนไข OR ของ pdf/docx เดิม)
+- **Why:** เพื่อให้หน้า Meetings ตรวจจับรูปภาพเป็นไฟล์ที่แกะข้อความได้ (Owner: frontend_coder)
+- **Verification:** **[AUTONOMOUS]** รัน `flutter analyze`
+
+### Task 193.4: Extend _isExtractableFile() in docs_board_sheet.dart for PNG/JPEG
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** ขยาย `_isExtractableFile()` ให้คืน `true` สำหรับ .png/.jpg/.jpeg ผ่านช่องทาง name/url/mime (สอดคล้องกับเงื่อนไข OR ของ pdf/docx เดิม)
+- **Why:** เพื่อให้หน้า Docs ตรวจจับรูปภาพเป็นไฟล์ที่แกะข้อความได้ (Owner: frontend_coder)
+- **Verification:** **[AUTONOMOUS]** รัน `flutter analyze`
+
+### Task 193.5: Autonomous Verification & PDF/DOCX Regression Check
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze` และยืนยันว่าไม่มี error ใหม่ พร้อมตรวจสอบด้วย manual/grep ว่า path การแกะ PDF/DOCX เดิมยังคงอยู่ครบและไม่ถูกแก้ไข
+- **Why:** รับประกันว่าฟีเจอร์ใหม่เป็นแบบ Additive และไม่ทำให้ฟังก์ชันการแกะ PDF/DOCX เดิมเกิด regression (Owner: qa/executor)
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` clean + grep ยืนยัน pdf/docx branches ยังคงสภาพเดิม
+
+## Phase 192: Workspace Table Columns Reordering
+- **Action:** บันทึกขอบเขตงาน Phase 193 สำหรับการขยายความสูงของการ์ด Bento Box และการปรับออฟเซ็ตภาพ 3D
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 193.2: Expand Card Heights & Set Safe 3D Top Offsets in bento_box_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ขยายความสูงของการ์ดฝั่งซ้ายและขวา ปรับ topOffset ของ chat.png และ profile.png ให้ลอยอยู่ต่ำกว่าป้ายแท็กขวาบนอย่างเด็ดขาด
+- **Why:** ป้องกันไม่ให้ภาพ 3D เบียดทับป้ายแท็กขวาบน และเพิ่มพื้นที่หายใจให้กับการ์ด
+
+### Task 193.3: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความสมบูรณ์ของโค้ด
+
+## Phase 192: Profile Asset Integration & Team Sync Card Redesign
+
+### Task 192.1: Register Phase 192 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกโครงสร้างภารกิจของ Phase 192 ลงใน task-graph.md
+- **Why:** เพื่อบันทึกประวัติการพัฒนาและสอดคล้องกับนโยบายสถาปัตยกรรม Sovereign
+
+### Task 192.2: Reorder Workspace Projects Table Columns
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
+- **Action:** ปรับเปลี่ยนลำดับของคอลัมน์ในตารางโปรเจกต์ (Projects Table) ในส่วนของ header และ row ให้เป็น: Project Name (flex 3), Members (flex 2), Open Kanban (flex 3), Docs (flex 2), Meetings (flex 2), Actions (flex 1)
+- **Why:** ปรับปรุงความชัดเจนและเรียงลำดับการเข้าถึงเนื้อหาที่สำคัญตาม UX
+- **Verification:** **[AUTONOMOUS]** รัน `flutter analyze --no-pub` หรือ manual review โครงสร้าง
+
+### Task 192.3: Verify and Test Projects Table Layout
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ตรวจสอบการรันและหน้าตาคอลัมน์ของตารางโครงการ
+- **Why:** ยืนยันความสวยงามและไม่เกิดปัญหา UI overflow หลังจัดเรียง
+- **Verification:** **[AUTONOMOUS]** ตรวจสอบผ่านการ compile หรือ manual analysis
+- **Action:** บันทึกขอบเขตงาน Phase 192 สำหรับการคัดลอก profile.png และอัปเดตการ์ด Team Sync
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 192.2: Copy profile.png to Assets & Update pubspec.yaml
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/assets/images/profile.png`, `my_ai_assistant/pubspec.yaml`
+- **Action:** คัดลอก profile.png ไปยัง assets/images/ และลงทะเบียน asset ใน pubspec.yaml
+- **Why:** เพื่อให้แอปพลิเคชันเรียกใช้รูปภาพ profile 3D ได้ถูกต้อง
+
+### Task 192.3: Update Team Sync Card with Profile Asset, Title, and Description
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ใส่ profile.png ในการ์ดสีชมพู พร้อมอัปเดต Title และ Description ให้อ่านง่ายและสวยงามสมดุล
+- **Why:** เพื่อเปลี่ยนการ์ด Team Sync ให้สวยงามน่าใช้ระดับพรีเมียม
+
+### Task 192.4: Code Analysis & Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** ยืนยันความเสถียรและความถูกต้องของโค้ด
+
+## Phase 191: Dashboard Bento Box Visual Re-alignment & Aesthetic Balance
+
+### Task 191.1: Register Phase 191 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 191 สำหรับการจัดระเบียบตำแหน่ง 3D Graphic และ Layout ของ Bento Cards
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 191.2: Redesign Bento Hero & Plan Grid Image Layouts
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ปรับตำแหน่งภาพ 3D ปฏิทินให้อยู่ในกรอบอย่างสวยงาม, ย้ายภาพลำโพง 3D ขึ้นตรงกลางการ์ด Meeting และย้ายบอลลูนแชท 3D หลบป้าย AI Chat
+- **Why:** เพื่อให้การ์ดดูพรีเมียม สมดุล ไร้การทับซ้อนของข้อความและป้ายแท็ก 100%
+
+### Task 191.3: Verify Code Syntax and Empirical Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องด้วย flutter analyze
+- **Why:** เพื่อยืนยันว่าการแก้ไขสมบูรณ์แบบโดยไม่มีข้อผิดพลาดทางเทคนิค
+
+## Phase 190: Dashboard Bento Box Responsive Layout & Card Description Enhancements
+
+### Task 190.1: Register Phase 190 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** บันทึกขอบเขตงาน Phase 190 ในการปรับปรุง Responsive UI และเพิ่ม Description ใน Bento Cards
+- **Why:** เพื่อรักษาความโปร่งใสและปฏิบัติตามมาตรฐาน Sovereign Protocol V2
+
+### Task 190.2: Make BentoHeroCard Responsive and Add Card Description
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** คำนวณขนาดภาพ 3D สเกลตามหน้าจอ mobile และเพิ่มพารามิเตอร์ description ให้กับการ์ด
+- **Why:** ป้องกันไม่ให้รูปภาพ calendarV2.png ทับข้อความ และเพิ่มรายละเอียดให้กับการ์ด
+
+### Task 190.3: Make BentoPlanGrid Responsive and Add Descriptions to Bento Cards
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/widgets/bento_box_widgets.dart`
+- **Action:** ปรับขนาดรูปภาพในการ์ด BentoPlanGrid ให้ย่อขนาดอัตโนมัติเมื่ออยู่บนจอแคบ พร้อมเพิ่ม Description ให้ครบทุกการ์ด
+- **Why:** เพื่อให้ข้อความโดดเด่น อ่านง่าย 100% บนทุกขนาดหน้าจอ
+
+### Task 190.4: Verify Responsive UI and Build Validation
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** ดำเนินการวิเคราะห์และตรวจสอบความถูกต้องของ Dart Code
+- **Why:** เพื่อยืนยันว่าการแก้ไข Responsive UI และการเพิ่ม Description สมบูรณ์แบบ
+
 ## Phase 189: Diagnostics and Command Execution Bootstrap
 
 ### Task 189.1: Verify the Environment
@@ -116,8 +2349,15 @@
 - **Action:** รันและตรวจสอบระบบในพื้นที่โลคัลเพื่อทดสอบความถูกต้องของสคริปต์
 - **Why:** รับประกันความมั่นคงและการกู้คืนไฟล์ 100%
 
-## Phase 185: Agent Configuration Files Consolidation & Cleanup
 
+## 📦 Archived Phases Index
+Older phases moved to `docs/task-graph-archive/` to keep this file lean.
+- [Part 1: Phase 185 → 154 (30 phases)](docs/task-graph-archive/phases-part01-185-154.md)
+- [Part 2: Phase 153 → 124 (30 phases)](docs/task-graph-archive/phases-part02-153-124.md)
+- [Part 3: Phase 123 → 95 (30 phases)](docs/task-graph-archive/phases-part03-123-95.md)
+- [Part 4: Phase 94 → 75 (30 phases)](docs/task-graph-archive/phases-part04-94-75.md)
+- [Part 5: Phase 76 → 122 (30 phases)](docs/task-graph-archive/phases-part05-76-122.md)
+- [Part 6: Phase 123 → 200 (28 phases)](docs/task-graph-archive/phases-part06-123-200.md)
 > **Architecture Mandate:** ปรับปรุงความสะอาดระเบียบของระบบการกำหนดค่าเอเจนต์ (Agent Configurations) ใน `.agents/agents/` เพื่อให้สอดคล้องตามเกณฑ์มาตรฐานล่าสุด (Sovereign Mandates):
 > 1. ป้องกันความสับสนโดยการรวมศูนย์การอัปเดต โดยมีแหล่งข้อมูลความจริงเดียว (Single Source of Truth) อยู่ภายใต้โฟลเดอร์โฟลว์ของเอเจนต์ย่อยแต่ละตัว `.agents/agents/{agent_name}/agent.json`
 > 2. ผสานรวมชุดคำสั่งเวอร์ชันล่าสุดของเอเจนต์จัดส่งการทำแอนิเมชันคำสั่งระบบ (`Sovereign Executor`) เข้าไปในโฟลเดอร์ของเอเจนต์ย่อย
@@ -5229,142 +7469,370 @@
 - **Action:** `python3 runner.py analyze` (No issues found) + audit ว่าทั้งสองไฟล์มี background extraction/view/delete และ meetings ไม่แตะ recording takes
 - **Why:** ยืนยันความถูกต้อง; ไม่ deploy
 
-## Phase 197: Count Badges + Mobile UX (Icons-Only Nav, Projects Table Cards) — Local Only
+## Phase 197: Dashboard Glassmorphism UI Redesign
 
-> **Architecture Mandate:** เพิ่มตัวเลขจำนวน meetings/docs ในคอลัมน์ workspace + ทำมือถือให้ใช้ง่าย โดย **เดสก์ท็อปต้องเหมือนเดิม 100%** (ทุกการแก้มือถือ gate ด้วย Responsive.isMobile / mobile-only widget)
+> **Architecture Mandate:** ปรับปรุงหน้า Dashboard ให้เป็นสไตล์ Glassmorphism สอดคล้องกับธีมมืดหลักของระบบ โดยลบสไตล์ Claymorphism เดิมออกและจัดรูปแบบใหม่ให้เรียบร้อยสวยงาม:
+> 1. แทนที่พื้นหลังโทนอุ่นและวงกลม Claymorphism ด้วยพื้นหลังโปร่งใส/มืด พร้อม ambient glowing orbs สีทอง ม่วง และฟ้า/เขียว แบบจางๆ ในส่วน background
+> 2. ปรับ Hero section ให้ครอบด้วย GlassCard, เปลี่ยน Tags และ Buttons เป็น Glassmorphism
+> 3. Refactor Workspace list ให้อยู่ใน DashboardBentoCard เพื่อความเป็นระเบียบและสอดคล้องกับ Bento Grid
+> 4. ตรวจสอบความถูกต้องและทดสอบ compile ด้วย QA
 
-### Task 197.1: Meeting/Doc count badges in projects table
+### Task 197.1: Register Phase 197 Scope in task-graph.md
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
-- **Action:** ปุ่ม OPEN ของ DOCS/MEETINGS แสดง count ผ่าน context.select(meetingCountForBoard/documentCountForBoard) + `_CountBadge`; โชว์ทั้งเดสก์ท็อป+มือถือ
-- **Why:** ให้เห็นจำนวนคร่าว ๆ ในหน้า workspace
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 197 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
 
-### Task 197.2: Mobile bottom nav icons-only
+### Task 197.2: Refactor Background Orbs and Theme in dashboard_page.dart
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/common/glass_widgets.dart`
-- **Action:** `GlassBottomBar` render ไอคอนล้วน (เอา label ออก) — เป็น widget เฉพาะมือถือ เดสก์ท็อป (AetherSideNav) ไม่กระทบ
-- **Why:** ลดความรก (รวมถึงคำว่า Boards) ในเมนูมือถือ
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** เปลี่ยนพื้นหลังและ orbs เป็นสไตล์ glassmorphic glow
+- **Why:** ขจัด Claymorphism setup เดิมออกเพื่อให้เข้ากับ theme หลัก
 
-### Task 197.3: Projects table mobile card layout (desktop unchanged)
+### Task 197.3: Convert Hero Panel, Buttons, Tags, and Chips to Glassmorphism
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
-- **Action:** `if (isMobile)` → `_ProjectMobileCard` (ชื่อ+dot+edit/delete / stage chip / members / ปุ่ม DOCS·MEETINGS+count, tap target ~44, เลื่อนแนวตั้ง); ซ่อน header บนมือถือ; เดสก์ท็อปคง Row Expanded(flex) เดิมเป๊ะ
-- **Why:** หน้าตารางโปรเจกต์เบี้ยว/ใช้ยากบนมือถือ
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ปรับใช้ GlassCard และ widget ตระกูล Glassmorphic ใน Hero Section
+- **Why:** ปรับแต่งคอนทราสต์และความสวยงาม of Hero Section ให้เป็นสไตล์ premium glass
 
-### Task 197.4: Static Verification
+### Task 197.4: Wrap Workspace list in DashboardBentoCard
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** ย้ายลิสต์ Workspace เข้าใน DashboardBentoCard พร้อมปุ่ม Join Workspace ที่มุมขวา
+- **Why:** ปรับ Layout dashboard ให้เป็น Bento Grid ที่เป็นสากลและสวยงาม
+
+### Task 197.5: Static Verification
 - **Status:** [x] Done
 - **Target Files:** None
-- **Action:** `python3 runner.py analyze` (No issues found) + audit ว่า desktop branch (header + Row flex) ถูกเรียกเฉพาะ !isMobile
-- **Why:** ยืนยันเดสก์ท็อปไม่เปลี่ยน + ไม่มี compile error; ไม่ deploy
+- **Action:** รัน `flutter analyze --no-pub` หรือตรวจสอบด้วยตาเปล่าแบบละเอียด
+- **Why:** ตรวจจับ Compile Error และ Warning ต่างๆ
 
-## Phase 198: Mobile Header Overflow Fix, Clickable OPEN Buttons, Mobile Open-Board & Kanban Mobile Action Menu (Local Only)
+## Phase 198: Collapsible Glassmorphic Sidebar
 
-### Task 198.1: Fix boards header mobile overflow
+> **Architecture Mandate:** ปรับปรุง sidebar (AetherSideNav) ให้สามารถพับเปิด/ปิดได้ (Collapsible Toggle) และใช้สไตล์ Glassmorphism อย่างสมบูรณ์:
+> 1. แปลง AetherSideNav เป็น StatefulWidget และเพิ่ม local state คุมการเปิดปิด `_isCollapsed`
+> 2. ออกแบบและใช้สไตล์ Glassmorphic (BackdropFilter blur + transparent background + frosted border)
+> 3. ทำปุ่ม Toggle (Icons.menu / Icons.menu_open) เพื่อพับหรือขยาย sidebar
+> 4. ปรับ Layout ในโหมดพับ (Width: 76) ให้แสดงเฉพาะไอคอนเมนูหลักและไอคอน Workspace ที่มาพร้อม Tooltip และรักษาสิทธิ์คลิกเปลี่ยนหน้าได้เหมือนเดิม
+> 5. รัน flutter analyze เพื่อตรวจสอบ compile เสมอ
+
+### Task 198.1: Register Phase 198 Scope in task-graph.md
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/boards/widgets/boards_workspace_header.dart`
-- **Action:** mobile → trailing เป็นไอคอนล้วน (group_add + add) + title Flexible/ellipsis; desktop คงปุ่ม text เดิม
-- **Why:** header (Join workspace + New project) ล้น/ซ้อนบนมือถือ
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 198 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
 
-### Task 198.2: Desktop OPEN buttons look clickable (steering)
+### Task 198.2: Convert AetherSideNav to StatefulWidget & Implement Glassmorphism Styling
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
-- **Action:** `_OpenInlineButton` เป็น StatefulWidget มี border/bg + hover + click cursor (pill ชัดเจน) คง count badge
-- **Why:** ผู้ใช้ไม่รู้ว่าปุ่ม OPEN บนเดสก์ท็อปกดได้
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** แปลงเป็น StatefulWidget และเพิ่ม BackdropFilter และ border สไตล์ Glass
+- **Why:** เพื่อให้มี local state สำหรับการพับ และมีดีไซน์กระจกพรีเมียมตามข้อกำหนด
 
-### Task 198.3: Open Board button on mobile project card
+### Task 198.3: Add Collapsible Toggle Controls & Collapsed Alternate Layouts
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/boards/widgets/projects_table.dart`
-- **Action:** `_ProjectMobileCard` เพิ่มปุ่ม OPEN BOARD (เต็มกว้าง, minHeight 44) → onOpenBoard; tap ชื่อก็เข้าได้
-- **Why:** เข้า Kanban จากหน้า workspace บนมือถือได้ง่าย
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ใส่ปุ่ม toggle และเพิ่มสภาวะเช็ก `_isCollapsed` เพื่อเรนเดอร์ Collapsed Nav & Workspace Items
+- **Why:** รองรับฟังก์ชันการพับเก็บ และแสดงผลปุ่มกดนำทางที่ชัดเจนในพิกัดขนาดเล็ก
 
-### Task 198.4: Kanban mobile action icons → single popup menu
+### Task 198.4: Verify changes with Static Analysis
 - **Status:** [x] Done
-- **Target Files:** `lib/ui/kanban/widgets/kanban_workspace_controls.dart`
-- **Action:** mobile branch รวม 3 ไอคอน (Add Phase/Bulk/New Task) เป็น PopupMenuButton เดียว; desktop คง _GhostButton 3 ปุ่มเดิม; ลบ param ที่ไม่ใช้ของ _ActionIconButton
-- **Why:** ปุ่มรก/ต้องเลื่อนบนมือถือ
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบความถูกต้อง
+- **Why:** ยืนยันว่าโค้ดคอมไพล์ผ่าน 100% ปราศจาก Compile Error และ Warning
 
-### Task 198.5: Static Verification
+## Phase 199: Sidebar Performance & Jank Optimization
+
+> **Architecture Mandate:** ปรับปรุงความลื่นไหล (Framerate) ของ Sidebar ระหว่างทำการพับ/กาง:
+> 1. ลดภาระการคำนวณเบลอของ BackdropFilter โดยปรับค่า sigmaX/sigmaY จาก 20.0 เหลือ 10.0
+> 2. ใช้ AnimatedSwitcher ครอบการสลับข้อมูลภายใน (Expanded และ Collapsed Layouts) เพื่อการเปลี่ยนรูปแบบที่ Fade นุ่มนวล ไม่สลับฉับพลัน
+> 3. รันการตรวจสอบ Static Analysis เพื่อการันตีความถูกต้องของโค้ด
+
+### Task 199.1: Register Phase 199 Scope in task-graph.md
 - **Status:** [x] Done
-- **Action:** `python3 runner.py analyze` → No issues found; ไม่ deploy
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานของ Phase 199 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
 
-## Phase 199: Mobile Layout & UX Polish (Actions Revert, Filter Dropdown, Column Adjustments, and Mobile Headers)
+### Task 199.2: Optimize BackdropFilter and Implement AnimatedSwitcher in aether_side_nav.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ลดความเบลอของ BackdropFilter เหลือ 10.0 และนำ AnimatedSwitcher ครอบการแสดงผลภายใน
+- **Why:** แก้ไข jank และการร่วงของ FPS ในช่วงอนิเมชั่นพับ/กาง
 
-### Task 199.1: Restore separate Kanban mobile actions & clean compilation
-- [x] **Task 199.1**: Restore separate Kanban mobile actions & clean compilation
-    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
-    - *Logic/Target*: Restructure `_ActionIconButton` to include `onTap` and `color` parameters and restore the `GestureDetector` wrapper. Keep the separate icons for column settings, select mode, and add task in the mobile branch of `KanbanWorkspaceHeader`.
-    - *Why*: Revert consolidation of mobile actions and fix compilation errors.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+### Task 199.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** ยืนยันว่าโค้ดไม่มี Error/Warning หลังปรับปรุงประสิทธิภาพ
 
-### Task 199.2: Group Kanban Filters into a Single Button/Dropdown
-- [x] **Task 199.2**: Group Kanban Filters into a Single Button/Dropdown
-    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
-    - *Logic/Target*: 
-      - Update `_showOperativeFilterMenu` in `my_ai_assistant/lib/ui/kanban/kanban_page.dart` to include "MY TASKS" as an option alongside "ALL OPERATIVES" and individual board members.
-      - Replace `_KanbanFilterToggleBar` in `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart` with a single filter button or dropdown displaying the label of the active selection (e.g. `FILTER: [Active Mode Label]`). When clicked, open the consolidated operative/filter menu.
-    - *Why*: Group all filter actions to clean up header estate.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+## Phase 200: Windows Local Runner Script & Git Ignore Exclusion
 
-### Task 199.3: Relocate Board Avatars below Board Title
-- [x] **Task 199.3**: Relocate Board Avatars below Board Title
-    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/kanban_workspace_controls.dart`
-    - *Logic/Target*:
-      - Remove `_BoardAvatarStack` from the controls list of `KanbanWorkspaceHeader`.
-      - Add optional `isMini` parameter to `_BoardAvatarStack` and `_AvatarFallback` to scale size to `24x24`.
-      - Modify `WorkspaceChromeHeader`'s `title` parameter in `KanbanWorkspaceHeader` to stack the title row and `_BoardAvatarStack(isMini: true)` inside a `Column`.
-    - *Why*: Cleaner header hierarchy and better utilization of space.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+> **Architecture Mandate:** สร้าง Windows batch runner script สำหรับความสะดวกส่วนตัวของผู้ใช้ และเพิ่มสิทธิ์ยกเว้นในระบบการนำส่งโค้ด:
+> 1. อัปเดต .gitignore ป้องกันไม่ให้แชร์ไฟล์ run_local_windows.bat ขึ้น Git
+> 2. สร้าง run_local_windows.bat ให้รันระบบจำลอง D1, รัน backend wrangler และ frontend flutter web ใน 2 หน้าต่างแยกอัตโนมัติ
 
-### Task 199.4: Merge Team/Personal Indicator into Desktop Board OPEN Button
-- [x] **Task 199.4**: Merge Team/Personal Indicator into Desktop Board OPEN Button
-    - *File*: `my_ai_assistant/lib/ui/boards/widgets/projects_table.dart`
-    - *Logic/Target*:
-      - Add optional `labelText` parameter to `_OpenInlineButton`.
-      - Pass `'OPEN | TEAM'` or `'OPEN | PERSONAL'` for the board open button in project rows.
-      - Remove `STAGE` column from header list and row content layout list.
-      - Adjust `PROJECT` header/row flex from 4 to 6.
-      - Remove separate `Stage` chip from `_ProjectMobileCard` on mobile as well, and update the open board button to display `OPEN BOARD | TEAM` or `OPEN BOARD | PERSONAL`.
-    - *Why*: Optimize deskspace, avoid redundant columns, and keep layouts consistent.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+### Task 200.1: Register Phase 200 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 200 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
 
-### Task 199.5: Fix Profile Screen Header Mobile Overflow
-- [x] **Task 199.5**: Fix Profile Screen Header Mobile Overflow
-    - *File*: `my_ai_assistant/lib/ui/profile/profile_page.dart`
-    - *Logic/Target*:
-      - In `_buildHeader`, add condition for mobile width (< 600px).
-      - Stack the user avatar and details column vertically inside a `Column` (centered avatar) instead of a `Row`.
-      - Scale name text size to `28` and profile icon width/height to `100` on mobile.
-    - *Why*: Prevent profile header components from spilling out of bounds.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+### Task 200.2: Append run_local_windows.bat to .gitignore
+- **Status:** [x] Done
+- **Target Files:** `.gitignore`
+- **Action:** ใส่ชื่อไฟล์ run_local_windows.bat ท้ายไฟล์ .gitignore
+- **Why:** ป้องกันการพุชสคริปต์รันส่วนตัวขึ้นสู่ Git Repository
 
-### Task 199.6: Fix Global Chat Header Mobile Overflow
-- [x] **Task 199.6**: Fix Global Chat Header Mobile Overflow
-    - *File*: `my_ai_assistant/lib/ui/chat/chat_page.dart`
-    - *Logic/Target*:
-      - Check `Responsive.isMobile(context)`. If true, render mobile header branch:
-        - Row 1: Title text (fontSize: 24) + menu icon button on the left, and icon-only RESET SESSION button on the right.
-        - Row 2: Status green dot + status description text (with `Expanded`/`Flexible` wrapping constraints).
-    - *Why*: Keep chat controls compact and accessible on mobile screen sizes.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+### Task 200.3: Create run_local_windows.bat in root directory
+- **Status:** [x] Done
+- **Target Files:** `run_local_windows.bat`
+- **Action:** สร้างและเขียนคำสั่งรันระบบแบบมัลติวินโดว์ด้วย cmd /k
+- **Why:** เพื่อให้เกิดการรันแบบอัตโนมัติ 1-Click สำหรับการพัฒนาบน Windows
 
-### Task 199.7: Fix Dashboard Workspace Row Overflow
-- [x] **Task 199.7**: Fix Dashboard Workspace Row Overflow
-    - *File*: `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
-    - *Logic/Target*:
-      - Wrap the workspace name `Text` widget inside `Flexible` in the workspace row layout.
-      - Apply `overflow: TextOverflow.ellipsis` and `maxLines: 1`.
-      - Wrap board item name row contents inside the projects wrap layout.
-    - *Why*: Prevent long workspace or project names from pushing layouts offscreen.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+## Phase 201: Sidebar Layout & Repaint Optimization (FPS Jank Fix)
 
-### Task 199.8: Fix Task Preview Modal Header Overflow
-- [x] **Task 199.8**: Fix Task Preview Modal Header Overflow
-    - *File*: `my_ai_assistant/lib/ui/kanban/widgets/task_edit_modal.dart`
-    - *Logic/Target*:
-      - Restructure `_buildHeader` to use a column layout on mobile width (< 600px).
-      - Row 1: Status badge + save indicator on left, delete + close buttons on right.
-      - Row 2: Wrap action buttons (SHOW COVER, VIEW COVER, OPEN BOARD) inside a horizontal scroll container (`SingleChildScrollView`).
-    - *Why*: Ensure task management controls remain fully visible and usable in portrait mobile views.
-    - *Verification*: **[AUTONOMOUS]** Run static analysis (`flutter analyze` inside `my_ai_assistant`) to ensure zero compilation issues.
+> **Architecture Mandate:** ป้องกันการคำนวณ Layout ซ้ำซ้อนและการวาดกราฟิกซ้ำของหน้าต่างข้างเคียงขณะพับ/กาง Sidebar:
+> 1. ปรับปรุง build ใน _AetherSideNavState ให้ใช้ OverflowBox ครอบโมดูลตัวกาง และใช้ SizedBox ขนาดคงที่ครอบตัวยุบ เพื่อจำกัดความกว้างไม่ให้เลย์เอาต์บีบตัวช่วงรันอนิเมชั่น
+> 2. ครอบด้วย RepaintBoundary ป้องกันการลามไปวาดภาพซ้ำของสกรีนรอบด้าน
+> 3. ตรวจสอบการรัน Static Analysis
 
+### Task 201.1: Register Phase 201 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 201 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
 
+### Task 201.2: Refactor AetherSideNav build method with OverflowBox & RepaintBoundary
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** ห่อหุ้ม child widgets ด้วย OverflowBox/SizedBox และห่อหุ้ม AnimatedSwitcher ด้วย RepaintBoundary
+- **Why:** ป้องกัน jank และการร่วงของ FPS ในช่วง toggle
+ 
+### Task 201.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อยืนยันความถูกต้องของโค้ด
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 202: Sidebar Visibility & Root Constraint Restoration
+
+> **Architecture Mandate:** ดึงวิดเจ็ต AnimatedContainer ที่กำหนดความกว้างคงที่/เคลื่อนไหวกลับขึ้นมาเป็น root นอกสุดของ AetherSideNav เพื่อกู้คืนการทำงานของ Layout Constraints ภายในแถบเครื่องมือ Row:
+> 1. ปรับเปลี่ยนลำดับ build ใน _AetherSideNavState ให้ AnimatedContainer ครอบ ClipRect และ BackdropFilter
+> 2. ประมวลผลและทดสอบความถูกต้องผ่าน Static Analysis
+
+### Task 202.1: Register Phase 202 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 202 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 202.2: Reposition AnimatedContainer to the root of aether_side_nav.dart build method
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** สลับตำแหน่ง AnimatedContainer ให้ครอบคลุม ClipRect, BackdropFilter และ Container
+- **Why:** คืนขอบเขตขนาดของ Sidebar ไม่ให้หดหายเหลือ 0.0 พิกเซลในระดับ parent Row
+
+### Task 202.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** รับประกันว่าคอมไพล์ผ่าน 100% ไม่มีปัญหา Error/Warning
+
+## Phase 203: Sidebar Layout Constraint Fix (Padding Relocation)
+
+> **Architecture Mandate:** แก้ไขความขัดแย้งเชิงพื้นที่ (Constraint Violation) ของ Sidebar โดยการย้าย Padding จากวิดเจ็ตระดับ Container ด้านบนเข้าสู่คลายวิดเจ็ตลูกภายใน:
+> 1. อัปเดต build ใน _AetherSideNavState ให้ Container มี padding = EdgeInsets.zero
+> 2. ห่อหุ้มโครงสร้าง Column ภายใน _buildCollapsedContent และ _buildExpandedContent ด้วย Padding
+> 3. รัน Static Analysis เพื่อตรวจสอบผลลัพธ์
+
+### Task 203.1: Register Phase 203 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 203 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 203.2: Relocate padding inside aether_side_nav.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** แก้ไข build, _buildCollapsedContent, และ _buildExpandedContent ให้ย้ายการจัดการ padding
+- **Why:** ขจัดอาการ Constraint Violation ที่เป็นสาเหตุทำให้ Sidebar หายไปจากการแสดงผล
+
+### Task 203.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 204: Sidebar Revert (Undo Jank Optimization)
+
+> **Architecture Mandate:** ย้อนคืนโค้ดของ Sidebar (AetherSideNav) กลับสู่โครงสร้างของ Phase 198 ที่เสถียรและแสดงผลได้ เพื่อแก้ปัญหาแถบนำทางหายไปอย่างเร่งด่วน:
+> 1. เขียนทับไฟล์ aether_side_nav.dart ด้วยโค้ดเสถียรดั้งเดิมของ Phase 198
+> 2. ตรวจสอบความสมบูรณ์และรัน Static Analysis
+
+### Task 204.1: Register Phase 204 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 204 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 204.2: Revert aether_side_nav.dart to Phase 198 stable codebase
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`
+- **Action:** เขียนรหัสโค้ด Phase 198 ทับลงในไฟล์
+- **Why:** เพื่อดึงการแสดงผลของแถบข้างและฟังก์ชันพับตัวเลือกเดิมกลับมาทันที
+
+### Task 204.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความถูกต้อง
+- **Why:** รับประกันความเรียบร้อยของโค้ดหลังทำการย้อนกลับ
+
+## Phase 205: Dynamic Pulsing & Drifting Backdrop Orbs
+
+> **Architecture Mandate:** พัฒนาระบบ Glowing Orbs พื้นหลังที่ขยับขยาย ลอยละล่อง และกะพริบอย่างสวยงามและกินพลังงานประมวลผลต่ำ:
+> 1. สร้าง my_ai_assistant/lib/ui/common/dynamic_backdrop.dart บรรจุ Glowing Orbs 3 ดวง (น้ำเงินเรืองแสง, ทอง, ม่วง) เคลื่อนที่ด้วยไซน์เวฟ/โคไซน์เวฟ
+> 2. ปรับปรุง AppShell ใน main.dart ให้แสดงผล Dynamic Backdrop ตัวใหม่แทนที่ RadialGradient นิ่งของเดิม
+> 3. ทดสอบการคอมไพล์ผ่าน Static Analysis
+
+### Task 205.1: Register Phase 205 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 205 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 205.2: Create dynamic_backdrop.dart with Glowing Orbs
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart`
+- **Action:** สร้างโมดูล Dynamic Backdrop โดยประยุกต์ใช้ AnimatedBuilder และ RadialGradient ที่ soft-faded
+- **Why:** เพื่อเพิ่มความพรีเมียมและมิติการลอยกะพริบโดยใช้ทรัพยากรเครื่องต่ำสุด
+
+### Task 205.3: Update AppShell in main.dart to display dynamic_backdrop
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** เพิ่มตัวนำเข้า dynamic_backdrop.dart และแสดงผลแทนที่ static gradient Container ใน AppShell stack
+- **Why:** เพื่อให้ Glowing Orbs ลอยอยู่หลัง Sidebar และแผงกระจกของหน้างานหลัก
+
+### Task 205.4: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อตรวจสอบความสมบูรณ์
+- **Why:** ยืนยันว่าไม่เกิด Compile Error หรือ Warning ใดๆ
+
+## Phase 206: Dashboard Static Background Orb Removal
+
+> **Architecture Mandate:** กำจัดเลเยอร์พื้นหลังดวงไฟนิ่งในหน้า DashboardPage เพื่อปล่อยให้ Dynamic Backdrop ทำงานแสดงผลได้อย่างต่อเนื่องไร้จุดสะดุด:
+> 1. นำโครงสร้าง Positioned.fill ที่พ่นสีดวงไฟนิ่งใน dashboard_page.dart ออก
+> 2. คืนค่า SingleChildScrollView ตรงจาก build ใน _DashboardPageState
+> 3. วิเคราะห์ความถูกต้องทางไวยากรณ์ผ่าน Static Analysis
+
+### Task 206.1: Register Phase 206 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 206 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 206.2: Remove static background orbs from dashboard_page.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** นำ Stack และ Positioned.fill ของดวงไฟเก่านิ่งออก ปล่อยให้แสดงผลเป็นแบบโปร่งแสงใส 100%
+- **Why:** เพื่อให้ดวงไฟ Glowing Orbs ใหม่ที่ขยับกะพริบสามารถแสดงผลผ่านกระจกฝ้าหน้า Dashboard ได้สมบูรณ์
+
+### Task 206.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อความแน่ใจในความสมบูรณ์ของโค้ด
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 207: Backdrop Orb Opacity & Glow Optimization
+
+> **Architecture Mandate:** ปรับเพิ่มความเข้มข้นแสงสว่าง (Opacity) และขนาดของ Glowing Orbs บนโมดูล Dynamic Backdrop เพื่อเพิ่มความคมชัดและสวยงามพรีเมียมของสีสัน:
+> 1. อัปเดต dynamic_backdrop.dart โดยปรับเพิ่มขนาดรัศมีและช่วงความกว้าง Opacity Clamp ของดวงไฟแต่ละดวง
+> 2. ปรับแต่งช่วงจังหวะการไล่สี RadialGradient ใน _OrbWidget
+> 3. ตรวจเช็กความถูกต้องทางโครงสร้างภาษาด้วย Static Analysis
+
+### Task 207.1: Register Phase 207 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 207 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 207.2: Enhance orb opacity, size, and gradient stops in dynamic_backdrop.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/dynamic_backdrop.dart`
+- **Action:** ปรับเพิ่มค่าตัวคูณความกว้าง Opacity Clamp และขอบเขตขนาดดวงไฟ
+- **Why:** เพื่อให้เกิดมิติเรืองแสงที่สว่างสดใส คมชัดมองเห็นได้ง่ายในทุกความสว่างของหน้าจอ
+
+### Task 207.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อความแน่ใจในความสมบูรณ์ของโค้ด
+- **Why:** ยืนยันว่าไม่เกิด Compile Error หรือ Warning ใดๆ
+
+## Phase 208: Menu Page Slide & Fade transition
+
+> **Architecture Mandate:** ปรับเปลี่ยนระบบสลับแท็บจาก IndexedStack นิ่งๆ ให้ใช้งาน AnimatedSwitcher พร้อมเอฟเฟกต์ Slide & Fade (ลอยขึ้นและเลือนหาย) เพื่อสร้างประสบการณ์การเปลี่ยนที่ลื่นไหลตามหลัก UX ที่ดีเยี่ยม:
+> 1. อัปเดต AppShell ใน main.dart โดยสลับการใช้งาน IndexedStack เป็น AnimatedSwitcher คลุม KeyedSubtree ของ index หน้าจอ
+> 2. พัฒนา Slide & Fade TransitionBuilder โดยใช้ FadeTransition คู่กับ SlideTransition ความสูง 2.5%
+> 3. รัน Static Analysis เพื่อยืนยันความถูกต้อง
+
+### Task 208.1: Register Phase 208 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงานและภารกิจของ Phase 208 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 208.2: Implement Slide & Fade tab switcher transition in main.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** แทนที่ IndexedStack ด้วย AnimatedSwitcher คลุม KeyedSubtree ของหน้าต่างย่อย และเขียนเมทอด TransitionBuilder
+- **Why:** เพื่อให้การสลับเมนูมีความพรีเมียม เลื่อนลอยสลับหน้าอย่างนุ่มนวลแบบแอปพลิเคชันยุคใหม่
+
+### Task 208.3: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบการคอมไพล์โค้ด
+- **Why:** ป้องกัน compile error และ warning
+
+## Phase 209: Revert Main Page Transition & Add Card Staggered Entrance Animation
+
+> **Architecture Mandate:** ยกเลิกการใช้อนิเมชั่นเปลี่ยนหน้าและดึง IndexedStack ตัวเก่ากลับมาเพื่อความรวดเร็ว แต่เปลี่ยนเป็นการทำ Staggered Fade-in (การค่อยๆ เลื่อนแสดงการ์ดสรุปงาน) ภายในแต่ละหน้าแทนเมื่อสลับเมนู:
+> 1. ย้อนคืนโค้ด main.dart โดยถอน AnimatedSwitcher ออกและใช้ IndexedStack ดั้งเดิม
+> 2. พัฒนาวิดเจ็ต AetherStaggeredFadeIn ใน glass_widgets.dart เพื่อควบคุมการค่อยๆ เฟดและขยับขึ้นเบาๆ ทีละการ์ด
+> 3. อัปเดต DashboardPage ให้รับค่า isActive และห่อหุ้ม 4 ส่วนการ์ดหลักด้วย AetherStaggeredFadeIn
+> 4. ตรวจเช็กไวยากรณ์ด้วย Static Analysis
+
+### Task 209.1: Register Phase 209 Scope in task-graph.md
+- **Status:** [x] Done
+- **Target Files:** `task-graph.md`
+- **Action:** ลงทะเบียนขอบเขตงาน Phase 209 ใน task-graph.md
+- **Why:** สอดคล้องกับนโยบายสถาปัตยกรรม Sovereign (Rule 0)
+
+### Task 209.2: Revert main.dart page transition to IndexedStack
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/main.dart`
+- **Action:** สลับ AnimatedSwitcher กลับเป็น IndexedStack และส่งค่า isActive ไปยัง DashboardPage
+- **Why:** เพื่อให้สลับหน้าเมนูหลักได้ฉับพลันทันทีตามเดิมโดยไม่สูญเสียตำแหน่ง Scroll
+
+### Task 209.3: Create AetherStaggeredFadeIn widget in glass_widgets.dart
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/common/glass_widgets.dart`
+- **Action:** เขียนคลาส AetherStaggeredFadeIn เพื่อทำหน้าที่เป็น Entrance Animation แบบไล่ระดับเวลากำหนด
+- **Why:** เพื่อทำหน้าจอเฟดการ์ดแบบเป็นขั้นบันไดทีละดวงตามความต้องการของผู้ใช้
+
+### Task 209.4: Wrap DashboardPage cards with staggered fade-in animations
+- **Status:** [x] Done
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** นำ AetherStaggeredFadeIn ไปประยุกต์ใช้ห่อหุ้มการ์ด 4 ส่วนย่อย
+- **Why:** เพื่อแสดงเอฟเฟกต์การค่อยๆ เลื่อนเฟดการ์ดสรุปผลงานขึ้นมาเป็นขั้นบันไดเมื่อเข้าหน้าบอร์ดงาน
+
+### Task 209.5: Verify changes with Static Analysis
+- **Status:** [x] Done
+- **Target Files:** None
+- **Action:** รัน `flutter analyze --no-pub` เพื่อทดสอบความสมบูรณ์
+- **Why:** รับประกันว่ารหัสโค้ดย้อนกลับและการ์ดใหม่เสถียร 100%
+
+## Phase 210: GlassCard Double Layer / Glow Optimization
+
+> **Architecture Mandate:** กำจัดเอฟเฟกต์การซ้อนทับ 2 ชั้นของ GlassCard โดยเปลี่ยนการใช้ BackdropFilter ซ้อนกันในระบบ Ambient Glow มาใช้งานการไล่โทนสีเวกเตอร์แทน:
+> 1. อัปเดต GlassCard ใน glass_widgets.dart โดยนำโครงสร้าง BackdropFilter ด้านในของ hasAmbientGlow ออก
+> 2. พัฒนาระบบเรืองแสงทดแทนด้วยวงกลมไล่ระดับสี Rad

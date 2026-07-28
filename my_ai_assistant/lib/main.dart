@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
-import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:async';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'utils/db_init.dart';
 
 import 'firebase_options.dart';
 import 'config/env_config.dart';
@@ -22,7 +20,7 @@ import 'state_managers/state_tasks.dart';
 import 'state_managers/state_chat.dart';
 import 'models/board_model.dart';
 import 'ui/theme/glass_theme.dart';
-import 'ui/common/glass_widgets.dart';
+import 'ui/common/floating_bottom_nav_bar.dart';
 import 'ui/common/aether_side_nav.dart';
 import 'ui/chat/chat_page.dart';
 import 'ui/dashboard/dashboard_page.dart';
@@ -35,13 +33,23 @@ import 'ui/meetings/meetings_board_page.dart';
 import 'ui/docs/docs_board_page.dart';
 import 'ui/common/floating_assistant_shell.dart';
 import 'ui/common/responsive_layout.dart';
+import 'ui/common/dynamic_backdrop.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
+  if (!kIsWeb) {
+    initDesktopDb();
   }
 
   try {
@@ -82,7 +90,16 @@ class MainApp extends StatelessWidget {
       title: 'VaultTask',
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
-      theme: GlassAppTheme.dark(),
+      theme: GlassAppTheme.dark().copyWith(
+        primaryColor: GlassColors.primary,
+        scaffoldBackgroundColor: GlassColors.background,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: GlassColors.primary,
+          primary: GlassColors.primary,
+          background: GlassColors.background,
+          surface: GlassColors.surface,
+        ),
+      ),
       home: const StartupGuard(),
     );
   }
@@ -174,7 +191,7 @@ class _StartupGuardState extends State<StartupGuard> {
               OutlinedButton(
                 onPressed: () {
                   if (kIsWeb) {
-                    html.window.location.reload();
+                    // html.window.location.reload();
                   }
                 },
                 style: OutlinedButton.styleFrom(
@@ -220,7 +237,7 @@ class _StartupGuardState extends State<StartupGuard> {
               ElevatedButton(
                 onPressed: () {
                   if (kIsWeb) {
-                    html.window.location.reload();
+                    // html.window.location.reload();
                   }
                 },
                 child: const Text('RETRY'),
@@ -253,7 +270,7 @@ class _AppShellState extends State<AppShell> {
   static const _selectedTabPrefKey = 'app_selected_tab_index';
   int _index = 0;
   final Set<int> _visitedTabs = {0};
-  StreamSubscription<html.Event>? _windowFocusSub;
+  // StreamSubscription<html.Event>? _windowFocusSub;
   bool _isRestoringShellState = true;
 
   @override
@@ -263,16 +280,16 @@ class _AppShellState extends State<AppShell> {
       await _restoreShellState();
     });
     if (kIsWeb) {
-      _windowFocusSub = html.window.onFocus.listen((_) {
-        if (!mounted) return;
-        context.read<StateTasks>().refreshReadComments();
-      });
+      // _windowFocusSub = html.window.onFocus.listen((_) {
+      //   if (!mounted) return;
+      //   context.read<StateTasks>().refreshReadComments();
+      // });
     }
   }
 
   @override
   void dispose() {
-    _windowFocusSub?.cancel();
+    // _windowFocusSub?.cancel();
     super.dispose();
   }
 
@@ -325,27 +342,36 @@ class _AppShellState extends State<AppShell> {
     await prefs.setInt(_selectedTabPrefKey, _index);
   }
 
-  Widget _buildScreen(int index) {
+  Widget _buildScreen(int index, {bool isActive = true}) {
     switch (index) {
       case 0:
         return DashboardPage(
           isDark: false,
+          isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 1:
-        return const BoardsPage(isDark: false);
+        return BoardsPage(
+          isDark: false,
+          isActive: isActive,
+        );
       case 2:
         return CalendarPage(
           isDark: false,
+          isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 3:
         return ChatPage(
           isDark: false,
+          isActive: isActive,
           onNavigate: (i) => _selectTab(i, clearBoard: i != 1),
         );
       case 4:
-        return const ProfilePage(isDark: false);
+        return ProfilePage(
+          isDark: false,
+          isActive: isActive,
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -354,7 +380,7 @@ class _AppShellState extends State<AppShell> {
   List<Widget> _buildVisitedScreens() {
     return List<Widget>.generate(5, (index) {
       if (_visitedTabs.contains(index)) {
-        return _buildScreen(index);
+        return _buildScreen(index, isActive: _index == index);
       }
       return const SizedBox.shrink();
     });
@@ -385,69 +411,37 @@ class _AppShellState extends State<AppShell> {
         meetingsLoading;
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: GlassColors.background,
       bottomNavigationBar: !isDesktop && selectedBoard == null
-          ? GlassBottomBar(
+          ? FloatingBottomNavBar(
               selectedIndex: _index,
               onItemSelected: (index) => _selectTab(index),
-              items: const [
-                GlassBottomBarItem(
-                  icon: Icons.dashboard_outlined,
-                  label: 'Dashboard',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.grid_view_rounded,
-                  label: 'Boards',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.calendar_today_outlined,
-                  label: 'Calendar',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Chat',
-                ),
-                GlassBottomBarItem(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Profile',
-                ),
-              ],
               isDark: false,
             )
           : null,
-      body: Container(
-        decoration: BoxDecoration(gradient: GlassGradients.background()),
-        child: Row(
-          children: [
-            if (isDesktop)
-              AetherSideNav(
-                selectedIndex: _index,
-                onItemSelected: (index) =>
-                    _selectTab(index, clearBoard: index != 1),
-                isDark: false,
-              ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: RadialGradient(
-                            center: const Alignment(0.7, -0.6),
-                            radius: 1.2,
-                            colors: [
-                              GlassColors.primary.withOpacity(0.03),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SafeArea(
-                    top: !isDesktop,
-                    bottom: false,
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: IgnorePointer(
+              child: AetherDynamicBackdrop(),
+            ),
+          ),
+          Row(
+            children: [
+              if (isDesktop)
+                AetherSideNav(
+                  selectedIndex: _index,
+                  onItemSelected: (index) =>
+                      _selectTab(index, clearBoard: index != 1),
+                  isDark: false,
+                ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    SafeArea(
+                      top: !isDesktop,
+                      bottom: false,
                     child: selectedBoard != null
                         ? AnimatedSwitcher(
                             duration: const Duration(milliseconds: 220),
@@ -531,9 +525,10 @@ class _AppShellState extends State<AppShell> {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          ], // closes Row children
+        ), // closes Row
+      ], // closes outer Stack children
+    ), // closes outer Stack
+  ); // closes return Scaffold
   }
 }

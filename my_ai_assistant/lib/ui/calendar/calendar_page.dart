@@ -12,6 +12,7 @@ import '../../state_managers/state_boards.dart';
 import '../../models/task_model.dart';
 import '../theme/glass_theme.dart';
 import '../common/responsive_layout.dart';
+import '../common/glass_widgets.dart';
 import 'widgets/daily_timeline_view.dart';
 import 'widgets/month_calendar_panel.dart';
 import 'widgets/unscheduled_task_bucket.dart';
@@ -20,8 +21,14 @@ import '../kanban/widgets/task_edit_modal.dart';
 class CalendarPage extends StatefulWidget {
   final bool isDark;
   final Function(int)? onNavigate;
+  final bool isActive;
 
-  const CalendarPage({super.key, required this.isDark, this.onNavigate});
+  const CalendarPage({
+    super.key,
+    required this.isDark,
+    this.onNavigate,
+    this.isActive = true,
+  });
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
@@ -82,10 +89,23 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildCalendarHeader(),
-        if (_isDayView) _buildWeekDayStrip(),
+        AetherStaggeredFadeIn(
+          index: 0,
+          isActive: widget.isActive,
+          child: _buildCalendarHeader(),
+        ),
+        if (_isDayView)
+          AetherStaggeredFadeIn(
+            index: 1,
+            isActive: widget.isActive,
+            child: _buildWeekDayStrip(),
+          ),
         Expanded(
-          child: _isDayView ? _buildDailyTimeline() : _buildMonthlyGrid(),
+          child: AetherStaggeredFadeIn(
+            index: 2,
+            isActive: widget.isActive,
+            child: _isDayView ? _buildDailyTimeline() : _buildMonthlyGrid(),
+          ),
         ),
       ],
     );
@@ -321,7 +341,7 @@ class _CalendarPageState extends State<CalendarPage> {
       height: isMobile ? 100 : 120,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 48,
-        vertical: 16,
+        vertical: 6,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -360,7 +380,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(ExecutiveRadius.m),
                       border: Border.all(
@@ -524,7 +544,7 @@ class _CalendarPageState extends State<CalendarPage> {
         isMobile ? 16 : 48,
         0,
         isMobile ? 16 : 48,
-        isMobile ? 16 : 48,
+        isMobile ? 160 : 110,
       ),
       child: isMobile
           ? Column(

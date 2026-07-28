@@ -26,10 +26,18 @@ pkill -f "wrangler dev" 2>/dev/null || true
 pkill -f "miniflare" 2>/dev/null || true
 sleep 1
 
+# Auto-clean temporary build & crash logs to prevent 'no space left on device' errors
+rm -rf cloudflare_backend/.wrangler/tmp/* 2>/dev/null || true
+rm -rf my_ai_assistant/*.log 2>/dev/null || true
+rm -rf /tmp/flutter_tools.* 2>/dev/null || true
+
 cd cloudflare_backend
 
-# Free up ports 8787, 8788, 8789 to avoid port collisions
-for port in 8787 8788 8789; do
+# Stop any Docker containers publishing port 8080
+docker stop $(docker ps -q --filter "publish=8080") 2>/dev/null || true
+
+# Free up ports 8080, 8787, 8788, 8789 to avoid port collisions
+for port in 8080 8787 8788 8789; do
   STALE_PID=$(lsof -t -i:$port 2>/dev/null || /usr/bin/lsof -t -i:$port 2>/dev/null || true)
   if [ ! -z "$STALE_PID" ]; then
     echo "Found conflicting process $STALE_PID on port $port. Freeing up port..."
@@ -40,7 +48,7 @@ sleep 1
 
 # Generate local secret variables dynamically
 echo "DEEPGRAM_API_KEY=\"5ad0ebfddedec0b349c567dc7625bef97ad6f3a2\"" > .dev.vars
-echo "OPENROUTER_API_KEY=\"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\"" >> .dev.vars
+echo "OPENROUTER_API_KEY=\"sk-or-v1-YOUR_OPENROUTER_API_KEY_HERE\"" >> .dev.vars
 
 npx wrangler dev --port 8787 &
 BACKEND_PID=$!

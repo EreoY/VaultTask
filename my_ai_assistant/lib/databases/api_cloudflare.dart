@@ -638,17 +638,21 @@ class ApiCloudflare {
     return '';
   }
 
-  static Future<String> summarizeMeeting({required String prompt}) async {
+  static Future<String> summarizeMeeting({
+    required String prompt,
+    List<Map<String, dynamic>>? messages,
+  }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return '';
     try {
       final body = {
         'uid': user.uid,
         'model': 'google/gemma-4-26b-a4b-it',
-        'messages': [
+        'messages': messages ?? [
           {'role': 'user', 'content': prompt}
         ],
         'max_tokens': 2000,
+        'tools': [],
       };
 
       final response = await http.post(
@@ -743,6 +747,112 @@ class ApiCloudflare {
     return '';
   }
 
+  /// Maps a lowercased filename/mime pair to a supported image mime string.
+  /// Returns 'image/png' for png, 'image/jpeg' for jpg/jpeg, else null.
+  /// Matches by filename suffix OR mime substring.
+  static String? _imageMimeFor(String lowerName, String lowerMime) {
+    if (lowerName.endsWith('.png') || lowerMime.contains('png')) {
+      return 'image/png';
+    }
+    if (lowerName.endsWith('.jpg') ||
+        lowerName.endsWith('.jpeg') ||
+        lowerMime.contains('jpeg') ||
+        lowerMime.contains('jpg')) {
+      return 'image/jpeg';
+    }
+    return null;
+  }
+
+  /// Downloads an image from R2 and asks gemini-3.1-flash-lite to extract any
+  /// visible text via multimodal (image_url) input. Returns '' on any failure.
+  /// Enforces a 10MB size gate before calling the AI. Output truncated to
+  /// 12000 chars.
+  static Future<String> extractImageText(
+    String fileUrl,
+    String filename,
+    String mimeType,
+  ) async {
+    debugPrint(
+      '[extractImageText] entry filename=$filename mimeType=$mimeType',
+    );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      debugPrint('[extractImageText][Error] no auth');
+      return '';
+    }
+    try {
+      // [Network] Fetch raw image bytes from storage.
+      final fileResp = await http.get(
+        Uri.parse(EnvConfig.sanitizeUrl(fileUrl)),
+      );
+      if (fileResp.statusCode != 200) {
+        debugPrint(
+          '[extractImageText][Error] Failed to download image: ${fileResp.statusCode}',
+        );
+        return '';
+      }
+
+      // [Size Gate] Reject oversized images before spending an AI call.
+      if (fileResp.bodyBytes.length > 10 * 1024 * 1024) {
+        debugPrint(
+          '[extractImageText][Warn] Image too large: ${fileResp.bodyBytes.length} bytes (max 10MB)',
+        );
+        return '';
+      }
+
+      final b64 = base64Encode(fileResp.bodyBytes);
+
+      final body = {
+        'uid': user.uid,
+        'model': 'google/gemini-3.1-flash-lite',
+        'max_tokens': 4000,
+        'messages': [
+          {
+            'role': 'user',
+            'content': [
+              {
+                'type': 'text',
+                'text':
+                    'ดึงข้อความทั้งหมดที่มองเห็นในรูปภาพนี้ออกมาเป็นข้อความ (plain text) อย่างละเอียดและครบถ้วน รักษาโครงสร้าง เช่น หัวข้อ/รายการ/ตาราง ให้มากที่สุดเท่าที่ทำได้ ตอบเฉพาะข้อความที่ดึงออกมา ไม่ต้องมีคำอธิบายเพิ่ม'
+              },
+              {
+                'type': 'image_url',
+                'image_url': {'url': 'data:$mimeType;base64,$b64'},
+              }
+            ]
+          }
+        ],
+      };
+
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/ai/chat'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        var text =
+            (data['result']?['choices']?[0]?['message']?['content'] ?? '')
+                .toString()
+                .trim();
+        if (text.length > 12000) {
+          text = text.substring(0, 12000);
+        }
+        debugPrint('[extractImageText] success, ${text.length} chars');
+        return text;
+      }
+      debugPrint(
+        '[extractImageText][Error] AI chat returned: ${response.statusCode}',
+      );
+    } catch (e) {
+      debugPrint('[extractImageText][Error] $e');
+    }
+    return '';
+  }
+
   /// Routes an attachment to the correct extractor based on its file type.
   /// PDF -> gemini extraction; DOCX -> client-side zip parse; else ''.
   static Future<String> extractAttachmentText(
@@ -769,6 +879,11 @@ class ApiCloudflare {
         final fileResp = await http.get(Uri.parse(EnvConfig.sanitizeUrl(url)));
         if (fileResp.statusCode != 200) return '';
         return DocxText.extractText(fileResp.bodyBytes);
+      }
+
+      final imageMime = _imageMimeFor(lowerName, mime);
+      if (imageMime != null) {
+        return await extractImageText(url, name, imageMime);
       }
 
       return '';
@@ -951,8 +1066,18 @@ class ApiCloudflare {
     }
   }
 
-  static Future<List<ChatMessage>> getChatMessages(String sessionId) async {
-    final url = '$_base/api/chat/messages?session_id=$sessionId';
+  static Future<List<ChatMessage>> getChatMessages(
+    String sessionId, {
+    String taskId = '',
+  }) async {
+    String url = '$_base/api/chat/messages';
+    if (sessionId.isNotEmpty) {
+      url += '?session_id=$sessionId';
+    } else if (taskId.isNotEmpty) {
+      url += '?task_id=$taskId';
+    } else {
+      return [];
+    }
     final response = await http.get(Uri.parse(url), headers: _headers);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

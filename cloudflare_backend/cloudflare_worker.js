@@ -364,7 +364,17 @@ export default {
     if (url.pathname === "/api/chat/messages" && request.method === "GET") {
       try {
         const sessionId = url.searchParams.get("session_id");
-        if (!sessionId) return json({ error: "Missing session_id" }, 400);
+        const taskId = url.searchParams.get("task_id");
+        
+        if (taskId) {
+          const { results } = await env.DB.prepare(
+            `SELECT m.* FROM chat_messages m JOIN chat_sessions s ON m.session_id = s.id WHERE s.task_id = ? ORDER BY m.timestamp ASC`
+          ).bind(taskId).all();
+          return json(results);
+        }
+
+        if (!sessionId) return json({ error: "Missing session_id or task_id" }, 400);
+        
         const { results } = await env.DB.prepare(
           `SELECT * FROM chat_messages WHERE session_id = ? ORDER BY timestamp ASC`
         ).bind(sessionId).all();
@@ -390,9 +400,9 @@ export default {
           reasoning || "",
           is_user ? 1 : 0,
           has_draft ? 1 : 0,
-          pending_call || "",
-          tool_calls || "[]",
-          attachments || "[]",
+          typeof pending_call === "string" ? pending_call : (pending_call ? JSON.stringify(pending_call) : ""),
+          typeof tool_calls === "string" ? tool_calls : JSON.stringify(tool_calls || []),
+          typeof attachments === "string" ? attachments : JSON.stringify(attachments || []),
           timestamp
         ).run();
 
@@ -1458,26 +1468,52 @@ export default {
         };
 
         console.log(`🤖 [AI CHAT] Forwarding to OpenRouter (Model: ${actualModel})`);
-        const geminiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
-            "HTTP-Referer": "https://calenda.flow",
-            "X-Title": "Calenda Flow"
-          },
-          body: JSON.stringify(requestBody)
-        });
+        let geminiResponse;
+        let openRouterFailed = false;
+        let failStatus = 500;
 
-        if (!geminiResponse.ok) {
-          let errText = "Failed to fetch response from OpenRouter";
-          const status = geminiResponse.status;
-          try {
-            const errData = await geminiResponse.json();
-            errText = errData.error?.message || JSON.stringify(errData);
-          } catch (e) {}
-          console.error(`❌ [AI CHAT] OpenRouter API Error: Status ${status} - ${errText}`);
-          return json({ error: { message: errText } }, status);
+        try {
+          geminiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+              "HTTP-Referer": "https://calenda.flow",
+              "X-Title": "Calenda Flow"
+            },
+            body: JSON.stringify(requestBody)
+          });
+          if (!geminiResponse.ok) {
+            openRouterFailed = true;
+            failStatus = geminiResponse.status;
+          }
+        } catch (e) {
+          openRouterFailed = true;
+          failStatus = "network_error";
+        }
+
+        if (openRouterFailed) {
+          console.warn(`[AI CHAT] OpenRouter failed (${failStatus}), falling back to Cloudflare Workers AI (env.AI)`);
+          if (env.AI) {
+            const formattedMessages = messagesWithTime.map(m => {
+              let text = typeof m.content === "string" ? m.content : "";
+              if (Array.isArray(m.content)) {
+                const textPart = m.content.find(p => p.type === "text");
+                text = textPart ? textPart.text : "";
+              }
+              return { role: m.role, content: text };
+            });
+            const aiRes = await env.AI.run('@cf/meta/llama-3.3-70b-instruct', {
+              messages: formattedMessages
+            });
+            return json({
+              result: {
+                choices: [{ message: { content: aiRes.response || aiRes } }]
+              }
+            });
+          } else {
+            return json({ error: { message: `OpenRouter failed (${failStatus}) and env.AI not available` } }, 500);
+          }
         }
 
         const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(part => part.type === "image_url"));
