@@ -158,7 +158,7 @@ class BoardsWorkspaceHeader extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                (selectedWorkspace?.description?.trim().isNotEmpty == true) ? selectedWorkspace!.description! : 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
+                                (selectedWorkspace?.description?.trim().isNotEmpty == true) ? selectedWorkspace!.description! : (isTeam ? 'Strategic workspace for team collaboration, tasks, and documentation.' : 'Personal space for tasks, notes, and productivity.'),
                                 style: GlassText.bodyMD().copyWith(
                                   color: GlassColors.onSurfaceVariant,
                                   fontSize: 12,

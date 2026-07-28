@@ -100,6 +100,11 @@ async function ensureSchema(db) {
       // column already exists, ignore
     }
     try {
+      await db.prepare(`ALTER TABLE team_workspaces ADD COLUMN description TEXT DEFAULT ''`).run();
+    } catch (e) {
+      // ignore
+    }
+    try {
       await db.prepare(`ALTER TABLE team_boards ADD COLUMN documents TEXT DEFAULT '[]'`).run();
     } catch (e) {
       // ignore
@@ -526,13 +531,44 @@ export default {
 
     if (url.pathname === "/api/workspaces" && request.method === "POST") {
       try {
-        const { id, owner_uid, name, members } = await request.json();
+        const { id, owner_uid, name, members, description } = await request.json();
         if (!id || !owner_uid || !name) return json({ error: "Missing required fields" }, 400);
         await env.DB.prepare(
-          `INSERT INTO team_workspaces (id, owner_uid, name, members) VALUES (?, ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET name=excluded.name, members=excluded.members`
-        ).bind(id, owner_uid, name, JSON.stringify(members || [owner_uid])).run();
+          `INSERT INTO team_workspaces (id, owner_uid, name, members, description) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET name=excluded.name, members=excluded.members, description=excluded.description`
+        ).bind(id, owner_uid, name, JSON.stringify(members || [owner_uid]), description || "").run();
         return json({ success: true, id }, 201);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/workspaces" && request.method === "PUT") {
+      try {
+        const { id, name, members, description } = await request.json();
+        if (!id) return json({ error: "Missing id" }, 400);
+        
+        let query = "UPDATE team_workspaces SET ";
+        let params = [];
+        if (name !== undefined) {
+          query += "name = ?, ";
+          params.push(name);
+        }
+        if (members !== undefined) {
+          query += "members = ?, ";
+          params.push(JSON.stringify(members));
+        }
+        if (description !== undefined) {
+          query += "description = ?, ";
+          params.push(description);
+        }
+        if (params.length === 0) return json({ success: true });
+        
+        query = query.slice(0, -2) + " WHERE id = ?";
+        params.push(id);
+
+        await env.DB.prepare(query).bind(...params).run();
+        return json({ success: true });
       } catch (err) {
         return json({ error: err.message }, 500);
       }

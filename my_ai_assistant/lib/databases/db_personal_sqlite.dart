@@ -28,7 +28,7 @@ class DbPersonalSqlite {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 14,
+      version: 15,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -42,6 +42,7 @@ CREATE TABLE personal_workspaces (
   type TEXT NOT NULL,
   owner_uid TEXT DEFAULT '',
   members TEXT DEFAULT '[]',
+  description TEXT DEFAULT '',
   created_at TEXT NOT NULL
 )
 ''');
@@ -166,6 +167,7 @@ CREATE TABLE personal_workspaces (
   type TEXT NOT NULL,
   owner_uid TEXT DEFAULT '',
   members TEXT DEFAULT '[]',
+  description TEXT DEFAULT '',
   created_at TEXT NOT NULL
 )
 ''');
@@ -239,6 +241,13 @@ CREATE TABLE IF NOT EXISTS project_documents (
   FOREIGN KEY(board_id) REFERENCES personal_boards(id)
 )
 ''');
+      } catch (_) {}
+    }
+    if (oldVersion < 15) {
+      try {
+        await db.execute(
+          'ALTER TABLE personal_workspaces ADD COLUMN description TEXT DEFAULT ""',
+        );
       } catch (_) {}
     }
   }

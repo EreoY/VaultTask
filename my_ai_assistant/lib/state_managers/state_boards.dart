@@ -134,6 +134,32 @@ class StateBoards extends ChangeNotifier {
 
       _workspaces = [...localWorkspaces, ...remoteWorkspaces];
 
+      // Backfill missing descriptions
+      for (int i = 0; i < _workspaces.length; i++) {
+        final w = _workspaces[i];
+        if (w.description == null || w.description!.isEmpty) {
+          final defaultDesc = w.type == 'team' 
+              ? 'Strategic workspace for team collaboration, tasks, and documentation.' 
+              : 'Personal space for tasks, notes, and productivity.';
+          final updated = w.copyWith(description: defaultDesc);
+          _workspaces[i] = updated;
+          
+          if (w.type == 'personal') {
+            if (!kIsWeb) {
+              await DbPersonalSqlite.instance.updateWorkspace(updated);
+            }
+          } else {
+            if (uid != null) {
+              try {
+                await ApiCloudflare.updateWorkspaceDescription(w.id, defaultDesc);
+              } catch (e) {
+                debugPrint('Failed to auto-backfill description for ${w.id}: $e');
+              }
+            }
+          }
+        }
+      }
+
       // 2. Auto-provision default workspaces if empty
       bool hasPersonalDefault = _workspaces.any(
         (w) => w.type == 'personal' && w.id == 'default_personal',
@@ -142,7 +168,7 @@ class StateBoards extends ChangeNotifier {
         final personalDefault = WorkspaceModel(
           id: 'default_personal',
           name: 'Default Personal Workspace',
-          description: 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
+          description: 'Personal space for tasks, notes, and productivity.',
           type: 'personal',
           ownerUid: uid ?? '',
           members: [],
@@ -159,7 +185,7 @@ class StateBoards extends ChangeNotifier {
         final teamDefault = WorkspaceModel(
           id: 'default_team_$uid',
           name: 'Default Team Workspace',
-          description: 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
+          description: 'Strategic workspace for team collaboration, tasks, and documentation.',
           type: 'team',
           ownerUid: uid,
           members: [uid],
@@ -296,7 +322,7 @@ class StateBoards extends ChangeNotifier {
       final workspace = WorkspaceModel(
         id: id,
         name: name,
-        description: 'พื้นที่สำหรับจัดเก็บงาน เอกสาร และสรุปการประชุมของทีม',
+        description: type == 'team' ? 'Strategic workspace for team collaboration, tasks, and documentation.' : 'Personal space for tasks, notes, and productivity.',
         type: type,
         ownerUid: uid,
         members: type == 'team' ? [uid] : [],
