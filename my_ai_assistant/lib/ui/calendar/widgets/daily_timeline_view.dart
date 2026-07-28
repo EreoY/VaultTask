@@ -114,9 +114,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         Expanded(
           child: ListView.builder(
             controller: _scrollController,
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 48,
-              vertical: isMobile ? 16 : 32,
+            padding: EdgeInsets.only(
+              left: isMobile ? 16 : 48,
+              right: isMobile ? 16 : 48,
+              top: isMobile ? 16 : 32,
+              bottom: isMobile ? 100 : 32,
             ),
             itemCount: 24,
             itemBuilder: (context, hour) {

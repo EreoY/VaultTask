@@ -1,3 +1,97 @@
+## Phase 221: Home Dashboard Nav Bar Alignment & Calendar 24:00 Scroll Padding [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Home / Dashboard Floating Nav Bar Discrepancy Alignment (`dashboard_page.dart`)**:
+>    - In `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`, update `Scaffold` background to `Colors.transparent` (or remove nested solid background fill).
+>    - Ensure `DashboardPage` allows the outer `AppShell` dynamic backdrop (`AetherDynamicBackdrop`) to pass through cleanly, eliminating solid off-white background fill behind `FloatingBottomNavBar` so it floats identically to `BoardsPage`, `CalendarPage`, `ChatPage`, and `ProfilePage`.
+> 2. **Calendar 24:00 Time Slot Scroll Clearance (`daily_timeline_view.dart`)**:
+>    - In `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`, adjust `ListView.builder` bottom padding from `isMobile ? 16 : 32` to `isMobile ? 100 : 32` (or `bottom: 90`).
+>    - Ensure the 23:00 / 24:00 time slot row at the bottom of the daily timeline scroll view can be scrolled cleanly above the floating capsule navigation bar without being obscured.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero syntax or layout regressions.
+
+- [x] Task 221.1: Align `DashboardPage` background to `Colors.transparent` in `dashboard_page.dart` so `FloatingBottomNavBar` floats cleanly on Home page identically to all other pages.
+- [x] Task 221.2: Add bottom scroll padding (`isMobile ? 100 : 32`) to `ListView.builder` in `daily_timeline_view.dart` so users can scroll to 24:00 cleanly above floating nav bar.
+- [x] Task 221.3: Perform static analysis (`flutter analyze`).
+
+### Task 221.1: Align DashboardPage background to Colors.transparent in dashboard_page.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
+- **Action:** Update `Scaffold` background in `DashboardPage` to `backgroundColor: Colors.transparent`.
+- **Why:** Resolve user's report where Home tab renders solid background behind floating nav bar unlike all other tab pages.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Floating bottom navigation bar renders over transparent background on Home page identically to all other tabs.
+
+### Task 221.2: Add bottom scroll padding to ListView.builder in daily_timeline_view.dart
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/calendar/widgets/daily_timeline_view.dart`
+- **Action:** Update `ListView.builder` padding in `daily_timeline_view.dart` to use `bottom: isMobile ? 100 : 32` (or 90px bottom padding).
+- **Why:** Resolve user's report where scrolling to 24:00 in calendar timeline is obscured by the floating nav bar.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** User can scroll timeline view completely to 24:00 above the floating bottom nav bar.
+
+### Task 221.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** Modified UI files
+- **Action:** Execute `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and compliance with project standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with zero errors.
+
+## Phase 220: AiSummarizeSheet Dynamic Light/Dark Theme Token Conversion [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Purge Hardcoded `Colors.white` Overrides in `AiSummarizeSheet` (`ai_summarize_sheet.dart`)**:
+>    - Replace hardcoded `Colors.white` text, icon, and border overrides with dynamic design system tokens (`GlassColors` / `Theme.of(context)`).
+>    - Text colors: Use `GlassColors.onSurface` (or `GlassText` default styles) for all labels, header title, prompt labels, session names, checkbox titles, alert titles, and text field inputs so text adapts dynamically to Light (`#1E1E24` dark text) and Dark mode (`#FFFFFF` white text).
+>    - Sub-text & Hints: Use `GlassColors.onSurfaceVariant` or `GlassColors.onSurfaceVariant.withOpacity(0.5)` for hint texts, secondary labels, and close/action icons.
+>    - Card/Chip/Container Fills: Replace hardcoded dark fills (`0x80161926`, `0x801E2235`, white opacities) with dynamic theme container tokens (`GlassColors.surfaceContainer`, `GlassColors.surfaceBright`, `GlassColors.surface`).
+>    - Borders & Dividers: Use `GlassColors.outlineVariant` or `GlassColors.hairline` instead of `Colors.white12`/`Colors.white24`.
+>    - Primary Accents & Buttons: Use `GlassColors.primary` (`#1E1E24`) for filled buttons ("สร้างสรุป", "นำไปใช้") and active ChoiceChips, with `GlassColors.onPrimary` (`#FFFFFF`) for foreground button text/icons.
+> 2. **Verify `MarkdownBlockEditor` & Chat Bubble Legibility**:
+>    - Ensure `MarkdownBlockEditor` block container and chat message bubbles (`ChatMessage`) utilize adaptive surface fills (`GlassColors.surfaceBright`, `GlassColors.surfaceContainer`) and text colors (`GlassColors.onSurface`) in Light Mode.
+> 3. Perform static analysis (`flutter analyze`) to guarantee zero compilation or layout regressions.
+
+- [x] Task 220.1: Convert all hardcoded `Colors.white` text, icons, text fields, checkboxes, chips, and container fills in `ai_summarize_sheet.dart` to dynamic theme tokens (`GlassColors.onSurface`, `GlassColors.surfaceContainer`, `GlassColors.primary`, `GlassColors.onPrimary`).
+- [x] Task 220.2: Perform static analysis (`flutter analyze`).
+
+### Task 220.1: Convert hardcoded Colors.white in ai_summarize_sheet.dart to dynamic theme tokens
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** 
+  1. Header (lines 428-445): Change sparkle icon color from `Colors.white` to `GlassColors.primary` or `GlassColors.onSurface`, header text style to remove `.copyWith(color: Colors.white)`, close icon color to `GlassColors.onSurfaceVariant`, and divider color to `GlassColors.outlineVariant`.
+  2. Session selector & dialog (lines 78-101, 474-529):
+     - Rename session dialog: change title/content text style to `GlassColors.onSurface`, hintStyle to `GlassColors.onSurfaceVariant`, textField fillColor to `GlassColors.surfaceContainer`, cancel button to `GlassColors.onSurfaceVariant`, save button to `GlassColors.primary`.
+     - `+ เสสชันใหม่` ActionChip: `backgroundColor: GlassColors.surfaceContainer`, border `GlassColors.outlineVariant`, label `GlassColors.onSurface`.
+     - ChoiceChip session tabs: `selectedColor: GlassColors.primary`, active label color `GlassColors.onPrimary`, inactive label color `GlassColors.onSurface`, edit icon color `GlassColors.onPrimary` (when active) / `GlassColors.onSurface` (when inactive).
+  3. Config view (lines 557-675):
+     - Section titles: `GlassColors.onSurface`.
+     - CheckboxListTile widgets: text `GlassColors.onSurface`, `activeColor: GlassColors.primary`, `checkColor: GlassColors.onPrimary`.
+     - Custom prompt TextField: text `GlassColors.onSurface`, hint text `GlassColors.onSurfaceVariant.withOpacity(0.5)`, fillColor `GlassColors.surfaceContainer`, border `GlassColors.outlineVariant`.
+     - "สร้างสรุป" button: `backgroundColor: GlassColors.primary`, foreground text/icon `GlassColors.onPrimary`, indicator color `GlassColors.onPrimary`.
+  4. Output view (lines 690-888):
+     - SegmentedButton: `backgroundColor: GlassColors.surfaceContainer`, `selectedBackgroundColor: GlassColors.primary`, `foregroundColor: GlassColors.onSurfaceVariant`, `selectedForegroundColor: GlassColors.onPrimary`, border `GlassColors.outlineVariant`.
+     - MarkdownBlockEditor container: `color: GlassColors.surfaceBright`, border `GlassColors.outlineVariant`.
+     - Chat bubbles: user bubble `GlassColors.primary` with `GlassColors.onPrimary` text, AI bubble `GlassColors.surfaceContainer` with `GlassColors.onSurface` text.
+     - LinearProgressIndicator: color `GlassColors.primary`.
+     - Refinement chat bar: container `color: GlassColors.surfaceContainer`, top border `GlassColors.outlineVariant`, TextField style `GlassColors.onSurface`, hintStyle `GlassColors.onSurfaceVariant.withOpacity(0.5)`, fillColor `GlassColors.surface`, send icon `GlassColors.primary`.
+     - Apply button ("นำไปใช้"): `backgroundColor: GlassColors.primary`, text color `GlassColors.onPrimary`.
+- **Why:** Resolve user's critical Light Mode contrast bug where white text on white sheet background made session tabs, labels, and text fields completely invisible ("มองไม่เห็นอะไรเลยนายใช้ธีมของแพลตฟอร์มนั่นแหละทำมาเลย").
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** All hardcoded white text and icons replaced with dynamic theme tokens, creating high-contrast legible UI in Light Mode and Dark Mode.
+
+### Task 220.2: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Run `flutter analyze` to ensure zero compilation or static analysis errors.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** Static analysis passed with 0 errors.
+
+
 ## Phase 219: Eliminate Solid White Background Strip Behind FloatingBottomNavBar [x] Completed
 
 - **Status:** [x] Completed

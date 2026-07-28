@@ -75,29 +75,29 @@ class _AiSummarizeSheetState extends State<AiSummarizeSheet> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: GlassColors.surface,
-          title: const Text('เปลี่ยนชื่อเสสชัน', style: TextStyle(color: Colors.white)),
+          title: Text('เปลี่ยนชื่อเสสชัน', style: TextStyle(color: GlassColors.onSurface)),
           content: TextField(
             controller: controller,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: GlassColors.onSurface),
             decoration: InputDecoration(
               hintText: 'ชื่อเสสชัน...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              hintStyle: TextStyle(color: GlassColors.onSurfaceVariant),
               filled: true,
-              fillColor: const Color(0x80161926),
+              fillColor: GlassColors.surfaceContainer,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: GlassColors.outlineVariant),
               ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('ยกเลิก', style: TextStyle(color: Colors.white54)),
+              child: Text('ยกเลิก', style: TextStyle(color: GlassColors.onSurfaceVariant)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('บันทึก', style: TextStyle(color: Colors.white)),
+              child: Text('บันทึก', style: TextStyle(color: GlassColors.onSurface)),
             ),
           ],
         );
@@ -425,27 +425,27 @@ $_summaryOutput
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                    Icon(Icons.auto_awesome, color: GlassColors.onSurface, size: 24),
                     const SizedBox(width: 12),
                     Text(
                       'AI Summarizer',
                       style: GlassText.headlineMD().copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: GlassColors.onSurface,
                       ),
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
+                      icon: Icon(Icons.close, color: GlassColors.onSurfaceVariant),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
-              const Divider(color: Colors.white12, height: 1),
+              Divider(color: GlassColors.outlineVariant, height: 1),
 
               _buildSessionSelector(),
-              const Divider(color: Colors.white12, height: 1),
+              Divider(color: GlassColors.outlineVariant, height: 1),
 
               Expanded(
                 child: _summaryOutput.isEmpty && _chatMessages.isEmpty
@@ -471,11 +471,11 @@ $_summaryOutput
           if (index == _sessions.length) {
             return Center(
               child: ActionChip(
-                backgroundColor: Colors.white.withOpacity(0.08),
-                side: const BorderSide(color: Colors.white24),
-                label: const Text(
+                backgroundColor: GlassColors.surface,
+                side: BorderSide(color: GlassColors.outlineVariant),
+                label: Text(
                   '+ เสสชันใหม่',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: GlassColors.onSurface),
                 ),
                 onPressed: () async {
                   final uid = AuthService().currentUser?.uid ?? 'temp';
@@ -512,19 +512,19 @@ $_summaryOutput
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () => _showRenameSessionDialog(index),
-                      child: const Icon(
+                      child: Icon(
                         Icons.edit_outlined,
                         size: 16,
-                        color: Colors.black,
+                        color: GlassColors.onPrimary,
                       ),
                     ),
                   ],
                 ],
               ),
               selected: isActive,
-              selectedColor: Colors.white,
+              selectedColor: GlassColors.primary,
               labelStyle: TextStyle(
-                color: isActive ? Colors.black : Colors.white,
+                color: isActive ? GlassColors.onPrimary : GlassColors.onSurface,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
               onSelected: (selected) async {
@@ -554,7 +554,7 @@ $_summaryOutput
             'เลือกแหล่งข้อมูล',
             style: GlassText.bodyLG().copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: GlassColors.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -562,22 +562,22 @@ $_summaryOutput
             CheckboxListTile(
               title: const Text(
                 'บันทึกข้อความ (Notes)',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: GlassColors.onSurface),
               ),
               value: _includeNotes,
-              activeColor: Colors.white,
-              checkColor: Colors.black,
+              activeColor: GlassColors.primary,
+              checkColor: GlassColors.onPrimary,
               onChanged: (val) => setState(() => _includeNotes = val ?? false),
             ),
           if (widget.mainTranscriptText.trim().isNotEmpty)
             CheckboxListTile(
               title: const Text(
                 'Transcript หลัก',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: GlassColors.onSurface),
               ),
               value: _includeMainTranscript,
-              activeColor: Colors.white,
-              checkColor: Colors.black,
+              activeColor: GlassColors.primary,
+              checkColor: GlassColors.onPrimary,
               onChanged: (val) =>
                   setState(() => _includeMainTranscript = val ?? false),
             ),
@@ -593,11 +593,11 @@ $_summaryOutput
                 return CheckboxListTile(
                   title: Text(
                     'Recording: ${take['name'] ?? 'Take'}',
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: GlassColors.onSurface),
                   ),
                   value: _includeTakes[take['id']],
-                  activeColor: Colors.white,
-                  checkColor: Colors.black,
+                  activeColor: GlassColors.primary,
+                  checkColor: GlassColors.onPrimary,
                   onChanged: (val) =>
                       setState(() => _includeTakes[take['id']!] = val ?? false),
                 );
@@ -608,11 +608,11 @@ $_summaryOutput
             return CheckboxListTile(
               title: Text(
                 file['name'] ?? 'Document',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: GlassColors.onSurface),
               ),
               value: _includeFiles[i],
-              activeColor: Colors.white,
-              checkColor: Colors.black,
+              activeColor: GlassColors.primary,
+              checkColor: GlassColors.onPrimary,
               onChanged: (val) =>
                   setState(() => _includeFiles[i] = val ?? false),
             );
@@ -623,22 +623,22 @@ $_summaryOutput
             'คำสั่งเพิ่มเติม (Custom Prompt)',
             style: GlassText.bodyLG().copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: GlassColors.onSurface,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _customPromptController,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: GlassColors.onSurface),
             maxLines: 3,
             decoration: InputDecoration(
               hintText: 'คำสั่งเพิ่มเติมล่วงหน้า...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              hintStyle: TextStyle(color: GlassColors.onSurfaceVariant),
               filled: true,
-              fillColor: const Color(0x80161926),
+              fillColor: GlassColors.surfaceContainer,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: GlassColors.outlineVariant),
               ),
             ),
           ),
@@ -655,20 +655,20 @@ $_summaryOutput
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.black,
+                        color: GlassColors.onPrimary,
                       ),
                     )
-                  : const Icon(Icons.auto_awesome, color: Colors.black),
+                  : const Icon(Icons.auto_awesome, color: GlassColors.onPrimary),
               label: Text(
                 _isSummarizing ? _summarizingLabel : 'สร้างสรุป',
                 style: GlassText.bodyLG().copyWith(
-                  color: Colors.black,
+                  color: GlassColors.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                disabledBackgroundColor: Colors.white.withOpacity(0.5),
+                backgroundColor: GlassColors.primary,
+                disabledBackgroundColor: GlassColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -690,11 +690,11 @@ $_summaryOutput
               Expanded(
                 child: SegmentedButton<int>(
                   style: SegmentedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.05),
-                    selectedBackgroundColor: Colors.white.withOpacity(0.15),
-                    foregroundColor: Colors.white70,
-                    selectedForegroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white12),
+                    backgroundColor: GlassColors.surface,
+                    selectedBackgroundColor: GlassColors.surfaceContainer,
+                    foregroundColor: GlassColors.onSurfaceVariant,
+                    selectedForegroundColor: GlassColors.onSurface,
+                    side: BorderSide(color: GlassColors.outlineVariant),
                   ),
                   segments: [
                     const ButtonSegment(
@@ -728,9 +728,9 @@ $_summaryOutput
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0x80161926),
+                        color: GlassColors.surfaceContainer,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white12),
+                        border: Border.all(color: GlassColors.outlineVariant),
                       ),
                       child: MarkdownBlockEditor(
                         initialMarkdown: _summaryOutput,
@@ -765,13 +765,13 @@ $_summaryOutput
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isUser
-                            ? GlassColors.primary.withOpacity(0.2)
-                            : const Color(0x80161926),
+                            ? GlassColors.primary
+                            : GlassColors.surfaceContainer,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isUser
-                              ? GlassColors.primary.withOpacity(0.5)
-                              : Colors.white12,
+                              ? GlassColors.primary
+                              : GlassColors.outlineVariant,
                         ),
                       ),
                       child: Row(
@@ -780,15 +780,19 @@ $_summaryOutput
                           Icon(
                             isUser ? Icons.person : Icons.auto_awesome,
                             color: isUser
-                                ? GlassColors.primary
-                                : Colors.white,
+                                ? GlassColors.onPrimary
+                                : GlassColors.onSurface,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               msg.text,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                color: isUser
+                                    ? GlassColors.onPrimary
+                                    : GlassColors.onSurface,
+                              ),
                             ),
                           ),
                         ],
@@ -800,34 +804,34 @@ $_summaryOutput
         if (_isSummarizing)
           const Padding(
             padding: EdgeInsets.all(8.0),
-            child: const LinearProgressIndicator(color: Colors.white),
+            child: LinearProgressIndicator(color: GlassColors.primary),
           ),
         // Refinement Chat Bar
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0x801E2235),
-            border: Border(top: BorderSide(color: Colors.white12)),
+            color: GlassColors.surfaceContainer,
+            border: Border(top: BorderSide(color: GlassColors.outlineVariant)),
           ),
           child: Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _refinePromptController,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: GlassColors.onSurface),
                   decoration: InputDecoration(
                     hintText: 'สั่ง AI แก้ไข/ปรับแต่งสรุป...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                    hintStyle: TextStyle(color: GlassColors.onSurfaceVariant),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
                     ),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.05),
+                    fillColor: GlassColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: GlassColors.outlineVariant),
                     ),
                   ),
                   onSubmitted: (_) => _isSummarizing ? null : _handleRefine(),
@@ -842,14 +846,14 @@ $_summaryOutput
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: GlassColors.onSurface,
                         ),
                       ),
                     )
                   : IconButton(
                       icon: const Icon(
                         Icons.send_rounded,
-                        color: Colors.white,
+                        color: GlassColors.onSurface,
                       ),
                       onPressed: _handleRefine,
                     ),
@@ -882,7 +886,7 @@ $_summaryOutput
                 'นำไปใช้',
                 style: GlassText.bodyLG().copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: GlassColors.onSurface,
                 ),
               ),
             ),

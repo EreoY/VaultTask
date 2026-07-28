@@ -63,7 +63,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final tasksState = context.watch<StateTasks>();
 
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,
