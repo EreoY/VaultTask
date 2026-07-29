@@ -8,7 +8,7 @@ import '../../state_managers/state_boards.dart';
 import '../../state_managers/state_meetings.dart';
 import '../common/responsive_layout.dart';
 import '../common/scroll_gutter.dart';
-import '../common/workspace_chrome.dart';
+
 import '../theme/glass_theme.dart';
 import 'meetings_board_sheet.dart';
 
@@ -90,6 +90,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   Widget _buildListSurface(BuildContext context, List<MeetingModel> meetings) {
     final isMobile = Responsive.isMobile(context);
     final filtered = _applyFilters(meetings);
+    final grouped = _groupMeetingsByDate(filtered);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -101,21 +102,13 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildNavBar(metaText: 'Board meetings'),
-          const SizedBox(height: 14),
-
-          Row(
-            children: [
-              WorkspaceBackButton(onTap: _exitToWorkspace),
-            ],
-          ),
-          const SizedBox(height: 14),
 
           // Bento Meeting Hero Banner
           BentoMeetingHeroHeader(
             board: widget.board,
             totalMeetings: meetings.length,
             onCreateMeeting: _openCreateDraft,
+            onBack: _exitToWorkspace,
           ),
 
           const SizedBox(height: 14),
@@ -140,7 +133,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
           const SizedBox(height: 14),
 
           Expanded(
-            child: filtered.isEmpty
+            child: grouped.isEmpty
                 ? Center(
                     child: Container(
                       padding: const EdgeInsets.all(32),
@@ -158,23 +151,81 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
                 : ScrollbarGutterFrame(
                     child: ListView.builder(
                       padding: ScrollbarGutter.reserveRight(EdgeInsets.zero),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final meeting = filtered[index];
-                        return BentoMeetingCard(
-                          meeting: meeting,
-                          onTap: () {
-                            context.read<StateMeetings>().openMeetingDetail(
-                              widget.board.id,
-                              meeting.id,
-                            );
-                          },
-                          onDelete: () async {
-                            await context.read<StateMeetings>().deleteMeeting(
-                              widget.board,
-                              meeting.id,
-                            );
-                          },
+                      itemCount: grouped.length,
+                      itemBuilder: (context, groupIndex) {
+                        final group = grouped[groupIndex];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: groupIndex == 0 ? 0 : 16,
+                                bottom: 10,
+                                left: 4,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: GlassColors.onSurfaceVariant
+                                        .withOpacity(0.7),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    group.label,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: GlassColors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: GlassColors.onSurfaceVariant
+                                          .withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${group.meetings.length}',
+                                      style: GlassText.labelSM().copyWith(
+                                        color: GlassColors.onSurfaceVariant
+                                            .withOpacity(0.8),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ...group.meetings.map((meeting) {
+                              return BentoMeetingCard(
+                                meeting: meeting,
+                                onTap: () {
+                                  context
+                                      .read<StateMeetings>()
+                                      .openMeetingDetail(
+                                        widget.board.id,
+                                        meeting.id,
+                                      );
+                                },
+                                onDelete: () async {
+                                  await context
+                                      .read<StateMeetings>()
+                                      .deleteMeeting(
+                                        widget.board,
+                                        meeting.id,
+                                      );
+                                },
+                              );
+                            }),
+                          ],
                         );
                       },
                     ),
@@ -202,16 +253,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
-            ),
-            child: _buildNavBar(
-              metaText:
-                  'Edited ${DateFormat('MMM d').format(selectedMeeting.createdAt)}',
-            ),
-          ),
-          const SizedBox(height: 18),
           Expanded(
             child: MeetingsBoardSheet(
               board: widget.board,
@@ -247,13 +288,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: isMobile ? 16 : ExecutiveSpacing.containerPadding(context),
-            ),
-            child: _buildNavBar(metaText: 'New draft'),
-          ),
-          const SizedBox(height: 18),
           Expanded(
             child: MeetingsBoardSheet(
               board: widget.board,
@@ -283,41 +317,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
     );
   }
 
-  Widget _buildNavBar({required String metaText}) {
-    return Row(
-      children: [
-        Expanded(
-          child: WorkspaceChromeHeader(
-            padding: EdgeInsets.zero,
-            gapAfterMeta: 0,
-            crumbs: [
-        WorkspaceCrumb(
-          icon: Icons.home_rounded,
-          label: 'Workspace HQ',
-          onTap: _exitToWorkspace,
-        ),
-        WorkspaceCrumb(
-          icon: Icons.calendar_today_rounded,
-          label: 'Meetings',
-          color: GlassColors.onSurfaceVariant.withOpacity(0.72),
-          onTap: _returnToMeetingsList,
-        ),
-        WorkspaceCrumb(label: widget.board.name),
-      ],
-      metaText: metaText,
-      title: const SizedBox.shrink(),
-    ),
-  ),
-  ],
-);
-  }
-
-  void _returnToMeetingsList() {
-    if (_isCreatingDraft) {
-      setState(() => _isCreatingDraft = false);
-    }
-    context.read<StateMeetings>().closeMeetingDetail();
-  }
 
   Widget _pillToggle({
     required String label,
@@ -483,45 +482,6 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
     setState(() => _isCreatingDraft = true);
   }
 
-  List<_MeetingGroup> _groupMeetings(List<MeetingModel> meetings) {
-    final sortedMeetings = List<MeetingModel>.from(meetings)
-      ..sort((a, b) => b.startAt.compareTo(a.startAt));
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final lastWeekThreshold = today.subtract(const Duration(days: 7));
-    final orderedLabels = <String>[];
-    final grouped = <String, List<MeetingModel>>{};
-
-    for (final meeting in sortedMeetings) {
-      final date = DateTime(
-        meeting.startAt.year,
-        meeting.startAt.month,
-        meeting.startAt.day,
-      );
-      late final String label;
-      if (date == today) {
-        label = 'Today';
-      } else if (date == yesterday) {
-        label = 'Yesterday';
-      } else if (date.isAfter(lastWeekThreshold)) {
-        label = 'Last 7 days';
-      } else {
-        label = DateFormat('MMMM yyyy').format(meeting.startAt);
-      }
-      if (!grouped.containsKey(label)) {
-        orderedLabels.add(label);
-        grouped[label] = [];
-      }
-      grouped[label]!.add(meeting);
-    }
-
-    return orderedLabels
-        .map((label) => _MeetingGroup(label: label, meetings: grouped[label]!))
-        .toList();
-  }
-
   List<String> _roleOptions(List<MeetingModel> meetings) {
     final roles = <String>{..._boardRolePresets};
     for (final meeting in meetings) {
@@ -546,116 +506,42 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   }
 }
 
-class _MeetingGroup {
+class _MeetingDateGroup {
   final String label;
   final List<MeetingModel> meetings;
 
-  const _MeetingGroup({required this.label, required this.meetings});
+  const _MeetingDateGroup({required this.label, required this.meetings});
 }
 
-class _MeetingSection extends StatelessWidget {
-  final String label;
-  final List<MeetingModel> meetings;
-  final String boardName;
-  final ValueChanged<MeetingModel> onTapMeeting;
+List<_MeetingDateGroup> _groupMeetingsByDate(List<MeetingModel> meetings) {
+  final sorted = List<MeetingModel>.from(meetings);
+  sorted.sort((a, b) => b.startAt.compareTo(a.startAt));
 
-  const _MeetingSection({
-    required this.label,
-    required this.meetings,
-    required this.boardName,
-    required this.onTapMeeting,
-  });
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = DateTime(now.year, now.month, now.day - 1);
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.arrow_drop_down_rounded,
-              size: 18,
-              color: GlassColors.onSurfaceVariant.withOpacity(0.76),
-            ),
-            Text(
-              '$label (${meetings.length})',
-              style: GlassText.bodyLG().copyWith(
-                fontWeight: FontWeight.w600,
-                color: GlassColors.onSurfaceVariant.withOpacity(0.9),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        ...meetings.map((meeting) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10, left: 20),
-            child: InkWell(
-              onTap: () => onTapMeeting(meeting),
-              borderRadius: BorderRadius.circular(10),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            meeting.title,
-                            style: GlassText.bodyLG().copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: GlassColors.onSurface,
-                            ),
-                          ),
-                          if (meeting.description.trim().isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              meeting.description.trim(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GlassText.bodyMD().copyWith(
-                                color: GlassColors.onSurfaceVariant.withOpacity(
-                                  0.54,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          DateFormat(
-                            'MMM d, yyyy h:mm a',
-                          ).format(meeting.startAt),
-                          style: GlassText.bodyMD().copyWith(
-                            color: GlassColors.onSurface.withOpacity(0.86),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          boardName,
-                          style: GlassText.bodyMD().copyWith(
-                            color: GlassColors.onSurfaceVariant.withOpacity(
-                              0.58,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-      ],
-    );
+  final groups = <DateTime, List<MeetingModel>>{};
+  final order = <DateTime>[];
+
+  for (final m in sorted) {
+    final date = DateTime(m.startAt.year, m.startAt.month, m.startAt.day);
+    if (!groups.containsKey(date)) {
+      groups[date] = [];
+      order.add(date);
+    }
+    groups[date]!.add(m);
   }
+
+  return order.map((date) {
+    late final String label;
+    if (date == today) {
+      label = 'Today (${DateFormat('d MMM').format(date)})';
+    } else if (date == yesterday) {
+      label = 'Yesterday (${DateFormat('d MMM').format(date)})';
+    } else {
+      label = DateFormat('EEEE, d MMM yyyy').format(date);
+    }
+    return _MeetingDateGroup(label: label, meetings: groups[date]!);
+  }).toList();
 }

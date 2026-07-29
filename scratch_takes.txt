@@ -1,0 +1,269 @@
+  2808	  Widget _buildRecordingTakesList() {
+  2809	    final recordingTakes = _attachments
+  2810	        .where((a) => a['type'] == 'recording')
+  2811	        .toList();
+  2812	    if (recordingTakes.isEmpty) return const SizedBox.shrink();
+  2813	
+  2814	    return Column(
+  2815	      crossAxisAlignment: CrossAxisAlignment.start,
+  2816	      children: [
+  2817	        const SizedBox(height: 16),
+  2818	        Text(
+  2819	          'ไฟล์บันทึกเสียง (${recordingTakes.length})',
+  2820	          style: GlassText.bodyMD().copyWith(
+  2821	            fontWeight: FontWeight.w700,
+  2822	            color: GlassColors.onSurface.withOpacity(0.85),
+  2823	          ),
+  2824	        ),
+  2825	        const SizedBox(height: 8),
+  2826	        ListView.separated(
+  2827	          shrinkWrap: true,
+  2828	          physics: const NeverScrollableScrollPhysics(),
+  2829	          itemCount: recordingTakes.length,
+  2830	          separatorBuilder: (_, __) => const SizedBox(height: 8),
+  2831	          itemBuilder: (context, index) {
+  2832	            final take = recordingTakes[index];
+  2833	
+  2834	
+  2835	            return Container(
+  2836	              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  2837	              decoration: BoxDecoration(
+  2838	                borderRadius: BorderRadius.circular(8),
+  2839	                color: GlassColors.surface.withOpacity(0.04),
+  2840	                border: Border.all(
+  2841	                  color: GlassColors.outlineVariant.withOpacity(0.08),
+  2842	                ),
+  2843	              ),
+  2844	              child: Column(
+  2845	                crossAxisAlignment: CrossAxisAlignment.start,
+  2846	                children: [
+  2847	                  Row(
+  2848	                    children: [
+  2849	                      Icon(
+  2850	                        Icons.audiotrack_rounded,
+  2851	                        color: GlassColors.primary.withOpacity(0.8),
+  2852	                        size: 20,
+  2853	                      ),
+  2854	                      const SizedBox(width: 12),
+  2855	                      Expanded(
+  2856	                        child: Text(
+  2857	                          take['name'] ?? 'Recording Take',
+  2858	                          style: GlassText.bodyMD().copyWith(
+  2859	                            fontWeight: FontWeight.w500,
+  2860	                            color: GlassColors.onSurface.withOpacity(0.9),
+  2861	                          ),
+  2862	                          maxLines: 1,
+  2863	                          overflow: TextOverflow.ellipsis,
+  2864	                        ),
+  2865	                      ),
+  2866	                      const SizedBox(width: 8),
+  2867	                      if (take['url'] != null && take['url']!.isNotEmpty)
+  2868	                        IconButton(
+  2869	                          icon: const Icon(Icons.play_arrow_rounded, size: 20),
+  2870	                          tooltip: 'เล่นเสียง',
+  2871	                          onPressed: () async {
+  2872	                            final uri = Uri.parse(take['url']!);
+  2873	                            if (await canLaunchUrl(uri)) {
+  2874	                              await launchUrl(uri);
+  2875	                            } else {
+  2876	                              GlassNotifications.show(
+  2877	                                context,
+  2878	                                'ไม่สามารถเปิดลิงก์ไฟล์เสียงได้',
+  2879	                                isError: true,
+  2880	                              );
+  2881	                            }
+  2882	                          },
+  2883	                        ),
+  2884	                      TextButton.icon(
+  2885	                        icon: const Text('🎴'),
+  2886	                        label: const Text('ดูการ์ดสรุป'),
+  2887	                        onPressed: () => _showIntervalCardsModal(context, take),
+  2888	                      ),
+  2889	                      TextButton.icon(
+  2890	                        icon: const Text('📝'),
+  2891	                        label: const Text('ดู Raw Data'),
+  2892	                        onPressed: () => _showRawDataModal(context, take),
+  2893	                      ),
+  2894	                      PopupMenuButton<String>(
+  2895	                        icon: const Icon(Icons.more_vert_rounded, size: 20),
+  2896	                        onSelected: (action) async {
+  2897	                          if (action == 'download_audio') {
+  2898	                            if (take['url'] != null &&
+  2899	                                take['url']!.isNotEmpty) {
+  2900	                              await launchUrl(
+  2901	                                Uri.parse(take['url']!),
+  2902	                                mode: LaunchMode.externalApplication,
+  2903	                              );
+  2904	                            } else {
+  2905	                              GlassNotifications.show(
+  2906	                                context,
+  2907	                                'ไม่มีลิงก์สำหรับดาวน์โหลด',
+  2908	                                isError: true,
+  2909	                              );
+  2910	                            }
+  2911	                          } else if (action == 'create_task') {
+  2912	                            final buffer = StringBuffer();
+  2913	                            try {
+  2914	                              final List<dynamic> parsed = jsonDecode(
+  2915	                                take['transcript'] ?? '[]',
+  2916	                              );
+  2917	                              for (final item in parsed) {
+  2918	                                if (item is Map) {
+  2919	                                  final u = SpeakerUtterance.fromJson(
+  2920	                                    Map<String, dynamic>.from(item),
+  2921	                                  );
+  2922	                                  buffer.writeln(
+  2923	                                    '**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_',
+  2924	                                  );
+  2925	                                  buffer.writeln();
+  2926	                                }
+  2927	                              }
+  2928	                            } catch (e) {
+  2929	                              buffer.writeln('Error parsing transcript: $e');
+  2930	                            }
+  2931	                            final transcriptText = buffer.toString();
+  2932	
+  2933	                            final newTask = TaskModel(
+  2934	                              id: const Uuid().v4(),
+  2935	                              boardId: widget.board.id,
+  2936	                              title: 'บันทึกเสียง: ${take['name']}',
+  2937	                              description: transcriptText,
+  2938	                              dueDate: DateTime.now().add(
+  2939	                                const Duration(days: 7),
+  2940	                              ),
+  2941	                              type: widget.board.type,
+  2942	                              status:
+  2943	                                  widget.board.columns.firstOrNull ?? 'todo',
+  2944	                            );
+  2945	                            await Provider.of<StateTasks>(
+  2946	                              context,
+  2947	                              listen: false,
+  2948	                            ).addTask(widget.board, newTask);
+  2949	                            GlassNotifications.show(
+  2950	                              context,
+  2951	                              'สร้างงานใหม่เรียบร้อยแล้ว',
+  2952	                            );
+  2953	                          } else if (action == 'append_notes') {
+  2954	                            final buffer = StringBuffer();
+  2955	                            try {
+  2956	                              final List<dynamic> parsed = jsonDecode(
+  2957	                                take['transcript'] ?? '[]',
+  2958	                              );
+  2959	                              for (final item in parsed) {
+  2960	                                if (item is Map) {
+  2961	                                  final u = SpeakerUtterance.fromJson(
+  2962	                                    Map<String, dynamic>.from(item),
+  2963	                                  );
+  2964	                                  buffer.writeln(
+  2965	                                    '**Speaker ${u.speaker}:** ${u.text} _(${u.timestamp.toLocal().toString().substring(11, 19)})_',
+  2966	                                  );
+  2967	                                  buffer.writeln();
+  2968	                                }
+  2969	                              }
+  2970	                            } catch (e) {
+  2971	                              buffer.writeln('Error parsing transcript: $e');
+  2972	                            }
+  2973	                            final transcriptText = buffer.toString();
+  2974	
+  2975	                            _notesController.text =
+  2976	                                '${_notesController.text}\n\n### Transcript: ${take['name']}\n$transcriptText';
+  2977	                            _scheduleAutoSave();
+  2978	                            GlassNotifications.show(
+  2979	                              context,
+  2980	                              'บันทึกความคืบหน้าเข้าบันทึกประชุมแล้ว',
+  2981	                            );
+  2982	                          } else if (action == 'clear_take_transcript') {
+  2983	                            setState(() {
+  2984	                              take['transcript'] = '[]';
+  2985	                            });
+  2986	                            _scheduleAutoSave();
+  2987	                            GlassNotifications.show(
+  2988	                              context,
+  2989	                              'ล้างข้อมูลทรานสคริปต์ของ Take นี้สำเร็จ',
+  2990	                            );
+  2991	                          } else if (action == 'delete') {
+  2992	                            setState(() {
+  2993	                              _attachments.removeWhere(
+  2994	                                (a) => a['id'] == take['id'],
+  2995	                              );
+  2996	                            });
+  2997	                            _scheduleAutoSave();
+  2998	                            GlassNotifications.show(
+  2999	                              context,
+  3000	                              'ลบไฟล์อัดเสียงสำเร็จ',
+  3001	                            );
+  3002	                          }
+  3003	                        },
+  3004	                        itemBuilder: (BuildContext context) =>
+  3005	                            <PopupMenuEntry<String>>[
+  3006	                              const PopupMenuItem<String>(
+  3007	                                value: 'download_audio',
+  3008	                                child: Row(
+  3009	                                  children: [
+  3010	                                    Icon(Icons.download_rounded, size: 18),
+  3011	                                    SizedBox(width: 8),
+  3012	                                    Text('ดาวน์โหลดไฟล์เสียง'),
+  3013	                                  ],
+  3014	                                ),
+  3015	                              ),
+  3016	                              const PopupMenuItem<String>(
+  3017	                                value: 'create_task',
+  3018	                                child: Row(
+  3019	                                  children: [
+  3020	                                    Icon(Icons.add_task_rounded, size: 18),
+  3021	                                    SizedBox(width: 8),
+  3022	                                    Text('สร้างบันทึก/งานใหม่'),
+  3023	                                  ],
+  3024	                                ),
+  3025	                              ),
+  3026	                              const PopupMenuItem<String>(
+  3027	                                value: 'append_notes',
+  3028	                                child: Row(
+  3029	                                  children: [
+  3030	                                    Icon(Icons.note_add_rounded, size: 18),
+  3031	                                    SizedBox(width: 8),
+  3032	                                    Text('เขียนลงบันทึกประชุม (Append)'),
+  3033	                                  ],
+  3034	                                ),
+  3035	                              ),
+  3036	                              const PopupMenuItem<String>(
+  3037	                                value: 'clear_take_transcript',
+  3038	                                child: Row(
+  3039	                                  children: [
+  3040	                                    Icon(Icons.clear_all_rounded, size: 18),
+  3041	                                    SizedBox(width: 8),
+  3042	                                    Text('ล้างทรานสคริปต์ของ Take นี้'),
+  3043	                                  ],
+  3044	                                ),
+  3045	                              ),
+  3046	                              const PopupMenuDivider(),
+  3047	                              const PopupMenuItem<String>(
+  3048	                                value: 'delete',
+  3049	                                child: Row(
+  3050	                                  children: [
+  3051	                                    Icon(
+  3052	                                      Icons.delete_outline_rounded,
+  3053	                                      color: Colors.redAccent,
+  3054	                                      size: 18,
+  3055	                                    ),
+  3056	                                    SizedBox(width: 8),
+  3057	                                    Text(
+  3058	                                      'ลบไฟล์อัดเสียงนี้',
+  3059	                                      style: TextStyle(color: Colors.redAccent),
+  3060	                                    ),
+  3061	                                  ],
+  3062	                                ),
+  3063	                              ),
+  3064	                            ],
+  3065	                      ),
+  3066	                    ],
+  3067	                  ),
+  3068	
+  3069	                ],
+  3070	              ),
+  3071	            );
+  3072	          },
+  3073	        ),
+  3074	      ],
+  3075	    );
+  3076	  }

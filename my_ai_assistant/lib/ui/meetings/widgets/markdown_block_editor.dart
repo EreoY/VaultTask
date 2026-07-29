@@ -192,7 +192,7 @@ List<MarkdownBlock> parseMarkdownToBlocks(String markdown) {
 String serializeBlocksToMarkdown(List<MarkdownBlock> blocks) {
   int numberedIndex = 1;
   return blocks.map((block) {
-    if (block.type == 'h1' || block.type == 'h2' || block.type == 'paragraph') {
+    if (block.type == 'h1' || block.type == 'h2') {
       numberedIndex = 1;
     }
     switch (block.type) {
@@ -640,7 +640,7 @@ class _MarkdownBlockEditorState extends State<MarkdownBlockEditor> {
           for (int i = index - 1; i >= 0; i--) {
             if (_blocks[i].type == 'numbered') {
               numberedIndex = numberedIndex! + 1;
-            } else if (_blocks[i].type == 'h1' || _blocks[i].type == 'h2' || _blocks[i].type == 'paragraph') {
+            } else if (_blocks[i].type == 'h1' || _blocks[i].type == 'h2') {
               break;
             }
           }

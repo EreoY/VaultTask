@@ -895,50 +895,80 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
                       ),
                     ),
                   )
-                : ScrollbarGutterFrame(
-                    child: ListView.separated(
-                      padding: ScrollbarGutter.reserveRight(EdgeInsets.zero),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => Divider(
-                        color: GlassColors.outlineVariant.withOpacity(0.1),
-                        height: 1,
-                      ),
-                      itemBuilder: (context, index) {
-                        final meeting = filtered[index];
-                        final isSelected = _selectedMeeting?.id == meeting.id;
-                        return InkWell(
-                          onTap: () => _loadMeeting(meeting),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    meeting.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GlassText.bodyMD().copyWith(
-                                      fontWeight: isSelected
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
+                : () {
+                    final grouped = _groupMeetingsByDate(filtered);
+                    return ScrollbarGutterFrame(
+                      child: ListView.builder(
+                        padding: ScrollbarGutter.reserveRight(EdgeInsets.zero),
+                        itemCount: grouped.length,
+                        itemBuilder: (context, groupIndex) {
+                          final group = grouped[groupIndex];
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  top: groupIndex == 0 ? 4 : 14,
+                                  bottom: 6,
+                                ),
+                                child: Text(
+                                  group.label,
+                                  style: GlassText.secondary().copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: GlassColors.onSurfaceVariant
+                                        .withOpacity(0.7),
+                                  ),
+                                ),
+                              ),
+                              ...group.meetings.map((meeting) {
+                                final isSelected =
+                                    _selectedMeeting?.id == meeting.id;
+                                return InkWell(
+                                  onTap: () => _loadMeeting(meeting),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            meeting.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GlassText.bodyMD().copyWith(
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          DateFormat('h:mm a')
+                                              .format(meeting.startAt),
+                                          style: GlassText.bodyMD().copyWith(
+                                            color: GlassColors.onSurfaceVariant
+                                                .withOpacity(0.58),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                );
+                              }),
+                              if (groupIndex < grouped.length - 1)
+                                Divider(
+                                  color: GlassColors.outlineVariant
+                                      .withOpacity(0.1),
+                                  height: 1,
                                 ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  DateFormat('MMM d').format(meeting.startAt),
-                                  style: GlassText.bodyMD().copyWith(
-                                    color: GlassColors.onSurfaceVariant
-                                        .withOpacity(0.58),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                            ],
+                          );
+                        },
+                      ),
+                    );
+                  }(),
           ),
         ],
       ),
@@ -3033,6 +3063,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
   Future<void> _handleAiSummarize() async {
     if (_selectedMeeting == null) return;
+    final meeting = _selectedMeeting!;
 
     final recordingTakes = _attachments
         .where((a) => a['type'] == 'recording')
@@ -3050,12 +3081,12 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
         notesText: _notesController.text,
         mainTranscriptText: _sttService.utterances.isNotEmpty
             ? _sttService.getFormattedTranscript()
-            : _selectedMeeting!.transcript,
+            : meeting.transcript,
         recordingTakes: recordingTakes,
         fileAttachments: fileAttachments
             .map((e) => Map<String, dynamic>.from(e))
             .toList(),
-        targetId: 'meeting_${_selectedMeeting!.id}',
+        targetId: 'meeting_${meeting.id}',
         initialSummary: _descriptionController.text,
       ),
     );
@@ -3122,4 +3153,47 @@ class __PulsingRecordDotState extends State<_PulsingRecordDot>
       },
     );
   }
+}
+
+class _MeetingDateGroup {
+  final String label;
+  final List<MeetingModel> meetings;
+
+  const _MeetingDateGroup({
+    required this.label,
+    required this.meetings,
+  });
+}
+
+List<_MeetingDateGroup> _groupMeetingsByDate(List<MeetingModel> meetings) {
+  final sorted = List<MeetingModel>.from(meetings);
+  sorted.sort((a, b) => b.startAt.compareTo(a.startAt));
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = DateTime(now.year, now.month, now.day - 1);
+
+  final groups = <DateTime, List<MeetingModel>>{};
+  final order = <DateTime>[];
+
+  for (final m in sorted) {
+    final date = DateTime(m.startAt.year, m.startAt.month, m.startAt.day);
+    if (!groups.containsKey(date)) {
+      groups[date] = [];
+      order.add(date);
+    }
+    groups[date]!.add(m);
+  }
+
+  return order.map((date) {
+    late final String label;
+    if (date == today) {
+      label = 'Today (${DateFormat('d MMM').format(date)})';
+    } else if (date == yesterday) {
+      label = 'Yesterday (${DateFormat('d MMM').format(date)})';
+    } else {
+      label = DateFormat('EEEE, d MMM yyyy').format(date);
+    }
+    return _MeetingDateGroup(label: label, meetings: groups[date]!);
+  }).toList();
 }

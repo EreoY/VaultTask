@@ -1356,6 +1356,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
 
   Future<void> _handleAiSummarize() async {
     if (_selectedDocument == null) return;
+    final doc = _selectedDocument!;
 
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
@@ -1369,7 +1370,7 @@ class _DocsBoardSheetState extends State<DocsBoardSheet> {
         fileAttachments: _attachments
             .map((e) => Map<String, dynamic>.from(e))
             .toList(),
-        targetId: 'doc_${_selectedDocument!.id}',
+        targetId: 'doc_${doc.id}',
         initialSummary: _summaryController.text,
       ),
     );

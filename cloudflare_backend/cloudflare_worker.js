@@ -78,6 +78,19 @@ async function ensureSchema(db) {
     `).run();
 
     await db.prepare(`
+      CREATE TABLE IF NOT EXISTS meeting_interval_cards (
+        id TEXT PRIMARY KEY,
+        meeting_id TEXT NOT NULL,
+        audio_id TEXT,
+        start_seconds INTEGER DEFAULT 0,
+        end_seconds INTEGER DEFAULT 0,
+        raw_transcript TEXT DEFAULT '',
+        interval_summary TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    await db.prepare(`
       CREATE TABLE IF NOT EXISTS team_documents (
         id TEXT PRIMARY KEY,
         board_id TEXT NOT NULL,
@@ -1282,6 +1295,44 @@ export default {
           .bind(id)
           .run();
         return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/meetings/interval-cards" && request.method === "POST") {
+      try {
+        const { id, meeting_id, audio_id, start_seconds, end_seconds, raw_transcript, interval_summary } = await request.json();
+        if (!id || !meeting_id) return json({ error: "Missing id or meeting_id" }, 400);
+        
+        await env.DB.prepare(
+          `INSERT INTO meeting_interval_cards (id, meeting_id, audio_id, start_seconds, end_seconds, raw_transcript, interval_summary)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET 
+             audio_id=excluded.audio_id,
+             start_seconds=excluded.start_seconds,
+             end_seconds=excluded.end_seconds,
+             raw_transcript=excluded.raw_transcript,
+             interval_summary=excluded.interval_summary`
+        ).bind(
+          id, meeting_id, audio_id || "", start_seconds || 0, end_seconds || 0, raw_transcript || "", interval_summary || ""
+        ).run();
+        
+        return json({ success: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    if (url.pathname.match(/^\/api\/meetings\/[^\/]+\/interval-cards$/) && request.method === "GET") {
+      try {
+        const meeting_id = url.pathname.split("/")[3];
+        if (!meeting_id) return json({ error: "Missing meeting_id" }, 400);
+        
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM meeting_interval_cards WHERE meeting_id = ? ORDER BY start_seconds ASC`
+        ).bind(meeting_id).all();
+        return json(results);
       } catch (err) {
         return json({ error: err.message }, 500);
       }

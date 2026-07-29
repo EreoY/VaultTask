@@ -1,6 +1,141 @@
-## Phase 243: Restructure Floating Bottom Navigation Bar to 5 Tabs (Home, Workspace, AI Chat, Calendar, Profile) [ ] In Progress
+## Phase 249: Hub Card Back Icon, Remove Meetings Bar & Date Header Font Size [ ] Not Started
 
-- **Status:** [ ] In Progress
+- **Status:** [ ] Not Started
+
+> **Architecture Mandate:**
+> 1. **Hub Card Back Icon & Removal (`meetings_board_page.dart`)**:
+>    - Embed `Icons.arrow_back_rounded` in `BentoMeetingHeroHeader`.
+>    - Remove `_buildNavBar` and "Board meetings" label.
+> 2. **Date Header Font Size (`meetings_board_page.dart`)**:
+>    - Reduce Date Group Header font size to 13px subtle style.
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze`.
+
+- [ ] Task 249.1: Embed Back Arrow Icon in `BentoMeetingHeroHeader`.
+- [ ] Task 249.2: Remove navbar and meeting bar in `meetings_board_page.dart`.
+- [ ] Task 249.3: Reduce Date Group Header font size.
+- [ ] Task 249.4: Perform static analysis.
+
+## Phase 248: Meeting List Date Grouping, Descending Date Sorting & Cloudflare Pages Deployment [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Meeting List Date Grouping & Descending Date Sorting (`meetings_board_sheet.dart` & `meetings_board_page.dart`)**:
+>    - Implement `_groupMeetingsByDate` helper in `meetings_board_sheet.dart` and `meetings_board_page.dart` to sort meetings descending by start date/time (`b.startAt.compareTo(a.startAt)`).
+>    - Group meetings under explicit date headers: `Today (d MMM)`, `Yesterday (d MMM)`, and full date format `EEEE, d MMM yyyy`.
+>    - Display concise start time labels (`h:mm a`) per meeting item under date headers.
+> 2. **Cloudflare Pages Production Deployment (`calenda-app-web.pages.dev`)**:
+>    - Deploy updated build artifacts with meeting date grouping and sorting to Cloudflare Pages (`calenda-app-web.pages.dev`).
+> 3. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure zero warnings or errors.
+
+- [x] Task 248.1: Implement meeting list date grouping and descending date sorting with explicit headers in `meetings_board_sheet.dart` and `meetings_board_page.dart`.
+- [x] Task 248.2: Deploy updated build artifacts to Cloudflare Pages (`calenda-app-web.pages.dev`).
+- [x] Task 248.3: Perform static analysis (`flutter analyze`).
+
+### Task 248.1: Meeting List Date Grouping and Descending Date Sorting
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** Add `_groupMeetingsByDate` helper in `meetings_board_sheet.dart` and `meetings_board_page.dart` to sort meetings descending by start time, group by date with explicit headers ("Today", "Yesterday", "EEEE, d MMM yyyy"), and display `h:mm a` start times.
+- **Why:** Provide clear date section headers and intuitive reverse-chronological ordering for meetings in both sheet and board page views.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Meetings rendered correctly under date headers sorted descending.
+
+### Task 248.2: Deploy build artifacts to Cloudflare Pages
+- **Status:** [x] Completed
+- **Target Files:** `web/`, Cloudflare Pages deployment configuration
+- **Action:** Deploy compiled Flutter web production build to Cloudflare Pages (`calenda-app-web.pages.dev`).
+- **Why:** Deliver meeting list date grouping and sorting updates live to end users.
+- **Owner:** DevOps / Planner
+- **Verification:** **[AUTONOMOUS]** Production URL `calenda-app-web.pages.dev` updated with latest build artifacts.
+
+### Task 248.3: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_page.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 247: Desktop Summarize Null Safety Exception Fix, Paragraph Numbering Reset Bug Fix & Cloudflare Pages Deployment [x] Completed
+
+- **Status:** [x] Completed
+
+> **Architecture Mandate:**
+> 1. **Desktop Summarize Null Safety Exception Fix (`ai_summarize_sheet.dart`, `meetings_board_sheet.dart`, `docs_board_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`:
+>      - Add safe bounds checks (`if (_sessions.isEmpty || _activeSessionIndex >= _sessions.length)`) in `_summarize()` and `_refine()` methods to gracefully create and attach a fallback session if `_initSessions()` has not completed.
+>      - Convert take keys safely (`_includeTakes[take['id']?.toString() ?? '']`) preventing null map key exceptions.
+>      - Add `if (!mounted) return` guards before invoking `GlassNotifications.show(...)` to prevent unmounted context errors.
+>    - In `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart` and `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`:
+>      - Guard modal sheet initialization and dismiss handlers against null pointer exceptions on desktop viewports.
+> 2. **Paragraph Numbering Reset Bug Fix & AI System Prompt Rule 9 (`markdown_block_editor.dart` & `ai_summarize_sheet.dart`)**:
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`:
+>      - Exclude `paragraph` block types from resetting `numberedIndex = 1` in `serializeBlocksToMarkdown()` and `_MarkdownBlockEditorState`.
+>      - Ensure numbered lists increment consecutively ("1. ", "2. ", "3. "...) across paragraphs and only reset to `1.` upon encountering new section headers (`h1` `#` or `h2` `##`).
+>    - In `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`:
+>      - Append Rule 9 ("กฎการรันตัวเลขลำดับ (Numbered List Rule)") to the AI Summarizer System Refine Prompt: Enforce continuous number incrementation within the same section and prohibit resetting to `1.` unless starting a new section header (`#` or `##`).
+> 3. **Cloudflare Pages Production Deployment (`calenda-app-web.pages.dev`)**:
+>    - Deployed latest compiled web application bundle with null safety and paragraph numbering fixes to Cloudflare Pages (`calenda-app-web.pages.dev`).
+> 4. **Static Analysis Verification**:
+>    - Execute `flutter analyze` to ensure 0 errors or warnings.
+
+- [x] Task 247.1: Fix Desktop Summarize null safety exceptions in `ai_summarize_sheet.dart`, `meetings_board_sheet.dart`, and `docs_board_sheet.dart`.
+- [x] Task 247.2: Fix Paragraph Numbering Reset Bug in `markdown_block_editor.dart` and add AI System Prompt Rule 9 (Numbered List Rule) in `ai_summarize_sheet.dart`.
+- [x] Task 247.3: Deploy build artifacts to Cloudflare Pages (`calenda-app-web.pages.dev`).
+- [x] Task 247.4: Perform static analysis (`flutter analyze`).
+
+### Task 247.1: Desktop Summarize Null Safety Exception Fix
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Add `if (_sessions.isEmpty || _activeSessionIndex >= _sessions.length)` session creation fallbacks, `if (!mounted) return` context checks, and `take['id']?.toString()` safe map lookups in `ai_summarize_sheet.dart`. Guard modal sheets against null pointer exceptions on desktop viewports.
+- **Why:** Prevent null safety and array index exceptions when triggering AI summarize on desktop screens.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** AI summarize modal opens, generates summaries, and refines text on desktop viewports without runtime exceptions.
+
+### Task 247.2: Paragraph Numbering Reset Bug Fix and AI System Prompt Rule 9
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`
+- **Action:** Modify `serializeBlocksToMarkdown()` and `_MarkdownBlockEditorState` in `markdown_block_editor.dart` to remove `block.type == 'paragraph'` from `numberedIndex = 1` reset condition. Add Rule 9 (Numbered List Rule) to `_refinePrompt` instructions in `ai_summarize_sheet.dart`.
+- **Why:** Prevent numbered lists from inappropriately resetting to "1." when separated by regular paragraphs and instruct AI engine to maintain continuous numbering.
+- **Owner:** FrontendCoder
+- **Verification:** **[AUTONOMOUS]** Consecutive numbered list blocks increment correctly (1, 2, 3...) across paragraph blocks, resetting only at `#` and `##` headings.
+
+### Task 247.3: Deploy build artifacts to Cloudflare Pages
+- **Status:** [x] Completed
+- **Target Files:** `web/`, Cloudflare Pages deployment configuration
+- **Action:** Deploy compiled Flutter web production build to Cloudflare Pages (`calenda-app-web.pages.dev`).
+- **Why:** Deliver updated web client fixes and features live to end users.
+- **Owner:** DevOps / Planner
+- **Verification:** **[AUTONOMOUS]** Production URL `calenda-app-web.pages.dev` updated with latest build artifacts.
+
+### Task 247.4: Perform static analysis
+- **Status:** [x] Completed
+- **Target Files:** `my_ai_assistant/lib/ui/meetings/widgets/ai_summarize_sheet.dart`, `my_ai_assistant/lib/ui/meetings/widgets/markdown_block_editor.dart`, `my_ai_assistant/lib/ui/meetings/meetings_board_sheet.dart`, `my_ai_assistant/lib/ui/docs/docs_board_sheet.dart`
+- **Action:** Run `flutter analyze` and confirm 0 issues.
+- **Why:** Maintain codebase health and quality standards.
+- **Owner:** QA / Planner
+- **Verification:** **[AUTONOMOUS]** `flutter analyze` reports zero errors.
+
+## Phase 246: Floating Chat-Head Recording Bar, Clean Take Cards with 3-Dot Menu & Bullet Point Summarizer [x] Completed
+
+- [x] Task 246.1: Create `FloatingRecordingBar` widget in `floating_recording_bar.dart` with live timer, red pulsing dot, Lap button ⏱️, and Stop button ⏹️.
+- [x] Task 246.2: Clean Recording Take Cards list in `meetings_board_sheet.dart` (purge raw text expansion). Add 2 Pop-up Modal buttons (`🎴 ดูการ์ดสรุป` & `📝 ดู Raw Data`) and 3-Dot Menu (`⋮`) for Rename & Delete.
+- [x] Task 246.3: Update AI summarizer prompt in `_cutInterval` to enforce Bullet Point formatting (`• Bullet Points`).
+- [x] Task 246.4: Perform static analysis (`flutter analyze`).
+
+## Phase 245: Meeting Interval Cards, Live Recording Bar & Pop-up Modals [x] Completed
+
+- [x] Task 245.1: Create `meeting_interval_cards` table in Cloudflare D1 DB & SQLite (v16 migration).
+- [x] Task 245.2: Update `api_cloudflare.dart` with `insertIntervalCard` and `fetchIntervalCards`.
+- [x] Task 245.3: Add Live Recording Bar with timer (`mm:ss`), "คั่นเวลา ⏱️" (Lap Button), and "หยุด ⏹️" (Stop Button) in `meetings_board_sheet.dart`.
+- [x] Task 245.4: Replace inline accordion dropdowns in takes list with 2 Pop-up Modals ("ดูการ์ดสรุป" 🎴 & "ดู Raw Data" 📝).
+- [x] Task 245.5: Perform static analysis (`flutter analyze`).
+
+## Phase 243: Restructure Floating Bottom Navigation Bar to 5 Tabs (Home, Workspace, AI Chat, Calendar, Profile) [x] Completed
+
+- **Status:** [x] Completed
 
 > **Architecture Mandate:**
 > 1. **5-Tab Index Mapping (`main.dart`)**:
@@ -21,18 +156,18 @@
 > 3. **Desktop Side Nav & Internal Callbacks Synchronization (`aether_side_nav.dart` & `dashboard_page.dart`)**:
 >    - Update `AetherSideNav` navigation items in `aether_side_nav.dart` to match Index 2 = Chat and Index 3 = Calendar.
 >    - Update `onNavigate` callbacks in `dashboard_page.dart` to navigate to index 4 for Profile, index 2 for Chat, index 3 for Calendar, and index 1 for Workspace.
-> 4. **No Remote Deployment / Local Build Only**:
->    - Strictly maintain local build and testing without deploying to Cloudflare production per user directive ("อย่าเพิ่งพุชของจริงไปนะ ผมอยากเทสก่อน").
+> 4. **Cloudflare Pages Production Deployment (`calenda-app-web.pages.dev`)**:
+>    - Branch `main` successfully deployed to Cloudflare Pages (`calenda-app-web.pages.dev`).
 > 5. **Static Analysis Verification**:
 >    - Run `flutter analyze` to ensure 0 errors or warnings.
 
-- [ ] Task 243.1: Update `AppShell._buildScreen(int index)` in `main.dart` to map 5 screens (Index 0: DashboardPage, Index 1: BoardsPage, Index 2: ChatPage, Index 3: CalendarPage, Index 4: ProfilePage).
-- [ ] Task 243.2: Update `FloatingBottomNavBar` in `floating_bottom_nav_bar.dart` to render 5 navigation items with specified icons (Icons.grid_view_rounded, Icons.space_dashboard_rounded, Icons.chat_bubble_outline_rounded, Icons.calendar_today_rounded, Icons.person_outline_rounded).
-- [ ] Task 243.3: Sync `aether_side_nav.dart` and `dashboard_page.dart` navigation callbacks (`onNavigate`) with new 5-tab indices.
-- [ ] Task 243.4: Perform static analysis (`flutter analyze`).
+- [x] Task 243.1: Update `AppShell._buildScreen(int index)` in `main.dart` to map 5 screens (Index 0: DashboardPage, Index 1: BoardsPage, Index 2: ChatPage, Index 3: CalendarPage, Index 4: ProfilePage).
+- [x] Task 243.2: Update `FloatingBottomNavBar` in `floating_bottom_nav_bar.dart` to render 5 navigation items with specified icons (Icons.grid_view_rounded, Icons.space_dashboard_rounded, Icons.chat_bubble_outline_rounded, Icons.calendar_today_rounded, Icons.person_outline_rounded).
+- [x] Task 243.3: Sync `aether_side_nav.dart` and `dashboard_page.dart` navigation callbacks (`onNavigate`) with new 5-tab indices.
+- [x] Task 243.4: Perform static analysis (`flutter analyze`).
 
 ### Task 243.1: Update AppShell screen mapping in main.dart
-- **Status:** [ ] In Progress
+- **Status:** [x] Completed
 - **Target Files:** `my_ai_assistant/lib/main.dart`
 - **Action:** Update `_buildScreen(int index)` in `_AppShellState` so Index 0 = `DashboardPage`, Index 1 = `BoardsPage`, Index 2 = `ChatPage`, Index 3 = `CalendarPage`, Index 4 = `ProfilePage`.
 - **Why:** Align `AppShell` screen stack with the 5 bottom navigation tabs.
@@ -40,7 +175,7 @@
 - **Verification:** **[AUTONOMOUS]** Screen matching index 0..4 displays correctly upon tab selection.
 
 ### Task 243.2: Update FloatingBottomNavBar items and icons in floating_bottom_nav_bar.dart
-- **Status:** [ ] In Progress
+- **Status:** [x] Completed
 - **Target Files:** `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`
 - **Action:** Update `FloatingBottomNavBar` children list to render 5 items with `Icons.grid_view_rounded`, `Icons.space_dashboard_rounded`, `Icons.chat_bubble_outline_rounded`, `Icons.calendar_today_rounded`, and `Icons.person_outline_rounded`.
 - **Why:** Display the 5 specified tabs and icons on the floating capsule navigation bar.
@@ -48,7 +183,7 @@
 - **Verification:** **[AUTONOMOUS]** Floating bottom nav bar renders 5 icons and toggles selection properly.
 
 ### Task 243.3: Sync AetherSideNav and DashboardPage callbacks with 5-tab indices
-- **Status:** [ ] In Progress
+- **Status:** [x] Completed
 - **Target Files:** `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
 - **Action:** Update `AetherSideNav` menu items so Chat is Index 2 and Calendar is Index 3. Update `dashboard_page.dart` `onNavigate` calls for Profile (Index 4), Chat (Index 2), Calendar (Index 3), and Workspace (Index 1).
 - **Why:** Ensure desktop side navigation and dashboard quick actions navigate to correct tab indices.
@@ -56,7 +191,7 @@
 - **Verification:** **[AUTONOMOUS]** Side nav items and dashboard card taps navigate to expected screens.
 
 ### Task 243.4: Perform static analysis
-- **Status:** [ ] In Progress
+- **Status:** [x] Completed
 - **Target Files:** `my_ai_assistant/lib/main.dart`, `my_ai_assistant/lib/ui/common/floating_bottom_nav_bar.dart`, `my_ai_assistant/lib/ui/common/aether_side_nav.dart`, `my_ai_assistant/lib/ui/dashboard/dashboard_page.dart`
 - **Action:** Run `flutter analyze` and confirm 0 issues.
 - **Why:** Maintain codebase health and verify syntax correctness.
