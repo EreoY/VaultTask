@@ -248,9 +248,143 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildToolbar() {
+    final isMobile = Responsive.isMobile(context);
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final allTasks = context.select<StateTasks, List<TaskModel>>(
+      (state) => state.allTasksWithDueDate,
+    );
+    final unscheduledCount = allTasks
+        .where(
+          (t) => t.members.contains(currentUser?.uid) && t.dueDate.year == 1970,
+        )
+        .length;
+
     return SizedBox(
       height: 36,
-      child: Align(alignment: Alignment.centerLeft, child: _buildViewToggle()),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildViewToggle(),
+          if (isMobile) _buildUnscheduledMobileButton(unscheduledCount),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnscheduledMobileButton(int count) {
+    return InkWell(
+      onTap: _showUnscheduledBottomSheet,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: GlassColors.gold.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: GlassColors.gold.withOpacity(0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '📋 งานยังไม่กำหนดวัน',
+              style: GlassText.labelSM().copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: GlassColors.gold,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: GlassColors.gold,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: GlassText.labelSM().copyWith(
+                    color: Colors.black,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUnscheduledBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Consumer3<StateTasks, StateBoards, StateMeetings>(
+          builder: (context, taskState, boardState, meetingState, _) {
+            final currentUser = FirebaseAuth.instance.currentUser;
+            final unscheduledTasks = taskState.allTasksWithDueDate
+                .where(
+                  (t) =>
+                      t.members.contains(currentUser?.uid) &&
+                      t.dueDate.year == 1970,
+                )
+                .toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.70,
+              decoration: BoxDecoration(
+                color: GlassColors.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(ExecutiveRadius.xl),
+                ),
+                border: Border.all(color: GlassColors.ghostBorder),
+              ),
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: GlassColors.onSurfaceVariant.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: UnscheduledTaskBucket(
+                      tasks: unscheduledTasks,
+                      boards: boardState.boards,
+                      workspaces: boardState.workspaces,
+                      onTaskTap: (task) {
+                        Navigator.of(ctx).pop();
+                        _showTaskPreview(
+                          task,
+                          _findBoard(task, boardState.boards),
+                        );
+                      },
+                      onToggleComplete: (task, value) async {
+                        final board = _findBoard(task, boardState.boards);
+                        if (board == null) return;
+                        await context.read<StateTasks>().updateTask(
+                          board,
+                          task.copyWith(isCompleted: value),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -524,6 +658,13 @@ class _CalendarPageState extends State<CalendarPage> {
       onMeetingTap: _showMeetingPreview,
     );
 
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+        child: monthPanel,
+      );
+    }
+
     final bucket = UnscheduledTaskBucket(
       tasks: unscheduledTasks,
       boards: boards,
@@ -540,28 +681,15 @@ class _CalendarPageState extends State<CalendarPage> {
     );
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 48,
-        0,
-        isMobile ? 16 : 48,
-        isMobile ? 160 : 110,
+      padding: const EdgeInsets.fromLTRB(48, 0, 48, 110),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: monthPanel),
+          const SizedBox(width: 24),
+          SizedBox(width: 300, child: bucket),
+        ],
       ),
-      child: isMobile
-          ? Column(
-              children: [
-                Expanded(child: monthPanel),
-                const SizedBox(height: 16),
-                SizedBox(height: 190, child: bucket),
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: monthPanel),
-                const SizedBox(width: 24),
-                SizedBox(width: 300, child: bucket),
-              ],
-            ),
     );
   }
 

@@ -176,6 +176,11 @@ export default {
       }
 
       console.log("Stream-STT: Handshake request received. API Key present:", !!env.DEEPGRAM_API_KEY);
+
+      if (!env.DEEPGRAM_API_KEY) {
+        console.error("Stream-STT: DEEPGRAM_API_KEY is not configured in worker environment.");
+        return new Response("DEEPGRAM_API_KEY is not configured", { status: 500 });
+      }
       
       // Use language=th to transcribe Thai accurately, and enable interim_results and low endpointing for real-time responsiveness using model=nova-3
       const deepgramUrl = "https://api.deepgram.com/v1/listen?model=nova-3&diarize=true&language=th&interim_results=true&endpointing=300";
@@ -185,12 +190,13 @@ export default {
         deepgramResponse = await fetch(deepgramUrl, {
           headers: {
             "Upgrade": "websocket",
-            "Authorization": `Token ${env.DEEPGRAM_API_KEY || ""}`
+            "Authorization": `Token ${env.DEEPGRAM_API_KEY}`
           }
         });
       } catch (err) {
-        console.error("Stream-STT: Fetch to Deepgram failed:", err.message);
-        return new Response("Deepgram handshake fetch failed: " + err.message, { status: 502 });
+        const errMsg = err?.message || (typeof err === "string" ? err : "") || "Unknown fetch error";
+        console.error("Stream-STT: Fetch to Deepgram failed:", errMsg);
+        return new Response("Deepgram handshake fetch failed: " + errMsg, { status: 502 });
       }
 
       console.log("Stream-STT: Deepgram response status:", deepgramResponse.status);
@@ -198,7 +204,7 @@ export default {
       if (deepgramResponse.status !== 101) {
         const errorText = await deepgramResponse.text().catch(() => "No error details");
         console.error("Stream-STT: Deepgram handshake failed with status:", deepgramResponse.status, "body:", errorText);
-        return new Response(`Deepgram handshake failed: ${deepgramResponse.status} - ${errorText}`, { status: 502 });
+        return new Response(`Deepgram handshake failed: ${deepgramResponse.status} - ${errorText || "Unknown status error"}`, { status: 502 });
       }
 
       const deepgramSocket = deepgramResponse.webSocket;
@@ -225,7 +231,7 @@ export default {
         try {
           serverSocket.close(validCode, reason || "");
         } catch (e) {
-          console.warn("Stream-STT: Error closing serverSocket:", e.message);
+          console.warn("Stream-STT: Error closing serverSocket:", e?.message || String(e));
         }
       };
 
@@ -236,7 +242,7 @@ export default {
         try {
           deepgramSocket.close(validCode, reason || "");
         } catch (e) {
-          console.warn("Stream-STT: Error closing deepgramSocket:", e.message);
+          console.warn("Stream-STT: Error closing deepgramSocket:", e?.message || String(e));
         }
       };
 
@@ -254,8 +260,9 @@ export default {
           try {
             deepgramSocket.send(event.data);
           } catch (err) {
-            console.error("Stream-STT: Failed to send data to Deepgram:", err.message);
-            safeCloseDeepgram(1011, "Send failed");
+            const errMsg = err?.message || String(err) || "Failed to send audio data to Deepgram";
+            console.error("Stream-STT: Failed to send data to Deepgram:", errMsg);
+            safeCloseDeepgram(1011, "Send failed: " + errMsg);
           }
         }
       };
@@ -265,8 +272,9 @@ export default {
           try {
             serverSocket.send(event.data);
           } catch (err) {
-            console.error("Stream-STT: Failed to send data to client:", err.message);
-            safeCloseClient(1011, "Send failed");
+            const errMsg = err?.message || String(err) || "Failed to send data to client";
+            console.error("Stream-STT: Failed to send data to client:", errMsg);
+            safeCloseClient(1011, "Send failed: " + errMsg);
           }
         }
       };
@@ -280,7 +288,7 @@ export default {
           serverSocket.removeEventListener("error", onClientError);
           deepgramSocket.removeEventListener("error", onDeepgramError);
         } catch (e) {
-          console.error("Stream-STT: Error during listener cleanup:", e);
+          console.error("Stream-STT: Error during listener cleanup:", e?.message || String(e));
         }
       };
       
@@ -299,22 +307,24 @@ export default {
       };
       
       const onClientError = (err) => {
-        console.error("Stream-STT: Client WebSocket error:", err);
+        const errMsg = err?.message || (typeof err === "string" ? err : "") || "Client WebSocket connection error";
+        console.error("Stream-STT: Client WebSocket error:", errMsg);
         cleanup();
-        safeCloseClient(1011, "Client error");
-        safeCloseDeepgram(1011, "Client error");
+        safeCloseClient(1011, errMsg);
+        safeCloseDeepgram(1011, errMsg);
       };
       
       const onDeepgramError = (err) => {
-        console.error("Stream-STT: Deepgram WebSocket error:", err);
+        const errMsg = err?.message || (typeof err === "string" ? err : "") || "Deepgram WebSocket connection error";
+        console.error("Stream-STT: Deepgram WebSocket error:", errMsg);
         try {
           if (!clientClosed) {
-            serverSocket.send(JSON.stringify({ error: "Deepgram error: " + (err.message || "Unknown error") }));
+            serverSocket.send(JSON.stringify({ error: "Deepgram error: " + errMsg }));
           }
         } catch(e) {}
         cleanup();
-        safeCloseClient(1011, "Deepgram error");
-        safeCloseDeepgram(1011, "Deepgram error");
+        safeCloseClient(1011, "Deepgram error: " + errMsg);
+        safeCloseDeepgram(1011, "Deepgram error: " + errMsg);
       };
 
       serverSocket.addEventListener("message", onClientMessage);
@@ -628,6 +638,7 @@ export default {
         )
           .bind(uid, `%${uid}%`, uid, `%${uid}%`)
           .all();
+
         return json(results);
       } catch (err) {
         return json({ error: err.message }, 500);

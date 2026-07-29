@@ -2,11 +2,33 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnvConfig {
+  /// Checks if a given host is localhost, local domain, or an IP address (including local/VPN IPs like 100.110.113.23).
+  static bool _isLocalOrIpHost(String host) {
+    if (host.isEmpty) return false;
+    if (host == 'localhost' ||
+        host == '127.0.0.1' ||
+        host.endsWith('.local') ||
+        host.endsWith('.lan') ||
+        host.endsWith('.internal')) {
+      return true;
+    }
+    // Check IPv4 address pattern (e.g. 100.110.113.23, 192.168.x.x, 10.x.x.x)
+    final ipv4Regex = RegExp(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$');
+    if (ipv4Regex.hasMatch(host)) {
+      return true;
+    }
+    // Check IPv6 address pattern
+    if (host.contains(':')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Toggle this to switch between local Wrangler backend and production.
   static bool get useLocalBackend {
     if (kIsWeb) {
       final host = Uri.base.host;
-      if (host != 'localhost' && host != '127.0.0.1') {
+      if (!_isLocalOrIpHost(host)) {
         return false;
       }
     }
@@ -20,7 +42,10 @@ class EnvConfig {
   /// Retrieves the backend URL based on the environment and target platform.
   static String get backendUrl {
     if (useLocalBackend) {
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      if (kIsWeb) {
+        return 'http://${Uri.base.host}:8787';
+      }
+      if (defaultTargetPlatform == TargetPlatform.android) {
         return dotenv.get('LOCAL_BACKEND_URL_ANDROID', fallback: 'http://10.0.2.2:8787');
       }
       return dotenv.get('LOCAL_BACKEND_URL_DEFAULT', fallback: 'http://localhost:8787');
@@ -58,6 +83,10 @@ class EnvConfig {
     if (url.startsWith('https://localhost') || 
         url.startsWith('https://127.0.0.1') || 
         url.startsWith('https://10.0.2.2')) {
+      return url.replaceFirst('https://', 'http://');
+    }
+    final uri = Uri.tryParse(url);
+    if (uri != null && uri.scheme == 'https' && _isLocalOrIpHost(uri.host)) {
       return url.replaceFirst('https://', 'http://');
     }
     return url;

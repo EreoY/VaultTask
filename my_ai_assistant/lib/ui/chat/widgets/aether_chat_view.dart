@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../state_managers/state_chat.dart';
@@ -31,6 +30,7 @@ class _AetherChatViewState extends State<AetherChatView> {
   StreamSubscription? _uploadErrorSub;
   StreamSubscription? _uploadSuccessSub;
   bool _isNavBarVisible = true;
+  double _accumulatedScrollDelta = 0.0;
 
   @override
   void dispose() {
@@ -104,12 +104,38 @@ class _AetherChatViewState extends State<AetherChatView> {
           child: Column(
             children: [
               Expanded(
-                child: NotificationListener<UserScrollNotification>(
+                child: NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
-                    if (notification.direction == ScrollDirection.reverse) {
-                      if (_isNavBarVisible) setState(() => _isNavBarVisible = false);
-                    } else if (notification.direction == ScrollDirection.forward) {
-                      if (!_isNavBarVisible) setState(() => _isNavBarVisible = true);
+                    final metrics = notification.metrics;
+                    if (metrics.pixels <= 50) {
+                      _accumulatedScrollDelta = 0.0;
+                      if (!_isNavBarVisible) {
+                        setState(() => _isNavBarVisible = true);
+                      }
+                      return false;
+                    }
+
+                    if (notification is ScrollUpdateNotification) {
+                      final delta = notification.scrollDelta;
+                      if (delta != null) {
+                        if ((delta > 0 && _accumulatedScrollDelta < 0) ||
+                            (delta < 0 && _accumulatedScrollDelta > 0)) {
+                          _accumulatedScrollDelta = 0.0;
+                        }
+                        _accumulatedScrollDelta += delta;
+
+                        if (_accumulatedScrollDelta >= 45.0) {
+                          if (_isNavBarVisible) {
+                            setState(() => _isNavBarVisible = false);
+                          }
+                          _accumulatedScrollDelta = 0.0;
+                        } else if (_accumulatedScrollDelta <= -25.0) {
+                          if (!_isNavBarVisible) {
+                            setState(() => _isNavBarVisible = true);
+                          }
+                          _accumulatedScrollDelta = 0.0;
+                        }
+                      }
                     }
                     return false;
                   },

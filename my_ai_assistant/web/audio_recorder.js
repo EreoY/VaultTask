@@ -70,7 +70,8 @@
             }
             if (!includeMic) {
               if (micStream) micStream.getTracks().forEach(t => t.stop());
-              if (onError) onError("Failed to capture system audio: " + e.message);
+              const detail = (e && e.message) ? e.message : (e && e.name) ? e.name : (e ? String(e) : "Unknown error");
+              if (onError) onError("Failed to capture system audio: " + detail);
               return;
             }
           }
@@ -162,13 +163,15 @@
 
         socket.onerror = (err) => {
           console.error("STT WebSocket error:", err);
-          if (onError) onError("WebSocket error: " + err.message);
+          const detail = (err && err.message) ? err.message : (err && err.type) ? err.type : "Handshake failed or network issue";
+          if (onError) onError("WebSocket connection error: " + detail);
         };
 
       } catch (err) {
         console.error("Failed to start audio recording:", err);
         this.stop();
-        if (onError) onError(err.message || err.toString());
+        const detail = (err && err.message) ? err.message : (err && err.name) ? err.name : (err ? err.toString() : "Unknown error");
+        if (onError) onError(detail);
       }
     },
 

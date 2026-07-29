@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,30 +33,48 @@ class ApiCloudflare {
 
   static Future<BoardModel> getBoardById(String id) async {
     final url = '$_base/api/boards?id=$id';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      return BoardModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } else {
-      throw Exception('Failed to get board: ${response.body}');
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return BoardModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to get board: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Get board timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<List<BoardModel>> getBoards(String uid) async {
     final url = '$_base/api/boards?uid=$uid';
     debugPrint('DEBUG GET $url');
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is! List) return [];
-      return data
-          .map((j) => BoardModel.fromJson(j as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception(
-        'Failed to get boards: ${response.statusCode} - ${response.body}',
-      );
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is! List) return [];
+        return data
+            .map((j) => BoardModel.fromJson(j as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(
+          'Failed to get boards: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } on TimeoutException {
+      debugPrint('getBoards timed out');
+      return [];
+    } catch (e) {
+      debugPrint('getBoards error: $e');
+      return [];
     }
   }
 
@@ -63,80 +82,120 @@ class ApiCloudflare {
     final id = board.id.isEmpty
         ? '${DateTime.now().millisecondsSinceEpoch}'
         : board.id;
-    final response = await http.post(
-      Uri.parse('$_base/api/boards'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': id,
-        'owner_uid': ownerUid,
-        'name': board.name,
-        'color': board.color,
-        'members': board.members,
-        'member_roles': board.memberRoles,
-        'columns': board.columns,
-        'labels': board.labels,
-        'workspace_id': board.workspaceId,
-      }),
-    );
-    if (response.statusCode != 201) {
-      debugPrint('INSERT BOARD ERROR: ${response.body}');
-      throw Exception('Failed to create board: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/boards'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': id,
+              'owner_uid': ownerUid,
+              'name': board.name,
+              'color': board.color,
+              'members': board.members,
+              'member_roles': board.memberRoles,
+              'columns': board.columns,
+              'labels': board.labels,
+              'workspace_id': board.workspaceId,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 201) {
+        debugPrint('INSERT BOARD ERROR: ${response.body}');
+        throw Exception('Failed to create board: ${response.body}');
+      }
+      return id;
+    } on TimeoutException {
+      throw Exception('Insert board timed out');
+    } catch (e) {
+      rethrow;
     }
-    return id;
   }
 
   static Future<void> updateBoard(BoardModel board) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/boards'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': board.id,
-        'name': board.name,
-        'color': board.color,
-        'members': board.members,
-        'member_roles': board.memberRoles,
-        'columns': board.columns,
-        'labels': board.labels,
-        'workspace_id': board.workspaceId,
-      }),
-    );
-    if (response.statusCode != 200) {
-      debugPrint('UPDATE BOARD ERROR: ${response.body}');
-      throw Exception('Failed to update board: ${response.body}');
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/boards'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': board.id,
+              'name': board.name,
+              'color': board.color,
+              'members': board.members,
+              'member_roles': board.memberRoles,
+              'columns': board.columns,
+              'labels': board.labels,
+              'workspace_id': board.workspaceId,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        debugPrint('UPDATE BOARD ERROR: ${response.body}');
+        throw Exception('Failed to update board: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Update board timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<void> deleteBoard(String boardId) async {
-    final response = await http.delete(
-      Uri.parse('$_base/api/boards?id=$boardId'),
-      headers: _headers,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete board: ${response.body}');
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_base/api/boards?id=$boardId'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete board: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Delete board timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<BoardModel> joinBoard(String uid, String boardId) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/boards_join'),
-      headers: _headers,
-      body: jsonEncode({'id': boardId, 'uid': uid}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to join board: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/boards_join'),
+            headers: _headers,
+            body: jsonEncode({'id': boardId, 'uid': uid}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to join board: ${response.body}');
+      }
+      final json = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+      return BoardModel.fromJson(json);
+    } on TimeoutException {
+      throw Exception('Join board timed out');
+    } catch (e) {
+      rethrow;
     }
-    final json = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    return BoardModel.fromJson(json);
   }
 
   static Future<void> removeMember(String boardId, String uid) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/boards_remove_member'),
-      headers: _headers,
-      body: jsonEncode({'id': boardId, 'uid': uid}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to remove member: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/boards_remove_member'),
+            headers: _headers,
+            body: jsonEncode({'id': boardId, 'uid': uid}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove member: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Remove member timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -145,48 +204,68 @@ class ApiCloudflare {
   static Future<List<TaskModel>> getTasksByBoard(String boardId) async {
     final url = '$_base/api/tasks?board_id=$boardId';
     debugPrint('DEBUG GET $url');
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      try {
-        final rawData = jsonDecode(response.body);
-        final data = (rawData is List) ? List<dynamic>.from(rawData) : [];
-        if (data.isEmpty) return [];
-        return data
-            .map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map)))
-            .toList();
-      } catch (e) {
-        debugPrint('JSON Decode Error in getTasksByBoard: $e');
-        debugPrint('Raw: ${response.body}');
-        throw Exception('Failed to decode tasks: $e');
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        try {
+          final rawData = jsonDecode(response.body);
+          final data = (rawData is List) ? List<dynamic>.from(rawData) : [];
+          if (data.isEmpty) return [];
+          return data
+              .map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map)))
+              .toList();
+        } catch (e) {
+          debugPrint('JSON Decode Error in getTasksByBoard: $e');
+          debugPrint('Raw: ${response.body}');
+          throw Exception('Failed to decode tasks: $e');
+        }
+      } else {
+        throw Exception(
+          'Failed to get tasks: ${response.statusCode} - ${response.body}',
+        );
       }
-    } else {
-      throw Exception(
-        'Failed to get tasks: ${response.statusCode} - ${response.body}',
-      );
+    } on TimeoutException {
+      debugPrint('getTasksByBoard timed out');
+      return [];
+    } catch (e) {
+      debugPrint('Error in getTasksByBoard: $e');
+      return [];
     }
   }
 
   // Delta fetch
   static Future<DeltaResult> getTasksDelta(String boardId, int since) async {
     final url = '$_base/api/tasks_delta?board_id=$boardId&since=$since';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final dynamic rawData = jsonDecode(response.body);
-      final Map<String, dynamic> data = Map<String, dynamic>.from(
-        rawData as Map,
-      );
-      final rawTasks = data['tasks'];
-      final tasksJson = (rawTasks is List) ? List<dynamic>.from(rawTasks) : [];
-      final maxUpdated =
-          int.tryParse(data['maxUpdated']?.toString() ?? '') ?? since;
-      final tasks = tasksJson
-          .map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map)))
-          .toList();
-      return DeltaResult(tasks, maxUpdated);
-    } else {
-      throw Exception(
-        'Failed to get tasks delta: ${response.statusCode} - ${response.body}',
-      );
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final dynamic rawData = jsonDecode(response.body);
+        final Map<String, dynamic> data = Map<String, dynamic>.from(
+          rawData as Map,
+        );
+        final rawTasks = data['tasks'];
+        final tasksJson = (rawTasks is List) ? List<dynamic>.from(rawTasks) : [];
+        final maxUpdated =
+            int.tryParse(data['maxUpdated']?.toString() ?? '') ?? since;
+        final tasks = tasksJson
+            .map((j) => TaskModel.fromJson(Map<String, dynamic>.from(j as Map)))
+            .toList();
+        return DeltaResult(tasks, maxUpdated);
+      } else {
+        throw Exception(
+          'Failed to get tasks delta: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } on TimeoutException {
+      debugPrint('getTasksDelta timed out');
+      return DeltaResult([], since);
+    } catch (e) {
+      debugPrint('Error in getTasksDelta: $e');
+      return DeltaResult([], since);
     }
   }
 
@@ -194,53 +273,69 @@ class ApiCloudflare {
     final id = task.id.isEmpty
         ? '${DateTime.now().millisecondsSinceEpoch}'
         : task.id;
-    final response = await http.post(
-      Uri.parse('$_base/api/tasks'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': id,
-        'board_id': task.boardId,
-        'author_uid': authorUid,
-        'title': task.title,
-        'description': task.description,
-        'due_date': task.dueDate.toIso8601String(),
-        'members': task.members,
-        'label_ids': task.labelIds,
-        'status': task.status,
-        'is_completed': task.isCompleted,
-        'checklist': task.checklist.map((e) => e.toJson()).toList(),
-        'images': task.images.map((e) => e.toJson()).toList(),
-        'comments': task.comments.map((e) => e.toMap()).toList(),
-      }),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to insert task: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/tasks'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': id,
+              'board_id': task.boardId,
+              'author_uid': authorUid,
+              'title': task.title,
+              'description': task.description,
+              'due_date': task.dueDate.toIso8601String(),
+              'members': task.members,
+              'label_ids': task.labelIds,
+              'status': task.status,
+              'is_completed': task.isCompleted,
+              'checklist': task.checklist.map((e) => e.toJson()).toList(),
+              'images': task.images.map((e) => e.toJson()).toList(),
+              'comments': task.comments.map((e) => e.toMap()).toList(),
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to insert task: ${response.body}');
+      }
+      return id;
+    } on TimeoutException {
+      throw Exception('Insert task timed out');
+    } catch (e) {
+      rethrow;
     }
-    return id;
   }
 
   static Future<void> updateTask(TaskModel task) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/tasks'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': task.id,
-        'board_id': task.boardId, // 🚀 Task 64.1
-        'title': task.title,
-        'description': task.description,
-        'due_date': task.dueDate.toIso8601String(),
-        'members': task.members,
-        'label_ids': task.labelIds,
-        'status': task.status,
-        'is_completed': task.isCompleted,
-        'checklist': task.checklist.map((e) => e.toJson()).toList(),
-        'images': task.images.map((e) => e.toJson()).toList(),
-        'comments': task.comments.map((e) => e.toMap()).toList(),
-      }),
-    );
-    if (response.statusCode != 200) {
-      debugPrint('UPDATE TASK ERROR: ${response.body}');
-      throw Exception('Failed to update task: ${response.body}');
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/tasks'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': task.id,
+              'board_id': task.boardId, // 🚀 Task 64.1
+              'title': task.title,
+              'description': task.description,
+              'due_date': task.dueDate.toIso8601String(),
+              'members': task.members,
+              'label_ids': task.labelIds,
+              'status': task.status,
+              'is_completed': task.isCompleted,
+              'checklist': task.checklist.map((e) => e.toJson()).toList(),
+              'images': task.images.map((e) => e.toJson()).toList(),
+              'comments': task.comments.map((e) => e.toMap()).toList(),
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        debugPrint('UPDATE TASK ERROR: ${response.body}');
+        throw Exception('Failed to update task: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Update task timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -249,23 +344,39 @@ class ApiCloudflare {
     String status,
     String boardId,
   ) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/tasks_status'),
-      headers: _headers,
-      body: jsonEncode({'id': id, 'status': status, 'board_id': boardId}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update task status: ${response.body}');
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/tasks_status'),
+            headers: _headers,
+            body: jsonEncode({'id': id, 'status': status, 'board_id': boardId}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update task status: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Update task status timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<void> deleteTask(String id) async {
-    final response = await http.delete(
-      Uri.parse('$_base/api/tasks?id=$id'),
-      headers: _headers,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete task: ${response.body}');
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_base/api/tasks?id=$id'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete task: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Delete task timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -273,15 +384,25 @@ class ApiCloudflare {
 
   static Future<List<MeetingModel>> getMeetingsByBoard(String boardId) async {
     final url = '$_base/api/meetings?board_id=$boardId';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is! List) return [];
-      return data
-          .map((j) => MeetingModel.fromJson(j as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception('Failed to get meetings: ${response.body}');
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is! List) return [];
+        return data
+            .map((j) => MeetingModel.fromJson(j as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to get meetings: ${response.body}');
+      }
+    } on TimeoutException {
+      debugPrint('getMeetingsByBoard timed out');
+      return [];
+    } catch (e) {
+      debugPrint('Error in getMeetingsByBoard: $e');
+      return [];
     }
   }
 
@@ -289,59 +410,83 @@ class ApiCloudflare {
     final id = meeting.id.isEmpty
         ? '${DateTime.now().millisecondsSinceEpoch}'
         : meeting.id;
-    final response = await http.post(
-      Uri.parse('$_base/api/meetings'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': id,
-        'board_id': meeting.boardId,
-        'title': meeting.title,
-        'description': meeting.description,
-        'notes': meeting.notes,
-        'start_at': meeting.startAt.toIso8601String(),
-        'end_at': meeting.endAt?.toIso8601String(),
-        'role_tags': meeting.roleTags,
-        'attachments': meeting.attachments,
-        'transcript': meeting.transcript,
-        'summary': meeting.summary,
-      }),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to insert meeting: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/meetings'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': id,
+              'board_id': meeting.boardId,
+              'title': meeting.title,
+              'description': meeting.description,
+              'notes': meeting.notes,
+              'start_at': meeting.startAt.toIso8601String(),
+              'end_at': meeting.endAt?.toIso8601String(),
+              'role_tags': meeting.roleTags,
+              'attachments': meeting.attachments,
+              'transcript': meeting.transcript,
+              'summary': meeting.summary,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to insert meeting: ${response.body}');
+      }
+      return id;
+    } on TimeoutException {
+      throw Exception('Insert meeting timed out');
+    } catch (e) {
+      rethrow;
     }
-    return id;
   }
 
   static Future<void> updateMeeting(MeetingModel meeting) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/meetings'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': meeting.id,
-        'board_id': meeting.boardId,
-        'title': meeting.title,
-        'description': meeting.description,
-        'notes': meeting.notes,
-        'start_at': meeting.startAt.toIso8601String(),
-        'end_at': meeting.endAt?.toIso8601String(),
-        'role_tags': meeting.roleTags,
-        'attachments': meeting.attachments,
-        'transcript': meeting.transcript,
-        'summary': meeting.summary,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update meeting: ${response.body}');
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/meetings'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': meeting.id,
+              'board_id': meeting.boardId,
+              'title': meeting.title,
+              'description': meeting.description,
+              'notes': meeting.notes,
+              'start_at': meeting.startAt.toIso8601String(),
+              'end_at': meeting.endAt?.toIso8601String(),
+              'role_tags': meeting.roleTags,
+              'attachments': meeting.attachments,
+              'transcript': meeting.transcript,
+              'summary': meeting.summary,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update meeting: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Update meeting timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<void> deleteMeeting(String id) async {
-    final response = await http.delete(
-      Uri.parse('$_base/api/meetings?id=$id'),
-      headers: _headers,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete meeting: ${response.body}');
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_base/api/meetings?id=$id'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete meeting: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Delete meeting timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -351,15 +496,25 @@ class ApiCloudflare {
     String boardId,
   ) async {
     final url = '$_base/api/documents?board_id=$boardId';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is! List) return [];
-      return data
-          .map((j) => DocumentModel.fromJson(j as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception('Failed to get documents: ${response.body}');
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is! List) return [];
+        return data
+            .map((j) => DocumentModel.fromJson(j as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to get documents: ${response.body}');
+      }
+    } on TimeoutException {
+      debugPrint('getDocumentsByBoard timed out');
+      return [];
+    } catch (e) {
+      debugPrint('Error in getDocumentsByBoard: $e');
+      return [];
     }
   }
 
@@ -367,49 +522,73 @@ class ApiCloudflare {
     final id = document.id.isEmpty
         ? '${DateTime.now().millisecondsSinceEpoch}'
         : document.id;
-    final response = await http.post(
-      Uri.parse('$_base/api/documents'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': id,
-        'board_id': document.boardId,
-        'title': document.title,
-        'notes': document.notes,
-        'attachments': document.attachments,
-        'summary': document.summary,
-      }),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to insert document: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/documents'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': id,
+              'board_id': document.boardId,
+              'title': document.title,
+              'notes': document.notes,
+              'attachments': document.attachments,
+              'summary': document.summary,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to insert document: ${response.body}');
+      }
+      return id;
+    } on TimeoutException {
+      throw Exception('Insert document timed out');
+    } catch (e) {
+      rethrow;
     }
-    return id;
   }
 
   static Future<void> updateDocument(DocumentModel document) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/documents'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': document.id,
-        'board_id': document.boardId,
-        'title': document.title,
-        'notes': document.notes,
-        'attachments': document.attachments,
-        'summary': document.summary,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update document: ${response.body}');
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/documents'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': document.id,
+              'board_id': document.boardId,
+              'title': document.title,
+              'notes': document.notes,
+              'attachments': document.attachments,
+              'summary': document.summary,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update document: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Update document timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<void> deleteDocument(String id) async {
-    final response = await http.delete(
-      Uri.parse('$_base/api/documents?id=$id'),
-      headers: _headers,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete document: ${response.body}');
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_base/api/documents?id=$id'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete document: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Delete document timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -418,14 +597,22 @@ class ApiCloudflare {
     String boardId,
     List<Map<String, dynamic>> updates,
   ) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/tasks_order'),
-      headers: _headers,
-      body: jsonEncode({'board_id': boardId, 'updates': updates}),
-    );
-    if (response.statusCode != 200) {
-      debugPrint('UPDATE ORDER ERROR: ${response.body}');
-      throw Exception('Failed to update task order: ${response.body}');
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/tasks_order'),
+            headers: _headers,
+            body: jsonEncode({'board_id': boardId, 'updates': updates}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        debugPrint('UPDATE ORDER ERROR: ${response.body}');
+        throw Exception('Failed to update task order: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Update task order timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -579,7 +766,6 @@ class ApiCloudflare {
               'meetingId': meetingId,
             }),
           )
-          // Pre-recorded transcription of long media can take a while.
           .timeout(const Duration(seconds: 180));
     }
 
@@ -621,11 +807,13 @@ class ApiCloudflare {
         'max_tokens': 300,
       };
 
-      final response = await http.post(
-        Uri.parse('$_base/api/ai/chat'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/ai/chat'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return (data['result']?['choices']?[0]?['message']?['content'] ?? '')
@@ -655,11 +843,13 @@ class ApiCloudflare {
         'tools': [],
       };
 
-      final response = await http.post(
-        Uri.parse('$_base/api/ai/chat'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/ai/chat'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -685,9 +875,9 @@ class ApiCloudflare {
     if (user == null) return '';
     try {
       // [Network] Fetch raw PDF bytes from storage.
-      final fileResp = await http.get(
-        Uri.parse(EnvConfig.sanitizeUrl(fileUrl)),
-      );
+      final fileResp = await http
+          .get(Uri.parse(EnvConfig.sanitizeUrl(fileUrl)))
+          .timeout(const Duration(seconds: 10));
       if (fileResp.statusCode != 200) {
         debugPrint(
           '[extractPdfText][Error] Failed to download PDF: ${fileResp.statusCode}',
@@ -721,11 +911,13 @@ class ApiCloudflare {
         ],
       };
 
-      final response = await http.post(
-        Uri.parse('$_base/api/ai/chat'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/ai/chat'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -782,9 +974,9 @@ class ApiCloudflare {
     }
     try {
       // [Network] Fetch raw image bytes from storage.
-      final fileResp = await http.get(
-        Uri.parse(EnvConfig.sanitizeUrl(fileUrl)),
-      );
+      final fileResp = await http
+          .get(Uri.parse(EnvConfig.sanitizeUrl(fileUrl)))
+          .timeout(const Duration(seconds: 10));
       if (fileResp.statusCode != 200) {
         debugPrint(
           '[extractImageText][Error] Failed to download image: ${fileResp.statusCode}',
@@ -876,7 +1068,9 @@ class ApiCloudflare {
           mime.contains(
             'vnd.openxmlformats-officedocument.wordprocessingml.document',
           )) {
-        final fileResp = await http.get(Uri.parse(EnvConfig.sanitizeUrl(url)));
+        final fileResp = await http
+            .get(Uri.parse(EnvConfig.sanitizeUrl(url)))
+            .timeout(const Duration(seconds: 10));
         if (fileResp.statusCode != 200) return '';
         return DocxText.extractText(fileResp.bodyBytes);
       }
@@ -902,20 +1096,24 @@ class ApiCloudflare {
   ) async {
     final url = '$_base/api/users';
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: _headers,
-        body: jsonEncode({
-          'uid': uid,
-          'email': email,
-          'display_name': displayName,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: _headers,
+            body: jsonEncode({
+              'uid': uid,
+              'email': email,
+              'display_name': displayName,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode != 200 && response.statusCode != 201) {
         debugPrint(
           'Failed to register user to Cloudflare D1: ${response.statusCode} - ${response.body}',
         );
       }
+    } on TimeoutException {
+      debugPrint('registerUser timed out');
     } catch (e) {
       debugPrint('Error registering user to Cloudflare D1: $e');
     }
@@ -928,7 +1126,9 @@ class ApiCloudflare {
     final query = uids.join(',');
     final url = '$_base/api/users?uids=$query';
     try {
-      final response = await http.get(Uri.parse(url), headers: _headers);
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is List) {
@@ -943,6 +1143,8 @@ class ApiCloudflare {
           return map;
         }
       }
+    } on TimeoutException {
+      debugPrint('getUsersByUids timed out');
     } catch (e) {
       debugPrint('Failed to get users: $e');
     }
@@ -953,68 +1155,112 @@ class ApiCloudflare {
     String uid,
     String displayName,
   ) async {
-    await http.put(
-      Uri.parse('$_base/api/users'),
-      headers: _headers,
-      body: jsonEncode({'uid': uid, 'display_name': displayName}),
-    );
+    try {
+      await http
+          .put(
+            Uri.parse('$_base/api/users'),
+            headers: _headers,
+            body: jsonEncode({'uid': uid, 'display_name': displayName}),
+          )
+          .timeout(const Duration(seconds: 5));
+    } on TimeoutException {
+      debugPrint('updateUserDisplayName timed out');
+    } catch (e) {
+      debugPrint('Failed to update user display name: $e');
+    }
   }
 
   // ─── WORKSPACES ───────────────────────────────────────
 
   static Future<List<WorkspaceModel>> getWorkspaces(String uid) async {
     final url = '$_base/api/workspaces?uid=$uid';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is! List) return [];
-      return data
-          .map((j) => WorkspaceModel.fromJson(j as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception('Failed to get workspaces: ${response.body}');
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is! List) return [];
+        return data
+            .map((j) => WorkspaceModel.fromJson(j as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception('Failed to get workspaces: ${response.body}');
+      }
+    } on TimeoutException {
+      debugPrint('getWorkspaces timed out');
+      return [];
+    } catch (e) {
+      debugPrint('Error in getWorkspaces: $e');
+      return [];
     }
   }
 
   static Future<String> insertWorkspace(WorkspaceModel workspace) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/workspaces'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': workspace.id,
-        'owner_uid': workspace.ownerUid,
-        'name': workspace.name,
-        'description': workspace.description ?? '',
-        'members': workspace.members,
-      }),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create workspace: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/workspaces'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': workspace.id,
+              'owner_uid': workspace.ownerUid,
+              'name': workspace.name,
+              'description': workspace.description ?? '',
+              'members': workspace.members,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to create workspace: ${response.body}');
+      }
+      return workspace.id;
+    } on TimeoutException {
+      throw Exception('Insert workspace timed out');
+    } catch (e) {
+      rethrow;
     }
-    return workspace.id;
   }
 
   static Future<void> deleteWorkspace(String id) async {
-    final response = await http.delete(
-      Uri.parse('$_base/api/workspaces?id=$id'),
-      headers: _headers,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete workspace: ${response.body}');
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_base/api/workspaces?id=$id'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete workspace: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Delete workspace timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
-  static Future<void> updateWorkspaceDescription(String workspaceId, String description) async {
-    final response = await http.put(
-      Uri.parse('$_base/api/workspaces_description'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': workspaceId,
-        'description': description,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update workspace description: ${response.body}');
+  static Future<void> updateWorkspaceDescription(
+    String workspaceId,
+    String description,
+  ) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$_base/api/workspaces_description'),
+            headers: _headers,
+            body: jsonEncode({'id': workspaceId, 'description': description}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to update workspace description: ${response.body}',
+        );
+      }
+    } on TimeoutException {
+      throw Exception('Update workspace description timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -1022,17 +1268,25 @@ class ApiCloudflare {
     String uid,
     String workspaceId,
   ) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/workspaces_join'),
-      headers: _headers,
-      body: jsonEncode({'id': workspaceId, 'uid': uid}),
-    );
-    if (response.statusCode == 200) {
-      return WorkspaceModel.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } else {
-      throw Exception('Failed to join workspace: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/workspaces_join'),
+            headers: _headers,
+            body: jsonEncode({'id': workspaceId, 'uid': uid}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return WorkspaceModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to join workspace: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Join workspace timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -1043,15 +1297,25 @@ class ApiCloudflare {
     String taskId = '',
   }) async {
     final url = '$_base/api/chat/sessions?uid=$uid&task_id=$taskId';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is! List) return [];
-      return data
-          .map((j) => ChatSession.fromMap(Map<String, dynamic>.from(j as Map)))
-          .toList();
-    } else {
-      throw Exception('Failed to get chat sessions: ${response.body}');
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is! List) return [];
+        return data
+            .map((j) => ChatSession.fromMap(Map<String, dynamic>.from(j as Map)))
+            .toList();
+      } else {
+        throw Exception('Failed to get chat sessions: ${response.body}');
+      }
+    } on TimeoutException {
+      debugPrint('getChatSessions timed out');
+      return [];
+    } catch (e) {
+      debugPrint('Error in getChatSessions: $e');
+      return [];
     }
   }
 
@@ -1061,23 +1325,44 @@ class ApiCloudflare {
     String name, {
     String taskId = '',
   }) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/chat/sessions'),
-      headers: _headers,
-      body: jsonEncode({'id': id, 'uid': uid, 'name': name, 'task_id': taskId}),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to insert chat session: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/chat/sessions'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': id,
+              'uid': uid,
+              'name': name,
+              'task_id': taskId,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to insert chat session: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Insert chat session timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<void> deleteChatSession(String id) async {
-    final response = await http.delete(
-      Uri.parse('$_base/api/chat/sessions?id=$id'),
-      headers: _headers,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete chat session: ${response.body}');
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$_base/api/chat/sessions?id=$id'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete chat session: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Delete chat session timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -1093,67 +1378,77 @@ class ApiCloudflare {
     } else {
       return [];
     }
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is! List) return [];
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is! List) return [];
 
-      List<ChatMessage> list = [];
-      for (final m in data) {
-        final pendingCallStr = m['pending_call'] as String? ?? '';
-        dynamic parsedPendingCall;
-        if (pendingCallStr.isNotEmpty) {
+        List<ChatMessage> list = [];
+        for (final m in data) {
+          final pendingCallStr = m['pending_call'] as String? ?? '';
+          dynamic parsedPendingCall;
+          if (pendingCallStr.isNotEmpty) {
+            try {
+              final pMap = jsonDecode(pendingCallStr);
+              parsedPendingCall = FunctionCall(
+                pMap['name'],
+                Map<String, Object?>.from(pMap['arguments']),
+              );
+            } catch (_) {}
+          }
+
+          final toolCallsStr = m['tool_calls'] as String? ?? '[]';
+          List<ToolCallInfo> parsedToolCalls = [];
           try {
-            final pMap = jsonDecode(pendingCallStr);
-            parsedPendingCall = FunctionCall(
-              pMap['name'],
-              Map<String, Object?>.from(pMap['arguments']),
-            );
+            final tcList = jsonDecode(toolCallsStr) as List;
+            parsedToolCalls = tcList
+                .map(
+                  (tc) => ToolCallInfo(
+                    name: tc['name'].toString(),
+                    arguments: Map<String, dynamic>.from(tc['arguments']),
+                  ),
+                )
+                .toList();
           } catch (_) {}
+
+          final attachmentsStr = m['attachments'] as String? ?? '[]';
+          List<Map<String, String>> parsedAttachments = [];
+          try {
+            final attList = jsonDecode(attachmentsStr) as List;
+            parsedAttachments = attList
+                .map((a) => Map<String, String>.from(a))
+                .toList();
+          } catch (_) {}
+
+          list.add(
+            ChatMessage(
+              id: m['id'] as String,
+              text: m['text'] as String,
+              reasoning: m['reasoning'] as String?,
+              isUser: (m['is_user'] == 1),
+              hasDraft: (m['has_draft'] == 1),
+              pendingCall: parsedPendingCall,
+              toolCalls: parsedToolCalls,
+              attachments: parsedAttachments,
+              timestamp:
+                  DateTime.tryParse(m['timestamp'] as String? ?? '') ??
+                  DateTime.now(),
+            ),
+          );
         }
-
-        final toolCallsStr = m['tool_calls'] as String? ?? '[]';
-        List<ToolCallInfo> parsedToolCalls = [];
-        try {
-          final tcList = jsonDecode(toolCallsStr) as List;
-          parsedToolCalls = tcList
-              .map(
-                (tc) => ToolCallInfo(
-                  name: tc['name'].toString(),
-                  arguments: Map<String, dynamic>.from(tc['arguments']),
-                ),
-              )
-              .toList();
-        } catch (_) {}
-
-        final attachmentsStr = m['attachments'] as String? ?? '[]';
-        List<Map<String, String>> parsedAttachments = [];
-        try {
-          final attList = jsonDecode(attachmentsStr) as List;
-          parsedAttachments = attList
-              .map((a) => Map<String, String>.from(a))
-              .toList();
-        } catch (_) {}
-
-        list.add(
-          ChatMessage(
-            id: m['id'] as String,
-            text: m['text'] as String,
-            reasoning: m['reasoning'] as String?,
-            isUser: (m['is_user'] == 1),
-            hasDraft: (m['has_draft'] == 1),
-            pendingCall: parsedPendingCall,
-            toolCalls: parsedToolCalls,
-            attachments: parsedAttachments,
-            timestamp:
-                DateTime.tryParse(m['timestamp'] as String? ?? '') ??
-                DateTime.now(),
-          ),
-        );
+        return list.reversed.toList();
+      } else {
+        throw Exception('Failed to get chat messages: ${response.body}');
       }
-      return list.reversed.toList();
-    } else {
-      throw Exception('Failed to get chat messages: ${response.body}');
+    } on TimeoutException {
+      debugPrint('getChatMessages timed out');
+      return [];
+    } catch (e) {
+      debugPrint('Error in getChatMessages: $e');
+      return [];
     }
   }
 
@@ -1167,72 +1462,110 @@ class ApiCloudflare {
       return copy;
     }).toList();
 
-    final response = await http.post(
-      Uri.parse('$_base/api/chat/messages'),
-      headers: _headers,
-      body: jsonEncode({
-        'id': message.id,
-        'session_id': sessionId,
-        'text': message.text,
-        'reasoning': message.reasoning ?? '',
-        'is_user': message.isUser ? 1 : 0,
-        'has_draft': message.hasDraft ? 1 : 0,
-        'pending_call': message.pendingCall != null
-            ? jsonEncode({
-                'name': message.pendingCall.name,
-                'arguments': message.pendingCall.args,
-              })
-            : '',
-        'tool_calls': jsonEncode(
-          message.toolCalls
-              .map((tc) => {'name': tc.name, 'arguments': tc.arguments})
-              .toList(),
-        ),
-        'attachments': jsonEncode(cleanedAttachments),
-        'timestamp': message.timestamp.toIso8601String(),
-      }),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to insert chat message: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/chat/messages'),
+            headers: _headers,
+            body: jsonEncode({
+              'id': message.id,
+              'session_id': sessionId,
+              'text': message.text,
+              'reasoning': message.reasoning ?? '',
+              'is_user': message.isUser ? 1 : 0,
+              'has_draft': message.hasDraft ? 1 : 0,
+              'pending_call': message.pendingCall != null
+                  ? jsonEncode({
+                      'name': message.pendingCall.name,
+                      'arguments': message.pendingCall.args,
+                    })
+                  : '',
+              'tool_calls': jsonEncode(
+                message.toolCalls
+                    .map((tc) => {'name': tc.name, 'arguments': tc.arguments})
+                    .toList(),
+              ),
+              'attachments': jsonEncode(cleanedAttachments),
+              'timestamp': message.timestamp.toIso8601String(),
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to insert chat message: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Insert chat message timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
   static Future<List<String>> getReadCommentIds(String uid) async {
     final url = '$_base/api/comments/reads?uid=$uid';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is List) {
-        return List<String>.from(data.map((e) => e.toString()));
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          return List<String>.from(data.map((e) => e.toString()));
+        }
+        return [];
+      } else {
+        throw Exception('Failed to get read comments: ${response.body}');
       }
+    } on TimeoutException {
+      debugPrint('getReadCommentIds timed out');
       return [];
-    } else {
-      throw Exception('Failed to get read comments: ${response.body}');
+    } catch (e) {
+      debugPrint('Error in getReadCommentIds: $e');
+      return [];
     }
   }
 
-  static Future<List<Map<String, dynamic>>> fetchIntervalCards(String meetingId) async {
+  static Future<List<Map<String, dynamic>>> fetchIntervalCards(
+    String meetingId,
+  ) async {
     final url = '$_base/api/meetings/interval_cards?meeting_id=$meetingId';
-    final response = await http.get(Uri.parse(url), headers: _headers);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is List) {
-        return List<Map<String, dynamic>>.from(data);
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: _headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+        return [];
+      } else {
+        throw Exception('Failed to fetch interval cards: ${response.body}');
       }
+    } on TimeoutException {
+      debugPrint('fetchIntervalCards timed out');
       return [];
-    } else {
-      throw Exception('Failed to fetch interval cards: ${response.body}');
+    } catch (e) {
+      debugPrint('Error in fetchIntervalCards: $e');
+      return [];
     }
   }
 
   static Future<void> insertIntervalCard(Map<String, dynamic> cardData) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/meetings/interval_cards'),
-      headers: _headers,
-      body: jsonEncode(cardData),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to insert interval card: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/meetings/interval_cards'),
+            headers: _headers,
+            body: jsonEncode(cardData),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to insert interval card: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Insert interval card timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -1240,13 +1573,21 @@ class ApiCloudflare {
     String uid,
     List<String> commentIds,
   ) async {
-    final response = await http.post(
-      Uri.parse('$_base/api/comments/read'),
-      headers: _headers,
-      body: jsonEncode({'uid': uid, 'comment_ids': commentIds}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to mark comments as read: ${response.body}');
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_base/api/comments/read'),
+            headers: _headers,
+            body: jsonEncode({'uid': uid, 'comment_ids': commentIds}),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to mark comments as read: ${response.body}');
+      }
+    } on TimeoutException {
+      throw Exception('Mark comments as read timed out');
+    } catch (e) {
+      rethrow;
     }
   }
 }

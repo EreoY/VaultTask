@@ -29,6 +29,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   _MeetingsTimeFilter _timeFilter = _MeetingsTimeFilter.all;
   String? _selectedRole;
   bool _isCreatingDraft = false;
+  int _draftKeyCounter = 0;
   String _activeQuickSection = 'all';
 
   List<String> get _boardRolePresets {
@@ -49,10 +50,17 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   @override
   void initState() {
     super.initState();
+    final meetingsState = context.read<StateMeetings>();
+    if (meetingsState.shouldOpenCreateDraftForBoard(widget.board.id)) {
+      _isCreatingDraft = true;
+      _draftKeyCounter++;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<StateMeetings>().fetchMeetingsForBoard(widget.board);
       if (!mounted) return;
-      context.read<StateMeetings>().openBoardHome(widget.board.id);
+      if (!_isCreatingDraft) {
+        context.read<StateMeetings>().openBoardHome(widget.board.id);
+      }
     });
   }
 
@@ -63,10 +71,17 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
       _timeFilter = _MeetingsTimeFilter.all;
       _selectedRole = null;
       _isCreatingDraft = false;
+      final meetingsState = context.read<StateMeetings>();
+      if (meetingsState.shouldOpenCreateDraftForBoard(widget.board.id)) {
+        _isCreatingDraft = true;
+        _draftKeyCounter++;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await context.read<StateMeetings>().fetchMeetingsForBoard(widget.board);
         if (!mounted) return;
-        context.read<StateMeetings>().openBoardHome(widget.board.id);
+        if (!_isCreatingDraft) {
+          context.read<StateMeetings>().openBoardHome(widget.board.id);
+        }
       });
     }
   }
@@ -74,6 +89,17 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   @override
   Widget build(BuildContext context) {
     final meetingsState = context.watch<StateMeetings>();
+    if (meetingsState.shouldOpenCreateDraftForBoard(widget.board.id)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<StateMeetings>().consumeCreateDraftRequest();
+        setState(() {
+          _isCreatingDraft = true;
+          _draftKeyCounter++;
+        });
+      });
+    }
+
     final meetings = meetingsState.meetingsForBoard(widget.board.id);
     final roleOptions = _roleOptions(meetings);
     final selectedMeeting = meetingsState.selectedMeetingForBoard(
@@ -277,6 +303,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
     final initialRoles = _selectedRole == null
         ? const <String>[]
         : [_selectedRole!];
+    final todayStr = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -290,6 +317,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
         children: [
           Expanded(
             child: MeetingsBoardSheet(
+              key: ValueKey('create_draft_$_draftKeyCounter'),
               board: widget.board,
               embeddedInPage: true,
               showListPane: false,
@@ -297,6 +325,7 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
               initialRoleTags: initialRoles,
               autoLoadFirstMeeting: false,
               isCreateMode: true,
+              initialTitle: todayStr,
               onBack: () => setState(() => _isCreatingDraft = false),
               onSaved: (meeting) {
                 if (!mounted) return;
@@ -479,7 +508,10 @@ class _MeetingsBoardPageState extends State<MeetingsBoardPage> {
   }
 
   void _openCreateDraft() {
-    setState(() => _isCreatingDraft = true);
+    setState(() {
+      _isCreatingDraft = true;
+      _draftKeyCounter++;
+    });
   }
 
   List<String> _roleOptions(List<MeetingModel> meetings) {

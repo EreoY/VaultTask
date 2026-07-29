@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'dart:ui' as ui;
 import 'dart:async';
-import 'package:flutter/rendering.dart';
 import 'utils/db_init.dart';
 
 import 'firebase_options.dart';
@@ -33,6 +32,7 @@ import 'ui/boards/boards_page.dart';
 import 'ui/meetings/meetings_board_page.dart';
 import 'ui/docs/docs_board_page.dart';
 import 'ui/common/floating_assistant_shell.dart';
+import 'ui/common/quick_create_meeting_modal.dart';
 import 'ui/common/responsive_layout.dart';
 import 'ui/common/dynamic_backdrop.dart';
 
@@ -278,6 +278,7 @@ class _AppShellState extends State<AppShell> {
   // StreamSubscription<html.Event>? _windowFocusSub;
   bool _isRestoringShellState = true;
   bool _isNavBarVisible = true;
+  double _accumulatedScrollDelta = 0.0;
 
   @override
   void initState() {
@@ -303,6 +304,7 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _index = index;
       _isNavBarVisible = true;
+      _accumulatedScrollDelta = 0.0;
       _visitedTabs.add(index);
       if (clearBoard) {
         final selectedBoardId = context.read<StateBoards>().selectedBoard?.id;
@@ -318,35 +320,57 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _restoreShellState() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedIndex = prefs.getInt(_selectedTabPrefKey) ?? 0;
-    if (!mounted) return;
-    setState(() {
-      _index = savedIndex.clamp(0, 4);
-      _visitedTabs.add(_index);
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedIndex = prefs.getInt(_selectedTabPrefKey) ?? 0;
+      if (!mounted) return;
+      setState(() {
+        _index = savedIndex.clamp(0, 4);
+        _visitedTabs.add(_index);
+      });
 
-    final boardsState = context.read<StateBoards>();
-    await boardsState.fetchAllBoards();
-    await context.read<StateMeetings>().fetchAllMeetings(
-      boardsState.boards,
-      silent: true,
-    );
-    if (!mounted) return;
-    await context.read<StateDocuments>().fetchAllDocuments(
-      boardsState.boards,
-      silent: true,
-    );
-    await boardsState.restorePersistedSelectedBoard();
-    if (!mounted) return;
-    setState(() {
-      _isRestoringShellState = false;
-    });
+      final boardsState = context.read<StateBoards>();
+      await boardsState.fetchAllBoards();
+      await context.read<StateMeetings>().fetchAllMeetings(
+        boardsState.boards,
+        silent: true,
+      );
+      if (!mounted) return;
+      await context.read<StateDocuments>().fetchAllDocuments(
+        boardsState.boards,
+        silent: true,
+      );
+      await boardsState.restorePersistedSelectedBoard();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRestoringShellState = false;
+        });
+      }
+    }
   }
 
   Future<void> _persistShellState() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_selectedTabPrefKey, _index);
+  }
+
+  Future<void> _handleCreateMeeting(BuildContext context) async {
+    final boardsState = context.read<StateBoards>();
+    if (boardsState.boards.isEmpty || boardsState.workspaces.isEmpty) {
+      await boardsState.fetchAllBoards();
+    }
+    if (!mounted) return;
+
+    final result = await QuickCreateMeetingModal.show(context);
+    if (result != null && mounted) {
+      final workspace = result.workspace;
+      final board = result.board;
+
+      boardsState.setSelectedWorkspace(workspace);
+      context.read<StateMeetings>().requestCreateDraft(board.id);
+      boardsState.openBoardMeetings(board);
+    }
   }
 
   Widget _buildScreen(int index, {bool isActive = true}) {
@@ -432,12 +456,38 @@ class _AppShellState extends State<AppShell> {
       extendBodyBehindAppBar: true,
       backgroundColor: GlassColors.background,
       bottomNavigationBar: null,
-      body: NotificationListener<UserScrollNotification>(
+      body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification.direction == ScrollDirection.reverse) {
-            if (_isNavBarVisible) setState(() => _isNavBarVisible = false);
-          } else if (notification.direction == ScrollDirection.forward) {
-            if (!_isNavBarVisible) setState(() => _isNavBarVisible = true);
+          final metrics = notification.metrics;
+          if (metrics.pixels <= 50) {
+            _accumulatedScrollDelta = 0.0;
+            if (!_isNavBarVisible) {
+              setState(() => _isNavBarVisible = true);
+            }
+            return false;
+          }
+
+          if (notification is ScrollUpdateNotification) {
+            final delta = notification.scrollDelta;
+            if (delta != null) {
+              if ((delta > 0 && _accumulatedScrollDelta < 0) ||
+                  (delta < 0 && _accumulatedScrollDelta > 0)) {
+                _accumulatedScrollDelta = 0.0;
+              }
+              _accumulatedScrollDelta += delta;
+
+              if (_accumulatedScrollDelta >= 45.0) {
+                if (_isNavBarVisible) {
+                  setState(() => _isNavBarVisible = false);
+                }
+                _accumulatedScrollDelta = 0.0;
+              } else if (_accumulatedScrollDelta <= -25.0) {
+                if (!_isNavBarVisible) {
+                  setState(() => _isNavBarVisible = true);
+                }
+                _accumulatedScrollDelta = 0.0;
+              }
+            }
           }
           return false;
         },
@@ -554,13 +604,14 @@ class _AppShellState extends State<AppShell> {
               right: 0,
               bottom: 0,
               child: AnimatedSlide(
-                offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.5),
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
+                offset: _isNavBarVisible ? Offset.zero : const Offset(0, 1.4),
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.fastOutSlowIn,
                 child: FloatingBottomNavBar(
                   selectedIndex: _index,
                   onItemSelected: (index) => _selectTab(index),
                   isDark: false,
+                  onCreateMeetingPressed: () => _handleCreateMeeting(context),
                 ),
               ),
             ),

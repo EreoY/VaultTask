@@ -67,11 +67,44 @@ class SttStreamService extends ChangeNotifier {
         _handleTranscriptJson(jsonString);
       },
       onError: (errorMsg) {
-        _errorMessage = errorMsg;
+        _errorMessage = _formatErrorMessage(errorMsg);
         _isRecording = false;
         notifyListeners();
       },
     );
+  }
+
+  /// Sanitizes raw error string (removing 'undefined' or 'null') and converts to friendly Thai message.
+  String _formatErrorMessage(String? rawError) {
+    if (rawError == null || rawError.isEmpty) {
+      return "เกิดข้อผิดพลาดในการเชื่อมต่อระบบถอดเสียง";
+    }
+
+    // Filter out 'undefined' and 'null' strings
+    String cleaned = rawError
+        .replaceAll(RegExp(r'\bundefined\b', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\bnull\b', caseSensitive: false), '')
+        .trim();
+
+    if (cleaned.isEmpty || cleaned.toLowerCase() == 'error') {
+      return "เกิดข้อผิดพลาดในการเชื่อมต่อระบบถอดเสียง";
+    }
+
+    // Friendly Thai error translations
+    if (cleaned.contains("DEEPGRAM_API_KEY") || cleaned.contains("not configured")) {
+      return "ระบบยังไม่ได้ตั้งค่า API Key สำหรับการถอดเสียง (DEEPGRAM_API_KEY)";
+    }
+    if (cleaned.contains("Deepgram handshake failed") || cleaned.contains("502")) {
+      return "เกิดข้อผิดพลาดในการเชื่อมต่อบริการถอดเสียง (Handshake Failed)";
+    }
+    if (cleaned.contains("Microphone") || cleaned.contains("permission") || cleaned.contains("NotAllowedError")) {
+      return "ไม่สามารถเข้าถึงไมโครโฟนได้ โปรดตรวจสอบการอนุญาตสิทธิ์ใช้งานไมโครโฟน";
+    }
+    if (cleaned.contains("WebSocket") || cleaned.contains("Connection") || cleaned.contains("network")) {
+      return "เกิดข้อผิดพลาดในการเชื่อมต่อระบบถอดเสียงเรียลไทม์";
+    }
+
+    return "เกิดข้อผิดพลาดในการเชื่อมต่อระบบถอดเสียง: $cleaned";
   }
 
   void stopSession() {
@@ -140,7 +173,7 @@ class SttStreamService extends ChangeNotifier {
       final data = jsonDecode(jsonString);
       
       if (data['error'] != null) {
-        _errorMessage = data['error'].toString();
+        _errorMessage = _formatErrorMessage(data['error'].toString());
         notifyListeners();
         return;
       }

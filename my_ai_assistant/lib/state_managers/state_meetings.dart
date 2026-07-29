@@ -40,6 +40,28 @@ class StateMeetings extends ChangeNotifier {
     return null;
   }
 
+  bool _shouldOpenCreateDraft = false;
+
+  bool get shouldOpenCreateDraft => _shouldOpenCreateDraft;
+
+  bool shouldOpenCreateDraftForBoard(String boardId) {
+    return _shouldOpenCreateDraft && _activeBoardId == boardId;
+  }
+
+  void requestCreateDraft(String boardId) {
+    _activeBoardId = boardId;
+    _selectedMeetingId = null;
+    _shouldOpenCreateDraft = true;
+    notifyListeners();
+  }
+
+  void consumeCreateDraftRequest() {
+    if (_shouldOpenCreateDraft) {
+      _shouldOpenCreateDraft = false;
+      notifyListeners();
+    }
+  }
+
   void openBoardHome(String boardId) {
     _activeBoardId = boardId;
     _selectedMeetingId = null;
@@ -61,6 +83,7 @@ class StateMeetings extends ChangeNotifier {
     if (boardId == null || _activeBoardId == boardId) {
       _activeBoardId = null;
       _selectedMeetingId = null;
+      _shouldOpenCreateDraft = false;
       notifyListeners();
     }
   }

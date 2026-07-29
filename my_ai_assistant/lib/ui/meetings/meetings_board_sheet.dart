@@ -44,6 +44,7 @@ class MeetingsBoardSheet extends StatefulWidget {
   final List<String> initialRoleTags;
   final bool autoLoadFirstMeeting;
   final bool isCreateMode;
+  final String? initialTitle;
   final VoidCallback? onBack;
   final VoidCallback? onOpenBoard;
   final ValueChanged<MeetingModel>? onSaved;
@@ -59,6 +60,7 @@ class MeetingsBoardSheet extends StatefulWidget {
     this.initialRoleTags = const [],
     this.autoLoadFirstMeeting = true,
     this.isCreateMode = false,
+    this.initialTitle,
     this.onBack,
     this.onOpenBoard,
     this.onSaved,
@@ -69,6 +71,8 @@ class MeetingsBoardSheet extends StatefulWidget {
     required BuildContext context,
     required BoardModel board,
     String? initialMeetingId,
+    bool isCreateMode = false,
+    String? initialTitle,
   }) async {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     if (isDesktop) {
@@ -84,6 +88,8 @@ class MeetingsBoardSheet extends StatefulWidget {
           child: MeetingsBoardSheet(
             board: board,
             initialMeetingId: initialMeetingId,
+            isCreateMode: isCreateMode,
+            initialTitle: initialTitle,
           ),
         ),
       );
@@ -93,8 +99,12 @@ class MeetingsBoardSheet extends StatefulWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) =>
-          MeetingsBoardSheet(board: board, initialMeetingId: initialMeetingId),
+      builder: (_) => MeetingsBoardSheet(
+        board: board,
+        initialMeetingId: initialMeetingId,
+        isCreateMode: isCreateMode,
+        initialTitle: initialTitle,
+      ),
     );
   }
 
@@ -338,6 +348,7 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<StateMeetings>().fetchMeetingsForBoard(widget.board);
       if (!mounted) return;
+      if (widget.isCreateMode) return;
       if (widget.initialMeetingId == null && !widget.autoLoadFirstMeeting) {
         return;
       }
@@ -377,7 +388,10 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
     if (_draftInitialized) return;
     _draftInitialized = true;
     _isSuppressingAutoSave = true;
-    _titleController.clear();
+    final defaultTitle = (widget.initialTitle != null && widget.initialTitle!.isNotEmpty)
+        ? widget.initialTitle!
+        : (widget.isCreateMode ? DateFormat('dd/MM/yyyy').format(DateTime.now()) : '');
+    _titleController.text = defaultTitle;
     _descriptionController.clear();
     _notesController.clear();
     _roleInputController.clear();
@@ -409,9 +423,12 @@ class _MeetingsBoardSheetState extends State<MeetingsBoardSheet> {
 
   void _startNewMeeting() {
     _isSuppressingAutoSave = true;
+    final defaultTitle = (widget.initialTitle != null && widget.initialTitle!.isNotEmpty)
+        ? widget.initialTitle!
+        : (widget.isCreateMode ? DateFormat('dd/MM/yyyy').format(DateTime.now()) : '');
     setState(() {
       _selectedMeeting = null;
-      _titleController.clear();
+      _titleController.text = defaultTitle;
       _descriptionController.clear();
       _notesController.clear();
       _roleInputController.clear();

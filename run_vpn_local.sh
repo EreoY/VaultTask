@@ -6,10 +6,12 @@ set -e
 # Save root directory of the project
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Copy local development configuration to active env on startup
+# Copy local development configuration to active env on startup (both in my_ai_assistant and root)
+mkdir -p "$ROOT_DIR/assets"
 cp "$ROOT_DIR/my_ai_assistant/assets/env.development" "$ROOT_DIR/my_ai_assistant/assets/env"
+cp "$ROOT_DIR/my_ai_assistant/assets/env.development" "$ROOT_DIR/assets/env"
 
-echo "=== VaultTask: Starting Local Environment ==="
+echo "=== VaultTask: Starting Local Environment (VPN Accessible) ==="
 
 # 1. Initialize/Migrate Local D1 Database Schema
 echo "[1/3] Setting up local database schema..."
@@ -50,7 +52,7 @@ sleep 1
 echo "DEEPGRAM_API_KEY=\"5ad0ebfddedec0b349c567dc7625bef97ad6f3a2\"" > .dev.vars
 echo "OPENROUTER_API_KEY=\"sk-or-v1-YOUR_OPENROUTER_API_KEY_HERE\"" >> .dev.vars
 
-npx wrangler dev --port 8787 --ip 127.0.0.1 &
+npx wrangler dev --port 8787 --ip 0.0.0.0 &
 BACKEND_PID=$!
 cd ..
 
@@ -61,6 +63,9 @@ cleanup() {
   kill $BACKEND_PID 2>/dev/null || true
   # Restore production env configuration on exit to prevent committing dev credentials
   cp "$ROOT_DIR/my_ai_assistant/assets/env.production" "$ROOT_DIR/my_ai_assistant/assets/env"
+  if [ -f "$ROOT_DIR/my_ai_assistant/assets/env.production" ]; then
+    cp "$ROOT_DIR/my_ai_assistant/assets/env.production" "$ROOT_DIR/assets/env" 2>/dev/null || true
+  fi
   exit 0
 }
 trap cleanup SIGINT SIGTERM EXIT
@@ -68,7 +73,7 @@ trap cleanup SIGINT SIGTERM EXIT
 # Wait a couple of seconds for backend to start
 sleep 3
 
-# 3. Start Flutter Frontend Web on Chrome
-echo "[3/3] Starting Flutter application on Chrome..."
+# 3. Start Flutter Frontend Web on Chrome / Web Server
+echo "[3/3] Starting Flutter application on Web Server (0.0.0.0)..."
 cd my_ai_assistant
-flutter run -d web-server --release --web-port=8080 --web-hostname 127.0.0.1
+flutter run -d web-server --release --web-port=8080 --web-hostname 0.0.0.0

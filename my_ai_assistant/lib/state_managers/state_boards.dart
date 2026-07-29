@@ -237,8 +237,7 @@ class StateBoards extends ChangeNotifier {
         }
       }
 
-      // 4. Migrate orphaned boards (where workspaceId is empty)
-      // For personal boards
+      // 4. Backfill missing workspaceId for personal boards if needed
       for (final pb in personalBoards) {
         if (pb.workspaceId.isEmpty) {
           final updated = pb.copyWith(workspaceId: 'default_personal');
@@ -249,31 +248,7 @@ class StateBoards extends ChangeNotifier {
           ? <BoardModel>[]
           : await DbPersonalSqlite.instance.getAllBoards();
 
-      // For team boards
-      for (final tb in teamBoards) {
-        if (tb.workspaceId.isEmpty && uid != null) {
-          final updated = tb.copyWith(workspaceId: 'default_team_$uid');
-          try {
-            await ApiCloudflare.updateBoard(updated);
-          } catch (e) {
-            debugPrint('Error migrating team board $tb: $e');
-          }
-        }
-      }
-
-      List<BoardModel> finalTeamBoards = [];
-      if (uid != null) {
-        try {
-          finalTeamBoards = await ApiCloudflare.getBoards(uid);
-        } catch (_) {
-          preserveMissingSelectedBoard = true;
-          finalTeamBoards = teamBoards;
-        }
-      } else {
-        finalTeamBoards = teamBoards;
-      }
-
-      _boards = [...finalPersonalBoards, ...finalTeamBoards];
+      _boards = [...finalPersonalBoards, ...teamBoards];
 
       // Fetch profiles for all members found in boards and workspaces
       final allUids = {

@@ -42,6 +42,7 @@ class MonthCalendarPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
     final dates = _visibleMonthDates(currentMonth);
 
     return Container(
@@ -50,7 +51,7 @@ class MonthCalendarPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(ExecutiveRadius.xl),
         border: Border.all(color: GlassColors.ghostBorder),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isMobile ? 8 : 16),
       child: Column(
         children: [
           Row(
@@ -74,7 +75,7 @@ class MonthCalendarPanel extends StatelessWidget {
                         ).format(currentMonth).toUpperCase(),
                         style: GlassText.headlineLG().copyWith(
                           color: GlassColors.gold,
-                          fontSize: 18,
+                          fontSize: isMobile ? 15 : 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.2,
                         ),
@@ -92,27 +93,29 @@ class MonthCalendarPanel extends StatelessWidget {
               _buildNavButton(Icons.chevron_right_rounded, onNext),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 8 : 16),
           _buildWeekdayHeader(context),
-          const SizedBox(height: 8),
+          SizedBox(height: isMobile ? 4 : 8),
           Expanded(
             child: GridView.builder(
               padding: EdgeInsets.zero,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
-                childAspectRatio: 0.96,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
+                childAspectRatio: isMobile ? 0.55 : 0.96,
+                crossAxisSpacing: isMobile ? 3 : 8,
+                mainAxisSpacing: isMobile ? 3 : 8,
               ),
               itemCount: dates.length,
               itemBuilder: (context, index) {
                 final date = dates[index];
                 final isCurrentMonth = date.month == currentMonth.month;
+                final weekIndex = index ~/ 7;
                 return _buildDayCell(
                   context,
                   date: date,
                   isCurrentMonth: isCurrentMonth,
                   isWeekendColumn: index % 7 == 0 || index % 7 == 6,
+                  weekIndex: weekIndex,
                 );
               },
             ),
@@ -183,6 +186,7 @@ class MonthCalendarPanel extends StatelessWidget {
     required DateTime date,
     required bool isCurrentMonth,
     required bool isWeekendColumn,
+    required int weekIndex,
   }) {
     final isMobile = Responsive.isMobile(context);
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -219,31 +223,72 @@ class MonthCalendarPanel extends StatelessWidget {
           ..sort((a, b) => a.startAt.compareTo(b.startAt));
     final totalItems = myTasks.length + dayMeetings.length;
 
+    final Border borderStyle;
+    if (isToday) {
+      borderStyle = Border.all(
+        color: GlassColors.gold,
+        width: 2.0,
+      );
+    } else if (isSelected) {
+      borderStyle = Border.all(
+        color: GlassColors.primary.withOpacity(0.9),
+        width: 1.4,
+      );
+    } else {
+      borderStyle = Border(
+        top: BorderSide(
+          color: GlassColors.ghostBorder.withOpacity(0.6),
+          width: 0.5,
+        ),
+        left: BorderSide(
+          color: GlassColors.ghostBorder.withOpacity(0.6),
+          width: 0.5,
+        ),
+        right: BorderSide(
+          color: GlassColors.ghostBorder.withOpacity(0.6),
+          width: 0.5,
+        ),
+        bottom: BorderSide(
+          color: weekIndex < 5
+              ? GlassColors.gold.withOpacity(0.28)
+              : GlassColors.ghostBorder.withOpacity(0.6),
+          width: weekIndex < 5 ? 1.2 : 0.5,
+        ),
+      );
+    }
+
     return InkWell(
       onTap: () => onDateSelected(date),
+      borderRadius: BorderRadius.circular(ExecutiveRadius.s),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: isToday
-              ? GlassColors.primary.withOpacity(0.055)
-              : (isWeekendColumn
-                    ? GlassColors.surfaceHighest.withOpacity(0.4)
-                    : Colors.white.withOpacity(0.01)),
+              ? GlassColors.gold.withOpacity(0.12)
+              : (isSelected
+                    ? GlassColors.primary.withOpacity(0.08)
+                    : (isWeekendColumn
+                          ? GlassColors.surfaceHighest.withOpacity(0.35)
+                          : Colors.white.withOpacity(0.01))),
           borderRadius: BorderRadius.circular(ExecutiveRadius.s),
-          border: Border.all(
-            color: isSelected
-                ? GlassColors.primary.withOpacity(0.9)
-                : GlassColors.ghostBorder.withOpacity(0.8),
-            width: isSelected ? 1.2 : 0.55,
-          ),
+          border: borderStyle,
+          boxShadow: isToday
+              ? [
+                  BoxShadow(
+                    color: GlassColors.gold.withOpacity(0.25),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 6 : 10,
-                isMobile ? 5 : 8,
-                isMobile ? 6 : 10,
+                isMobile ? 3 : 10,
+                isMobile ? 3 : 8,
+                isMobile ? 3 : 10,
                 2,
               ),
               child: Row(
@@ -253,34 +298,44 @@ class MonthCalendarPanel extends StatelessWidget {
                       '${date.day}',
                       style: GlassText.bodyMD().copyWith(
                         fontSize: isMobile ? 11 : 14,
-                        fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
+                        fontWeight: isToday
+                            ? FontWeight.w900
+                            : (isSelected ? FontWeight.w800 : FontWeight.w600),
                         color: !isCurrentMonth
                             ? GlassColors.onSurfaceVariant.withOpacity(0.22)
                             : (isToday
-                                  ? GlassColors.primary
-                                  : GlassColors.onSurface.withOpacity(0.92)),
+                                  ? GlassColors.gold
+                                  : (isSelected
+                                        ? GlassColors.primary
+                                        : GlassColors.onSurface.withOpacity(0.92))),
                       ),
                     ),
                   ),
-                  if (!isMobile && isCurrentMonth && totalItems > 0)
+                  if (isCurrentMonth && totalItems > 0)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 4 : 6,
+                        vertical: isMobile ? 1 : 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: isToday
+                            ? GlassColors.gold.withOpacity(0.2)
+                            : Colors.white.withOpacity(0.04),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: GlassColors.ghostBorder.withOpacity(0.9),
+                          color: isToday
+                              ? GlassColors.gold.withOpacity(0.5)
+                              : GlassColors.ghostBorder.withOpacity(0.9),
                         ),
                       ),
                       child: Text(
                         '$totalItems',
                         style: GlassText.labelSM().copyWith(
-                          fontSize: 8,
+                          fontSize: isMobile ? 7.5 : 8,
                           fontWeight: FontWeight.w700,
-                          color: GlassColors.onSurfaceVariant.withOpacity(0.72),
+                          color: isToday
+                              ? GlassColors.gold
+                              : GlassColors.onSurfaceVariant.withOpacity(0.72),
                         ),
                       ),
                     ),
@@ -290,13 +345,13 @@ class MonthCalendarPanel extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 5 : 8,
-                  2,
-                  isMobile ? 5 : 8,
-                  isMobile ? 5 : 8,
+                  isMobile ? 2 : 8,
+                  1,
+                  isMobile ? 2 : 8,
+                  isMobile ? 2 : 8,
                 ),
                 child: isMobile
-                    ? _buildMobileTaskDots(myTasks, dayMeetings)
+                    ? _buildMobileTaskList(myTasks, dayMeetings, isCurrentMonth)
                     : _buildMonthTaskList(myTasks, dayMeetings, isCurrentMonth),
               ),
             ),
@@ -306,38 +361,133 @@ class MonthCalendarPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileTaskDots(
+  Widget _buildMobileTaskList(
     List<TaskModel> tasks,
     List<MeetingModel> meetings,
+    bool isCurrentMonth,
   ) {
-    return Align(
-      alignment: Alignment.topLeft,
-      child: Wrap(
-        spacing: 3,
-        runSpacing: 3,
-        children: [
-          ...tasks.take(8).map((task) {
-            return Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: _boardColor(task),
-                shape: BoxShape.circle,
-              ),
-            );
-          }),
-          ...meetings.take(4).map((meeting) {
-            return Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: _boardColorById(meeting.boardId).withOpacity(0.95),
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(1.5),
-              ),
-            );
-          }),
-        ],
+    if (!isCurrentMonth) return const SizedBox.shrink();
+    if (tasks.isEmpty && meetings.isEmpty) return const SizedBox.shrink();
+
+    final items = <Widget>[];
+
+    for (final task in tasks) {
+      final board = _findBoard(task);
+      final boardColor = board != null ? Color(board.color) : GlassColors.primary;
+      final isCompleted = task.isCompleted;
+
+      items.add(
+        InkWell(
+          onTap: () => onTaskTap(task, board),
+          borderRadius: BorderRadius.circular(3),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1.5),
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? boardColor.withOpacity(0.12)
+                  : boardColor.withOpacity(0.24),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 2.5,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: boardColor,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(
+                  calendarTaskTypeIcon(task.type),
+                  size: 9,
+                  color: calendarTaskTypeColor(task.type, active: !isCompleted),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    task.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GlassText.bodyMD().copyWith(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                      decoration: isCompleted ? TextDecoration.lineThrough : null,
+                      color: GlassColors.onSurface.withOpacity(
+                        isCompleted ? 0.45 : 0.95,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    for (final meeting in meetings) {
+      final board = _findBoardById(meeting.boardId);
+      final boardColor = board != null ? Color(board.color) : GlassColors.primary;
+
+      items.add(
+        InkWell(
+          onTap: () => onMeetingTap(meeting, board),
+          borderRadius: BorderRadius.circular(3),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1.5),
+            decoration: BoxDecoration(
+              color: boardColor.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 2.5,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: boardColor,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(
+                  calendarTaskTypeIcon('meeting'),
+                  size: 9,
+                  color: calendarTaskTypeColor('meeting'),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    meeting.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GlassText.bodyMD().copyWith(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                      color: GlassColors.onSurface.withOpacity(0.95),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ScrollConfiguration(
+      behavior: const _CalendarHiddenScrollBehavior(),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        primary: false,
+        physics: const ClampingScrollPhysics(),
+        children: items,
       ),
     );
   }
